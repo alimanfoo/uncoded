@@ -19,6 +19,6 @@ repos:
     hooks:
       - id: ty
         name: ty
-        entry: uvx ty check src
+        entry: uvx ty check src tests
         language: system
         pass_filenames: false
