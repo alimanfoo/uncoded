@@ -17,7 +17,7 @@ def iter_source_files(source_root: Path, base: Path | None) -> Iterator[tuple[st
     """Yield (source_text, rel_path) for each candidate Python file."""
     ...
 
-def walk_source(source_root: Path, base: Path | None) -> list[ModuleInfo]:  # L95-115
+def walk_source(source_root: Path, base: Path | None) -> list[ModuleInfo]:  # L95-116
     """Walk a source root and extract public symbols from all packages."""
     ...
 

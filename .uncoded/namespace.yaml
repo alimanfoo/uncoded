@@ -69,6 +69,8 @@ tests/:
       test_basic_walk:
       test_nested_subpackage:
       test_skips_private_subdirectory:
+      test_includes_init_with_public_symbols:
+      test_skips_empty_init:
       test_skips_syntax_errors:
   test_namespace_map.py:
     TestBuildMap:

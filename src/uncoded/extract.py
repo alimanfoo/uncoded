@@ -67,9 +67,9 @@ def iter_source_files(
 ) -> Iterator[tuple[str, str]]:
     """Yield (source_text, rel_path) for each candidate Python file.
 
-    Skips __init__.py, private modules (leading underscore), and files
-    inside private directories. Paths are relative to *base* (defaults
-    to cwd).
+    Includes __init__.py when it contains public symbols. Skips other
+    private modules (leading underscore) and private directories. Paths
+    are relative to *base* (defaults to cwd).
     """
     if base is None:
         base = Path.cwd()
@@ -78,7 +78,7 @@ def iter_source_files(
     base = base.resolve()
 
     for py_file in sorted(source_root.rglob("*.py")):
-        if py_file.name.startswith("_"):
+        if py_file.name.startswith("_") and py_file.name != "__init__.py":
             continue
 
         try:
@@ -98,8 +98,9 @@ def walk_source(source_root: Path, base: Path | None = None) -> list[ModuleInfo]
     Paths in the returned ModuleInfo are relative to *base* (defaults to
     cwd), so they can be used directly to open files from the repo root.
 
-    Skips __init__.py, private modules (leading underscore), and files
-    that contain no public symbols. Skips files with syntax errors.
+    Includes __init__.py when it contains public symbols. Skips other
+    private modules (leading underscore), files with no public symbols,
+    and files with syntax errors.
     """
     modules: list[ModuleInfo] = []
 

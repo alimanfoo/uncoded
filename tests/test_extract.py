@@ -206,6 +206,31 @@ class TestWalkSource:
 
         assert modules == []
 
+    def test_includes_init_with_public_symbols(self, tmp_path):
+        src = tmp_path / "src"
+        pkg = src / "mypackage"
+        pkg.mkdir(parents=True)
+        (pkg / "__init__.py").write_text("def create(): pass\n")
+        (pkg / "core.py").write_text("def run(): pass\n")
+
+        modules = walk_source(src, base=tmp_path)
+
+        rel_paths = [m.rel_path for m in modules]
+        assert "src/mypackage/__init__.py" in rel_paths
+        assert "src/mypackage/core.py" in rel_paths
+
+    def test_skips_empty_init(self, tmp_path):
+        src = tmp_path / "src"
+        pkg = src / "mypackage"
+        pkg.mkdir(parents=True)
+        (pkg / "__init__.py").write_text("")
+        (pkg / "core.py").write_text("def run(): pass\n")
+
+        modules = walk_source(src, base=tmp_path)
+
+        rel_paths = [m.rel_path for m in modules]
+        assert not any("__init__.py" in p for p in rel_paths)
+
     def test_skips_syntax_errors(self, tmp_path):
         src = tmp_path / "src"
         pkg = src / "mypackage"

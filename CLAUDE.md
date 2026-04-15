@@ -34,8 +34,8 @@ Two-level index (phase 2 in progress):
   file directly from the key name without inferring a source root.
 - The map uses a pure key hierarchy — no lists, no mixed notation. Every
   level (directory, file, symbol, member) is a YAML key. Indent to zoom in.
-- Public means no leading underscore. `__init__.py` is skipped so each
-  symbol appears at one canonical location.
+- Public means no leading underscore. `__init__.py` is included when it
+  contains public symbols, so package-level API is not invisible.
 - Source order is preserved, not alphabetized.
 - The tool is designed to run as a pre-commit hook to keep the index in sync,
   and as a CI check to catch drift.

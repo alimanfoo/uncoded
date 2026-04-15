@@ -43,7 +43,7 @@ class TestExtractModule:  # L23-152
     def test_preserves_source_order(self):  # L133-152
         ...
 
-class TestWalkSource:  # L155-221
+class TestWalkSource:  # L155-246
 
     def test_basic_walk(self, tmp_path):  # L156-181
         ...
@@ -54,5 +54,11 @@ class TestWalkSource:  # L155-221
     def test_skips_private_subdirectory(self, tmp_path):  # L197-207
         ...
 
-    def test_skips_syntax_errors(self, tmp_path):  # L209-221
+    def test_includes_init_with_public_symbols(self, tmp_path):  # L209-220
+        ...
+
+    def test_skips_empty_init(self, tmp_path):  # L222-232
+        ...
+
+    def test_skips_syntax_errors(self, tmp_path):  # L234-246
         ...
