@@ -10,35 +10,49 @@ understanding of code that's sitting right there, unread.
 
 ## Approach
 
-Provide a static, pre-computed index that gives agents a top-down view of a
-codebase. The agent loads the index at the start of a task, sees the full
-vocabulary of the code, and navigates deterministically to what it needs —
-no guessing, no grep.
+A static, pre-computed index gives agents a top-down view of a codebase.
+The agent loads the index at the start of a task, sees the full vocabulary
+of the code, and navigates deterministically to what it needs — no guessing,
+no grep.
 
-Two-level index (phase 2 in progress):
+Two-level index:
 
-1. **Namespace map** (.uncoded/namespace.yaml) — a hierarchical YAML file
+1. **Namespace map** (`.uncoded/namespace.yaml`) — a hierarchical YAML file
    listing all public symbols: directories, files, classes (with attributes
-   and methods), and functions. Loaded into context before any task begins.
-   Gives the agent a world view and the vocabulary of the codebase.
+   and methods), and functions. Covers both source and tests. Loaded into
+   context before any task begins. Gives the agent a world view.
 
-2. **Stub files** (.pyi) — one per source file, providing full signatures
-   with parameter names, types, return types, first-sentence docstrings,
-   and line-range comments pointing to the implementation. The agent reads
-   these to understand a file's API surface before jumping to specific line
-   ranges in the source.
+2. **Stub files** (`.uncoded/stubs/`) — one `.pyi` per source file, with
+   imports, full signatures (parameter names, types, return types),
+   first-sentence docstrings, and `L<start>-<end>` line range comments.
+   Includes all symbols — public and private — so agents can follow calls
+   into implementation detail without grepping.
+
+## Navigation protocol
+
+1. **Load** `.uncoded/namespace.yaml` — orient, identify relevant files and
+   symbols.
+2. **Read** stub files for those files — understand signatures, find line
+   ranges.
+3. **Read** specific line ranges in the source — implementation detail only
+   where needed.
+
+No grepping. No reading whole files. No guessing.
 
 ## Design notes
 
 - Paths in the namespace map are repo-relative, so an agent can open any
-  file directly from the key name without inferring a source root.
+  file directly from the key without inferring a source root.
 - The map uses a pure key hierarchy — no lists, no mixed notation. Every
   level (directory, file, symbol, member) is a YAML key. Indent to zoom in.
-- Public means no leading underscore. `__init__.py` is included when it
-  contains public symbols, so package-level API is not invisible.
+- The namespace map lists only public symbols (no leading underscore).
+  Stubs include everything, since agents navigating implementation need
+  private helpers too. The `_` prefix is sufficient distinction.
+- `__init__.py` is included when it contains public symbols, so
+  package-level API is not invisible.
 - Source order is preserved, not alphabetized.
-- The tool is designed to run as a pre-commit hook to keep the index in sync,
-  and as a CI check to catch drift.
+- `uncoded sync` runs as a pre-commit hook to keep the index in sync.
+  `uncoded check` runs in CI to catch drift.
 
 ## Commands
 
