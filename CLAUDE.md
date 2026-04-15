@@ -44,10 +44,10 @@ Two-level index (phase 2 in progress):
 
 ```
 # Generate (or update) the namespace map and stub files
-uncoded sync src
+uncoded sync src tests
 
 # Check that the index is up to date (used in CI)
-uncoded check src
+uncoded check src tests
 
 # Run tests
 pytest

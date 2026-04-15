@@ -22,7 +22,8 @@ def main(argv: list[str] | None = None):
         ("check", "Check that namespace map and stub files are up to date"),
     ]:
         subparsers.add_parser(name, help=help_text).add_argument(
-            "source_root", type=Path, help="Path to source root (e.g. src/)"
+            "source_roots", type=Path, nargs="+", metavar="source_root",
+            help="Path(s) to source root(s) (e.g. src tests)",
         )
 
     args = parser.parse_args(argv)
@@ -37,36 +38,42 @@ def main(argv: list[str] | None = None):
     return 1
 
 
-def _resolve_source_root(args: argparse.Namespace) -> Path | None:
-    source_root = args.source_root.resolve()
-    if not source_root.is_dir():
-        print(f"Error: {source_root} is not a directory", file=sys.stderr)
-        return None
-    return source_root
+def _resolve_source_roots(args: argparse.Namespace) -> list[Path] | None:
+    roots = []
+    for p in args.source_roots:
+        resolved = p.resolve()
+        if not resolved.is_dir():
+            print(f"Error: {resolved} is not a directory", file=sys.stderr)
+            return None
+        roots.append(resolved)
+    return roots
 
 
 def cmd_sync(args: argparse.Namespace) -> int:
-    source_root = _resolve_source_root(args)
-    if source_root is None:
+    source_roots = _resolve_source_roots(args)
+    if source_roots is None:
         return 1
 
-    map_content = render_map(build_map(walk_source(source_root)))
+    modules = [m for root in source_roots for m in walk_source(root)]
+    map_content = render_map(build_map(modules))
     DEFAULT_MAP_OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     DEFAULT_MAP_OUTPUT.write_text(map_content)
     print(f"Wrote {DEFAULT_MAP_OUTPUT}")
 
-    build_stubs(source_root)
+    for root in source_roots:
+        build_stubs(root)
     return 0
 
 
 def cmd_check(args: argparse.Namespace) -> int:
-    source_root = _resolve_source_root(args)
-    if source_root is None:
+    source_roots = _resolve_source_roots(args)
+    if source_roots is None:
         return 1
 
     ok = True
 
-    expected_map = render_map(build_map(walk_source(source_root)))
+    modules = [m for root in source_roots for m in walk_source(root)]
+    expected_map = render_map(build_map(modules))
     if not DEFAULT_MAP_OUTPUT.exists():
         print(f"Missing: {DEFAULT_MAP_OUTPUT}")
         ok = False
@@ -74,17 +81,18 @@ def cmd_check(args: argparse.Namespace) -> int:
         print(f"Out of date: {DEFAULT_MAP_OUTPUT}")
         ok = False
 
-    for rel_stub_path, expected_content in generate_stubs(source_root).items():
-        stub_path = DEFAULT_STUBS_OUTPUT / rel_stub_path
-        if not stub_path.exists():
-            print(f"Missing: {stub_path}")
-            ok = False
-        elif stub_path.read_text() != expected_content:
-            print(f"Out of date: {stub_path}")
-            ok = False
+    for root in source_roots:
+        for rel_stub_path, expected_content in generate_stubs(root).items():
+            stub_path = DEFAULT_STUBS_OUTPUT / rel_stub_path
+            if not stub_path.exists():
+                print(f"Missing: {stub_path}")
+                ok = False
+            elif stub_path.read_text() != expected_content:
+                print(f"Out of date: {stub_path}")
+                ok = False
 
     if not ok:
-        print("Run `uncoded sync <src>` to update.", file=sys.stderr)
+        print("Run `uncoded sync <src> [...]` to update.", file=sys.stderr)
         return 1
 
     return 0
