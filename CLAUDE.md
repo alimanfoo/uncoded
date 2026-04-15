@@ -30,14 +30,41 @@ Two-level index:
 
 ## Navigation protocol
 
-1. **Load** `.uncoded/namespace.yaml` — orient, identify relevant files and
-   symbols.
-2. **Read** stub files for those files — understand signatures, find line
-   ranges.
-3. **Read** specific line ranges in the source — implementation detail only
-   where needed.
+If you are working on a repo that contains a `.uncoded/` directory, follow
+this protocol. Do not grep. Do not read whole source files.
 
-No grepping. No reading whole files. No guessing.
+**Step 1 — Orient.** At the start of every task, read the namespace map in
+full:
+
+```
+Read .uncoded/namespace.yaml
+```
+
+This gives you every public symbol in the codebase — directories, files,
+classes, methods, functions — in source order. Use it to identify which
+files are relevant to your task.
+
+**Step 2 — Understand.** For each relevant file, read its stub in full. The
+stub path mirrors the source path under `.uncoded/stubs/`, with a `.pyi`
+extension:
+
+```
+src/foo/bar.py  →  .uncoded/stubs/src/foo/bar.pyi
+tests/test_foo.py  →  .uncoded/stubs/tests/test_foo.pyi
+```
+
+The stub gives you imports, all signatures with types, first-sentence
+docstrings, and a `L<start>-<end>` line range on every definition.
+
+**Step 3 — Read.** Use line ranges from the stub to read only the
+implementation you need:
+
+```
+Read src/foo/bar.py  offset=<start>  limit=<end - start + 1>
+```
+
+Stubs include private symbols (`_name`) alongside public ones, so you can
+follow calls into helpers without guessing where they are.
 
 ## Design notes
 
