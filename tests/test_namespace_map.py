@@ -1,7 +1,7 @@
 import yaml
 
-from uncode.extract import ClassInfo, ModuleInfo
-from uncode.namespace_map import build_map, render_map
+from uncoded.extract import ClassInfo, ModuleInfo
+from uncoded.namespace_map import build_map, render_map
 
 
 class TestBuildMap:

@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "uncode"
+name = "uncoded"
 version = "0.0.0"
 description = "Here be dragons."
 readme = "README.md"
@@ -22,11 +22,11 @@ classifiers = [
 ]
 
 [project.scripts]
-uncode = "uncode.cli:main"
+uncoded = "uncoded.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/alimanfoo/uncode"
-Repository = "https://github.com/alimanfoo/uncode"
+Homepage = "https://github.com/alimanfoo/uncoded"
+Repository = "https://github.com/alimanfoo/uncoded"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

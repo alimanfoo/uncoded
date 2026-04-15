@@ -1,5 +1,5 @@
 src/:
-  uncode/:
+  uncoded/:
     cli.py:
       main:
       cmd_map:

@@ -1,6 +1,6 @@
 import textwrap
 
-from uncode.extract import extract_module, is_public, walk_source
+from uncoded.extract import extract_module, is_public, walk_source
 
 
 class TestIsPublic:

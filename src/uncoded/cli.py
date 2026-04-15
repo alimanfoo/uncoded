@@ -1,13 +1,13 @@
-"""CLI entry point for uncode."""
+"""CLI entry point for uncoded."""
 
 import argparse
 import sys
 from pathlib import Path
 
-from uncode.extract import walk_source
-from uncode.namespace_map import build_map, render_map
+from uncoded.extract import walk_source
+from uncoded.namespace_map import build_map, render_map
 
-DEFAULT_OUTPUT = Path(".uncode/namespace.yaml")
+DEFAULT_OUTPUT = Path(".uncoded/namespace.yaml")
 
 
 def main(argv: list[str] | None = None):

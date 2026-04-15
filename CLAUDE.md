@@ -1,4 +1,4 @@
-# uncode
+# uncoded
 
 ## Problem
 
@@ -17,7 +17,7 @@ no guessing, no grep.
 
 Two-level index (phase 2 in progress):
 
-1. **Namespace map** (.uncode/namespace.yaml) — a hierarchical YAML file
+1. **Namespace map** (.uncoded/namespace.yaml) — a hierarchical YAML file
    listing all public symbols: directories, files, classes (with attributes
    and methods), and functions. Loaded into context before any task begins.
    Gives the agent a world view and the vocabulary of the codebase.
@@ -44,7 +44,7 @@ Two-level index (phase 2 in progress):
 
 ```
 # Generate the namespace map
-uncode map src
+uncoded map src
 
 # Run tests
 pytest

@@ -4,7 +4,7 @@ from pathlib import Path
 
 import yaml
 
-from uncode.extract import ModuleInfo
+from uncoded.extract import ModuleInfo
 
 
 class _CleanDumper(yaml.SafeDumper):
