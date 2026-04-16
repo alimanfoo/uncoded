@@ -11,19 +11,23 @@ def is_public(name: str) -> bool:  # L32-36
     """A name is public if it has no leading underscore (or is a public dunder)."""
     ...
 
-def _assign_target_name(node: ast.Assign | ast.AnnAssign) -> str | None:  # L39-47
+def _property_kind(node: ast.FunctionDef | ast.AsyncFunctionDef) -> str | None:  # L39-52
+    """Classify a method by its property-related decorators."""
+    ...
+
+def _assign_target_name(node: ast.Assign | ast.AnnAssign) -> str | None:  # L55-63
     """Return the single-name target of an assignment, or None if not a simple name."""
     ...
 
-def extract_module(source: str, rel_path: str) -> ModuleInfo:  # L50-93
+def extract_module(source: str, rel_path: str) -> ModuleInfo:  # L66-113
     """Parse Python source and extract public classes, functions, and constants."""
     ...
 
-def iter_source_files(source_root: Path, base: Path | None) -> Iterator[tuple[str, str]]:  # L96-123
+def iter_source_files(source_root: Path, base: Path | None) -> Iterator[tuple[str, str]]:  # L116-143
     """Yield (source_text, rel_path) for each candidate Python file."""
     ...
 
-def walk_source(source_root: Path, base: Path | None) -> list[ModuleInfo]:  # L126-147
+def walk_source(source_root: Path, base: Path | None) -> list[ModuleInfo]:  # L146-167
     """Walk a source root and extract public symbols from all packages."""
     ...
 

@@ -4,10 +4,10 @@ import ast
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from uncoded.extract import iter_source_files
+from uncoded.extract import _property_kind, iter_source_files
 
 VALUE_WIDTH_CAP = 80  # L12
-DEFAULT_STUBS_OUTPUT = Path('.uncoded/stubs')  # L350
+DEFAULT_STUBS_OUTPUT = Path('.uncoded/stubs')  # L370
 
 def _first_sentence(node: ast.AsyncFunctionDef | ast.FunctionDef | ast.ClassDef | ast.Module) -> str | None:  # L77-88
     """Return the first sentence of a node's docstring, or None."""
@@ -33,43 +33,47 @@ def _extract_function(node: ast.FunctionDef | ast.AsyncFunctionDef) -> StubFunct
     """Build a StubFunction from a function or method AST node."""
     ...
 
-def _extract_class(node: ast.ClassDef) -> StubClass:  # L200-223
+def _property_attribute(node: ast.FunctionDef | ast.AsyncFunctionDef) -> StubAssignment:  # L200-211
+    """Build a StubAssignment representing a @property as a class attribute."""
+    ...
+
+def _extract_class(node: ast.ClassDef) -> StubClass:  # L214-243
     """Build a StubClass from a class AST node."""
     ...
 
-def extract_stub(source: str, rel_path: str) -> StubModule:  # L226-252
+def extract_stub(source: str, rel_path: str) -> StubModule:  # L246-272
     """Parse Python source and extract all symbols with signatures and line ranges."""
     ...
 
-def _render_param(p: StubParam) -> str:  # L255-261
+def _render_param(p: StubParam) -> str:  # L275-281
     """Render a single parameter as a string for a function signature."""
     ...
 
-def _render_function(func: StubFunction, indent: str) -> list[str]:  # L264-275
+def _render_function(func: StubFunction, indent: str) -> list[str]:  # L284-295
     """Render a function or method as stub lines, indented for methods."""
     ...
 
-def _format_assignment_body(a: StubAssignment) -> str:  # L278-285
+def _format_assignment_body(a: StubAssignment) -> str:  # L298-305
     """Render the 'name [: type] [= value]' portion of an assignment."""
     ...
 
-def _render_assignment(a: StubAssignment, indent: str) -> str:  # L288-291
+def _render_assignment(a: StubAssignment, indent: str) -> str:  # L308-311
     """Render a module-level assignment as a stub line, with line range."""
     ...
 
-def _render_class_attribute(a: StubAssignment, indent: str) -> str:  # L294-296
+def _render_class_attribute(a: StubAssignment, indent: str) -> str:  # L314-316
     """Render a class attribute as a stub line (no line range — class has one)."""
     ...
 
-def render_stub(module: StubModule) -> str:  # L299-333
+def render_stub(module: StubModule) -> str:  # L319-353
     """Render a StubModule as a .pyi file string."""
     ...
 
-def _generate_stubs(source_root: Path) -> dict[Path, str]:  # L336-347
+def _generate_stubs(source_root: Path) -> dict[Path, str]:  # L356-367
     """Return a mapping from stub relative paths to rendered stub content."""
     ...
 
-def build_stubs(source_root: Path, output_dir: Path) -> None:  # L353-359
+def build_stubs(source_root: Path, output_dir: Path) -> None:  # L373-379
     """Write stub files for all symbols under source_root."""
     ...
 

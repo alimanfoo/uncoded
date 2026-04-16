@@ -26,7 +26,7 @@ class TestIsPublic:  # L6-26
     def test_dunder_version_is_public(self):  # L25-26
         ...
 
-class TestExtractModule:  # L29-224
+class TestExtractModule:  # L29-263
 
     def test_classes_and_functions(self):  # L30-56
         ...
@@ -64,25 +64,31 @@ class TestExtractModule:  # L29-224
     def test_class_with_no_public_members(self):  # L186-203
         ...
 
-    def test_preserves_source_order(self):  # L205-224
+    def test_property_classified_as_attribute(self):  # L205-220
         ...
 
-class TestWalkSource:  # L227-318
-
-    def test_basic_walk(self, tmp_path):  # L228-253
+    def test_property_setter_and_deleter_suppressed(self):  # L222-242
         ...
 
-    def test_nested_subpackage(self, tmp_path):  # L255-267
+    def test_preserves_source_order(self):  # L244-263
         ...
 
-    def test_skips_private_subdirectory(self, tmp_path):  # L269-279
+class TestWalkSource:  # L266-357
+
+    def test_basic_walk(self, tmp_path):  # L267-292
         ...
 
-    def test_includes_init_with_public_symbols(self, tmp_path):  # L281-292
+    def test_nested_subpackage(self, tmp_path):  # L294-306
         ...
 
-    def test_skips_empty_init(self, tmp_path):  # L294-304
+    def test_skips_private_subdirectory(self, tmp_path):  # L308-318
         ...
 
-    def test_skips_syntax_errors(self, tmp_path):  # L306-318
+    def test_includes_init_with_public_symbols(self, tmp_path):  # L320-331
+        ...
+
+    def test_skips_empty_init(self, tmp_path):  # L333-343
+        ...
+
+    def test_skips_syntax_errors(self, tmp_path):  # L345-357
         ...

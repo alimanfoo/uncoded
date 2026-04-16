@@ -36,6 +36,22 @@ def is_public(name: str) -> bool:
     return not name.startswith("_")
 
 
+def _property_kind(
+    node: ast.FunctionDef | ast.AsyncFunctionDef,
+) -> str | None:
+    """Classify a method by its property-related decorators.
+
+    Returns "property" for @property, "setter" for @<name>.setter,
+    "deleter" for @<name>.deleter, or None for a plain method.
+    """
+    for d in node.decorator_list:
+        if isinstance(d, ast.Name) and d.id == "property":
+            return "property"
+        if isinstance(d, ast.Attribute) and d.attr in ("setter", "deleter"):
+            return d.attr
+    return None
+
+
 def _assign_target_name(node: ast.Assign | ast.AnnAssign) -> str | None:
     """Return the single-name target of an assignment, or None if not a simple name."""
     if isinstance(node, ast.AnnAssign):
@@ -58,18 +74,22 @@ def extract_module(source: str, rel_path: str) -> ModuleInfo:
     for node in ast.iter_child_nodes(tree):
         if isinstance(node, ast.ClassDef) and is_public(node.name):
             attributes: list[str] = []
+            methods: list[str] = []
             for n in ast.iter_child_nodes(node):
-                name = None
                 if isinstance(n, (ast.AnnAssign, ast.Assign)):
                     name = _assign_target_name(n)
-                if name and is_public(name):
-                    attributes.append(name)
-            methods = [
-                n.name
-                for n in ast.iter_child_nodes(node)
-                if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
-                and is_public(n.name)
-            ]
+                    if name and is_public(name):
+                        attributes.append(name)
+                elif isinstance(
+                    n, (ast.FunctionDef, ast.AsyncFunctionDef)
+                ) and is_public(n.name):
+                    kind = _property_kind(n)
+                    if kind == "setter" or kind == "deleter":
+                        continue
+                    if kind == "property":
+                        attributes.append(n.name)
+                    else:
+                        methods.append(n.name)
             classes.append(
                 ClassInfo(name=node.name, attributes=attributes, methods=methods)
             )
