@@ -2,7 +2,7 @@
 
 import yaml
 from uncoded.extract import ClassInfo, ModuleInfo
-from uncoded.namespace_map import build_map, render_map
+from uncoded.namespace_map import HEADER, build_map, render_map
 
 class TestBuildMap:  # L7-146
 
@@ -33,7 +33,7 @@ class TestBuildMap:  # L7-146
     def test_constants_precede_classes_and_functions(self):  # L133-146
         ...
 
-class TestRenderMap:  # L149-185
+class TestRenderMap:  # L149-213
 
     def test_roundtrips_through_yaml(self):  # L150-163
         ...
@@ -42,4 +42,13 @@ class TestRenderMap:  # L149-185
         ...
 
     def test_null_renders_clean(self):  # L176-185
+        ...
+
+    def test_header_appears_at_top(self):  # L187-194
+        ...
+
+    def test_header_mentions_stub_pointer(self):  # L196-200
+        ...
+
+    def test_header_does_not_break_yaml_parse(self):  # L202-213
         ...

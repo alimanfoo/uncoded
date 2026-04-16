@@ -1,7 +1,7 @@
 import yaml
 
 from uncoded.extract import ClassInfo, ModuleInfo
-from uncoded.namespace_map import build_map, render_map
+from uncoded.namespace_map import HEADER, build_map, render_map
 
 
 class TestBuildMap:
@@ -183,3 +183,31 @@ class TestRenderMap:
 
         assert "compute:" in output
         assert "null" not in output
+
+    def test_header_appears_at_top(self):
+        modules = [
+            ModuleInfo(rel_path="src/pkg/utils.py", classes=[], functions=["compute"]),
+        ]
+        output = render_map(build_map(modules))
+        assert output.startswith(HEADER)
+        # Header must precede any non-comment YAML content.
+        assert output.index(HEADER) < output.index("src/")
+
+    def test_header_mentions_stub_pointer(self):
+        # The header's job is partly to tell a cold-start agent where to find
+        # signatures, types, and line ranges. Lock in that pointer.
+        output = render_map(build_map([]))
+        assert ".uncoded/stubs/" in output
+
+    def test_header_does_not_break_yaml_parse(self):
+        modules = [
+            ModuleInfo(
+                rel_path="src/pkg/core.py",
+                classes=[ClassInfo(name="Engine", methods=["run"])],
+                functions=["start"],
+            ),
+        ]
+        namespace = build_map(modules)
+        output = render_map(namespace)
+        # Parser should ignore the comment header and load the body.
+        assert yaml.safe_load(output) == namespace
