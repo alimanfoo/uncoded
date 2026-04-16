@@ -79,6 +79,17 @@ Like `ruff format`: if `uncoded` modifies any files, the commit fails and you
 stage the updated index before committing again. CI runs `pre-commit run
 --all-files` to verify the index is up to date.
 
+## How agents use it
+
+When `uncoded` is set up, a navigation section is automatically maintained in
+`CLAUDE.md`. Agents following that protocol:
+
+1. Read `.uncoded/namespace.yaml` to orient — every public symbol, at a glance.
+2. Read the relevant `.pyi` stubs to understand signatures and locate line ranges.
+3. Read only the source lines they need, using the `L<start>-<end>` ranges from the stubs.
+
+Three reads to navigate to any symbol in the codebase. No grep.
+
 ## Dev setup
 
 Clone, install dependencies, and wire up the pre-commit hooks:
@@ -101,14 +112,3 @@ Run all checks (the same suite CI runs):
 ```
 uv run pre-commit run --all-files
 ```
-
-## How agents use it
-
-When `uncoded` is set up, a navigation section is automatically maintained in
-`CLAUDE.md`. Agents following that protocol:
-
-1. Read `.uncoded/namespace.yaml` to orient — every public symbol, at a glance.
-2. Read the relevant `.pyi` stubs to understand signatures and locate line ranges.
-3. Read only the source lines they need, using the `L<start>-<end>` ranges from the stubs.
-
-Three reads to navigate to any symbol in the codebase. No grep.
