@@ -28,26 +28,6 @@ Two-level index:
    Includes all symbols — public and private — so agents can follow calls
    into implementation detail without grepping.
 
-## Design notes
-
-- Paths in the namespace map are repo-relative, so an agent can open any
-  file directly from the key without inferring a source root.
-- The map uses a pure key hierarchy — no lists, no mixed notation. Every
-  level (directory, file, symbol, member) is a YAML key. Indent to zoom in.
-- The namespace map lists only public symbols (no leading underscore).
-  Stubs include everything, since agents navigating implementation need
-  private helpers too. The `_` prefix is sufficient distinction.
-- `__init__.py` is included when it contains public symbols, so
-  package-level API is not invisible.
-- Source order is preserved, not alphabetized.
-- `uncoded` runs as a pre-commit hook to keep the index in sync, and in
-  CI via `pre-commit run --all-files`. Like `ruff format`: run it, and if
-  it modifies files the commit or CI step fails.
-- `uncoded` also maintains a navigation section in CLAUDE.md so agents
-  working on any repo using uncoded get the protocol automatically.
-- Source roots are configured once in `pyproject.toml` under
-  `[tool.uncoded] source-roots`; no arguments needed at invocation.
-
 ## Commands
 
 This project uses [uv](https://docs.astral.sh/uv/). Run commands via
