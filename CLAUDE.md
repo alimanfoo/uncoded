@@ -59,7 +59,7 @@ pytest
 ```
 
 <!-- uncoded:start -->
-## uncoded navigation index
+## How to navigate this codebase and read source files
 
 This repo uses [uncoded](https://github.com/alimanfoo/uncoded) to maintain
 a navigation index for AI agents. Do not grep. Do not read whole source files.
