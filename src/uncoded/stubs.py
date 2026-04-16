@@ -5,7 +5,7 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from uncoded.extract import iter_source_files
+from uncoded.extract import _property_kind, iter_source_files
 
 # Width cap for inlining the right-hand side of an assignment. If the unparsed
 # RHS exceeds this, it is elided to "..." and the reader follows the line range.
@@ -197,6 +197,20 @@ def _extract_function(
     )
 
 
+def _property_attribute(
+    node: ast.FunctionDef | ast.AsyncFunctionDef,
+) -> StubAssignment:
+    """Build a StubAssignment representing a @property as a class attribute."""
+    return StubAssignment(
+        name=node.name,
+        annotation=ast.unparse(node.returns) if node.returns else None,
+        value_source=None,
+        start_line=node.lineno,
+        end_line=node.end_lineno or node.lineno,
+        is_type_alias=False,
+    )
+
+
 def _extract_class(node: ast.ClassDef) -> StubClass:
     """Build a StubClass from a class AST node."""
     bases = [ast.unparse(b) for b in node.bases]
@@ -210,7 +224,13 @@ def _extract_class(node: ast.ClassDef) -> StubClass:
             if assignment is not None:
                 attributes.append(assignment)
         elif isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            methods.append(_extract_function(child))
+            kind = _property_kind(child)
+            if kind == "setter" or kind == "deleter":
+                continue
+            if kind == "property":
+                attributes.append(_property_attribute(child))
+            else:
+                methods.append(_extract_function(child))
 
     return StubClass(
         name=node.name,

@@ -4,7 +4,7 @@ import textwrap
 import pytest
 from uncoded.stubs import StubAssignment, StubClass, StubFunction, StubModule, StubParam, extract_stub, render_stub
 
-class TestExtractStub:  # L16-271
+class TestExtractStub:  # L16-320
 
     def test_simple_function(self):  # L17-31
         ...
@@ -75,61 +75,73 @@ class TestExtractStub:  # L16-271
     def test_class_with_unannotated_attribute(self):  # L259-271
         ...
 
-class TestRenderStub:  # L274-481
-
-    def test_header_contains_path(self):  # L275-277
+    def test_property_rendered_as_attribute(self):  # L273-288
         ...
 
-    def test_imports_rendered(self):  # L279-285
+    def test_property_without_return_annotation(self):  # L290-300
         ...
 
-    def test_function_line_range(self):  # L287-293
+    def test_property_setter_and_deleter_suppressed(self):  # L302-320
         ...
 
-    def test_async_function_prefix(self):  # L295-302
+class TestRenderStub:  # L323-546
+
+    def test_header_contains_path(self):  # L324-326
         ...
 
-    def test_function_with_annotations(self):  # L304-317
+    def test_imports_rendered(self):  # L328-334
         ...
 
-    def test_docstring_excerpt_rendered(self):  # L319-333
+    def test_function_line_range(self):  # L336-342
         ...
 
-    def test_class_with_bases(self):  # L335-340
+    def test_async_function_prefix(self):  # L344-351
         ...
 
-    def test_class_single_line_range(self):  # L342-347
+    def test_function_with_annotations(self):  # L353-366
         ...
 
-    def test_function_single_line_range(self):  # L349-354
+    def test_docstring_excerpt_rendered(self):  # L368-382
         ...
 
-    def test_class_no_bases(self):  # L356-361
+    def test_class_with_bases(self):  # L384-389
         ...
 
-    def test_attribute_with_annotation(self):  # L363-375
+    def test_class_single_line_range(self):  # L391-396
         ...
 
-    def test_method_indented(self):  # L377-397
+    def test_function_single_line_range(self):  # L398-403
         ...
 
-    def test_ends_with_newline(self):  # L399-401
+    def test_class_no_bases(self):  # L405-410
         ...
 
-    def test_constant_with_value_rendered(self):  # L403-412
+    def test_attribute_with_annotation(self):  # L412-424
         ...
 
-    def test_constant_annotated_with_value_rendered(self):  # L414-427
+    def test_method_indented(self):  # L426-446
         ...
 
-    def test_constant_elided_rendered(self):  # L429-438
+    def test_ends_with_newline(self):  # L448-450
         ...
 
-    def test_constant_bare_annotation_rendered(self):  # L440-449
+    def test_property_rendered_as_class_attribute(self):  # L452-466
         ...
 
-    def test_type_alias_pep695_rendered(self):  # L451-464
+    def test_constant_with_value_rendered(self):  # L468-477
         ...
 
-    def test_unannotated_class_attribute_rendered(self):  # L466-481
+    def test_constant_annotated_with_value_rendered(self):  # L479-492
+        ...
+
+    def test_constant_elided_rendered(self):  # L494-503
+        ...
+
+    def test_constant_bare_annotation_rendered(self):  # L505-514
+        ...
+
+    def test_type_alias_pep695_rendered(self):  # L516-529
+        ...
+
+    def test_unannotated_class_attribute_rendered(self):  # L531-546
         ...

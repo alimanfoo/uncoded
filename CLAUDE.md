@@ -50,12 +50,16 @@ Two-level index:
 
 ## Commands
 
+This project uses [uv](https://docs.astral.sh/uv/). Run commands via
+`uv run` so they execute inside the project environment without needing
+an activated venv.
+
 ```
 # Generate (or update) the namespace map, stub files, and CLAUDE.md section
-uncoded
+uv run uncoded
 
 # Run tests
-pytest
+uv run pytest
 ```
 
 <!-- uncoded:start -->

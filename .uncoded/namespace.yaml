@@ -111,6 +111,8 @@ tests/:
       test_module_with_only_constants_is_kept:
       test_annotated_attributes:
       test_class_with_no_public_members:
+      test_property_classified_as_attribute:
+      test_property_setter_and_deleter_suppressed:
       test_preserves_source_order:
     TestWalkSource:
       test_basic_walk:
@@ -159,6 +161,9 @@ tests/:
       test_type_alias_pep695:
       test_tuple_unpacking_skipped:
       test_class_with_unannotated_attribute:
+      test_property_rendered_as_attribute:
+      test_property_without_return_annotation:
+      test_property_setter_and_deleter_suppressed:
     TestRenderStub:
       test_header_contains_path:
       test_imports_rendered:
@@ -173,6 +178,7 @@ tests/:
       test_attribute_with_annotation:
       test_method_indented:
       test_ends_with_newline:
+      test_property_rendered_as_class_attribute:
       test_constant_with_value_rendered:
       test_constant_annotated_with_value_rendered:
       test_constant_elided_rendered:

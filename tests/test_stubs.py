@@ -270,6 +270,55 @@ class TestExtractStub:
             ("count", "int", "0"),
         ]
 
+    def test_property_rendered_as_attribute(self):
+        source = textwrap.dedent("""\
+            class Config:
+                @property
+                def path(self) -> Path:
+                    '''Return the config file path.'''
+                    return self._path
+        """)
+        module = extract_stub(source, "pkg/cfg.py")
+        cls = module.classes[0]
+        assert cls.methods == []
+        assert len(cls.attributes) == 1
+        attr = cls.attributes[0]
+        assert attr.name == "path"
+        assert attr.annotation == "Path"
+        assert attr.value_source is None
+
+    def test_property_without_return_annotation(self):
+        source = textwrap.dedent("""\
+            class Config:
+                @property
+                def path(self):
+                    return self._path
+        """)
+        module = extract_stub(source, "pkg/cfg.py")
+        cls = module.classes[0]
+        assert cls.attributes[0].name == "path"
+        assert cls.attributes[0].annotation is None
+
+    def test_property_setter_and_deleter_suppressed(self):
+        source = textwrap.dedent("""\
+            class Config:
+                @property
+                def path(self) -> Path:
+                    return self._path
+
+                @path.setter
+                def path(self, value: Path) -> None:
+                    self._path = value
+
+                @path.deleter
+                def path(self) -> None:
+                    del self._path
+        """)
+        module = extract_stub(source, "pkg/cfg.py")
+        cls = module.classes[0]
+        assert [a.name for a in cls.attributes] == ["path"]
+        assert cls.methods == []
+
 
 class TestRenderStub:
     def test_header_contains_path(self):
@@ -399,6 +448,22 @@ class TestRenderStub:
     def test_ends_with_newline(self):
         module = StubModule(rel_path="pkg/mod.py")
         assert render_stub(module).endswith("\n")
+
+    def test_property_rendered_as_class_attribute(self):
+        source = textwrap.dedent("""\
+            class Config:
+                @property
+                def path(self) -> Path:
+                    return self._path
+
+                @path.setter
+                def path(self, value: Path) -> None:
+                    self._path = value
+        """)
+        module = extract_stub(source, "pkg/cfg.py")
+        output = render_stub(module)
+        assert "    path: Path" in output
+        assert "def path" not in output
 
     def test_constant_with_value_rendered(self):
         module = StubModule(

@@ -202,6 +202,45 @@ class TestExtractModule:
         assert result.classes[0].attributes == []
         assert result.classes[0].methods == []
 
+    def test_property_classified_as_attribute(self):
+        source = textwrap.dedent("""\
+            class Config:
+                @property
+                def path(self):
+                    return self._path
+
+                def save(self):
+                    pass
+        """)
+
+        result = extract_module(source, "config.py")
+
+        cls = result.classes[0]
+        assert cls.attributes == ["path"]
+        assert cls.methods == ["save"]
+
+    def test_property_setter_and_deleter_suppressed(self):
+        source = textwrap.dedent("""\
+            class Config:
+                @property
+                def path(self):
+                    return self._path
+
+                @path.setter
+                def path(self, value):
+                    self._path = value
+
+                @path.deleter
+                def path(self):
+                    del self._path
+        """)
+
+        result = extract_module(source, "config.py")
+
+        cls = result.classes[0]
+        assert cls.attributes == ["path"]
+        assert cls.methods == []
+
     def test_preserves_source_order(self):
         source = textwrap.dedent("""\
             def zebra():
