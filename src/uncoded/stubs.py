@@ -7,6 +7,10 @@ from pathlib import Path
 
 from uncoded.extract import iter_source_files
 
+# Width cap for inlining the right-hand side of an assignment. If the unparsed
+# RHS exceeds this, it is elided to "..." and the reader follows the line range.
+VALUE_WIDTH_CAP = 80
+
 
 @dataclass
 class StubParam:
@@ -30,6 +34,23 @@ class StubFunction:
 
 
 @dataclass
+class StubAssignment:
+    """A module-level or class-level assignment.
+
+    ``value_source`` is the rendered RHS if it fits within ``VALUE_WIDTH_CAP``,
+    or the literal string ``"..."`` if the RHS was elided. ``None`` means there
+    is no RHS at all (e.g. a bare annotation ``X: int``).
+    """
+
+    name: str
+    annotation: str | None = None
+    value_source: str | None = None
+    start_line: int = 0
+    end_line: int = 0
+    is_type_alias: bool = False
+
+
+@dataclass
 class StubClass:
     """A class with its members and line range."""
 
@@ -38,7 +59,7 @@ class StubClass:
     docstring_excerpt: str | None = None
     start_line: int = 0
     end_line: int = 0
-    attributes: list[StubParam] = field(default_factory=list)
+    attributes: list[StubAssignment] = field(default_factory=list)
     methods: list[StubFunction] = field(default_factory=list)
 
 
@@ -48,6 +69,7 @@ class StubModule:
 
     rel_path: str
     imports: list[str] = field(default_factory=list)
+    constants: list[StubAssignment] = field(default_factory=list)
     classes: list[StubClass] = field(default_factory=list)
     functions: list[StubFunction] = field(default_factory=list)
 
@@ -101,6 +123,65 @@ def _extract_params(args: ast.arguments) -> list[StubParam]:
     return params
 
 
+def _line_range(start: int, end: int) -> str:
+    """Render a line range: 'L<start>' if single-line, else 'L<start>-<end>'."""
+    return f"L{start}" if start == end else f"L{start}-{end}"
+
+
+def _render_value(value: ast.expr) -> str:
+    """Render an expression as source, eliding to '...' if too long or multi-line."""
+    source = ast.unparse(value)
+    if len(source) > VALUE_WIDTH_CAP or "\n" in source:
+        return "..."
+    return source
+
+
+def _extract_assignment(
+    node: ast.Assign | ast.AnnAssign | ast.TypeAlias,
+) -> StubAssignment | None:
+    """Build a StubAssignment from an assignment-style AST node.
+
+    Returns None if the node's target is not a single simple name (e.g. tuple
+    unpacking or attribute assignment), which we can't represent cleanly.
+    """
+    start_line = node.lineno
+    end_line = node.end_lineno or node.lineno
+
+    if isinstance(node, ast.TypeAlias):
+        if not isinstance(node.name, ast.Name):
+            return None
+        return StubAssignment(
+            name=node.name.id,
+            value_source=_render_value(node.value),
+            start_line=start_line,
+            end_line=end_line,
+            is_type_alias=True,
+        )
+
+    if isinstance(node, ast.AnnAssign):
+        if not isinstance(node.target, ast.Name):
+            return None
+        annotation = ast.unparse(node.annotation)
+        value_source = _render_value(node.value) if node.value is not None else None
+        return StubAssignment(
+            name=node.target.id,
+            annotation=annotation,
+            value_source=value_source,
+            start_line=start_line,
+            end_line=end_line,
+        )
+
+    # ast.Assign
+    if len(node.targets) != 1 or not isinstance(node.targets[0], ast.Name):
+        return None
+    return StubAssignment(
+        name=node.targets[0].id,
+        value_source=_render_value(node.value),
+        start_line=start_line,
+        end_line=end_line,
+    )
+
+
 def _extract_function(
     node: ast.FunctionDef | ast.AsyncFunctionDef,
 ) -> StubFunction:
@@ -120,13 +201,14 @@ def _extract_class(node: ast.ClassDef) -> StubClass:
     """Build a StubClass from a class AST node."""
     bases = [ast.unparse(b) for b in node.bases]
 
-    attributes: list[StubParam] = []
+    attributes: list[StubAssignment] = []
     methods: list[StubFunction] = []
 
     for child in ast.iter_child_nodes(node):
-        if isinstance(child, ast.AnnAssign) and isinstance(child.target, ast.Name):
-            annotation = ast.unparse(child.annotation) if child.annotation else None
-            attributes.append(StubParam(name=child.target.id, annotation=annotation))
+        if isinstance(child, (ast.AnnAssign, ast.Assign)):
+            assignment = _extract_assignment(child)
+            if assignment is not None:
+                attributes.append(assignment)
         elif isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
             methods.append(_extract_function(child))
 
@@ -145,6 +227,7 @@ def extract_stub(source: str, rel_path: str) -> StubModule:
     """Parse Python source and extract all symbols with signatures and line ranges."""
     tree = ast.parse(source)
     imports: list[str] = []
+    constants: list[StubAssignment] = []
     classes: list[StubClass] = []
     functions: list[StubFunction] = []
 
@@ -155,9 +238,17 @@ def extract_stub(source: str, rel_path: str) -> StubModule:
             classes.append(_extract_class(node))
         elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             functions.append(_extract_function(node))
+        elif isinstance(node, (ast.Assign, ast.AnnAssign, ast.TypeAlias)):
+            assignment = _extract_assignment(node)
+            if assignment is not None:
+                constants.append(assignment)
 
     return StubModule(
-        rel_path=rel_path, imports=imports, classes=classes, functions=functions
+        rel_path=rel_path,
+        imports=imports,
+        constants=constants,
+        classes=classes,
+        functions=functions,
     )
 
 
@@ -176,12 +267,33 @@ def _render_function(func: StubFunction, indent: str = "") -> list[str]:
     ret = f" -> {func.return_annotation}" if func.return_annotation else ""
     prefix = "async def" if func.is_async else "def"
     lines = [
-        f"{indent}{prefix} {func.name}({params_str}){ret}:  # L{func.start_line}-{func.end_line}"  # noqa: E501
+        f"{indent}{prefix} {func.name}({params_str}){ret}:  # {_line_range(func.start_line, func.end_line)}"  # noqa: E501
     ]
     if func.docstring_excerpt:
         lines.append(f'{indent}    """{func.docstring_excerpt}"""')
     lines.append(f"{indent}    ...")
     return lines
+
+
+def _format_assignment_body(a: StubAssignment) -> str:
+    """Render the 'name [: type] [= value]' portion of an assignment."""
+    if a.is_type_alias:
+        return f"type {a.name} = {a.value_source}"
+    head = f"{a.name}: {a.annotation}" if a.annotation else a.name
+    if a.value_source is None:
+        return head
+    return f"{head} = {a.value_source}"
+
+
+def _render_assignment(a: StubAssignment, indent: str = "") -> str:
+    """Render a module-level assignment as a stub line, with line range."""
+    body = _format_assignment_body(a)
+    return f"{indent}{body}  # {_line_range(a.start_line, a.end_line)}"
+
+
+def _render_class_attribute(a: StubAssignment, indent: str = "    ") -> str:
+    """Render a class attribute as a stub line (no line range — class has one)."""
+    return f"{indent}{_format_assignment_body(a)}"
 
 
 def render_stub(module: StubModule) -> str:
@@ -192,24 +304,25 @@ def render_stub(module: StubModule) -> str:
         lines.extend(module.imports)
         lines.append("")
 
+    for const in module.constants:
+        lines.append(_render_assignment(const))
+    if module.constants:
+        lines.append("")
+
     for func in module.functions:
         lines.extend(_render_function(func))
         lines.append("")
 
     for cls in module.classes:
         bases_str = f"({', '.join(cls.bases)})" if cls.bases else ""
-        lines.append(
-            f"class {cls.name}{bases_str}:  # L{cls.start_line}-{cls.end_line}"
-        )
+        range_str = _line_range(cls.start_line, cls.end_line)
+        lines.append(f"class {cls.name}{bases_str}:  # {range_str}")
         if cls.docstring_excerpt:
             lines.append(f'    """{cls.docstring_excerpt}"""')
         lines.append("")
 
         for attr in cls.attributes:
-            if attr.annotation:
-                lines.append(f"    {attr.name}: {attr.annotation}")
-            else:
-                lines.append(f"    {attr.name}")
+            lines.append(_render_class_attribute(attr))
         if cls.attributes:
             lines.append("")
 
@@ -228,7 +341,7 @@ def _generate_stubs(source_root: Path) -> dict[Path, str]:
             module = extract_stub(source, rel_path)
         except SyntaxError:
             continue
-        if not module.classes and not module.functions:
+        if not module.classes and not module.functions and not module.constants:
             continue
         result[Path(rel_path).with_suffix(".pyi")] = render_stub(module)
     return result

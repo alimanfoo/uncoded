@@ -82,8 +82,8 @@ tests/test_foo.py   →  .uncoded/stubs/tests/test_foo.pyi
 ```
 
 The stub gives you imports, all signatures with types, first-sentence
-docstrings, and a `L<start>-<end>` line range on every definition —
-including private helpers.
+docstrings, and a `L<start>` or `L<start>-<end>` line range on every
+definition — including private helpers.
 
 **Step 3 — Read.** Use line ranges from the stub to read only what you need:
 

@@ -115,6 +115,36 @@ class TestBuildMap:
 
         assert keys == ["Alpha", "zebra", "apple"]
 
+    def test_module_level_constants(self):
+        modules = [
+            ModuleInfo(
+                rel_path="src/pkg/settings.py",
+                constants=["TIMEOUT", "MAX_RETRIES"],
+                classes=[],
+                functions=[],
+            ),
+        ]
+
+        result = build_map(modules)
+        file_entry = result["src/"]["pkg/"]["settings.py"]
+
+        assert file_entry == {"TIMEOUT": None, "MAX_RETRIES": None}
+
+    def test_constants_precede_classes_and_functions(self):
+        modules = [
+            ModuleInfo(
+                rel_path="src/pkg/mod.py",
+                constants=["VERSION"],
+                classes=[ClassInfo(name="Foo")],
+                functions=["run"],
+            ),
+        ]
+
+        result = build_map(modules)
+        keys = list(result["src/"]["pkg/"]["mod.py"].keys())
+
+        assert keys == ["VERSION", "Foo", "run"]
+
 
 class TestRenderMap:
     def test_roundtrips_through_yaml(self):

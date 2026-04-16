@@ -3,6 +3,7 @@ import textwrap
 import pytest
 
 from uncoded.stubs import (
+    StubAssignment,
     StubClass,
     StubFunction,
     StubModule,
@@ -79,10 +80,10 @@ class TestExtractStub:
         cls = module.classes[0]
         assert cls.name == "Record"
         assert cls.docstring_excerpt == "Stores a named value."
-        assert cls.attributes == [
-            StubParam("name", "str"),
-            StubParam("value", "int"),
-            StubParam("_internal", "float"),
+        assert [(a.name, a.annotation) for a in cls.attributes] == [
+            ("name", "str"),
+            ("value", "int"),
+            ("_internal", "float"),
         ]
         assert len(cls.methods) == 2
         assert cls.methods[0].name == "save"
@@ -180,6 +181,95 @@ class TestExtractStub:
         assert module.functions[1].name == "apple"
         assert module.classes[0].name == "Alpha"
 
+    def test_constant_annotated_with_value(self):
+        source = textwrap.dedent("""\
+            MAX_RETRIES: int = 3
+        """)
+        module = extract_stub(source, "pkg/mod.py")
+        c = module.constants[0]
+        assert c.name == "MAX_RETRIES"
+        assert c.annotation == "int"
+        assert c.value_source == "3"
+        assert c.is_type_alias is False
+        assert c.start_line == 1
+
+    def test_constant_unannotated_with_value(self):
+        source = textwrap.dedent("""\
+            TIMEOUT = 30
+        """)
+        module = extract_stub(source, "pkg/mod.py")
+        c = module.constants[0]
+        assert c.name == "TIMEOUT"
+        assert c.annotation is None
+        assert c.value_source == "30"
+
+    def test_constant_bare_annotation(self):
+        source = textwrap.dedent("""\
+            FOO: int
+        """)
+        module = extract_stub(source, "pkg/mod.py")
+        c = module.constants[0]
+        assert c.annotation == "int"
+        assert c.value_source is None
+
+    def test_constant_value_too_long_elided(self):
+        long_list = "[" + ", ".join(f'"item{i}"' for i in range(50)) + "]"
+        source = f"BIG = {long_list}\n"
+        module = extract_stub(source, "pkg/mod.py")
+        c = module.constants[0]
+        assert c.name == "BIG"
+        assert c.value_source == "..."
+
+    def test_constant_private_included(self):
+        source = textwrap.dedent("""\
+            _INTERNAL = 42
+        """)
+        module = extract_stub(source, "pkg/mod.py")
+        assert module.constants[0].name == "_INTERNAL"
+
+    def test_type_alias_classic(self):
+        source = textwrap.dedent("""\
+            from typing import TypeAlias
+            UserId: TypeAlias = int
+        """)
+        module = extract_stub(source, "pkg/mod.py")
+        c = module.constants[0]
+        assert c.name == "UserId"
+        assert c.annotation == "TypeAlias"
+        assert c.value_source == "int"
+        assert c.is_type_alias is False
+
+    def test_type_alias_pep695(self):
+        source = textwrap.dedent("""\
+            type UserId = int
+        """)
+        module = extract_stub(source, "pkg/mod.py")
+        c = module.constants[0]
+        assert c.name == "UserId"
+        assert c.is_type_alias is True
+        assert c.value_source == "int"
+
+    def test_tuple_unpacking_skipped(self):
+        source = textwrap.dedent("""\
+            X, Y = 1, 2
+        """)
+        module = extract_stub(source, "pkg/mod.py")
+        assert module.constants == []
+
+    def test_class_with_unannotated_attribute(self):
+        source = textwrap.dedent("""\
+            class Registry:
+                items = []
+                count: int = 0
+        """)
+        module = extract_stub(source, "pkg/mod.py")
+        cls = module.classes[0]
+        names = [(a.name, a.annotation, a.value_source) for a in cls.attributes]
+        assert names == [
+            ("items", None, "[]"),
+            ("count", "int", "0"),
+        ]
+
 
 class TestRenderStub:
     def test_header_contains_path(self):
@@ -249,6 +339,20 @@ class TestRenderStub:
         )
         assert "class Dog(Animal):  # L1-5" in render_stub(module)
 
+    def test_class_single_line_range(self):
+        module = StubModule(
+            rel_path="pkg/mod.py",
+            classes=[StubClass(name="Marker", start_line=7, end_line=7)],
+        )
+        assert "class Marker:  # L7\n" in render_stub(module)
+
+    def test_function_single_line_range(self):
+        module = StubModule(
+            rel_path="pkg/mod.py",
+            functions=[StubFunction(name="noop", start_line=3, end_line=3)],
+        )
+        assert "def noop():  # L3\n" in render_stub(module)
+
     def test_class_no_bases(self):
         module = StubModule(
             rel_path="pkg/mod.py",
@@ -264,7 +368,7 @@ class TestRenderStub:
                     name="Record",
                     start_line=1,
                     end_line=3,
-                    attributes=[StubParam("name", "str")],
+                    attributes=[StubAssignment("name", annotation="str")],
                 )
             ],
         )
@@ -295,3 +399,83 @@ class TestRenderStub:
     def test_ends_with_newline(self):
         module = StubModule(rel_path="pkg/mod.py")
         assert render_stub(module).endswith("\n")
+
+    def test_constant_with_value_rendered(self):
+        module = StubModule(
+            rel_path="pkg/mod.py",
+            constants=[
+                StubAssignment(
+                    name="TIMEOUT", value_source="30", start_line=3, end_line=3
+                )
+            ],
+        )
+        assert "TIMEOUT = 30  # L3" in render_stub(module)
+
+    def test_constant_annotated_with_value_rendered(self):
+        module = StubModule(
+            rel_path="pkg/mod.py",
+            constants=[
+                StubAssignment(
+                    name="MAX",
+                    annotation="int",
+                    value_source="3",
+                    start_line=4,
+                    end_line=4,
+                )
+            ],
+        )
+        assert "MAX: int = 3  # L4" in render_stub(module)
+
+    def test_constant_elided_rendered(self):
+        module = StubModule(
+            rel_path="pkg/mod.py",
+            constants=[
+                StubAssignment(
+                    name="BIG", value_source="...", start_line=5, end_line=10
+                )
+            ],
+        )
+        assert "BIG = ...  # L5-10" in render_stub(module)
+
+    def test_constant_bare_annotation_rendered(self):
+        module = StubModule(
+            rel_path="pkg/mod.py",
+            constants=[
+                StubAssignment(name="FOO", annotation="int", start_line=2, end_line=2)
+            ],
+        )
+        output = render_stub(module)
+        assert "FOO: int  # L2" in output
+        assert "FOO: int = " not in output
+
+    def test_type_alias_pep695_rendered(self):
+        module = StubModule(
+            rel_path="pkg/mod.py",
+            constants=[
+                StubAssignment(
+                    name="UserId",
+                    value_source="int",
+                    is_type_alias=True,
+                    start_line=1,
+                    end_line=1,
+                )
+            ],
+        )
+        assert "type UserId = int  # L1" in render_stub(module)
+
+    def test_unannotated_class_attribute_rendered(self):
+        module = StubModule(
+            rel_path="pkg/mod.py",
+            classes=[
+                StubClass(
+                    name="Registry",
+                    start_line=1,
+                    end_line=3,
+                    attributes=[StubAssignment("items", value_source="[]")],
+                )
+            ],
+        )
+        output = render_stub(module)
+        assert "    items = []" in output
+        # No line range comment on class attributes.
+        assert "items = []  # L" not in output

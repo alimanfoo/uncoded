@@ -4,7 +4,7 @@ import yaml
 from uncoded.extract import ClassInfo, ModuleInfo
 from uncoded.namespace_map import build_map, render_map
 
-class TestBuildMap:  # L7-116
+class TestBuildMap:  # L7-146
 
     def test_single_file(self):  # L8-23
         ...
@@ -27,13 +27,19 @@ class TestBuildMap:  # L7-116
     def test_source_order_preserved(self):  # L104-116
         ...
 
-class TestRenderMap:  # L119-155
-
-    def test_roundtrips_through_yaml(self):  # L120-133
+    def test_module_level_constants(self):  # L118-131
         ...
 
-    def test_preserves_insertion_order(self):  # L135-144
+    def test_constants_precede_classes_and_functions(self):  # L133-146
         ...
 
-    def test_null_renders_clean(self):  # L146-155
+class TestRenderMap:  # L149-185
+
+    def test_roundtrips_through_yaml(self):  # L150-163
+        ...
+
+    def test_preserves_insertion_order(self):  # L165-174
+        ...
+
+    def test_null_renders_clean(self):  # L176-185
         ...

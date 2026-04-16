@@ -8,6 +8,8 @@ from uncoded.extract import walk_source
 from uncoded.namespace_map import build_map, render_map
 from uncoded.stubs import build_stubs
 
+DEFAULT_MAP_OUTPUT = Path('.uncoded/namespace.yaml')  # L12
+
 def main() -> int:  # L15-38
     """Build the namespace map, stub files, and CLAUDE.md navigation section."""
     ...

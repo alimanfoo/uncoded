@@ -1,9 +1,14 @@
 src/:
   uncoded/:
     claude_md.py:
+      MARKER_START:
+      MARKER_END:
+      DEFAULT_CLAUDE_MD:
+      SECTION:
       generate_section:
       sync_claude_md:
     cli.py:
+      DEFAULT_MAP_OUTPUT:
       main:
     config.py:
       find_pyproject_toml:
@@ -15,6 +20,7 @@ src/:
         methods:
       ModuleInfo:
         rel_path:
+        constants:
         classes:
         functions:
       is_public:
@@ -25,6 +31,8 @@ src/:
       build_map:
       render_map:
     stubs.py:
+      VALUE_WIDTH_CAP:
+      DEFAULT_STUBS_OUTPUT:
       StubParam:
         name:
         annotation:
@@ -36,6 +44,13 @@ src/:
         start_line:
         end_line:
         is_async:
+      StubAssignment:
+        name:
+        annotation:
+        value_source:
+        start_line:
+        end_line:
+        is_type_alias:
       StubClass:
         name:
         bases:
@@ -47,6 +62,7 @@ src/:
       StubModule:
         rel_path:
         imports:
+        constants:
         classes:
         functions:
       extract_stub:
@@ -80,11 +96,19 @@ tests/:
       test_private_name:
       test_dunder_name:
       test_name_mangled:
+      test_dunder_all_is_public:
+      test_dunder_version_is_public:
     TestExtractModule:
       test_classes_and_functions:
       test_async_functions_and_methods:
       test_empty_module:
       test_only_private_symbols:
+      test_module_level_constants:
+      test_type_alias_classic:
+      test_type_alias_pep695:
+      test_tuple_unpacking_skipped:
+      test_unannotated_class_variable:
+      test_module_with_only_constants_is_kept:
       test_annotated_attributes:
       test_class_with_no_public_members:
       test_preserves_source_order:
@@ -104,6 +128,8 @@ tests/:
       test_function_is_none:
       test_class_with_no_members:
       test_source_order_preserved:
+      test_module_level_constants:
+      test_constants_precede_classes_and_functions:
     TestRenderMap:
       test_roundtrips_through_yaml:
       test_preserves_insertion_order:
@@ -124,6 +150,15 @@ tests/:
       test_imports_collected:
       test_syntax_error_raises:
       test_source_order_preserved:
+      test_constant_annotated_with_value:
+      test_constant_unannotated_with_value:
+      test_constant_bare_annotation:
+      test_constant_value_too_long_elided:
+      test_constant_private_included:
+      test_type_alias_classic:
+      test_type_alias_pep695:
+      test_tuple_unpacking_skipped:
+      test_class_with_unannotated_attribute:
     TestRenderStub:
       test_header_contains_path:
       test_imports_rendered:
@@ -132,9 +167,17 @@ tests/:
       test_function_with_annotations:
       test_docstring_excerpt_rendered:
       test_class_with_bases:
+      test_class_single_line_range:
+      test_function_single_line_range:
       test_class_no_bases:
       test_attribute_with_annotation:
       test_method_indented:
       test_ends_with_newline:
+      test_constant_with_value_rendered:
+      test_constant_annotated_with_value_rendered:
+      test_constant_elided_rendered:
+      test_constant_bare_annotation_rendered:
+      test_type_alias_pep695_rendered:
+      test_unannotated_class_attribute_rendered:
   test_uncoded.py:
     test_import:

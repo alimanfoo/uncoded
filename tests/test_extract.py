@@ -19,6 +19,12 @@ class TestIsPublic:
     def test_name_mangled(self):
         assert is_public("__foo") is False
 
+    def test_dunder_all_is_public(self):
+        assert is_public("__all__") is True
+
+    def test_dunder_version_is_public(self):
+        assert is_public("__version__") is True
+
 
 class TestExtractModule:
     def test_classes_and_functions(self):
@@ -89,6 +95,72 @@ class TestExtractModule:
 
         assert result.classes == []
         assert result.functions == []
+        assert result.constants == []
+
+    def test_module_level_constants(self):
+        source = textwrap.dedent("""\
+            TIMEOUT = 30
+            MAX_RETRIES: int = 3
+            _PRIVATE = 1
+            __version__ = "1.0.0"
+        """)
+
+        result = extract_module(source, "const.py")
+
+        assert result.constants == ["TIMEOUT", "MAX_RETRIES", "__version__"]
+
+    def test_type_alias_classic(self):
+        source = textwrap.dedent("""\
+            from typing import TypeAlias
+            UserId: TypeAlias = int
+        """)
+
+        result = extract_module(source, "aliases.py")
+
+        assert result.constants == ["UserId"]
+
+    def test_type_alias_pep695(self):
+        source = textwrap.dedent("""\
+            type UserId = int
+            type _PrivateId = int
+        """)
+
+        result = extract_module(source, "aliases.py")
+
+        assert result.constants == ["UserId"]
+
+    def test_tuple_unpacking_skipped(self):
+        source = textwrap.dedent("""\
+            X, Y = 1, 2
+        """)
+
+        result = extract_module(source, "tuple.py")
+
+        assert result.constants == []
+
+    def test_unannotated_class_variable(self):
+        source = textwrap.dedent("""\
+            class Registry:
+                items = []
+                _cache = {}
+                count: int = 0
+        """)
+
+        result = extract_module(source, "reg.py")
+
+        cls = result.classes[0]
+        assert cls.attributes == ["items", "count"]
+
+    def test_module_with_only_constants_is_kept(self, tmp_path):
+        src = tmp_path / "src"
+        pkg = src / "mypackage"
+        pkg.mkdir(parents=True)
+        (pkg / "__init__.py").write_text('__version__ = "1.0"\n')
+
+        modules = walk_source(src, base=tmp_path)
+
+        rel_paths = [m.rel_path for m in modules]
+        assert "src/mypackage/__init__.py" in rel_paths
 
     def test_annotated_attributes(self):
         source = textwrap.dedent("""\
