@@ -79,6 +79,29 @@ Like `ruff format`: if `uncoded` modifies any files, the commit fails and you
 stage the updated index before committing again. CI runs `pre-commit run
 --all-files` to verify the index is up to date.
 
+## Dev setup
+
+Clone, install dependencies, and wire up the pre-commit hooks:
+
+```
+git clone https://github.com/alimanfoo/uncoded
+cd uncoded
+uv sync --extra dev
+uv run pre-commit install
+```
+
+Run the tests:
+
+```
+uv run pytest
+```
+
+Run all checks (the same suite CI runs):
+
+```
+uv run pre-commit run --all-files
+```
+
 ## How agents use it
 
 When `uncoded` is set up, a navigation section is automatically maintained in
