@@ -78,21 +78,33 @@ answers will come from pretrained guesses rather than the code actually
 here. The map lists every public symbol in the codebase — directories,
 files, classes, methods, functions — in source order.
 
-**Step 2 — Understand.** For each relevant file, read its stub. The stub path
-mirrors the source path under `.uncoded/stubs/` with a `.pyi` extension:
+**Step 2 — Understand.** Before reading any `.py` source file in this repo,
+read its `.pyi` stub first. Stub paths mirror source paths under
+`.uncoded/stubs/`:
 
 ```
 src/foo/bar.py      →  .uncoded/stubs/src/foo/bar.pyi
 tests/test_foo.py   →  .uncoded/stubs/tests/test_foo.pyi
 ```
 
-The stub gives you imports, all signatures with types, first-sentence
-docstrings, and a `L<start>` or `L<start>-<end>` line range on every
-definition — including private helpers.
+This applies to every file you intend to touch or reference — including
+tests. The stub is sufficient for most navigation: it contains imports,
+every signature with types, first-sentence docstrings, and a `L<start>`
+or `L<start>-<end>` line range on every definition — public and private.
+Skipping to source means reading many lines to learn what the stub would
+have told you in one. If no stub exists at the expected path, the file
+has no public symbols indexed — in that narrow case, read source directly.
 
-**Step 3 — Read.** Use line ranges from the stub to read only what you need:
+**Step 3 — Read source, never without offset and limit.** When you need
+source beyond what the stub shows, use the stub's line range:
 
 ```
 Read src/foo/bar.py  offset=<start>  limit=<end - start + 1>
 ```
+
+Calling Read on a `.py` file without `offset` and `limit` is a protocol
+violation — it means either Step 2 was skipped, or you are reading more
+of the file than the stub said you needed. The one exception is the
+first Read of a stub-less file (see Step 2), which is genuinely
+exploratory.
 <!-- uncoded:end -->
