@@ -13,6 +13,7 @@ DEFAULT_MAP_OUTPUT = Path(".uncoded/namespace.yaml")
 
 
 def main() -> int:
+    """Build the namespace map, stub files, and CLAUDE.md navigation section."""
     try:
         source_roots = [r.resolve() for r in read_source_roots()]
     except (FileNotFoundError, KeyError) as e:

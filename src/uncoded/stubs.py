@@ -18,7 +18,7 @@ class StubParam:
 
 @dataclass
 class StubFunction:
-    """A public function or method with signature and line range."""
+    """A function or method with its signature and line range."""
 
     name: str
     params: list[StubParam] = field(default_factory=list)
@@ -31,7 +31,7 @@ class StubFunction:
 
 @dataclass
 class StubClass:
-    """A public class with its members and line range."""
+    """A class with its members and line range."""
 
     name: str
     bases: list[str] = field(default_factory=list)
@@ -44,7 +44,7 @@ class StubClass:
 
 @dataclass
 class StubModule:
-    """Public API surface of a single Python module."""
+    """All symbols extracted from a single Python module."""
 
     rel_path: str
     imports: list[str] = field(default_factory=list)
@@ -159,6 +159,7 @@ def extract_stub(source: str, rel_path: str) -> StubModule:
 
 
 def _render_param(p: StubParam) -> str:
+    """Render a single parameter as a string for a function signature."""
     if p.name in ("/", "*"):
         return p.name
     if p.annotation:
@@ -167,6 +168,7 @@ def _render_param(p: StubParam) -> str:
 
 
 def _render_function(func: StubFunction, indent: str = "") -> list[str]:
+    """Render a function or method as stub lines, with an optional indent for methods."""
     params_str = ", ".join(_render_param(p) for p in func.params)
     ret = f" -> {func.return_annotation}" if func.return_annotation else ""
     prefix = "async def" if func.is_async else "def"
@@ -216,6 +218,7 @@ def render_stub(module: StubModule) -> str:
 
 
 def _generate_stubs(source_root: Path) -> dict[Path, str]:
+    """Return a mapping from stub relative paths to rendered stub content."""
     result: dict[Path, str] = {}
     for source, rel_path in iter_source_files(source_root):
         try:

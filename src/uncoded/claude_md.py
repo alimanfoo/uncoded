@@ -49,6 +49,7 @@ def generate_section() -> str:
 
 
 def _replace_or_append(existing: str, section: str) -> str:
+    """Replace the delimited section in existing text, or append it if absent."""
     start = existing.find(MARKER_START)
     end = existing.find(MARKER_END)
     if start != -1 and end != -1 and start < end:

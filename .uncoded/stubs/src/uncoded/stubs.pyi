@@ -26,20 +26,23 @@ def extract_stub(source: str, rel_path: str) -> StubModule:  # L143-158
     """Parse Python source and extract all symbols with their signatures and line ranges."""
     ...
 
-def _render_param(p: StubParam) -> str:  # L161-166
+def _render_param(p: StubParam) -> str:  # L161-167
+    """Render a single parameter as a string for a function signature."""
     ...
 
-def _render_function(func: StubFunction, indent: str) -> list[str]:  # L169-179
+def _render_function(func: StubFunction, indent: str) -> list[str]:  # L170-181
+    """Render a function or method as stub lines, with an optional indent for methods."""
     ...
 
-def render_stub(module: StubModule) -> str:  # L182-215
+def render_stub(module: StubModule) -> str:  # L184-217
     """Render a StubModule as a .pyi file string."""
     ...
 
-def _generate_stubs(source_root: Path) -> dict[Path, str]:  # L218-228
+def _generate_stubs(source_root: Path) -> dict[Path, str]:  # L220-231
+    """Return a mapping from stub relative paths to rendered stub content."""
     ...
 
-def build_stubs(source_root: Path, output_dir: Path) -> None:  # L234-240
+def build_stubs(source_root: Path, output_dir: Path) -> None:  # L237-243
     """Write stub files for all symbols under source_root."""
     ...
 
@@ -50,7 +53,7 @@ class StubParam:  # L12-16
     annotation: str | None
 
 class StubFunction:  # L20-29
-    """A public function or method with signature and line range."""
+    """A function or method with its signature and line range."""
 
     name: str
     params: list[StubParam]
@@ -61,7 +64,7 @@ class StubFunction:  # L20-29
     is_async: bool
 
 class StubClass:  # L33-42
-    """A public class with its members and line range."""
+    """A class with its members and line range."""
 
     name: str
     bases: list[str]
@@ -72,7 +75,7 @@ class StubClass:  # L33-42
     methods: list[StubFunction]
 
 class StubModule:  # L46-52
-    """Public API surface of a single Python module."""
+    """All symbols extracted from a single Python module."""
 
     rel_path: str
     imports: list[str]
