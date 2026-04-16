@@ -73,8 +73,8 @@ def _generate_stubs(source_root: Path) -> dict[Path, str]:  # L356-367
     """Return a mapping from stub relative paths to rendered stub content."""
     ...
 
-def build_stubs(source_root: Path, output_dir: Path) -> None:  # L373-379
-    """Write stub files for all symbols under source_root."""
+def build_stubs(source_root: Path, output_dir: Path) -> None:  # L373-408
+    """Write stub files for all symbols under source_root, removing any orphans."""
     ...
 
 class StubParam:  # L16-20

@@ -191,5 +191,12 @@ tests/:
       test_constant_bare_annotation_rendered:
       test_type_alias_pep695_rendered:
       test_unannotated_class_attribute_rendered:
+    TestBuildStubs:
+      test_writes_expected_stubs:
+      test_removes_orphan_stub_when_source_deleted:
+      test_removes_orphan_stub_when_source_renamed:
+      test_prunes_empty_directories:
+      test_does_not_touch_other_source_root:
+      test_no_op_when_clean:
   test_uncoded.py:
     test_import:

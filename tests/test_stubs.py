@@ -1,3 +1,4 @@
+import os
 import textwrap
 
 import pytest
@@ -8,6 +9,7 @@ from uncoded.stubs import (
     StubFunction,
     StubModule,
     StubParam,
+    build_stubs,
     extract_stub,
     render_stub,
 )
@@ -544,3 +546,82 @@ class TestRenderStub:
         assert "    items = []" in output
         # No line range comment on class attributes.
         assert "items = []  # L" not in output
+
+
+class TestBuildStubs:
+    """build_stubs writes expected stubs and removes orphans for its source root."""
+
+    def _setup(self, tmp_path):
+        os.chdir(tmp_path)
+        src = tmp_path / "src"
+        src.mkdir()
+        out = tmp_path / "stubs"
+        return src, out
+
+    def test_writes_expected_stubs(self, tmp_path):
+        src, out = self._setup(tmp_path)
+        (src / "foo.py").write_text("def hello(): pass\n")
+        build_stubs(src, out)
+        assert (out / "src" / "foo.pyi").exists()
+
+    def test_removes_orphan_stub_when_source_deleted(self, tmp_path):
+        src, out = self._setup(tmp_path)
+        (src / "foo.py").write_text("def hello(): pass\n")
+        (src / "bar.py").write_text("def goodbye(): pass\n")
+        build_stubs(src, out)
+        assert (out / "src" / "bar.pyi").exists()
+
+        (src / "bar.py").unlink()
+        build_stubs(src, out)
+        assert (out / "src" / "foo.pyi").exists()
+        assert not (out / "src" / "bar.pyi").exists()
+
+    def test_removes_orphan_stub_when_source_renamed(self, tmp_path):
+        src, out = self._setup(tmp_path)
+        (src / "old_name.py").write_text("def hello(): pass\n")
+        build_stubs(src, out)
+        assert (out / "src" / "old_name.pyi").exists()
+
+        (src / "old_name.py").rename(src / "new_name.py")
+        build_stubs(src, out)
+        assert (out / "src" / "new_name.pyi").exists()
+        assert not (out / "src" / "old_name.pyi").exists()
+
+    def test_prunes_empty_directories(self, tmp_path):
+        src, out = self._setup(tmp_path)
+        pkg = src / "pkg"
+        pkg.mkdir()
+        (pkg / "mod.py").write_text("def hello(): pass\n")
+        build_stubs(src, out)
+        assert (out / "src" / "pkg" / "mod.pyi").exists()
+
+        # Remove the whole subpackage; the stub directory should be pruned.
+        (pkg / "mod.py").unlink()
+        pkg.rmdir()
+        build_stubs(src, out)
+        assert not (out / "src" / "pkg").exists()
+
+    def test_does_not_touch_other_source_root(self, tmp_path):
+        src, out = self._setup(tmp_path)
+        tests = tmp_path / "tests"
+        tests.mkdir()
+        (src / "foo.py").write_text("def hello(): pass\n")
+        (tests / "test_foo.py").write_text("def test_hello(): pass\n")
+
+        build_stubs(src, out)
+        build_stubs(tests, out)
+        assert (out / "src" / "foo.pyi").exists()
+        assert (out / "tests" / "test_foo.pyi").exists()
+
+        # Rebuilding only `src` must leave the `tests` stub alone.
+        build_stubs(src, out)
+        assert (out / "tests" / "test_foo.pyi").exists()
+
+    def test_no_op_when_clean(self, tmp_path):
+        src, out = self._setup(tmp_path)
+        (src / "foo.py").write_text("def hello(): pass\n")
+        build_stubs(src, out)
+        # Second build with no source changes should not error and should
+        # leave the stub in place.
+        build_stubs(src, out)
+        assert (out / "src" / "foo.pyi").exists()
