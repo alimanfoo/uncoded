@@ -25,7 +25,7 @@ and immediately know the full vocabulary of the codebase.
 `L<start>-<end>` line range on every definition. Includes private symbols too,
 so an agent can follow a call into implementation detail without grepping.
 
-`uncoded` also injects a navigation protocol into `CLAUDE.md`, so agents
+`uncoded` also injects a navigation protocol into `CLAUDE.md`/`AGENTS.md`, so agents
 working in the repo pick up the instructions automatically.
 
 ## Install
