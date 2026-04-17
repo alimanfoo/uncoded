@@ -58,7 +58,7 @@ uncoded
 That's it. Run it from the repo root. It reads `pyproject.toml` to find your
 source roots, builds the index, and updates `CLAUDE.md`/`AGENTS.md`.
 
-Commit the generated `.uncoded/` directory and `CLAUDE.md` so agents working
+Commit the generated `.uncoded/` directory so agents working
 in the repo always have a current index.
 
 ## Keep it current with pre-commit
