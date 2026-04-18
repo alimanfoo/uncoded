@@ -18,15 +18,13 @@ no grep.
 Two-level index:
 
 1. **Namespace map** (`.uncoded/namespace.yaml`) — a hierarchical YAML file
-   listing all public symbols: directories, files, classes (with attributes
+   listing all symbols: directories, files, classes (with attributes
    and methods), and functions. Covers both source and tests. Loaded into
    context before any task begins. Gives the agent a world view.
 
 2. **Stub files** (`.uncoded/stubs/`) — one `.pyi` per source file, with
    imports, full signatures (parameter names, types, return types),
    first-sentence docstrings, and `L<start>-<end>` line range comments.
-   Includes all symbols — public and private — so agents can follow calls
-   into implementation detail without grepping.
 
 ## Commands
 
