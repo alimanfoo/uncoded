@@ -90,6 +90,39 @@ When `uncoded` is set up, a navigation section is automatically maintained in
 
 Three reads to navigate to any symbol in the codebase. No grep.
 
+## Using uncoded with a language server
+
+Cross-file operations — find references, rename, check whether a symbol is
+still used — are better served by a language server than by grep. Uncoded's
+map supplies the dotted symbol names these tools take as input, and the
+stubs supply the line numbers.
+
+To try it, install [isaacphi/mcp-language-server][lsp-mcp] and pyright:
+
+```
+go install github.com/isaacphi/mcp-language-server@latest
+npm install -g pyright
+```
+
+Then register it with your MCP client. For Claude Code, add a `.mcp.json`
+at the repo root:
+
+```json
+{
+  "mcpServers": {
+    "language-server": {
+      "command": "mcp-language-server",
+      "args": ["--workspace", ".", "--lsp", "pyright-langserver", "--", "--stdio"]
+    }
+  }
+}
+```
+
+An absolute path may be required for `--workspace` depending on how your
+MCP client launches the server.
+
+[lsp-mcp]: https://github.com/isaacphi/mcp-language-server
+
 ## Dev setup
 
 Clone, install dependencies, and wire up the pre-commit hooks:

@@ -91,4 +91,15 @@ violation — it means either Step 2 was skipped, or you are reading more
 of the file than the stub said you needed. The one exception is the
 first Read of a stub-less file (see Step 2), which is genuinely
 exploratory.
+
+**For cross-file operations** — find references, rename, check whether a
+symbol is still used — prefer language-server MCP tools (`references`,
+`rename_symbol`, `definition`) over grep, if they are available. The
+namespace map supplies the dotted symbol names lookup tools expect; the
+stubs supply line numbers for positional tools.
 <!-- uncoded:end -->
+## Maintainer Contract
+
+You are a maintainer of this codebase. You are responsible for its ongoing coherence, not just for the task in front of you.
+
+If, during a task, or at any other time, you notice something wrong, inconsistent, dead, or misleading in the code, and you don't fix it: write a line about it in noticed.md before finishing.
