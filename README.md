@@ -142,7 +142,7 @@ Serena's `execute_shell_command`, which duplicates the shell access your
 MCP client already exposes.
 
 For Claude Code, commit `.claude/settings.json` to auto-enable the Serena
-server and allowlist its read-only navigation tools:
+server and allowlist the tools you want:
 
 ```json
 {
@@ -151,11 +151,33 @@ server and allowlist its read-only navigation tools:
     "allow": [
       "mcp__serena__find_symbol",
       "mcp__serena__find_referencing_symbols",
-      "mcp__serena__get_symbols_overview"
+      "mcp__serena__get_symbols_overview",
+      "mcp__serena__check_onboarding_performed",
+      "mcp__serena__initial_instructions",
+      "mcp__serena__list_memories",
+      "mcp__serena__read_memory",
+      "mcp__serena__rename_symbol",
+      "mcp__serena__insert_after_symbol",
+      "mcp__serena__insert_before_symbol",
+      "mcp__serena__replace_symbol_body",
+      "mcp__serena__safe_delete_symbol",
+      "mcp__serena__write_memory",
+      "mcp__serena__edit_memory",
+      "mcp__serena__delete_memory",
+      "mcp__serena__rename_memory",
+      "mcp__serena__onboarding"
     ]
   }
 }
 ```
+
+This covers navigation (`find_*`, `get_symbols_overview`), rename and
+structural symbol edits (`rename_symbol`, `insert_*`, `replace_symbol_body`,
+`safe_delete_symbol`), and Serena's memory tools — which read and write
+`.serena/memories/`, not your code. `open_dashboard` is intentionally
+omitted; it opens a browser window and is interactive noise. If you'd
+rather keep a human approval moment before code-mutating calls, drop the
+symbol-edit entries — `git diff` is the real safety net either way.
 
 [serena]: https://github.com/oraios/serena
 [ty]: https://github.com/astral-sh/ty
