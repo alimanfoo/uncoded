@@ -37,16 +37,6 @@ Repository = "https://github.com/alimanfoo/uncoded"
 [tool.uncoded]
 source-roots = ["src", "tests"]
 
-[tool.pyright]
-# Point pyright at the same virtual environment used for testing, so it
-# sees the same resolved dependencies. Also declare src/ so pyright treats
-# the package as first-party — without this, cross-file references into
-# an editable-install package are not linked, because pyright by default
-# treats site-packages code as third-party.
-venvPath = "."
-venv = ".venv"
-extraPaths = ["src"]
-
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 

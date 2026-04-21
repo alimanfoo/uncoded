@@ -94,52 +94,71 @@ Three reads to navigate to any symbol in the codebase. No grep.
 
 Cross-file operations — find references, rename, check whether a symbol is
 still used — are better served by a language server than by grep. Uncoded's
-map supplies the symbol names these tools take as input, and the stubs
-supply the line numbers.
+map supplies the `name_path` and `relative_path` these tools take as input.
 
-To try it, install [isaacphi/mcp-language-server][lsp-mcp] and pyright:
+The recommended setup is [oraios/serena][serena] as the MCP bridge with
+[astral-sh/ty][ty] as the Python language-server backend. Serena launches
+via `uvx`, so there's nothing to install globally; ty is downloaded by
+Serena on first use.
 
-```
-go install github.com/isaacphi/mcp-language-server@latest
-npm install -g pyright
-```
-
-Then register it with your MCP client. For Claude Code, add a `.mcp.json`
-at the repo root:
+For Claude Code, add `.mcp.json` at the repo root:
 
 ```json
 {
   "mcpServers": {
-    "language-server": {
-      "command": "mcp-language-server",
-      "args": ["--workspace", ".", "--lsp", "pyright-langserver", "--", "--stdio"]
+    "serena": {
+      "command": "uvx",
+      "args": [
+        "--from", "serena-agent==1.1.2",
+        "serena", "start-mcp-server",
+        "--context", "claude-code",
+        "--transport", "stdio",
+        "--project-from-cwd",
+        "--open-web-dashboard", "false"
+      ]
     }
   }
 }
 ```
 
-An absolute path may be required for `--workspace` depending on how your
-MCP client launches the server.
+(Replace `claude-code` with your client's context name if different.)
 
-The MCP-launched pyright-langserver has no venv hint and — for src-layout
-repos (importable packages under `src/`) — doesn't treat your package as
-first-party, so cross-file references from `tests/` return empty. Add to
-your `pyproject.toml`:
+And `.serena/project.yml` to pick ty as the backend:
 
-```toml
-[tool.pyright]
-venvPath = "."
-venv = ".venv"
-extraPaths = ["src"]
+```yaml
+project_name: "<your-project>"
+languages: ["python_ty"]
+ignored_paths:
+  - ".uncoded"
+excluded_tools:
+  - execute_shell_command
 ```
 
-`venvPath` + `venv` point pyright at the same environment pytest uses, so
-it sees the same resolved dependencies. `extraPaths` makes pyright treat
-`src/` as first-party — without it, the package arrives via the editable
-install in site-packages and pyright doesn't link cross-file references
-into it. This assumes contributors have run `uv sync` (see dev setup below).
+`languages: ["python_ty"]` selects ty over Serena's default (pyright); ty
+handles src-layout repos natively, so no `venvPath` / `extraPaths` config
+is needed. `ignored_paths` keeps Serena out of uncoded's generated stubs —
+otherwise a rename would silently rewrite them. `excluded_tools` drops
+Serena's `execute_shell_command`, which duplicates the shell access your
+MCP client already exposes.
 
-[lsp-mcp]: https://github.com/isaacphi/mcp-language-server
+For Claude Code, commit `.claude/settings.json` to auto-enable the Serena
+server and allowlist its read-only navigation tools:
+
+```json
+{
+  "enabledMcpjsonServers": ["serena"],
+  "permissions": {
+    "allow": [
+      "mcp__serena__find_symbol",
+      "mcp__serena__find_referencing_symbols",
+      "mcp__serena__get_symbols_overview"
+    ]
+  }
+}
+```
+
+[serena]: https://github.com/oraios/serena
+[ty]: https://github.com/astral-sh/ty
 
 ## Dev setup
 

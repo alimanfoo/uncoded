@@ -1,8 +1,15 @@
 {
   "mcpServers": {
-    "language-server": {
-      "command": "mcp-language-server",
-      "args": ["--workspace", ".", "--lsp", "pyright-langserver", "--", "--stdio"]
+    "serena": {
+      "command": "uvx",
+      "args": [
+        "--from", "serena-agent==1.1.2",
+        "serena", "start-mcp-server",
+        "--context", "claude-code",
+        "--transport", "stdio",
+        "--project-from-cwd",
+        "--open-web-dashboard", "false"
+      ]
     }
   }
 }

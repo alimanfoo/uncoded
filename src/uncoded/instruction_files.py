@@ -65,11 +65,11 @@ first Read of a stub-less file (see Step 2), which is genuinely
 exploratory.
 
 **For cross-file operations** — find references, rename, check whether a
-symbol is still used — prefer language-server MCP tools (`references`,
-`rename_symbol`, `definition`) over grep, if they are available. The
-namespace map and stubs give you the symbol names and line numbers these
-tools need. Use bare names (e.g. `extract_module`, `ClassInfo`). If a
-lookup returns empty, fall back to grep."""
+symbol is still used — prefer a language-server MCP bridge like Serena
+(`find_symbol`, `find_referencing_symbols`, `rename_symbol`) over grep,
+if one is available. The namespace map gives the `name_path` (e.g.
+`ClassName/method` for a method, `function_name` for a top-level
+function) and `relative_path` these tools take as input."""
 
 SECTION = f"{MARKER_START}\n{_SECTION_BODY}\n{MARKER_END}\n"
 

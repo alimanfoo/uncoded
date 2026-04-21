@@ -205,3 +205,8 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Serena — keep project.yml under version control, ignore runtime artefacts
+# (memories, caches, per-user overrides).
+.serena/*
+!.serena/project.yml
