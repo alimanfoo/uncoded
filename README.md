@@ -75,8 +75,9 @@ Add `uncoded` as a pre-commit hook so the index stays in sync automatically:
 ```
 
 Like `ruff format`: if `uncoded` modifies any files, the commit fails and you
-stage the updated index before committing again. CI runs `pre-commit run
---all-files` to verify the index is up to date.
+stage the updated index before committing again.
+
+You can also set up your CI to run `pre-commit run --all-files` to verify the index is up to date.
 
 ## How agents use it
 
