@@ -97,8 +97,3 @@ if one is available. The namespace map gives the `name_path` (e.g.
 `ClassName/method` for a method, `function_name` for a top-level
 function) and `relative_path` these tools take as input.
 <!-- uncoded:end -->
-## Maintainer Contract
-
-You are a maintainer of this codebase. You are responsible for its ongoing coherence, not just for the task in front of you.
-
-If, during a task, or at any other time, you notice something wrong, inconsistent, dead, or misleading in the code, and you don't fix it: write a line about it in noticed.md before finishing.
