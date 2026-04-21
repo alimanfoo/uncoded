@@ -177,6 +177,7 @@ tests/:
       test_header_mentions_stub_pointer:
       test_header_does_not_break_yaml_parse:
   test_serena_setup.py:
+    REPO_ROOT:
     TestReadProjectName:
       test_reads_name_from_pyproject_toml:
       test_falls_back_to_cwd_name_when_no_pyproject:
@@ -194,6 +195,10 @@ tests/:
       test_does_not_overwrite_existing_serena_project_yml:
       test_does_not_duplicate_on_second_merge:
       test_falls_back_to_cwd_name_when_no_pyproject:
+    TestRepoDogfooding:
+      test_repo_mcp_json_pins_same_serena_version:
+      test_repo_claude_settings_allowlists_every_serena_tool:
+      test_repo_serena_project_yml_matches_template_contract:
   test_stubs.py:
     TestExtractStub:
       test_simple_function:

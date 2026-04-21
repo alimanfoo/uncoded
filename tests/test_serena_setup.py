@@ -1,5 +1,6 @@
 import json
 import os
+from pathlib import Path
 
 import yaml
 
@@ -9,6 +10,8 @@ from uncoded.serena_setup import (
     read_project_name,
     setup_serena,
 )
+
+REPO_ROOT = Path(__file__).parent.parent
 
 
 class TestReadProjectName:
@@ -129,3 +132,32 @@ class TestSetupSerena:
         setup_serena()
         data = yaml.safe_load((tmp_path / ".serena" / "project.yml").read_text())
         assert data["project_name"] == tmp_path.name
+
+
+class TestRepoDogfooding:
+    """Catch drift between setup-serena's templates and this repo's own config.
+
+    uncoded's own LSP setup is hand-written (it predates setup-serena and
+    carries extra commentary worth keeping). Bumping ``SERENA_VERSION`` or
+    extending ``SERENA_ALLOWED_TOOLS`` therefore needs a manual sync to the
+    repo's own files; these tests make the drift visible instead of silent.
+    """
+
+    def test_repo_mcp_json_pins_same_serena_version(self):
+        mcp = json.loads((REPO_ROOT / ".mcp.json").read_text())
+        args = mcp["mcpServers"]["serena"]["args"]
+        assert f"serena-agent=={SERENA_VERSION}" in args
+
+    def test_repo_claude_settings_allowlists_every_serena_tool(self):
+        settings = json.loads((REPO_ROOT / ".claude" / "settings.json").read_text())
+        missing = set(SERENA_ALLOWED_TOOLS) - set(settings["permissions"]["allow"])
+        assert not missing, (
+            f"repo's .claude/settings.json is missing allowlist entries "
+            f"that setup-serena would write: {sorted(missing)}"
+        )
+
+    def test_repo_serena_project_yml_matches_template_contract(self):
+        data = yaml.safe_load((REPO_ROOT / ".serena" / "project.yml").read_text())
+        assert data["languages"] == ["python_ty"]
+        assert ".uncoded" in data["ignored_paths"]
+        assert "execute_shell_command" in data["excluded_tools"]

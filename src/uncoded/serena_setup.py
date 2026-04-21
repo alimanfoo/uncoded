@@ -24,7 +24,9 @@ from pathlib import Path
 from uncoded.config import find_pyproject_toml
 
 # Pin the Serena version so every repo that runs setup-serena gets the
-# same, tested integration. Bump in lockstep with README.md.
+# same, tested integration. On bump, this repo's own .mcp.json needs
+# updating separately — it predates setup-serena and is hand-written.
+# A dogfooding test in tests/test_serena_setup.py guards against drift.
 SERENA_VERSION = "1.1.2"
 
 MCP_SERVER_SERENA = {
