@@ -1,0 +1,191 @@
+"""Generate configuration files for Serena + ty LSP integration.
+
+Writes three files that wire a repo up to Serena's MCP bridge with ty as
+the Python language-server backend, in the shape Claude Code picks up
+automatically:
+
+* ``.mcp.json`` — registers the Serena MCP server so Claude Code launches
+  it via ``uvx`` on session start.
+* ``.serena/project.yml`` — selects ty over Serena's default backend
+  (pyright), keeps Serena out of uncoded's generated stubs, and drops
+  ``execute_shell_command`` (redundant with the client's own shell).
+* ``.claude/settings.json`` — enables the Serena server and allowlists
+  navigation, rename, and memory tools so they run without a prompt.
+
+JSON files merge into existing content so pre-existing MCP servers and
+permissions are preserved. The YAML project file is only written when
+absent, to avoid clobbering hand-edited Serena config.
+"""
+
+import json
+import tomllib
+from pathlib import Path
+
+from uncoded.config import find_pyproject_toml
+
+# Pin the Serena version so every repo that runs setup-serena gets the
+# same, tested integration. Bump in lockstep with README.md.
+SERENA_VERSION = "1.1.2"
+
+MCP_SERVER_SERENA = {
+    "command": "uvx",
+    "args": [
+        "--from",
+        f"serena-agent=={SERENA_VERSION}",
+        "serena",
+        "start-mcp-server",
+        "--context",
+        "claude-code",
+        "--transport",
+        "stdio",
+        "--project-from-cwd",
+        "--open-web-dashboard",
+        "false",
+    ],
+}
+
+SERENA_PROJECT_YML = """\
+# Serena project configuration, written by `uncoded setup-serena`.
+# python_ty selects ty over Serena's default backend (pyright); ty
+# handles src-layout repos natively. ignored_paths keeps Serena's
+# symbol tools out of uncoded's generated stubs — a rename that touches
+# a stub would leave it inconsistent with source until the next
+# `uncoded` regeneration. excluded_tools drops execute_shell_command,
+# which duplicates the shell access the MCP client already exposes.
+project_name: "{project_name}"
+languages: ["python_ty"]
+ignored_paths:
+  - ".uncoded"
+excluded_tools:
+  - execute_shell_command
+"""
+
+SERENA_ALLOWED_TOOLS = [
+    "mcp__serena__check_onboarding_performed",
+    "mcp__serena__find_referencing_symbols",
+    "mcp__serena__find_symbol",
+    "mcp__serena__get_symbols_overview",
+    "mcp__serena__initial_instructions",
+    "mcp__serena__list_memories",
+    "mcp__serena__read_memory",
+    "mcp__serena__rename_symbol",
+    "mcp__serena__insert_after_symbol",
+    "mcp__serena__insert_before_symbol",
+    "mcp__serena__replace_symbol_body",
+    "mcp__serena__safe_delete_symbol",
+    "mcp__serena__write_memory",
+    "mcp__serena__edit_memory",
+    "mcp__serena__delete_memory",
+    "mcp__serena__rename_memory",
+    "mcp__serena__onboarding",
+]
+
+_STATUS_VERB = {
+    "wrote": "Wrote",
+    "updated": "Updated",
+    "unchanged": "Unchanged",
+}
+
+
+def read_project_name() -> str:
+    """Read the project name from pyproject.toml, falling back to the cwd name."""
+    toml_path = find_pyproject_toml()
+    if toml_path is None:
+        return Path.cwd().name
+    with toml_path.open("rb") as f:
+        data = tomllib.load(f)
+    try:
+        return data["project"]["name"]
+    except KeyError:
+        return Path.cwd().name
+
+
+def _sync_mcp_json(path: Path) -> str:
+    """Write or merge Serena into ``.mcp.json``.
+
+    Returns a one-word status: ``wrote``, ``updated``, or ``unchanged``.
+    """
+    if path.exists():
+        data = json.loads(path.read_text())
+        servers = data.setdefault("mcpServers", {})
+        if "serena" in servers:
+            return "unchanged"
+        servers["serena"] = MCP_SERVER_SERENA
+        status = "updated"
+    else:
+        data = {"mcpServers": {"serena": MCP_SERVER_SERENA}}
+        status = "wrote"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, indent=2) + "\n")
+    return status
+
+
+def _sync_serena_project(path: Path, project_name: str) -> str:
+    """Write ``.serena/project.yml`` if absent.
+
+    Returns ``wrote`` or ``unchanged``. An existing file is never touched:
+    YAML merging preserves neither comments nor key order, and a user who
+    has customised their Serena config should keep it.
+    """
+    if path.exists():
+        return "unchanged"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(SERENA_PROJECT_YML.format(project_name=project_name))
+    return "wrote"
+
+
+def _sync_claude_settings(path: Path) -> str:
+    """Write or merge Serena allowlist into ``.claude/settings.json``.
+
+    Returns ``wrote``, ``updated``, or ``unchanged``.
+    """
+    if path.exists():
+        data = json.loads(path.read_text())
+        status = "unchanged"
+    else:
+        data = {}
+        status = "wrote"
+
+    enabled = data.setdefault("enabledMcpjsonServers", [])
+    if "serena" not in enabled:
+        enabled.append("serena")
+        if status == "unchanged":
+            status = "updated"
+
+    permissions = data.setdefault("permissions", {})
+    allow = permissions.setdefault("allow", [])
+    for tool in SERENA_ALLOWED_TOOLS:
+        if tool not in allow:
+            allow.append(tool)
+            if status == "unchanged":
+                status = "updated"
+
+    if status == "unchanged":
+        return status
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, indent=2) + "\n")
+    return status
+
+
+def setup_serena(root: Path | None = None) -> int:
+    """Generate Serena + ty + Claude Code configuration under ``root``.
+
+    JSON files merge into existing content; the Serena YAML project file
+    is only written when absent.
+    """
+    if root is None:
+        root = Path.cwd()
+    project_name = read_project_name()
+
+    mcp_path = root / ".mcp.json"
+    serena_path = root / ".serena" / "project.yml"
+    claude_path = root / ".claude" / "settings.json"
+
+    results = [
+        (mcp_path, _sync_mcp_json(mcp_path)),
+        (serena_path, _sync_serena_project(serena_path, project_name)),
+        (claude_path, _sync_claude_settings(claude_path)),
+    ]
+    for path, status in results:
+        print(f"{_STATUS_VERB[status]} {path.relative_to(root)}")
+    return 0

@@ -12,6 +12,7 @@ src/:
   uncoded/:
     cli.py:
       DEFAULT_MAP_OUTPUT:
+      _build:
       main:
     config.py:
       find_pyproject_toml:
@@ -47,6 +48,17 @@ src/:
         increase_indent:
       build_map:
       render_map:
+    serena_setup.py:
+      SERENA_VERSION:
+      MCP_SERVER_SERENA:
+      SERENA_PROJECT_YML:
+      SERENA_ALLOWED_TOOLS:
+      _STATUS_VERB:
+      read_project_name:
+      _sync_mcp_json:
+      _sync_serena_project:
+      _sync_claude_settings:
+      setup_serena:
     stubs.py:
       VALUE_WIDTH_CAP:
       DEFAULT_STUBS_OUTPUT:
@@ -164,6 +176,24 @@ tests/:
       test_header_appears_at_top:
       test_header_mentions_stub_pointer:
       test_header_does_not_break_yaml_parse:
+  test_serena_setup.py:
+    TestReadProjectName:
+      test_reads_name_from_pyproject_toml:
+      test_falls_back_to_cwd_name_when_no_pyproject:
+      test_falls_back_to_cwd_name_when_no_project_section:
+      test_falls_back_to_cwd_name_when_name_missing:
+    TestSetupSerena:
+      _run:
+      test_creates_all_three_files:
+      test_mcp_json_is_valid_and_pins_version:
+      test_serena_project_yml_uses_ty_and_ignores_uncoded:
+      test_claude_settings_enables_serena_and_allowlists_tools:
+      test_idempotent:
+      test_merges_into_existing_mcp_json:
+      test_merges_into_existing_claude_settings:
+      test_does_not_overwrite_existing_serena_project_yml:
+      test_does_not_duplicate_on_second_merge:
+      test_falls_back_to_cwd_name_when_no_pyproject:
   test_stubs.py:
     TestExtractStub:
       test_simple_function:

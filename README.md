@@ -98,7 +98,21 @@ The recommended setup is [oraios/serena][serena] as the MCP bridge with
 via `uvx`, so there's nothing to install globally; ty is downloaded by
 Serena on first use.
 
-For Claude Code, add `.mcp.json` at the repo root:
+### Quick setup
+
+```
+uv run uncoded setup-serena
+```
+
+Writes `.mcp.json`, `.serena/project.yml`, and `.claude/settings.json`
+with the configuration described below. Safe to re-run: the JSON files
+merge into existing content (so other MCP servers and permissions are
+preserved), and the Serena project YAML is left alone once present.
+Restart your agent afterwards so the new MCP server is picked up.
+
+### What the files do
+
+`.mcp.json` at the repo root registers the Serena MCP server:
 
 ```json
 {
@@ -120,7 +134,7 @@ For Claude Code, add `.mcp.json` at the repo root:
 
 (Replace `claude-code` with your client's context name if different.)
 
-And `.serena/project.yml` to pick ty as the backend:
+`.serena/project.yml` picks ty as the backend:
 
 ```yaml
 project_name: "<your-project>"
@@ -138,8 +152,8 @@ otherwise a rename would silently rewrite them. `excluded_tools` drops
 Serena's `execute_shell_command`, which duplicates the shell access your
 MCP client already exposes.
 
-For Claude Code, commit `.claude/settings.json` to auto-enable the Serena
-server and allowlist the tools you want:
+`.claude/settings.json` auto-enables the Serena server in Claude Code
+and allowlists the tools you want:
 
 ```json
 {
