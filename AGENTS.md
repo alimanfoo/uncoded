@@ -34,7 +34,7 @@ an activated venv.
 
 ```
 # Generate (or update) the namespace map, stub files, and CLAUDE.md section
-uv run uncoded
+uv run uncoded sync
 
 # Run tests
 uv run pytest

@@ -13,7 +13,7 @@ Additionally, **uncoded** provides some convenience for setting up your coding a
 
 ## What it generates
 
-Running `uncoded` produces two things under `.uncoded/`:
+Running `uncoded sync` produces two things under `.uncoded/`:
 
 **`namespace.yaml`** — a hierarchical YAML file listing every symbol:
 directories, files, classes (with attributes and methods), functions. Covers
@@ -51,33 +51,49 @@ source-roots = ["src", "tests"]
 ## Use
 
 ```
-uncoded
+uncoded sync
 ```
 
-That's it. Run it from the repo root. It reads `pyproject.toml` to find your
-source roots, builds the index, and updates `CLAUDE.md`/`AGENTS.md`.
+Run it from the repo root. It reads `pyproject.toml` to find your source
+roots, builds the index, and updates `CLAUDE.md`/`AGENTS.md`.
 
 Commit the generated `.uncoded/` directory so agents working
 in the repo always have a current index.
 
 ## Keep it current with pre-commit
 
-Add `uncoded` as a pre-commit hook so the index stays in sync automatically:
+Add `uncoded sync` as a pre-commit hook so the index stays in sync
+automatically:
 
 ```yaml
 - repo: local
   hooks:
     - id: uncoded
       name: uncoded
-      entry: uncoded
+      entry: uncoded sync
       language: system
       pass_filenames: false
 ```
 
-Like `ruff format`: if `uncoded` modifies any files, the commit fails and you
-stage the updated index before committing again.
+Like `ruff format`: if `uncoded sync` modifies any files, the commit
+fails and you stage the updated index before committing again.
 
 You can also set up your CI to run `pre-commit run --all-files` to verify the index is up to date.
+
+## Verify the index is fresh
+
+For CI or scripted checks that must not modify the working tree, use
+the `check` subcommand:
+
+```
+uncoded check
+```
+
+It runs the same pipeline but writes nothing. Exits 0 if every generated
+file is byte-identical to what a rebuild would produce, and 1 otherwise
+— printing which files would change. A stale index is a silent failure
+mode (agents read misleading line ranges and signatures), so gating on
+this in CI is worthwhile even alongside a pre-commit hook.
 
 ## How agents use it
 

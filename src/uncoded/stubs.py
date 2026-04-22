@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from uncoded.extract import _property_kind, iter_source_files
+from uncoded.sync import remove_file, sync_file
 
 # Width cap for inlining the right-hand side of an assignment. If the unparsed
 # RHS exceeds this, it is elided to "..." and the reader follows the line range.
@@ -370,21 +371,31 @@ def _generate_stubs(source_root: Path) -> dict[Path, str]:
 DEFAULT_STUBS_OUTPUT = Path(".uncoded/stubs")
 
 
-def build_stubs(source_root: Path, output_dir: Path = DEFAULT_STUBS_OUTPUT) -> None:
-    """Write stub files for all symbols under source_root, removing any orphans.
+def build_stubs(
+    source_root: Path,
+    output_dir: Path = DEFAULT_STUBS_OUTPUT,
+    *,
+    check: bool = False,
+) -> int:
+    """Sync stub files for all symbols under source_root, removing any orphans.
 
-    After writing the current set of stubs, any pre-existing ``.pyi`` files in
-    the corresponding subtree of ``output_dir`` whose source has been removed
-    or renamed are deleted, and any directories left empty by the deletion are
-    pruned. Only the subtree corresponding to ``source_root`` is touched, so
-    other source roots' stubs are not affected.
+    Writes only files whose content has changed. After reconciling the current
+    set of stubs, any pre-existing ``.pyi`` files in the corresponding subtree
+    of ``output_dir`` whose source has been removed or renamed are deleted,
+    and any directories left empty by the deletion are pruned. Only the
+    subtree corresponding to ``source_root`` is touched, so other source
+    roots' stubs are not affected.
+
+    When ``check=True``, the on-disk tree is not mutated; instead, prospective
+    writes and removals are reported and counted. Returns the number of
+    changes (or prospective changes).
     """
+    changes = 0
     expected: set[Path] = set()
     for rel_stub_path, content in _generate_stubs(source_root).items():
         stub_path = output_dir / rel_stub_path
-        stub_path.parent.mkdir(parents=True, exist_ok=True)
-        stub_path.write_text(content)
-        print(f"Wrote {stub_path}")
+        if sync_file(stub_path, content, check=check):
+            changes += 1
         expected.add(stub_path.resolve())
 
     base = Path.cwd().resolve()
@@ -392,17 +403,21 @@ def build_stubs(source_root: Path, output_dir: Path = DEFAULT_STUBS_OUTPUT) -> N
         source_rel = source_root.resolve().relative_to(base)
     except ValueError:
         # source_root is outside cwd; we have no safe subtree to clean.
-        return
+        return changes
     stubs_root = output_dir / source_rel
     if not stubs_root.exists():
-        return
+        return changes
 
     for existing in stubs_root.rglob("*.pyi"):
-        if existing.resolve() not in expected:
-            existing.unlink()
-            print(f"Removed {existing}")
+        if existing.resolve() not in expected and remove_file(existing, check=check):
+            changes += 1
+
+    if check:
+        return changes
 
     # Prune now-empty directories, deepest-first, but keep stubs_root itself.
     for d in sorted(stubs_root.rglob("*"), key=lambda p: len(p.parts), reverse=True):
         if d.is_dir() and not any(d.iterdir()):
             d.rmdir()
+
+    return changes

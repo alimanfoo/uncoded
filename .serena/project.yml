@@ -141,7 +141,7 @@ ignored_paths:
   # under version control so agents can read them, but Serena's symbol-aware
   # tools should not follow imports into them or rewrite them during rename
   # operations — a rename that touches a stub leaves it inconsistent with
-  # source until the next `uv run uncoded` regeneration. Excluding the whole
+  # source until the next `uv run uncoded sync` regeneration. Excluding the whole
   # .uncoded/ tree also keeps namespace.yaml out of scope.
   - ".uncoded"
 

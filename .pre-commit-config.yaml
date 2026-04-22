@@ -24,6 +24,6 @@ repos:
         pass_filenames: false
       - id: uncoded
         name: uncoded
-        entry: uv run uncoded
+        entry: uv run uncoded sync
         language: system
         pass_filenames: false

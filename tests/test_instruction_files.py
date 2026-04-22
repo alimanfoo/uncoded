@@ -59,3 +59,34 @@ class TestSyncInstructionFile:
         first = path.read_text()
         sync_instruction_file(path)
         assert path.read_text() == first
+
+    def test_returns_true_on_first_write(self, tmp_path):
+        path = tmp_path / "CLAUDE.md"
+        assert sync_instruction_file(path) is True
+
+    def test_returns_false_when_clean(self, tmp_path):
+        path = tmp_path / "CLAUDE.md"
+        sync_instruction_file(path)
+        assert sync_instruction_file(path) is False
+
+
+class TestSyncInstructionFileCheckMode:
+    def test_does_not_create_file(self, tmp_path):
+        path = tmp_path / "CLAUDE.md"
+        changed = sync_instruction_file(path, check=True)
+        assert changed is True
+        assert not path.exists()
+
+    def test_does_not_update_existing_file(self, tmp_path):
+        path = tmp_path / "CLAUDE.md"
+        path.write_text("# My Project\n\nSome content.\n")
+        original = path.read_text()
+        changed = sync_instruction_file(path, check=True)
+        assert changed is True
+        assert path.read_text() == original
+
+    def test_reports_no_change_when_clean(self, tmp_path):
+        path = tmp_path / "CLAUDE.md"
+        sync_instruction_file(path)
+        changed = sync_instruction_file(path, check=True)
+        assert changed is False

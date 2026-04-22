@@ -9,6 +9,8 @@ This module owns a delimited section in any such file and keeps it in sync.
 
 from pathlib import Path
 
+from uncoded.sync import sync_file
+
 MARKER_START = "<!-- uncoded:start -->"
 MARKER_END = "<!-- uncoded:end -->"
 
@@ -92,15 +94,15 @@ def _replace_or_append(existing: str, section: str) -> str:
     return prefix + section
 
 
-def sync_instruction_file(path: Path) -> None:
-    """Write or update the uncoded navigation section in an instruction file."""
+def sync_instruction_file(path: Path, *, check: bool = False) -> bool:
+    """Write or update the uncoded navigation section in an instruction file.
+
+    When ``check=True``, reports a prospective change without touching disk.
+    Returns ``True`` if a write was (or would be) performed.
+    """
     section = generate_section()
     if not path.exists():
-        path.write_text(section)
-        print(f"Wrote {path}")
-        return
+        return sync_file(path, section, check=check)
     existing = path.read_text()
     updated = _replace_or_append(existing, section)
-    if updated != existing:
-        path.write_text(updated)
-        print(f"Updated {path}")
+    return sync_file(path, updated, check=check)
