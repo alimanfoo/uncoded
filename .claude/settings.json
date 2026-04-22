@@ -1,6 +1,7 @@
 {
-  "$comment": "Project-level Claude Code settings. Committed to the repo so any contributor picks up the Serena MCP server and a safe allowlist for its navigation and rename tools. Per-user overrides go in .claude/settings.local.json (gitignored).",
-  "enabledMcpjsonServers": ["serena"],
+  "enabledMcpjsonServers": [
+    "serena"
+  ],
   "permissions": {
     "allow": [
       "mcp__serena__check_onboarding_performed",

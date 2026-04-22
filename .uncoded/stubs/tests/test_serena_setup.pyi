@@ -57,14 +57,14 @@ class TestSetupSerena:  # L38-134
     def test_falls_back_to_cwd_name_when_no_pyproject(self, tmp_path):  # L130-134
         ...
 
-class TestRepoDogfooding:  # L137-163
+class TestRepoDogfooding:  # L137-164
     """Catch drift between setup-serena's templates and this repo's own config."""
 
-    def test_repo_mcp_json_pins_same_serena_version(self):  # L146-149
+    def test_repo_mcp_json_pins_same_serena_version(self):  # L147-150
         ...
 
-    def test_repo_claude_settings_allowlists_every_serena_tool(self):  # L151-157
+    def test_repo_claude_settings_allowlists_every_serena_tool(self):  # L152-158
         ...
 
-    def test_repo_serena_project_yml_matches_template_contract(self):  # L159-163
+    def test_repo_serena_project_yml_matches_template_contract(self):  # L160-164
         ...
