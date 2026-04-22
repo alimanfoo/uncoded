@@ -42,6 +42,8 @@ Remember: this is your project, your code base, your call.
 
 Bring changes in via pull requests. When finished a piece of work, open a PR.
 
+Each PR must leave the codebase coherent. The PR is the unit of coherence — not the session, not the next planned PR. If a change makes anything else stale, inconsistent, or misleading and you can name what, fixing it belongs in this PR, not a follow-up. The test: if this PR merged and the planned follow-up never happened, would the codebase be coherent? If not, fold the follow-up in. "Smaller PR" is not a reason to split — a smaller PR that ships an incoherent intermediate state is worse than a larger one that ships a clean step.
+
 Get a third-party review on pull requests. Don’t self-merge without a review.
 
 ## Autonomy
