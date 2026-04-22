@@ -41,7 +41,7 @@ uv run pytest
 ```
 
 <!-- uncoded:start -->
-## How to navigate this codebase and read source files
+## How to read and edit code in this codebase
 
 This repo uses [uncoded](https://github.com/alimanfoo/uncoded) to maintain
 a navigation index for AI agents. Do not grep. Do not read whole source files.

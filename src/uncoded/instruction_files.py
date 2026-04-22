@@ -17,7 +17,7 @@ MARKER_END = "<!-- uncoded:end -->"
 DEFAULT_INSTRUCTION_FILES = [Path("CLAUDE.md"), Path("AGENTS.md")]
 
 _SECTION_BODY = """\
-## How to navigate this codebase and read source files
+## How to read and edit code in this codebase
 
 This repo uses [uncoded](https://github.com/alimanfoo/uncoded) to maintain
 a navigation index for AI agents. Do not grep. Do not read whole source files.
