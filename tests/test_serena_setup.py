@@ -91,6 +91,22 @@ class TestSetupSerena:
         assert "other" in data["mcpServers"]
         assert "serena" in data["mcpServers"]
 
+    def test_refreshes_stale_serena_entry_in_mcp_json(self, tmp_path):
+        mcp_path = tmp_path / ".mcp.json"
+        stale = {
+            "mcpServers": {
+                "serena": {
+                    "command": "uvx",
+                    "args": ["--from", "serena-agent==0.0.1", "serena"],
+                }
+            }
+        }
+        mcp_path.write_text(json.dumps(stale))
+        self._run(tmp_path)
+        args = json.loads(mcp_path.read_text())["mcpServers"]["serena"]["args"]
+        assert f"serena-agent=={SERENA_VERSION}" in args
+        assert "serena-agent==0.0.1" not in args
+
     def test_merges_into_existing_claude_settings(self, tmp_path):
         claude_path = tmp_path / ".claude" / "settings.json"
         claude_path.parent.mkdir()

@@ -12,9 +12,11 @@ automatically:
 * ``.claude/settings.json`` — enables the Serena server and allowlists
   navigation, rename, and memory tools so they run without a prompt.
 
-JSON files merge into existing content so pre-existing MCP servers and
-permissions are preserved. The YAML project file is only written when
-absent, to avoid clobbering hand-edited Serena config.
+JSON files merge into existing content: pre-existing non-Serena MCP
+servers and permissions are preserved, while the Serena entry itself
+refreshes to the current ``SERENA_VERSION`` so re-running after a bump
+propagates the pin. The YAML project file is only written when absent,
+to avoid clobbering hand-edited Serena config.
 """
 
 import json
@@ -24,10 +26,10 @@ from pathlib import Path
 from uncoded.config import find_pyproject_toml
 
 # Pin the Serena version so every repo that runs setup-serena gets the
-# same, tested integration. On bump, delete this repo's .mcp.json and
-# re-run `uncoded setup-serena` to pick up the new pin (the merge path
-# leaves an existing serena entry alone). A dogfooding test in
-# tests/test_serena_setup.py guards against drift.
+# same, tested integration. On bump, re-run `uncoded setup-serena` to
+# refresh the pin in existing repos — the sync overwrites the serena
+# entry in .mcp.json with the current MCP_SERVER_SERENA value. A
+# dogfooding test in tests/test_serena_setup.py guards against drift.
 SERENA_VERSION = "1.1.2"
 
 MCP_SERVER_SERENA = {
@@ -48,13 +50,6 @@ MCP_SERVER_SERENA = {
 }
 
 SERENA_PROJECT_YML = """\
-# Serena project configuration, written by `uncoded setup-serena`.
-# python_ty selects ty over Serena's default backend (pyright); ty
-# handles src-layout repos natively. ignored_paths keeps Serena's
-# symbol tools out of uncoded's generated stubs — a rename that touches
-# a stub would leave it inconsistent with source until the next
-# `uncoded` regeneration. excluded_tools drops execute_shell_command,
-# which duplicates the shell access the MCP client already exposes.
 project_name: "{project_name}"
 languages: ["python_ty"]
 ignored_paths:
@@ -106,12 +101,19 @@ def read_project_name() -> str:
 def _sync_mcp_json(path: Path) -> str:
     """Write or merge Serena into ``.mcp.json``.
 
+    Non-Serena MCP servers already in the file are preserved. The
+    ``serena`` entry itself is always refreshed to ``MCP_SERVER_SERENA``
+    so a ``SERENA_VERSION`` bump flows into existing repos on the next
+    ``setup-serena`` run. Anyone who has hand-customised the ``serena``
+    entry should keep their edits out of this file (add a sibling entry
+    instead, or re-apply after refresh).
+
     Returns a one-word status: ``wrote``, ``updated``, or ``unchanged``.
     """
     if path.exists():
         data = json.loads(path.read_text())
         servers = data.setdefault("mcpServers", {})
-        if "serena" in servers:
+        if servers.get("serena") == MCP_SERVER_SERENA:
             return "unchanged"
         servers["serena"] = MCP_SERVER_SERENA
         status = "updated"
@@ -173,8 +175,9 @@ def _sync_claude_settings(path: Path) -> str:
 def setup_serena(root: Path | None = None) -> int:
     """Generate Serena + ty + Claude Code configuration under ``root``.
 
-    JSON files merge into existing content; the Serena YAML project file
-    is only written when absent.
+    JSON files merge into existing content, refreshing the Serena
+    entries so a re-run picks up a bumped ``SERENA_VERSION``. The
+    Serena YAML project file is only written when absent.
     """
     if root is None:
         root = Path.cwd()

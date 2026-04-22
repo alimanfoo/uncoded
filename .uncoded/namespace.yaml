@@ -221,6 +221,7 @@ tests/:
       test_claude_settings_enables_serena_and_allowlists_tools:
       test_idempotent:
       test_merges_into_existing_mcp_json:
+      test_refreshes_stale_serena_entry_in_mcp_json:
       test_merges_into_existing_claude_settings:
       test_does_not_overwrite_existing_serena_project_yml:
       test_does_not_duplicate_on_second_merge:
