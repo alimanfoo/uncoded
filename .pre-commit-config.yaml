@@ -3,6 +3,11 @@ repos:
     rev: v5.0.0
     hooks:
       - id: trailing-whitespace
+        # Serena rewrites .serena/project.yml on MCP server start with its
+        # own default-annotated form, which has a trailing space in one
+        # comment line. Trimming it here would just trigger a diff on the
+        # next session — Serena owns this file's formatting, so exclude it.
+        exclude: ^\.serena/project\.yml$
       - id: end-of-file-fixer
       - id: check-yaml
       - id: check-toml

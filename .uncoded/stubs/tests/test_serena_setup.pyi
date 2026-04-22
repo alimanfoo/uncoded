@@ -22,7 +22,7 @@ class TestReadProjectName:  # L17-35
     def test_falls_back_to_cwd_name_when_name_missing(self, tmp_path):  # L32-35
         ...
 
-class TestSetupSerena:  # L38-134
+class TestSetupSerena:  # L38-150
 
     def _run(self, tmp_path, name):  # L39-42
         ...
@@ -45,26 +45,29 @@ class TestSetupSerena:  # L38-134
     def test_merges_into_existing_mcp_json(self, tmp_path):  # L84-92
         ...
 
-    def test_merges_into_existing_claude_settings(self, tmp_path):  # L94-110
+    def test_refreshes_stale_serena_entry_in_mcp_json(self, tmp_path):  # L94-108
         ...
 
-    def test_does_not_overwrite_existing_serena_project_yml(self, tmp_path):  # L112-118
+    def test_merges_into_existing_claude_settings(self, tmp_path):  # L110-126
         ...
 
-    def test_does_not_duplicate_on_second_merge(self, tmp_path):  # L120-128
+    def test_does_not_overwrite_existing_serena_project_yml(self, tmp_path):  # L128-134
         ...
 
-    def test_falls_back_to_cwd_name_when_no_pyproject(self, tmp_path):  # L130-134
+    def test_does_not_duplicate_on_second_merge(self, tmp_path):  # L136-144
         ...
 
-class TestRepoDogfooding:  # L137-164
+    def test_falls_back_to_cwd_name_when_no_pyproject(self, tmp_path):  # L146-150
+        ...
+
+class TestRepoDogfooding:  # L153-180
     """Catch drift between setup-serena's templates and this repo's own config."""
 
-    def test_repo_mcp_json_pins_same_serena_version(self):  # L147-150
+    def test_repo_mcp_json_pins_same_serena_version(self):  # L163-166
         ...
 
-    def test_repo_claude_settings_allowlists_every_serena_tool(self):  # L152-158
+    def test_repo_claude_settings_allowlists_every_serena_tool(self):  # L168-174
         ...
 
-    def test_repo_serena_project_yml_matches_template_contract(self):  # L160-164
+    def test_repo_serena_project_yml_matches_template_contract(self):  # L176-180
         ...
