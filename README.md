@@ -76,6 +76,21 @@ Like `ruff format`: if `uncoded` modifies any files, the commit fails and you
 stage the updated index before committing again. CI runs `pre-commit run
 --all-files` to verify the index is up to date.
 
+## Verify the index is fresh
+
+For CI or scripted checks that must not modify the working tree, use
+`--check`:
+
+```
+uncoded --check
+```
+
+It runs the same pipeline but writes nothing. Exits 0 if every generated
+file is byte-identical to what a rebuild would produce, and 1 otherwise
+— printing which files would change. A stale index is a silent failure
+mode (agents read misleading line ranges and signatures), so gating on
+this in CI is worthwhile even alongside a pre-commit hook.
+
 ## How agents use it
 
 When `uncoded` is set up, a navigation section is automatically maintained in

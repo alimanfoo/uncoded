@@ -625,3 +625,57 @@ class TestBuildStubs:
         # leave the stub in place.
         build_stubs(src, out)
         assert (out / "src" / "foo.pyi").exists()
+
+    def test_reports_count_on_first_build(self, tmp_path):
+        src, out = self._setup(tmp_path)
+        (src / "foo.py").write_text("def hello(): pass\n")
+        (src / "bar.py").write_text("def goodbye(): pass\n")
+        assert build_stubs(src, out) == 2
+
+    def test_reports_zero_when_clean(self, tmp_path):
+        src, out = self._setup(tmp_path)
+        (src / "foo.py").write_text("def hello(): pass\n")
+        build_stubs(src, out)
+        assert build_stubs(src, out) == 0
+
+
+class TestBuildStubsCheckMode:
+    """build_stubs with check=True must report changes without mutating the tree."""
+
+    def _setup(self, tmp_path):
+        os.chdir(tmp_path)
+        src = tmp_path / "src"
+        src.mkdir()
+        out = tmp_path / "stubs"
+        return src, out
+
+    def test_does_not_write_stub_in_check_mode(self, tmp_path):
+        src, out = self._setup(tmp_path)
+        (src / "foo.py").write_text("def hello(): pass\n")
+        changes = build_stubs(src, out, check=True)
+        assert changes == 1
+        assert not (out / "src" / "foo.pyi").exists()
+
+    def test_zero_changes_when_clean(self, tmp_path):
+        src, out = self._setup(tmp_path)
+        (src / "foo.py").write_text("def hello(): pass\n")
+        build_stubs(src, out)
+        assert build_stubs(src, out, check=True) == 0
+
+    def test_detects_stale_stub_content(self, tmp_path):
+        src, out = self._setup(tmp_path)
+        (src / "foo.py").write_text("def hello(): pass\n")
+        build_stubs(src, out)
+        # Simulate a source edit that would change the stub.
+        (src / "foo.py").write_text("def hello(name: str) -> str: pass\n")
+        assert build_stubs(src, out, check=True) == 1
+
+    def test_detects_orphan_stub_without_removing_it(self, tmp_path):
+        src, out = self._setup(tmp_path)
+        (src / "foo.py").write_text("def hello(): pass\n")
+        (src / "bar.py").write_text("def goodbye(): pass\n")
+        build_stubs(src, out)
+        (src / "bar.py").unlink()
+        assert build_stubs(src, out, check=True) == 1
+        # Check mode must not mutate the tree — orphan is still there.
+        assert (out / "src" / "bar.pyi").exists()

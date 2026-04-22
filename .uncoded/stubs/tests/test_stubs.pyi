@@ -147,7 +147,7 @@ class TestRenderStub:  # L325-548
     def test_unannotated_class_attribute_rendered(self):  # L533-548
         ...
 
-class TestBuildStubs:  # L551-627
+class TestBuildStubs:  # L551-639
     """build_stubs writes expected stubs and removes orphans for its source root."""
 
     def _setup(self, tmp_path):  # L554-559
@@ -169,4 +169,28 @@ class TestBuildStubs:  # L551-627
         ...
 
     def test_no_op_when_clean(self, tmp_path):  # L620-627
+        ...
+
+    def test_reports_count_on_first_build(self, tmp_path):  # L629-633
+        ...
+
+    def test_reports_zero_when_clean(self, tmp_path):  # L635-639
+        ...
+
+class TestBuildStubsCheckMode:  # L642-681
+    """build_stubs with check=True must report changes without mutating the tree."""
+
+    def _setup(self, tmp_path):  # L645-650
+        ...
+
+    def test_does_not_write_stub_in_check_mode(self, tmp_path):  # L652-657
+        ...
+
+    def test_zero_changes_when_clean(self, tmp_path):  # L659-663
+        ...
+
+    def test_detects_stale_stub_content(self, tmp_path):  # L665-671
+        ...
+
+    def test_detects_orphan_stub_without_removing_it(self, tmp_path):  # L673-681
         ...

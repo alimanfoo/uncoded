@@ -13,7 +13,7 @@ class TestGenerateSection:  # L9-20
     def test_ends_with_newline(self):  # L19-20
         ...
 
-class TestSyncInstructionFile:  # L23-61
+class TestSyncInstructionFile:  # L23-70
 
     def test_creates_file_if_missing(self, tmp_path):  # L24-28
         ...
@@ -28,4 +28,21 @@ class TestSyncInstructionFile:  # L23-61
         ...
 
     def test_idempotent(self, tmp_path):  # L56-61
+        ...
+
+    def test_returns_true_on_first_write(self, tmp_path):  # L63-65
+        ...
+
+    def test_returns_false_when_clean(self, tmp_path):  # L67-70
+        ...
+
+class TestSyncInstructionFileCheckMode:  # L73-92
+
+    def test_does_not_create_file(self, tmp_path):  # L74-78
+        ...
+
+    def test_does_not_update_existing_file(self, tmp_path):  # L80-86
+        ...
+
+    def test_reports_no_change_when_clean(self, tmp_path):  # L88-92
         ...
