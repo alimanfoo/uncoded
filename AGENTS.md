@@ -90,10 +90,35 @@ of the file than the stub said you needed. The one exception is the
 first Read of a stub-less file (see Step 2), which is genuinely
 exploratory.
 
-**For cross-file operations** — find references, rename, check whether a
-symbol is still used — prefer a language-server MCP bridge like Serena
-(`find_symbol`, `find_referencing_symbols`, `rename_symbol`) over grep,
-if one is available. The namespace map gives the `name_path` (e.g.
-`ClassName/method` for a method, `function_name` for a top-level
-function) and `relative_path` these tools take as input.
+**For symbol-level operations — use Serena.** Where Serena's MCP tools
+are available (`mcp__serena__*` in the tool list), prefer them over
+Read / Edit / grep for anything that operates on a symbol as a unit.
+The namespace map gives you the exact `name_path` and `relative_path`
+these tools take as input — e.g. `ClassName/method` for a method,
+`function_name` for a top-level function.
+
+- **Read one symbol body.** `find_symbol` with `include_body=True`
+  returns exactly the symbol — no `offset` / `limit` arithmetic, no
+  risk of reading too much. Often easier than the Step 3 dance for a
+  single function or method. (Stay on stubs for a wider sweep.)
+- **Find callers, or check whether a symbol is dead.**
+  `find_referencing_symbols` returns every reference resolved by the
+  language server. Do not grep for the name — grep hits comments,
+  strings, attribute lookups on unrelated types, and re-exports.
+- **Rename.** `rename_symbol` updates every reference across the
+  codebase in one call. Multi-file find-and-replace misses imports
+  and re-exports and racks up false positives.
+- **Edit a whole symbol.** `replace_symbol_body`,
+  `insert_before_symbol`, and `insert_after_symbol` operate on the
+  symbol as a unit. Immune to the Edit tool's "string not unique"
+  failure mode, never accidentally modify a similarly-named
+  neighbour, and keep surrounding indentation consistent.
+- **Delete a symbol.** `safe_delete_symbol` checks for live
+  references before removing — dead code goes cleanly, live code
+  stays put.
+
+Reach for Read + Edit when Serena does not fit: free-text files
+(Markdown, YAML, configs), partial-line edits inside a function
+body, or the rare stub-less Python file that needs exploratory
+reading.
 <!-- uncoded:end -->
