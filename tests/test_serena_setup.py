@@ -13,6 +13,24 @@ from uncoded.serena_setup import (
 
 REPO_ROOT = Path(__file__).parent.parent
 
+# Tools Serena exposes that we strip from the project. Kept in the test
+# module (not the source) so the test asserts the contract independently
+# of the constant it's validating: a typo or silent removal in
+# SERENA_PROJECT_YML shows up here.
+EXPECTED_EXCLUDED_TOOLS = {
+    "execute_shell_command",
+    "list_memories",
+    "read_memory",
+    "write_memory",
+    "edit_memory",
+    "delete_memory",
+    "rename_memory",
+    "onboarding",
+    "check_onboarding_performed",
+    "initial_instructions",
+    "open_dashboard",
+}
+
 
 class TestReadProjectName:
     def test_reads_name_from_pyproject_toml(self, tmp_path):
@@ -63,7 +81,7 @@ class TestSetupSerena:
         assert data["project_name"] == "my-app"
         assert data["languages"] == ["python_ty"]
         assert ".uncoded" in data["ignored_paths"]
-        assert "execute_shell_command" in data["excluded_tools"]
+        assert set(data["excluded_tools"]) == EXPECTED_EXCLUDED_TOOLS
 
     def test_claude_settings_enables_serena_and_allowlists_tools(self, tmp_path):
         self._run(tmp_path)
@@ -177,4 +195,4 @@ class TestRepoDogfooding:
         data = yaml.safe_load((REPO_ROOT / ".serena" / "project.yml").read_text())
         assert data["languages"] == ["python_ty"]
         assert ".uncoded" in data["ignored_paths"]
-        assert "execute_shell_command" in data["excluded_tools"]
+        assert set(data["excluded_tools"]) == EXPECTED_EXCLUDED_TOOLS

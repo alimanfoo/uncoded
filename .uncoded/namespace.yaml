@@ -208,6 +208,7 @@ tests/:
       test_header_does_not_break_yaml_parse:
   test_serena_setup.py:
     REPO_ROOT:
+    EXPECTED_EXCLUDED_TOOLS:
     TestReadProjectName:
       test_reads_name_from_pyproject_toml:
       test_falls_back_to_cwd_name_when_no_pyproject:
