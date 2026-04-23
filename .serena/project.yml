@@ -79,6 +79,16 @@ ignored_paths:
 #       The memory name should be meaningful.
 excluded_tools:
 - execute_shell_command
+- list_memories
+- read_memory
+- write_memory
+- edit_memory
+- delete_memory
+- rename_memory
+- onboarding
+- check_onboarding_performed
+- initial_instructions
+- open_dashboard
 
 # list of tools to include that would otherwise be disabled (particularly optional tools that are disabled by default).
 # This extends the existing inclusions (e.g. from the global configuration).

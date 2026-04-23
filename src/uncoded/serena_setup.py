@@ -5,12 +5,17 @@ the Python language-server backend, in the shape Claude Code picks up
 automatically:
 
 * ``.mcp.json`` — registers the Serena MCP server so Claude Code launches
-  it via ``uvx`` on session start.
+  it via ``uvx`` on session start, with the web dashboard disabled.
 * ``.serena/project.yml`` — selects ty over Serena's default backend
-  (pyright), keeps Serena out of uncoded's generated stubs, and drops
-  ``execute_shell_command`` (redundant with the client's own shell).
+  (pyright), keeps Serena out of uncoded's generated stubs, and narrows
+  Serena's surface to pure LSP operations: memory, onboarding,
+  dashboard, and shell-exec tools are all excluded. uncoded's namespace
+  map and stubs already give agents a project-wide view, so Serena's
+  memory-based project understanding is redundant and noisy alongside
+  it.
 * ``.claude/settings.json`` — enables the Serena server and allowlists
-  navigation, rename, and memory tools so they run without a prompt.
+  the eight LSP tools (symbol lookup, reference search, and the edit
+  family) so they run without a prompt.
 
 JSON files merge into existing content: pre-existing non-Serena MCP
 servers and permissions are preserved, while the Serena entry itself
@@ -56,26 +61,27 @@ ignored_paths:
   - ".uncoded"
 excluded_tools:
   - execute_shell_command
+  - list_memories
+  - read_memory
+  - write_memory
+  - edit_memory
+  - delete_memory
+  - rename_memory
+  - onboarding
+  - check_onboarding_performed
+  - initial_instructions
+  - open_dashboard
 """
 
 SERENA_ALLOWED_TOOLS = [
-    "mcp__serena__check_onboarding_performed",
-    "mcp__serena__find_referencing_symbols",
     "mcp__serena__find_symbol",
+    "mcp__serena__find_referencing_symbols",
     "mcp__serena__get_symbols_overview",
-    "mcp__serena__initial_instructions",
-    "mcp__serena__list_memories",
-    "mcp__serena__read_memory",
     "mcp__serena__rename_symbol",
-    "mcp__serena__insert_after_symbol",
-    "mcp__serena__insert_before_symbol",
-    "mcp__serena__replace_symbol_body",
     "mcp__serena__safe_delete_symbol",
-    "mcp__serena__write_memory",
-    "mcp__serena__edit_memory",
-    "mcp__serena__delete_memory",
-    "mcp__serena__rename_memory",
-    "mcp__serena__onboarding",
+    "mcp__serena__insert_before_symbol",
+    "mcp__serena__insert_after_symbol",
+    "mcp__serena__replace_symbol_body",
 ]
 
 _STATUS_VERB = {
