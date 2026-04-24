@@ -9,6 +9,7 @@ from uncoded.extract import walk_source
 from uncoded.instruction_files import sync_instruction_file
 from uncoded.namespace_map import build_map, render_map
 from uncoded.serena_setup import setup_serena
+from uncoded.skill import sync_skill
 from uncoded.stubs import build_stubs
 from uncoded.sync import sync_file
 
@@ -47,6 +48,9 @@ def _sync(*, check: bool = False) -> int:
     for path in read_instruction_files():
         if sync_instruction_file(path, check=check):
             changes += 1
+
+    if sync_skill(check=check):
+        changes += 1
 
     if check:
         if changes:

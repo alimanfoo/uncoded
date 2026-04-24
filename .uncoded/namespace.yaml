@@ -59,6 +59,10 @@ src/:
       _sync_serena_project:
       _sync_claude_settings:
       setup_serena:
+    skill.py:
+      SKILL_OUTPUT:
+      _SKILL_CONTENT:
+      sync_skill:
     stubs.py:
       VALUE_WIDTH_CAP:
       DEFAULT_STUBS_OUTPUT:
@@ -231,6 +235,16 @@ tests/:
       test_repo_mcp_json_pins_same_serena_version:
       test_repo_claude_settings_allowlists_every_serena_tool:
       test_repo_serena_project_yml_matches_template_contract:
+  test_skill.py:
+    TestSyncSkill:
+      test_writes_skill_file:
+      test_creates_parent_directories:
+      test_returns_true_on_first_write:
+      test_returns_false_when_already_in_sync:
+      test_idempotent:
+      test_check_mode_does_not_write:
+      test_check_mode_reports_change_when_missing:
+      test_check_mode_reports_no_change_when_in_sync:
   test_stubs.py:
     TestExtractStub:
       test_simple_function:
