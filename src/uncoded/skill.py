@@ -187,8 +187,26 @@ decide.
 
 **Zero-caller public symbols.** A public symbol (no leading underscore) with no
 references anywhere in the codebase. Either dead code or an unused API surface.
-Use Serena's `find_referencing_symbols` if available; otherwise note as lower
-confidence.
+
+Check systematically, not by spot-check:
+
+1. From the namespace map, list all public symbols in each source module.
+2. Cross-reference with stub import sections — any symbol imported by another
+   source module is live; remove it from the candidate list. This culls the
+   obvious cases cheaply.
+3. For remaining candidates, use Serena's `find_referencing_symbols` to verify.
+   If Serena is unavailable, note findings as lower confidence.
+4. Distinguish two sub-cases when reporting:
+   - *No callers anywhere* — dead code; highest priority.
+   - *Callers only in tests* — the symbol is tested but not used in source;
+     may be an exposed internal that should be private.
+
+**Redundant public surface.** A public constant and a public parameterless
+function in the same module where the function's sole body is `return
+<constant>`. Both symbols being public exposes an implementation detail
+unnecessarily — only one needs to be public. Detection: look for parameterless
+public functions with a trivial single-line body, then check whether they
+return a public symbol from the same module.
 
 ## Report format
 
