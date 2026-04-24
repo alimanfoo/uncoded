@@ -13,16 +13,20 @@ Additionally, **uncoded** provides some convenience for setting up your coding a
 
 ## What it generates
 
-Running `uncoded sync` produces two things under `.uncoded/`:
+Running `uncoded sync` produces:
 
-**`namespace.yaml`** — a hierarchical YAML file listing every symbol:
+**`.uncoded/namespace.yaml`** — a hierarchical YAML file listing every symbol:
 directories, files, classes (with attributes and methods), functions. Covers
 all configured source roots. An agent can load this at the start of a task
 and immediately know the full vocabulary of the codebase.
 
-**`stubs/`** — one `.pyi` stub per source file, with imports, full signatures
-(parameter names, types, return types), first-sentence docstrings, and an
-`L<start>-<end>` line range on every definition.
+**`.uncoded/stubs/`** — one `.pyi` stub per source file, with imports, full
+signatures (parameter names, types, return types), first-sentence docstrings,
+and an `L<start>-<end>` line range on every definition.
+
+**`.claude/skills/uncoded-review/SKILL.md`** — a Claude Code skill for running
+a coherence review of the codebase (see [Coherence review](#coherence-review)
+below).
 
 `uncoded` also injects a navigation protocol into `CLAUDE.md`/`AGENTS.md`, so agents
 working in the repo pick up the instructions automatically.
@@ -105,6 +109,37 @@ When `uncoded` is set up, a navigation section is automatically maintained in
 3. Read only the source lines they need, using the `L<start>-<end>` ranges from the stubs.
 
 Three reads to navigate to any symbol in the codebase. No grep.
+
+## Coherence review
+
+AI coding agents tend to leave codebases in an incoherent state: names that
+no longer match behaviour, docstrings that describe stale signatures, dead
+symbols, pattern changes applied in some places but not others. `uncoded sync`
+installs a `/uncoded-review` skill that runs a structured diagnostic sweep to
+find these problems.
+
+Invoke it in Claude Code:
+
+```
+/uncoded-review
+```
+
+The review works in four sweeps:
+
+1. **Orient** — loads `namespace.yaml` and forms a vocabulary map.
+2. **Lexical** — scans the namespace for naming inconsistency: concept
+   duplication, qualifier accretion (`_v2`, `_legacy`, `_final`), vocabulary
+   islands, name collision with drift.
+3. **Promissory** — reads stubs, checking each symbol's name / signature /
+   docstring triple for internal disagreement.
+4. **Structural** — checks for boundary violations (private symbols imported
+   across modules), overgrown public surfaces, cross-domain imports, and
+   zero-caller public symbols.
+
+Output is a timestamped Markdown report saved to `.uncoded/reviews/`, with
+verbatim evidence and a confidence level (high / medium / low) for each
+finding. The review only reports — it proposes no fixes. The human decides
+what to follow up.
 
 ## Using uncoded with a language server
 
