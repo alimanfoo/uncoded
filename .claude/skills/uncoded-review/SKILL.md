@@ -179,8 +179,9 @@ confidence.
 
 ## Report format
 
-Save the report as `coherence-review-YYYY-MM-DD.md` in the current working
-directory, using today's date (timestamped to preserve previous runs).
+Save the report as `.uncoded/reviews/coherence-review-YYYY-MM-DD.md`, using
+today's date (timestamped to preserve previous runs). Create the directory if
+it does not exist.
 
 Use this structure:
 
