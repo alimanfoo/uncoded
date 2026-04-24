@@ -221,9 +221,9 @@ range), then verify the body with Serena's `find_symbol` with
 
 ## Report format
 
-Save the report as `.uncoded/reviews/coherence-review-YYYY-MM-DD.md`, using
-today's date (timestamped to preserve previous runs). Create the directory if
-it does not exist.
+Save the report as `.uncoded/reviews/coherence-review-YYYY-MM-DD-HHMMSS.md`,
+using today's date and current time (timestamped to preserve multiple runs on
+the same day). Create the directory if it does not exist.
 
 Use this structure:
 
