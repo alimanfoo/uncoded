@@ -1,10 +1,10 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [project]
 name = "uncoded"
-version = "0.0.0"
+dynamic = ["version"]
 description = "Here be dragons."
 readme = "README.md"
 license = "MIT"
@@ -33,6 +33,9 @@ uncoded = "uncoded.cli:main"
 [project.urls]
 Homepage = "https://github.com/alimanfoo/uncoded"
 Repository = "https://github.com/alimanfoo/uncoded"
+
+[tool.hatch.version]
+source = "vcs"
 
 [tool.uncoded]
 source-roots = ["src", "tests"]
