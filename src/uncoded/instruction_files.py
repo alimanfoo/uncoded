@@ -22,8 +22,8 @@ _SECTION_BODY = """\
 This repo uses [uncoded](https://github.com/alimanfoo/uncoded) to maintain
 a symbol index over its source code, designed for AI agents to navigate
 deterministically rather than by grep-and-skim. For source navigation, use
-the index — grep and partial-file reading produce a noisier, slower version
-of what the index already lists in full. (For free-text search elsewhere —
+the index — grep-and-skim produces a noisier, slower version of what the
+index already lists in full. (For free-text search elsewhere —
 Markdown, configs, commit messages — grep remains the right tool. The index
 is about source.)
 
