@@ -7,8 +7,8 @@ from uncoded.config import find_pyproject_toml
 
 SERENA_VERSION = '1.1.2'  # L38
 MCP_SERVER_SERENA = ...  # L40-55
-SERENA_PROJECT_YML = ...  # L57-74
-SERENA_ALLOWED_TOOLS = ...  # L76-85
+SERENA_PROJECT_YML = ...  # L57-73
+SERENA_ALLOWED_TOOLS = ...  # L75-85
 _STATUS_VERB = {'wrote': 'Wrote', 'updated': 'Updated', 'unchanged': 'Unchanged'}  # L87-91
 
 def read_project_name() -> str:  # L94-104

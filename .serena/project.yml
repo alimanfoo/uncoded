@@ -87,7 +87,6 @@ excluded_tools:
 - rename_memory
 - onboarding
 - check_onboarding_performed
-- initial_instructions
 - open_dashboard
 
 # list of tools to include that would otherwise be disabled (particularly optional tools that are disabled by default).

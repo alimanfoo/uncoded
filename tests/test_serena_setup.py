@@ -27,7 +27,6 @@ EXPECTED_EXCLUDED_TOOLS = {
     "rename_memory",
     "onboarding",
     "check_onboarding_performed",
-    "initial_instructions",
     "open_dashboard",
 }
 
@@ -82,12 +81,14 @@ class TestSetupSerena:
         assert data["languages"] == ["python_ty"]
         assert ".uncoded" in data["ignored_paths"]
         assert set(data["excluded_tools"]) == EXPECTED_EXCLUDED_TOOLS
+        assert "initial_instructions" not in data["excluded_tools"]
 
     def test_claude_settings_enables_serena_and_allowlists_tools(self, tmp_path):
         self._run(tmp_path)
         data = json.loads((tmp_path / ".claude" / "settings.json").read_text())
         assert data["enabledMcpjsonServers"] == ["serena"]
         assert set(data["permissions"]["allow"]) == set(SERENA_ALLOWED_TOOLS)
+        assert "mcp__serena__initial_instructions" in data["permissions"]["allow"]
 
     def test_idempotent(self, tmp_path):
         self._run(tmp_path)
