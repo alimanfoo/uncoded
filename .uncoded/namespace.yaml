@@ -10,6 +10,8 @@
 
 src/:
   uncoded/:
+    __init__.py:
+      __version__:
     cli.py:
       DEFAULT_MAP_OUTPUT:
       _sync:
@@ -327,3 +329,4 @@ tests/:
       test_check_mode_reports_noop_when_absent:
   test_uncoded.py:
     test_import:
+    test_version_is_exposed:
