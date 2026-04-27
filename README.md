@@ -35,13 +35,13 @@ working in the repo pick up the instructions automatically.
 ## Install
 
 ```
-pip install git+https://github.com/alimanfoo/uncoded
+pip install uncoded
 ```
 
 Or with uv:
 
 ```
-uv add git+https://github.com/alimanfoo/uncoded
+uv add uncoded
 ```
 
 ## Configure
