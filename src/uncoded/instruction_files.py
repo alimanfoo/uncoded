@@ -20,7 +20,12 @@ _SECTION_BODY = """\
 ## How to read and edit code in this codebase
 
 This repo uses [uncoded](https://github.com/alimanfoo/uncoded) to maintain
-a navigation index for AI agents. Do not grep. Do not read whole source files.
+a symbol index over its source code, designed for AI agents to navigate
+deterministically rather than by grep-and-skim. For source navigation, use
+the index — grep and partial-file reading produce a noisier, slower version
+of what the index already lists in full. (For free-text search elsewhere —
+Markdown, configs, commit messages — grep remains the right tool. The index
+is about source.)
 
 **Step 1 — Orient. Do this now, before anything else.** Your first action
 in this session — before answering the user, before any other tool call —
