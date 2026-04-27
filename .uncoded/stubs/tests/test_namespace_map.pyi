@@ -4,51 +4,51 @@ import yaml
 from uncoded.extract import ClassInfo, ModuleInfo
 from uncoded.namespace_map import HEADER, build_map, render_map
 
-class TestBuildMap:  # L7-146
+class TestBuildMap:
 
-    def test_single_file(self):  # L8-23
+    def test_single_file(self):
         ...
 
-    def test_nested_subpackage(self):  # L25-42
+    def test_nested_subpackage(self):
         ...
 
-    def test_class_with_methods(self):  # L44-58
+    def test_class_with_methods(self):
         ...
 
-    def test_class_with_attributes_and_methods(self):  # L60-80
+    def test_class_with_attributes_and_methods(self):
         ...
 
-    def test_function_is_none(self):  # L82-89
+    def test_function_is_none(self):
         ...
 
-    def test_class_with_no_members(self):  # L91-102
+    def test_class_with_no_members(self):
         ...
 
-    def test_source_order_preserved(self):  # L104-116
+    def test_source_order_preserved(self):
         ...
 
-    def test_module_level_constants(self):  # L118-131
+    def test_module_level_constants(self):
         ...
 
-    def test_constants_precede_classes_and_functions(self):  # L133-146
+    def test_constants_precede_classes_and_functions(self):
         ...
 
-class TestRenderMap:  # L149-213
+class TestRenderMap:
 
-    def test_roundtrips_through_yaml(self):  # L150-163
+    def test_roundtrips_through_yaml(self):
         ...
 
-    def test_preserves_insertion_order(self):  # L165-174
+    def test_preserves_insertion_order(self):
         ...
 
-    def test_null_renders_clean(self):  # L176-185
+    def test_null_renders_clean(self):
         ...
 
-    def test_header_appears_at_top(self):  # L187-194
+    def test_header_appears_at_top(self):
         ...
 
-    def test_header_mentions_stub_pointer(self):  # L196-200
+    def test_header_mentions_stub_pointer(self):
         ...
 
-    def test_header_does_not_break_yaml_parse(self):  # L202-213
+    def test_header_does_not_break_yaml_parse(self):
         ...

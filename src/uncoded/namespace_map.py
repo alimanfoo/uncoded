@@ -14,7 +14,7 @@ HEADER = """\
 # Directory keys end with "/". Entries within a file or class appear
 # in source order.
 #
-# For signatures, types, and line ranges, see stubs:
+# For signatures and types, see stubs:
 #   src/foo/bar.py  →  .uncoded/stubs/src/foo/bar.pyi
 """
 

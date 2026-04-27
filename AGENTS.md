@@ -24,7 +24,7 @@ Two-level index:
 
 2. **Stub files** (`.uncoded/stubs/`) — one `.pyi` per source file, with
    imports, full signatures (parameter names, types, return types),
-   first-sentence docstrings, and `L<start>-<end>` line range comments.
+   first-sentence docstrings, module constants, and class attributes.
 
 ## Commands
 
@@ -76,36 +76,31 @@ tests/test_foo.py   →  .uncoded/stubs/tests/test_foo.pyi
 
 This applies to every file you intend to touch or reference — including
 tests. The stub is sufficient for most navigation: it contains imports,
-every signature with types, first-sentence docstrings, and a `L<start>`
-or `L<start>-<end>` line range on every definition. Skipping to source
-means reading many lines to learn what the stub would have told you in
-one. If no stub exists at the expected path, the file has no symbols
-indexed — in that narrow case, read source directly.
+every signature with types, module-level assignments, class attributes,
+and first-sentence docstrings. Skipping to source means reading many
+lines to learn what the stub would have told you in one. If no stub
+exists at the expected path, the file has no symbols indexed — in that
+narrow case, read source directly.
 
-**Step 3 — Read source, never without offset and limit.** When you need
-source beyond what the stub shows, use the stub's line range:
+**Step 3 — Read source through Serena.** When you need source beyond
+what the stub shows, use Serena to read exactly the symbol body. The
+namespace map and stub give you the exact `relative_path` and `name_path`
+Serena needs — e.g. `ClassName/method` for a method,
+`function_name` for a top-level function.
 
-```
-Read src/foo/bar.py  offset=<start>  limit=<end - start + 1>
-```
-
-Calling Read on a `.py` file without `offset` and `limit` is a protocol
-violation — it means either Step 2 was skipped, or you are reading more
-of the file than the stub said you needed. The one exception is the
-first Read of a stub-less file (see Step 2), which is genuinely
-exploratory.
+Stubs intentionally do not carry source line ranges: line numbers churn
+when nearby code moves, creating noisy generated diffs and teaching
+agents to trust stale coordinates. Let uncoded provide the stable map
+and signatures; let Serena resolve the current source body.
 
 **For symbol-level operations — use Serena.** Where Serena's MCP tools
 are available (`mcp__serena__*` in the tool list), prefer them over
 Read / Edit / grep for anything that operates on a symbol as a unit.
-The namespace map gives you the exact `name_path` and `relative_path`
-these tools take as input — e.g. `ClassName/method` for a method,
-`function_name` for a top-level function.
 
 - **Read one symbol body.** `find_symbol` with `include_body=True`
-  returns exactly the symbol — no `offset` / `limit` arithmetic, no
-  risk of reading too much. Often easier than the Step 3 dance for a
-  single function or method. (Stay on stubs for a wider sweep.)
+  returns exactly the symbol — no offset arithmetic, no risk of reading
+  too much. Stay on stubs for a wider sweep; use Serena when you need
+  implementation detail.
 - **Find callers, or check whether a symbol is dead.**
   `find_referencing_symbols` returns every reference resolved by the
   language server. Do not grep for the name — grep hits comments,
@@ -123,7 +118,7 @@ these tools take as input — e.g. `ClassName/method` for a method,
   stays put.
 
 Reach for Read + Edit when Serena does not fit: free-text files
-(Markdown, YAML, configs), partial-line edits inside a function
-body, or the rare stub-less Python file that needs exploratory
-reading.
+(Markdown, YAML, configs), partial-line edits inside a function body
+after you have retrieved it, environments where Serena is unavailable,
+or the rare stub-less Python file that needs exploratory reading.
 <!-- uncoded:end -->

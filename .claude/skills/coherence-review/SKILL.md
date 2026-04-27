@@ -201,10 +201,10 @@ Check systematically, not by spot-check:
 **Redundant public surface.** A public constant and a public parameterless
 function in the same module where the function's sole body is `return
 <constant>`. Both symbols being public exposes an implementation detail
-unnecessarily — only one needs to be public. Detection: look for parameterless
-public functions with a trivial single-line body (visible from the stub's line
-range), then verify the body with Serena's `find_symbol` with
-`include_body=True` before reporting.
+unnecessarily — only one needs to be public. Detection: use the stubs to find
+public parameterless functions near public constants, then verify each
+candidate body with Serena's `find_symbol` with `include_body=True` before
+reporting.
 
 ## Report format
 
@@ -240,7 +240,7 @@ Regions with two or more findings — examine these first:
   collision-with-drift | name-signature-mismatch | docstring-signature-mismatch |
   docstring-name-mismatch | defensive-docstring | god-module |
   boundary-violation | cross-vocabulary-import | zero-caller
-**Location:** `path/to/file.py` · `ClassName/method_name` · L12–L34
+**Location:** `path/to/file.py` · `ClassName/method_name`
 **Confidence:** high | medium | low
 
 **Evidence:**

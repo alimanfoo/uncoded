@@ -2,4 +2,4 @@
 
 from importlib.metadata import version
 
-__version__ = version('uncoded')  # L5
+__version__ = version('uncoded')

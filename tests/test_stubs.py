@@ -29,8 +29,6 @@ class TestExtractStub:
         assert f.params == [StubParam("name", "str")]
         assert f.return_annotation == "str"
         assert f.docstring_excerpt == "Say hello."
-        assert f.start_line == 1
-        assert f.end_line == 3
 
     def test_function_no_annotations(self):
         source = textwrap.dedent("""\
@@ -90,24 +88,6 @@ class TestExtractStub:
         assert len(cls.methods) == 2
         assert cls.methods[0].name == "save"
         assert cls.methods[1].name == "_validate"
-
-    def test_class_line_range(self):
-        source = textwrap.dedent("""\
-            class Foo:
-                def bar(self):
-                    pass
-
-                def baz(self):
-                    pass
-        """)
-        module = extract_stub(source, "pkg/foo.py")
-        cls = module.classes[0]
-        assert cls.start_line == 1
-        assert cls.end_line == 6
-        assert cls.methods[0].start_line == 2
-        assert cls.methods[0].end_line == 3
-        assert cls.methods[1].start_line == 5
-        assert cls.methods[1].end_line == 6
 
     def test_class_with_bases(self):
         source = textwrap.dedent("""\
@@ -193,7 +173,6 @@ class TestExtractStub:
         assert c.annotation == "int"
         assert c.value_source == "3"
         assert c.is_type_alias is False
-        assert c.start_line == 1
 
     def test_constant_unannotated_with_value(self):
         source = textwrap.dedent("""\
@@ -335,20 +314,34 @@ class TestRenderStub:
         output = render_stub(module)
         assert "import os\nfrom pathlib import Path" in output
 
-    def test_function_line_range(self):
+    def test_rendered_stub_has_no_line_range_comments(self):
         module = StubModule(
             rel_path="pkg/mod.py",
-            functions=[StubFunction(name="run", start_line=10, end_line=20)],
+            constants=[StubAssignment(name="VALUE", value_source="1")],
+            functions=[StubFunction(name="run")],
+            classes=[
+                StubClass(
+                    name="Worker",
+                    methods=[
+                        StubFunction(
+                            name="work",
+                            params=[StubParam("self")],
+                        )
+                    ],
+                )
+            ],
         )
         output = render_stub(module)
-        assert "def run():  # L10-20\n    ..." in output
+        assert "VALUE = 1" in output
+        assert "def run():\n    ..." in output
+        assert "class Worker:" in output
+        assert "    def work(self):" in output
+        assert "# L" not in output
 
     def test_async_function_prefix(self):
         module = StubModule(
             rel_path="pkg/mod.py",
-            functions=[
-                StubFunction(name="fetch", is_async=True, start_line=1, end_line=3)
-            ],
+            functions=[StubFunction(name="fetch", is_async=True)],
         )
         assert "async def fetch" in render_stub(module)
 
@@ -360,8 +353,6 @@ class TestRenderStub:
                     name="greet",
                     params=[StubParam("name", "str")],
                     return_annotation="str",
-                    start_line=1,
-                    end_line=2,
                 )
             ],
         )
@@ -374,8 +365,6 @@ class TestRenderStub:
                 StubFunction(
                     name="go",
                     docstring_excerpt="Do the thing.",
-                    start_line=1,
-                    end_line=3,
                 )
             ],
         )
@@ -386,30 +375,16 @@ class TestRenderStub:
     def test_class_with_bases(self):
         module = StubModule(
             rel_path="pkg/mod.py",
-            classes=[StubClass(name="Dog", bases=["Animal"], start_line=1, end_line=5)],
+            classes=[StubClass(name="Dog", bases=["Animal"])],
         )
-        assert "class Dog(Animal):  # L1-5" in render_stub(module)
-
-    def test_class_single_line_range(self):
-        module = StubModule(
-            rel_path="pkg/mod.py",
-            classes=[StubClass(name="Marker", start_line=7, end_line=7)],
-        )
-        assert "class Marker:  # L7\n" in render_stub(module)
-
-    def test_function_single_line_range(self):
-        module = StubModule(
-            rel_path="pkg/mod.py",
-            functions=[StubFunction(name="noop", start_line=3, end_line=3)],
-        )
-        assert "def noop():  # L3\n" in render_stub(module)
+        assert "class Dog(Animal):" in render_stub(module)
 
     def test_class_no_bases(self):
         module = StubModule(
             rel_path="pkg/mod.py",
-            classes=[StubClass(name="Plain", start_line=1, end_line=2)],
+            classes=[StubClass(name="Plain")],
         )
-        assert "class Plain:  # L1-2" in render_stub(module)
+        assert "class Plain:" in render_stub(module)
 
     def test_attribute_with_annotation(self):
         module = StubModule(
@@ -417,8 +392,6 @@ class TestRenderStub:
             classes=[
                 StubClass(
                     name="Record",
-                    start_line=1,
-                    end_line=3,
                     attributes=[StubAssignment("name", annotation="str")],
                 )
             ],
@@ -431,21 +404,17 @@ class TestRenderStub:
             classes=[
                 StubClass(
                     name="Foo",
-                    start_line=1,
-                    end_line=5,
                     methods=[
                         StubFunction(
                             name="bar",
                             params=[StubParam("self")],
-                            start_line=2,
-                            end_line=4,
                         )
                     ],
                 )
             ],
         )
         output = render_stub(module)
-        assert "    def bar(self):  # L2-4" in output
+        assert "    def bar(self):" in output
 
     def test_ends_with_newline(self):
         module = StubModule(rel_path="pkg/mod.py")
@@ -470,13 +439,9 @@ class TestRenderStub:
     def test_constant_with_value_rendered(self):
         module = StubModule(
             rel_path="pkg/mod.py",
-            constants=[
-                StubAssignment(
-                    name="TIMEOUT", value_source="30", start_line=3, end_line=3
-                )
-            ],
+            constants=[StubAssignment(name="TIMEOUT", value_source="30")],
         )
-        assert "TIMEOUT = 30  # L3" in render_stub(module)
+        assert "TIMEOUT = 30" in render_stub(module)
 
     def test_constant_annotated_with_value_rendered(self):
         module = StubModule(
@@ -486,33 +451,25 @@ class TestRenderStub:
                     name="MAX",
                     annotation="int",
                     value_source="3",
-                    start_line=4,
-                    end_line=4,
                 )
             ],
         )
-        assert "MAX: int = 3  # L4" in render_stub(module)
+        assert "MAX: int = 3" in render_stub(module)
 
     def test_constant_elided_rendered(self):
         module = StubModule(
             rel_path="pkg/mod.py",
-            constants=[
-                StubAssignment(
-                    name="BIG", value_source="...", start_line=5, end_line=10
-                )
-            ],
+            constants=[StubAssignment(name="BIG", value_source="...")],
         )
-        assert "BIG = ...  # L5-10" in render_stub(module)
+        assert "BIG = ..." in render_stub(module)
 
     def test_constant_bare_annotation_rendered(self):
         module = StubModule(
             rel_path="pkg/mod.py",
-            constants=[
-                StubAssignment(name="FOO", annotation="int", start_line=2, end_line=2)
-            ],
+            constants=[StubAssignment(name="FOO", annotation="int")],
         )
         output = render_stub(module)
-        assert "FOO: int  # L2" in output
+        assert "FOO: int" in output
         assert "FOO: int = " not in output
 
     def test_type_alias_pep695_rendered(self):
@@ -523,12 +480,10 @@ class TestRenderStub:
                     name="UserId",
                     value_source="int",
                     is_type_alias=True,
-                    start_line=1,
-                    end_line=1,
                 )
             ],
         )
-        assert "type UserId = int  # L1" in render_stub(module)
+        assert "type UserId = int" in render_stub(module)
 
     def test_unannotated_class_attribute_rendered(self):
         module = StubModule(
@@ -536,16 +491,13 @@ class TestRenderStub:
             classes=[
                 StubClass(
                     name="Registry",
-                    start_line=1,
-                    end_line=3,
                     attributes=[StubAssignment("items", value_source="[]")],
                 )
             ],
         )
         output = render_stub(module)
         assert "    items = []" in output
-        # No line range comment on class attributes.
-        assert "items = []  # L" not in output
+        assert "# L" not in output
 
 
 class TestBuildStubs:

@@ -5,7 +5,7 @@
 # Directory keys end with "/". Entries within a file or class appear
 # in source order.
 #
-# For signatures, types, and line ranges, see stubs:
+# For signatures and types, see stubs:
 #   src/foo/bar.py  →  .uncoded/stubs/src/foo/bar.pyi
 
 src/:
@@ -77,22 +77,16 @@ src/:
         params:
         return_annotation:
         docstring_excerpt:
-        start_line:
-        end_line:
         is_async:
       StubAssignment:
         name:
         annotation:
         value_source:
-        start_line:
-        end_line:
         is_type_alias:
       StubClass:
         name:
         bases:
         docstring_excerpt:
-        start_line:
-        end_line:
         attributes:
         methods:
       StubModule:
@@ -103,7 +97,6 @@ src/:
         functions:
       _first_sentence:
       _extract_params:
-      _line_range:
       _render_value:
       _extract_assignment:
       _extract_function:
@@ -114,7 +107,6 @@ src/:
       _render_function:
       _format_assignment_body:
       _render_assignment:
-      _render_class_attribute:
       render_stub:
       _generate_stubs:
       build_stubs:
@@ -258,7 +250,6 @@ tests/:
       test_async_function:
       test_private_function_included:
       test_class_with_attributes_and_methods:
-      test_class_line_range:
       test_class_with_bases:
       test_class_no_bases:
       test_docstring_first_sentence_only:
@@ -282,13 +273,11 @@ tests/:
     TestRenderStub:
       test_header_contains_path:
       test_imports_rendered:
-      test_function_line_range:
+      test_rendered_stub_has_no_line_range_comments:
       test_async_function_prefix:
       test_function_with_annotations:
       test_docstring_excerpt_rendered:
       test_class_with_bases:
-      test_class_single_line_range:
-      test_function_single_line_range:
       test_class_no_bases:
       test_attribute_with_annotation:
       test_method_indented:

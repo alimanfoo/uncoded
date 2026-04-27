@@ -5,192 +5,183 @@ import textwrap
 import pytest
 from uncoded.stubs import StubAssignment, StubClass, StubFunction, StubModule, StubParam, build_stubs, extract_stub, render_stub
 
-class TestExtractStub:  # L18-322
+class TestExtractStub:
 
-    def test_simple_function(self):  # L19-33
+    def test_simple_function(self):
         ...
 
-    def test_function_no_annotations(self):  # L35-43
+    def test_function_no_annotations(self):
         ...
 
-    def test_async_function(self):  # L45-53
+    def test_async_function(self):
         ...
 
-    def test_private_function_included(self):  # L55-63
+    def test_private_function_included(self):
         ...
 
-    def test_class_with_attributes_and_methods(self):  # L65-92
+    def test_class_with_attributes_and_methods(self):
         ...
 
-    def test_class_line_range(self):  # L94-110
+    def test_class_with_bases(self):
         ...
 
-    def test_class_with_bases(self):  # L112-118
+    def test_class_no_bases(self):
         ...
 
-    def test_class_no_bases(self):  # L120-126
+    def test_docstring_first_sentence_only(self):
         ...
 
-    def test_docstring_first_sentence_only(self):  # L128-135
+    def test_no_docstring(self):
         ...
 
-    def test_no_docstring(self):  # L137-143
+    def test_kwargs_and_varargs(self):
         ...
 
-    def test_kwargs_and_varargs(self):  # L145-153
+    def test_imports_collected(self):
         ...
 
-    def test_imports_collected(self):  # L155-169
+    def test_syntax_error_raises(self):
         ...
 
-    def test_syntax_error_raises(self):  # L171-173
+    def test_source_order_preserved(self):
         ...
 
-    def test_source_order_preserved(self):  # L175-184
+    def test_constant_annotated_with_value(self):
         ...
 
-    def test_constant_annotated_with_value(self):  # L186-196
+    def test_constant_unannotated_with_value(self):
         ...
 
-    def test_constant_unannotated_with_value(self):  # L198-206
+    def test_constant_bare_annotation(self):
         ...
 
-    def test_constant_bare_annotation(self):  # L208-215
+    def test_constant_value_too_long_elided(self):
         ...
 
-    def test_constant_value_too_long_elided(self):  # L217-223
+    def test_constant_private_included(self):
         ...
 
-    def test_constant_private_included(self):  # L225-230
+    def test_type_alias_classic(self):
         ...
 
-    def test_type_alias_classic(self):  # L232-242
+    def test_type_alias_pep695(self):
         ...
 
-    def test_type_alias_pep695(self):  # L244-252
+    def test_tuple_unpacking_skipped(self):
         ...
 
-    def test_tuple_unpacking_skipped(self):  # L254-259
+    def test_class_with_unannotated_attribute(self):
         ...
 
-    def test_class_with_unannotated_attribute(self):  # L261-273
+    def test_property_rendered_as_attribute(self):
         ...
 
-    def test_property_rendered_as_attribute(self):  # L275-290
+    def test_property_without_return_annotation(self):
         ...
 
-    def test_property_without_return_annotation(self):  # L292-302
+    def test_property_setter_and_deleter_suppressed(self):
         ...
 
-    def test_property_setter_and_deleter_suppressed(self):  # L304-322
+class TestRenderStub:
+
+    def test_header_contains_path(self):
         ...
 
-class TestRenderStub:  # L325-548
-
-    def test_header_contains_path(self):  # L326-328
+    def test_imports_rendered(self):
         ...
 
-    def test_imports_rendered(self):  # L330-336
+    def test_rendered_stub_has_no_line_range_comments(self):
         ...
 
-    def test_function_line_range(self):  # L338-344
+    def test_async_function_prefix(self):
         ...
 
-    def test_async_function_prefix(self):  # L346-353
+    def test_function_with_annotations(self):
         ...
 
-    def test_function_with_annotations(self):  # L355-368
+    def test_docstring_excerpt_rendered(self):
         ...
 
-    def test_docstring_excerpt_rendered(self):  # L370-384
+    def test_class_with_bases(self):
         ...
 
-    def test_class_with_bases(self):  # L386-391
+    def test_class_no_bases(self):
         ...
 
-    def test_class_single_line_range(self):  # L393-398
+    def test_attribute_with_annotation(self):
         ...
 
-    def test_function_single_line_range(self):  # L400-405
+    def test_method_indented(self):
         ...
 
-    def test_class_no_bases(self):  # L407-412
+    def test_ends_with_newline(self):
         ...
 
-    def test_attribute_with_annotation(self):  # L414-426
+    def test_property_rendered_as_class_attribute(self):
         ...
 
-    def test_method_indented(self):  # L428-448
+    def test_constant_with_value_rendered(self):
         ...
 
-    def test_ends_with_newline(self):  # L450-452
+    def test_constant_annotated_with_value_rendered(self):
         ...
 
-    def test_property_rendered_as_class_attribute(self):  # L454-468
+    def test_constant_elided_rendered(self):
         ...
 
-    def test_constant_with_value_rendered(self):  # L470-479
+    def test_constant_bare_annotation_rendered(self):
         ...
 
-    def test_constant_annotated_with_value_rendered(self):  # L481-494
+    def test_type_alias_pep695_rendered(self):
         ...
 
-    def test_constant_elided_rendered(self):  # L496-505
+    def test_unannotated_class_attribute_rendered(self):
         ...
 
-    def test_constant_bare_annotation_rendered(self):  # L507-516
-        ...
-
-    def test_type_alias_pep695_rendered(self):  # L518-531
-        ...
-
-    def test_unannotated_class_attribute_rendered(self):  # L533-548
-        ...
-
-class TestBuildStubs:  # L551-639
+class TestBuildStubs:
     """build_stubs writes expected stubs and removes orphans for its source root."""
 
-    def _setup(self, tmp_path):  # L554-559
+    def _setup(self, tmp_path):
         ...
 
-    def test_writes_expected_stubs(self, tmp_path):  # L561-565
+    def test_writes_expected_stubs(self, tmp_path):
         ...
 
-    def test_removes_orphan_stub_when_source_deleted(self, tmp_path):  # L567-577
+    def test_removes_orphan_stub_when_source_deleted(self, tmp_path):
         ...
 
-    def test_removes_orphan_stub_when_source_renamed(self, tmp_path):  # L579-588
+    def test_removes_orphan_stub_when_source_renamed(self, tmp_path):
         ...
 
-    def test_prunes_empty_directories(self, tmp_path):  # L590-602
+    def test_prunes_empty_directories(self, tmp_path):
         ...
 
-    def test_does_not_touch_other_source_root(self, tmp_path):  # L604-618
+    def test_does_not_touch_other_source_root(self, tmp_path):
         ...
 
-    def test_no_op_when_clean(self, tmp_path):  # L620-627
+    def test_no_op_when_clean(self, tmp_path):
         ...
 
-    def test_reports_count_on_first_build(self, tmp_path):  # L629-633
+    def test_reports_count_on_first_build(self, tmp_path):
         ...
 
-    def test_reports_zero_when_clean(self, tmp_path):  # L635-639
+    def test_reports_zero_when_clean(self, tmp_path):
         ...
 
-class TestBuildStubsCheckMode:  # L642-681
+class TestBuildStubsCheckMode:
     """build_stubs with check=True must report changes without mutating the tree."""
 
-    def _setup(self, tmp_path):  # L645-650
+    def _setup(self, tmp_path):
         ...
 
-    def test_does_not_write_stub_in_check_mode(self, tmp_path):  # L652-657
+    def test_does_not_write_stub_in_check_mode(self, tmp_path):
         ...
 
-    def test_zero_changes_when_clean(self, tmp_path):  # L659-663
+    def test_zero_changes_when_clean(self, tmp_path):
         ...
 
-    def test_detects_stale_stub_content(self, tmp_path):  # L665-671
+    def test_detects_stale_stub_content(self, tmp_path):
         ...
 
-    def test_detects_orphan_stub_without_removing_it(self, tmp_path):  # L673-681
+    def test_detects_orphan_stub_without_removing_it(self, tmp_path):
         ...

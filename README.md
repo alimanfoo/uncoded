@@ -22,7 +22,7 @@ and immediately know the full vocabulary of the codebase.
 
 **`.uncoded/stubs/`** — one `.pyi` stub per source file, with imports, full
 signatures (parameter names, types, return types), first-sentence docstrings,
-and an `L<start>-<end>` line range on every definition.
+module constants, and class attributes.
 
 **`.claude/skills/coherence-review/SKILL.md`** and
 **`.agents/skills/coherence-review/SKILL.md`** — a coherence review skill,
@@ -97,19 +97,22 @@ uncoded check
 It runs the same pipeline but writes nothing. Exits 0 if every generated
 file is byte-identical to what a rebuild would produce, and 1 otherwise
 — printing which files would change. A stale index is a silent failure
-mode (agents read misleading line ranges and signatures), so gating on
-this in CI is worthwhile even alongside a pre-commit hook.
+mode (agents read misleading names and signatures), so gating on this in
+CI is worthwhile even alongside a pre-commit hook.
 
 ## How agents use it
 
 When `uncoded` is set up, a navigation section is automatically maintained in
-`CLAUDE.md`. Agents following that protocol:
+the configured instruction files (by default, `CLAUDE.md` and `AGENTS.md`).
+Agents following that protocol:
 
 1. Read `.uncoded/namespace.yaml` to orient — every symbol, at a glance.
-2. Read the relevant `.pyi` stubs to understand signatures and locate line ranges.
-3. Read only the source lines they need, using the `L<start>-<end>` ranges from the stubs.
+2. Read the relevant `.pyi` stubs to understand imports, signatures, constants, class members, and docstring summaries.
+3. Use Serena's `find_symbol(..., include_body=True)` when they need implementation detail for a specific symbol.
 
-Three reads to navigate to any symbol in the codebase. No grep.
+The split is deliberate: `uncoded` provides a stable map and semantic summary;
+Serena resolves the current source body. No grep, no stale line-number
+coordinates, no offset arithmetic.
 
 ## Coherence review
 

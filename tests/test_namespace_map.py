@@ -195,7 +195,7 @@ class TestRenderMap:
 
     def test_header_mentions_stub_pointer(self):
         # The header's job is partly to tell a cold-start agent where to find
-        # signatures, types, and line ranges. Lock in that pointer.
+        # signatures and types. Lock in that pointer.
         output = render_map(build_map([]))
         assert ".uncoded/stubs/" in output
 

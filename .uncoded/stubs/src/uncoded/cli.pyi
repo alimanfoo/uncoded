@@ -12,12 +12,12 @@ from uncoded.skill import sync_skill
 from uncoded.stubs import build_stubs
 from uncoded.sync import sync_file
 
-DEFAULT_MAP_OUTPUT = Path('.uncoded/namespace.yaml')  # L16
+DEFAULT_MAP_OUTPUT = Path('.uncoded/namespace.yaml')
 
-def _sync(*, check: bool) -> int:  # L19-61
+def _sync(*, check: bool) -> int:
     """Sync (or verify) the namespace map, stub files, and instruction-file sections."""
     ...
 
-def main() -> int:  # L64-103
+def main() -> int:
     """Dispatch the uncoded CLI."""
     ...
