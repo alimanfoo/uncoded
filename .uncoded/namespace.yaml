@@ -107,7 +107,6 @@ src/:
       _render_function:
       _format_assignment_body:
       _render_assignment:
-      _render_class_attribute:
       render_stub:
       _generate_stubs:
       build_stubs:

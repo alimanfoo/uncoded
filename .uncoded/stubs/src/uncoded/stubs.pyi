@@ -39,7 +39,7 @@ def _extract_class(node: ast.ClassDef) -> StubClass:
     ...
 
 def extract_stub(source: str, rel_path: str) -> StubModule:
-    """Parse Python source and extract all symbols with signatures."""
+    """Parse Python source and extract imports, constants, classes, and functions."""
     ...
 
 def _render_param(p: StubParam) -> str:
@@ -56,10 +56,6 @@ def _format_assignment_body(a: StubAssignment) -> str:
 
 def _render_assignment(a: StubAssignment, indent: str) -> str:
     """Render a module-level assignment as a stub line."""
-    ...
-
-def _render_class_attribute(a: StubAssignment, indent: str) -> str:
-    """Render a class attribute as a stub line."""
     ...
 
 def render_stub(module: StubModule) -> str:

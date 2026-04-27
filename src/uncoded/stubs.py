@@ -219,7 +219,7 @@ def _extract_class(node: ast.ClassDef) -> StubClass:
 
 
 def extract_stub(source: str, rel_path: str) -> StubModule:
-    """Parse Python source and extract all symbols with signatures."""
+    """Parse Python source and extract imports, constants, classes, and functions."""
     tree = ast.parse(source)
     imports: list[str] = []
     constants: list[StubAssignment] = []
@@ -284,11 +284,6 @@ def _render_assignment(a: StubAssignment, indent: str = "") -> str:
     return f"{indent}{body}"
 
 
-def _render_class_attribute(a: StubAssignment, indent: str = "    ") -> str:
-    """Render a class attribute as a stub line."""
-    return f"{indent}{_format_assignment_body(a)}"
-
-
 def render_stub(module: StubModule) -> str:
     """Render a StubModule as a .pyi file string."""
     lines: list[str] = [f"# {module.rel_path}", ""]
@@ -314,7 +309,7 @@ def render_stub(module: StubModule) -> str:
         lines.append("")
 
         for attr in cls.attributes:
-            lines.append(_render_class_attribute(attr))
+            lines.append(_render_assignment(attr, indent="    "))
         if cls.attributes:
             lines.append("")
 
