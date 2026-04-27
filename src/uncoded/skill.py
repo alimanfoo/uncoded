@@ -1,17 +1,22 @@
-"""Generate the uncoded-review skill file for the target repository."""
+"""Generate the coherence-review skill file for the target repository."""
 
 from pathlib import Path
 
-from uncoded.sync import sync_file
+from uncoded.sync import remove_file, sync_file
 
 SKILL_OUTPUTS = [
+    Path(".claude/skills/coherence-review/SKILL.md"),  # Claude Code
+    Path(".agents/skills/coherence-review/SKILL.md"),  # Codex
+]
+
+LEGACY_SKILL_OUTPUTS = [
     Path(".claude/skills/uncoded-review/SKILL.md"),  # Claude Code
     Path(".agents/skills/uncoded-review/SKILL.md"),  # Codex
 ]
 
 _SKILL_CONTENT = """\
 ---
-name: uncoded-review
+name: coherence-review
 description: "Perform a coherence review of a Python codebase: a diagnostic sweep \
 for semantic drift, naming inconsistency, promissory mismatch, and structural \
 incoherence. Produces a Markdown report of findings with verbatim evidence and \
@@ -377,6 +382,7 @@ others raise, for the same kind of operation.</flag>
 
 
 def sync_skill(*, check: bool) -> bool:
-    """Write the uncoded-review skill file to all supported agent locations."""
+    """Write the coherence-review skill file to all supported agent locations."""
     results = [sync_file(path, _SKILL_CONTENT, check=check) for path in SKILL_OUTPUTS]
+    results.extend(remove_file(path, check=check) for path in LEGACY_SKILL_OUTPUTS)
     return any(results)

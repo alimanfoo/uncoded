@@ -24,8 +24,8 @@ and immediately know the full vocabulary of the codebase.
 signatures (parameter names, types, return types), first-sentence docstrings,
 and an `L<start>-<end>` line range on every definition.
 
-**`.claude/skills/uncoded-review/SKILL.md`** and
-**`.agents/skills/uncoded-review/SKILL.md`** — a coherence review skill,
+**`.claude/skills/coherence-review/SKILL.md`** and
+**`.agents/skills/coherence-review/SKILL.md`** — a coherence review skill,
 written to both Claude Code and Codex skill directories (see
 [Coherence review](#coherence-review) below).
 
@@ -116,13 +116,13 @@ Three reads to navigate to any symbol in the codebase. No grep.
 AI coding agents tend to leave codebases in an incoherent state: names that
 no longer match behaviour, docstrings that describe stale signatures, dead
 symbols, pattern changes applied in some places but not others. `uncoded sync`
-installs a `/uncoded-review` skill that runs a structured diagnostic sweep to
+installs a `/coherence-review` skill that runs a structured diagnostic sweep to
 find these problems.
 
 Invoke it in Claude Code:
 
 ```
-/uncoded-review
+/coherence-review
 ```
 
 The review works in four sweeps:

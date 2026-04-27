@@ -1,11 +1,12 @@
 # src/uncoded/skill.py
 
 from pathlib import Path
-from uncoded.sync import sync_file
+from uncoded.sync import remove_file, sync_file
 
 SKILL_OUTPUTS = ...  # L7-10
-_SKILL_CONTENT = ...  # L12-376
+LEGACY_SKILL_OUTPUTS = ...  # L12-15
+_SKILL_CONTENT = ...  # L17-381
 
-def sync_skill(*, check: bool) -> bool:  # L379-382
-    """Write the uncoded-review skill file to all supported agent locations."""
+def sync_skill(*, check: bool) -> bool:  # L384-388
+    """Write the coherence-review skill file to all supported agent locations."""
     ...

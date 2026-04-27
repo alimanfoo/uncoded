@@ -63,6 +63,7 @@ src/:
       setup_serena:
     skill.py:
       SKILL_OUTPUTS:
+      LEGACY_SKILL_OUTPUTS:
       _SKILL_CONTENT:
       sync_skill:
     stubs.py:
@@ -239,6 +240,7 @@ tests/:
       test_repo_serena_project_yml_matches_template_contract:
   test_skill.py:
     TestSyncSkill:
+      test_skill_name_and_output_paths:
       test_writes_skill_files:
       test_creates_parent_directories:
       test_returns_true_on_first_write:
@@ -247,6 +249,8 @@ tests/:
       test_check_mode_does_not_write:
       test_check_mode_reports_change_when_missing:
       test_check_mode_reports_no_change_when_in_sync:
+      test_removes_legacy_skill_files:
+      test_check_mode_reports_legacy_skill_files_without_removing:
   test_stubs.py:
     TestExtractStub:
       test_simple_function:

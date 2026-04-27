@@ -1,5 +1,5 @@
 ---
-name: uncoded-review
+name: coherence-review
 description: "Perform a coherence review of a Python codebase: a diagnostic sweep for semantic drift, naming inconsistency, promissory mismatch, and structural incoherence. Produces a Markdown report of findings with verbatim evidence and confidence levels, for human investigation. Assumes uncoded is installed (.uncoded/namespace.yaml and .uncoded/stubs/ present)."
 ---
 
