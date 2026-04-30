@@ -112,8 +112,8 @@ With the map and stub loaded, you have the exact `relative_path` and
   this symbol," regardless of how dead it looks, this is the tool.
 
 Skip `activate_project` and `check_onboarding_performed`. The project
-is already active by default, and `check_onboarding_performed` triggers
-an onboarding flow that writes Serena memories — which uncoded
+is already active by default, and `check_onboarding_performed` only
+gates Serena's `onboarding` flow — which writes memories that uncoded
 deliberately disables. Both calls produce only noise.
 
 ### Where Read, Edit, and grep are still the right tools
