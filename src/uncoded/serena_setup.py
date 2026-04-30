@@ -165,6 +165,7 @@ def _sync_claude_settings(path: Path) -> str:
     return status
 
 
+# `root` is an injection seam for tests; the CLI always uses `Path.cwd()`.
 def setup(root: Path | None = None) -> int:
     """Generate Serena + ty + Claude Code configuration under ``root``.
 
