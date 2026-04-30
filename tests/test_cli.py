@@ -177,9 +177,9 @@ class TestMainDispatch:
         monkeypatch.setattr(sys, "argv", ["uncoded", "check"])
         assert cli.main() == 0
 
-    def test_setup_serena_subcommand(self, tmp_path, monkeypatch):
+    def test_setup_subcommand(self, tmp_path, monkeypatch):
         _init_repo(tmp_path)
-        monkeypatch.setattr(sys, "argv", ["uncoded", "setup-serena"])
+        monkeypatch.setattr(sys, "argv", ["uncoded", "setup"])
         assert cli.main() == 0
         assert (tmp_path / ".mcp.json").exists()
 

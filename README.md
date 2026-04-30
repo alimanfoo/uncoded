@@ -160,7 +160,7 @@ Serena on first use.
 ### Setup
 
 ```
-uv run uncoded setup-serena
+uv run uncoded setup
 ```
 
 Generates three files, tailored for Claude Code:

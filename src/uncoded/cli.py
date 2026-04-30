@@ -66,7 +66,7 @@ def main() -> int:
 
     Three subcommands: ``sync`` builds or refreshes the navigation index;
     ``check`` verifies the index matches what a rebuild would produce
-    (exits non-zero on drift, useful in CI); ``setup-serena`` generates
+    (exits non-zero on drift, useful in CI); ``setup`` generates
     MCP and Claude Code config for the recommended Serena + ty LSP
     integration.
     """
@@ -90,7 +90,7 @@ def main() -> int:
         ),
     )
     subparsers.add_parser(
-        "setup-serena",
+        "setup",
         help=(
             "Write .mcp.json, .serena/project.yml, and .claude/settings.json "
             "for the recommended Serena + ty LSP integration."
@@ -98,6 +98,6 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    if args.command == "setup-serena":
+    if args.command == "setup":
         return setup_serena()
     return _sync(check=args.command == "check")

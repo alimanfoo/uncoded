@@ -131,7 +131,7 @@ tests/:
       test_sync_subcommand_runs_in_apply_mode:
       test_check_subcommand_runs_in_check_mode:
       test_check_subcommand_returns_zero_on_fresh_index:
-      test_setup_serena_subcommand:
+      test_setup_subcommand:
       test_no_subcommand_is_an_error:
       test_unknown_subcommand_is_an_error:
     _init_repo:
