@@ -69,35 +69,45 @@ def main() -> int:
     (exits non-zero on drift, useful in CI); ``setup`` generates
     MCP and Claude Code config for the recommended Serena + ty LSP
     integration.
+
+    Each subparser binds its own ``action`` callable via
+    ``set_defaults``; ``main`` then dispatches via ``args.action()``.
+    Adding a new subcommand is a local change at the registration site —
+    no central dispatch ladder to update, and no silent fall-through if
+    the binding is forgotten (``args.action`` will simply be missing).
     """
     parser = argparse.ArgumentParser(
         prog="uncoded",
         description="Build a navigation index for AI coding agents.",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
-    subparsers.add_parser(
+
+    sync_parser = subparsers.add_parser(
         "sync",
         help=(
             "Build or refresh the namespace map, stub files, and "
             "instruction-file sections."
         ),
     )
-    subparsers.add_parser(
+    sync_parser.set_defaults(action=lambda: _sync(check=False))
+
+    check_parser = subparsers.add_parser(
         "check",
         help=(
             "Verify the index is up to date without writing. Exits non-zero "
             "if any file would change. Useful in CI."
         ),
     )
-    subparsers.add_parser(
+    check_parser.set_defaults(action=lambda: _sync(check=True))
+
+    setup_parser = subparsers.add_parser(
         "setup",
         help=(
             "Write .mcp.json, .serena/project.yml, and .claude/settings.json "
             "for the recommended Serena + ty LSP integration."
         ),
     )
-    args = parser.parse_args()
+    setup_parser.set_defaults(action=lambda: setup())
 
-    if args.command == "setup":
-        return setup()
-    return _sync(check=args.command == "check")
+    args = parser.parse_args()
+    return args.action()
