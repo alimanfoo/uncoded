@@ -62,7 +62,7 @@ class TestSetupSerena:
         ...
 
 class TestRepoDogfooding:
-    """Catch drift between setup-serena's templates and this repo's own config."""
+    """Catch drift between ``uncoded setup``'s templates and this repo's own config."""
 
     def test_repo_mcp_json_pins_same_serena_version(self):
         ...

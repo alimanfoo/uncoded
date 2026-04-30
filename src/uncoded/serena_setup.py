@@ -30,8 +30,8 @@ from pathlib import Path
 
 from uncoded.config import find_pyproject_toml
 
-# Pin the Serena version so every repo that runs setup-serena gets the
-# same, tested integration. On bump, re-run `uncoded setup-serena` to
+# Pin the Serena version so every repo that runs `uncoded setup` gets
+# the same, tested integration. On bump, re-run `uncoded setup` to
 # refresh the pin in existing repos — the sync overwrites the serena
 # entry in .mcp.json with the current MCP_SERVER_SERENA value. A
 # dogfooding test in tests/test_serena_setup.py guards against drift.
@@ -110,7 +110,7 @@ def _sync_mcp_json(path: Path) -> str:
     Non-Serena MCP servers already in the file are preserved. The
     ``serena`` entry itself is always refreshed to ``MCP_SERVER_SERENA``
     so a ``SERENA_VERSION`` bump flows into existing repos on the next
-    ``setup-serena`` run. Anyone who has hand-customised the ``serena``
+    ``uncoded setup`` run. Anyone who has hand-customised the ``serena``
     entry should keep their edits out of this file (add a sibling entry
     instead, or re-apply after refresh).
 
