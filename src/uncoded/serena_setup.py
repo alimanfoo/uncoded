@@ -25,13 +25,12 @@ to avoid clobbering hand-edited Serena config.
 """
 
 import json
-import tomllib
 from pathlib import Path
 
-from uncoded.config import find_pyproject_toml
+from uncoded.config import read_project_name
 
-# Pin the Serena version so every repo that runs setup-serena gets the
-# same, tested integration. On bump, re-run `uncoded setup-serena` to
+# Pin the Serena version so every repo that runs `uncoded setup` gets
+# the same, tested integration. On bump, re-run `uncoded setup` to
 # refresh the pin in existing repos — the sync overwrites the serena
 # entry in .mcp.json with the current MCP_SERVER_SERENA value. A
 # dogfooding test in tests/test_serena_setup.py guards against drift.
@@ -91,26 +90,13 @@ _STATUS_VERB = {
 }
 
 
-def read_project_name() -> str:
-    """Read the project name from pyproject.toml, falling back to the cwd name."""
-    toml_path = find_pyproject_toml()
-    if toml_path is None:
-        return Path.cwd().name
-    with toml_path.open("rb") as f:
-        data = tomllib.load(f)
-    try:
-        return data["project"]["name"]
-    except KeyError:
-        return Path.cwd().name
-
-
 def _sync_mcp_json(path: Path) -> str:
     """Write or merge Serena into ``.mcp.json``.
 
     Non-Serena MCP servers already in the file are preserved. The
     ``serena`` entry itself is always refreshed to ``MCP_SERVER_SERENA``
     so a ``SERENA_VERSION`` bump flows into existing repos on the next
-    ``setup-serena`` run. Anyone who has hand-customised the ``serena``
+    ``uncoded setup`` run. Anyone who has hand-customised the ``serena``
     entry should keep their edits out of this file (add a sibling entry
     instead, or re-apply after refresh).
 
@@ -178,7 +164,7 @@ def _sync_claude_settings(path: Path) -> str:
     return status
 
 
-def setup_serena(root: Path | None = None) -> int:
+def setup(root: Path | None = None) -> int:
     """Generate Serena + ty + Claude Code configuration under ``root``.
 
     JSON files merge into existing content, refreshing the Serena

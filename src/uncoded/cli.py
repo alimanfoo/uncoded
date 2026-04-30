@@ -8,7 +8,7 @@ from uncoded.config import read_instruction_files, read_source_roots
 from uncoded.extract import walk_source
 from uncoded.instruction_files import sync_instruction_file
 from uncoded.namespace_map import build_map, render_map
-from uncoded.serena_setup import setup_serena
+from uncoded.serena_setup import setup
 from uncoded.skill import sync_skill
 from uncoded.stubs import build_stubs
 from uncoded.sync import sync_file
@@ -66,7 +66,7 @@ def main() -> int:
 
     Three subcommands: ``sync`` builds or refreshes the navigation index;
     ``check`` verifies the index matches what a rebuild would produce
-    (exits non-zero on drift, useful in CI); ``setup-serena`` generates
+    (exits non-zero on drift, useful in CI); ``setup`` generates
     MCP and Claude Code config for the recommended Serena + ty LSP
     integration.
     """
@@ -90,7 +90,7 @@ def main() -> int:
         ),
     )
     subparsers.add_parser(
-        "setup-serena",
+        "setup",
         help=(
             "Write .mcp.json, .serena/project.yml, and .claude/settings.json "
             "for the recommended Serena + ty LSP integration."
@@ -98,6 +98,6 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    if args.command == "setup-serena":
-        return setup_serena()
+    if args.command == "setup":
+        return setup()
     return _sync(check=args.command == "check")

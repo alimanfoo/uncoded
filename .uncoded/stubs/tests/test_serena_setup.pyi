@@ -4,26 +4,12 @@ import json
 import os
 from pathlib import Path
 import yaml
-from uncoded.serena_setup import SERENA_ALLOWED_TOOLS, SERENA_VERSION, read_project_name, setup_serena
+from uncoded.serena_setup import SERENA_ALLOWED_TOOLS, SERENA_VERSION, setup
 
 REPO_ROOT = Path(__file__).parent.parent
 EXPECTED_EXCLUDED_TOOLS = ...
 
-class TestReadProjectName:
-
-    def test_reads_name_from_pyproject_toml(self, tmp_path):
-        ...
-
-    def test_falls_back_to_cwd_name_when_no_pyproject(self, tmp_path):
-        ...
-
-    def test_falls_back_to_cwd_name_when_no_project_section(self, tmp_path):
-        ...
-
-    def test_falls_back_to_cwd_name_when_name_missing(self, tmp_path):
-        ...
-
-class TestSetupSerena:
+class TestSetup:
 
     def _run(self, tmp_path, name):
         ...
@@ -62,7 +48,7 @@ class TestSetupSerena:
         ...
 
 class TestRepoDogfooding:
-    """Catch drift between setup-serena's templates and this repo's own config."""
+    """Catch drift between ``uncoded setup``'s templates and this repo's own config."""
 
     def test_repo_mcp_json_pins_same_serena_version(self):
         ...

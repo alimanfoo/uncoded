@@ -56,7 +56,7 @@ class TestMainDispatch:
     def test_check_subcommand_returns_zero_on_fresh_index(self, tmp_path, monkeypatch):
         ...
 
-    def test_setup_serena_subcommand(self, tmp_path, monkeypatch):
+    def test_setup_subcommand(self, tmp_path, monkeypatch):
         ...
 
     def test_no_subcommand_is_an_error(self, tmp_path, monkeypatch):

@@ -7,7 +7,7 @@ from uncoded.config import read_instruction_files, read_source_roots
 from uncoded.extract import walk_source
 from uncoded.instruction_files import sync_instruction_file
 from uncoded.namespace_map import build_map, render_map
-from uncoded.serena_setup import setup_serena
+from uncoded.serena_setup import setup
 from uncoded.skill import sync_skill
 from uncoded.stubs import build_stubs
 from uncoded.sync import sync_file

@@ -19,6 +19,19 @@ def find_pyproject_toml() -> Path | None:
         current = parent
 
 
+def read_project_name() -> str:
+    """Read the project name from pyproject.toml, falling back to the cwd name."""
+    toml_path = find_pyproject_toml()
+    if toml_path is None:
+        return Path.cwd().name
+    with toml_path.open("rb") as f:
+        data = tomllib.load(f)
+    try:
+        return data["project"]["name"]
+    except KeyError:
+        return Path.cwd().name
+
+
 def read_source_roots() -> list[Path]:
     """Read source roots from [tool.uncoded] source-roots in pyproject.toml."""
     toml_path = find_pyproject_toml()

@@ -3,7 +3,7 @@
 import os
 from pathlib import Path
 import pytest
-from uncoded.config import find_pyproject_toml, read_instruction_files, read_source_roots
+from uncoded.config import find_pyproject_toml, read_instruction_files, read_project_name, read_source_roots
 from uncoded.instruction_files import DEFAULT_INSTRUCTION_FILES
 
 class TestFindPyprojectToml:
@@ -15,6 +15,20 @@ class TestFindPyprojectToml:
         ...
 
     def test_returns_none_if_not_found(self, tmp_path):
+        ...
+
+class TestReadProjectName:
+
+    def test_reads_name_from_pyproject_toml(self, tmp_path):
+        ...
+
+    def test_falls_back_to_cwd_name_when_no_pyproject(self, tmp_path):
+        ...
+
+    def test_falls_back_to_cwd_name_when_no_project_section(self, tmp_path):
+        ...
+
+    def test_falls_back_to_cwd_name_when_name_missing(self, tmp_path):
         ...
 
 class TestReadSourceRoots:
