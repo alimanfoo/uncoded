@@ -8,6 +8,7 @@ from uncoded.serena_setup import SERENA_ALLOWED_TOOLS, SERENA_VERSION, setup
 
 REPO_ROOT = Path(__file__).parent.parent
 EXPECTED_EXCLUDED_TOOLS = ...
+EXPECTED_MCP_ARGS = ...
 
 class TestSetup:
 

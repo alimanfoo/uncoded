@@ -29,6 +29,26 @@ EXPECTED_EXCLUDED_TOOLS = {
     "open_dashboard",
 }
 
+# Full argv that ``uncoded setup`` should write into the Serena entry of
+# ``.mcp.json``. Kept in the test module (not the source) so the test
+# asserts the contract independently of the constant it's validating: a
+# typo, drop, or re-order in MCP_SERVER_SERENA["args"] shows up here.
+# Order is significant — these are CLI args, and ``--from <pkg>`` /
+# ``--open-web-dashboard false`` are paired tokens.
+EXPECTED_MCP_ARGS = [
+    "--from",
+    f"serena-agent=={SERENA_VERSION}",
+    "serena",
+    "start-mcp-server",
+    "--context",
+    "claude-code",
+    "--transport",
+    "stdio",
+    "--project-from-cwd",
+    "--open-web-dashboard",
+    "false",
+]
+
 
 class TestSetup:
     def _run(self, tmp_path, name="my-app"):
@@ -47,10 +67,7 @@ class TestSetup:
         data = json.loads((tmp_path / ".mcp.json").read_text())
         serena = data["mcpServers"]["serena"]
         assert serena["command"] == "uvx"
-        assert f"serena-agent=={SERENA_VERSION}" in serena["args"]
-        assert "--context" in serena["args"]
-        assert "claude-code" in serena["args"]
-        assert "--project-from-cwd" in serena["args"]
+        assert serena["args"] == EXPECTED_MCP_ARGS
 
     def test_serena_project_yml_uses_ty_and_ignores_uncoded(self, tmp_path):
         self._run(tmp_path, name="my-app")

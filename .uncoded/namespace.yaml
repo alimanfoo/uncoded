@@ -213,6 +213,7 @@ tests/:
   test_serena_setup.py:
     REPO_ROOT:
     EXPECTED_EXCLUDED_TOOLS:
+    EXPECTED_MCP_ARGS:
     TestSetup:
       _run:
       test_creates_all_three_files:
