@@ -38,7 +38,7 @@ This project uses [uv](https://docs.astral.sh/uv/). Run commands via
 an activated venv.
 
 ```
-# Generate (or update) the namespace map, stub files, and CLAUDE.md section
+# Generate (or update) the namespace map, stub files, and instruction-file section
 uv run uncoded sync
 
 # Run tests
