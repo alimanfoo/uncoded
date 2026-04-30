@@ -14,7 +14,7 @@ def _sync_mcp_json(path: Path) -> str:
     """Write or merge Serena into ``.mcp.json``."""
     ...
 
-def _sync_serena_project(path: Path, project_name: str) -> str:
+def _write_serena_project_if_absent(path: Path, project_name: str) -> str:
     """Write ``.serena/project.yml`` if absent."""
     ...
 

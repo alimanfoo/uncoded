@@ -58,7 +58,7 @@ src/:
       SERENA_ALLOWED_TOOLS:
       _STATUS_VERB:
       _sync_mcp_json:
-      _sync_serena_project:
+      _write_serena_project_if_absent:
       _sync_claude_settings:
       setup:
     skill.py:
