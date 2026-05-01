@@ -1,5 +1,7 @@
 # src/uncoded/cli.py
 
+"""CLI entry point for uncoded."""
+
 import argparse
 import sys
 from pathlib import Path

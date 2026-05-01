@@ -1,5 +1,7 @@
 # src/uncoded/sync.py
 
+"""Content-aware file writes with an optional check-only mode."""
+
 from pathlib import Path
 
 def sync_file(path: Path, content: str, *, check: bool) -> bool:

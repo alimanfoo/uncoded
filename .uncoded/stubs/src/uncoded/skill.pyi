@@ -1,5 +1,7 @@
 # src/uncoded/skill.py
 
+"""Generate the coherence-review skill file for the target repository."""
+
 from pathlib import Path
 from uncoded.sync import remove_file, sync_file
 

@@ -7,16 +7,24 @@ automatically:
 * ``.mcp.json`` — registers the Serena MCP server so Claude Code launches
   it via ``uvx`` on session start, with the web dashboard disabled.
 * ``.serena/project.yml`` — selects ty over Serena's default backend
-  (pyright), keeps Serena out of uncoded's generated stubs, and narrows
-  Serena's surface to pure LSP operations: memory, onboarding,
-  dashboard, and shell-exec tools are all excluded. uncoded's namespace
-  map and stubs already give agents a project-wide view, so Serena's
-  memory-based project understanding is redundant and noisy alongside
-  it.
+  (pyright), keeps Serena out of uncoded's generated stubs, and drops
+  the noisier tool surfaces (memory, onboarding, dashboard, shell-exec)
+  that uncoded's index already covers or that have no role in our
+  workflow. uncoded's namespace map and stubs already give agents a
+  project-wide view, so Serena's memory-based project understanding is
+  redundant and noisy alongside it.
 * ``.claude/settings.json`` — enables the Serena server and allowlists
   the nine tools (``initial_instructions`` plus the eight LSP tools —
   symbol lookup, reference search, and the edit family) so they run
-  without a prompt.
+  without a prompt. This is the file that finally narrows Serena's
+  active surface to pure LSP operations; the YAML's exclusions remove
+  the worst offenders, and the allowlist completes the narrowing.
+
+The exclusions in :data:`SERENA_PROJECT_FIELDS` defend in depth alongside
+the prose ``Skip activate_project and check_onboarding_performed`` line
+in ``instruction_files._SECTION_BODY``: the prose tells the agent not to
+call those tools, and the project config drops them from Serena's
+exposed surface so the call cannot land even if the prose is missed.
 
 JSON files merge into existing content: pre-existing non-Serena MCP
 servers and permissions are preserved, while the Serena entry itself
@@ -27,8 +35,17 @@ to avoid clobbering hand-edited Serena config.
 
 import json
 from pathlib import Path
+from typing import Literal
+
+import yaml
 
 from uncoded.config import read_project_name
+
+# Closed set of one-word statuses returned by the three sync helpers and
+# rendered through ``_STATUS_VERB`` by ``setup()``. Typed as a literal
+# union so a typo in a helper's return value is a ty error rather than a
+# runtime ``KeyError`` when ``setup()`` formats the per-file line.
+type _Status = Literal["wrote", "updated", "unchanged"]
 
 # Pin the Serena version so every repo that runs `uncoded setup` gets
 # the same, tested integration. On bump, re-run `uncoded setup` to
@@ -54,23 +71,30 @@ MCP_SERVER_SERENA = {
     ],
 }
 
-SERENA_PROJECT_YML = """\
-project_name: "{project_name}"
-languages: ["python_ty"]
-ignored_paths:
-  - ".uncoded"
-excluded_tools:
-  - execute_shell_command
-  - list_memories
-  - read_memory
-  - write_memory
-  - edit_memory
-  - delete_memory
-  - rename_memory
-  - onboarding
-  - check_onboarding_performed
-  - open_dashboard
-"""
+# Static fields of ``.serena/project.yml``. ``project_name`` is injected
+# per call by ``_write_serena_project_if_absent`` and serialised via
+# ``yaml.safe_dump`` so YAML-special characters in the name (colons,
+# quotes, leading dashes, braces, etc.) are escaped instead of producing
+# malformed YAML or a parse exception. Field order is preserved by
+# ``sort_keys=False`` at dump time; ``project_name`` is placed first by
+# constructing the dict with it as the first key.
+SERENA_PROJECT_FIELDS = {
+    "languages": ["python_ty"],
+    "ignored_paths": [".uncoded"],
+    "excluded_tools": [
+        "execute_shell_command",
+        "list_memories",
+        "read_memory",
+        "write_memory",
+        "edit_memory",
+        "delete_memory",
+        "rename_memory",
+        "activate_project",
+        "onboarding",
+        "check_onboarding_performed",
+        "open_dashboard",
+    ],
+}
 
 SERENA_ALLOWED_TOOLS = [
     "mcp__serena__initial_instructions",
@@ -84,14 +108,14 @@ SERENA_ALLOWED_TOOLS = [
     "mcp__serena__replace_symbol_body",
 ]
 
-_STATUS_VERB = {
+_STATUS_VERB: dict[_Status, str] = {
     "wrote": "Wrote",
     "updated": "Updated",
     "unchanged": "Unchanged",
 }
 
 
-def _sync_mcp_json(path: Path) -> str:
+def _sync_mcp_json(path: Path) -> _Status:
     """Write or merge Serena into ``.mcp.json``.
 
     Non-Serena MCP servers already in the file are preserved. The
@@ -118,7 +142,7 @@ def _sync_mcp_json(path: Path) -> str:
     return status
 
 
-def _write_serena_project_if_absent(path: Path, project_name: str) -> str:
+def _write_serena_project_if_absent(path: Path, project_name: str) -> _Status:
     """Write ``.serena/project.yml`` if absent.
 
     Returns ``wrote`` or ``unchanged``. An existing file is never touched:
@@ -128,11 +152,12 @@ def _write_serena_project_if_absent(path: Path, project_name: str) -> str:
     if path.exists():
         return "unchanged"
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(SERENA_PROJECT_YML.format(project_name=project_name))
+    data = {"project_name": project_name, **SERENA_PROJECT_FIELDS}
+    path.write_text(yaml.safe_dump(data, sort_keys=False))
     return "wrote"
 
 
-def _sync_claude_settings(path: Path) -> str:
+def _sync_claude_settings(path: Path) -> _Status:
     """Write or merge Serena allowlist into ``.claude/settings.json``.
 
     Returns ``wrote``, ``updated``, or ``unchanged``.

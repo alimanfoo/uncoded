@@ -122,6 +122,27 @@ class TestExtractStub:
         module = extract_stub(source, "pkg/silent.py")
         assert module.functions[0].docstring_excerpt is None
 
+    def test_module_docstring_extracted(self):
+        # Module-level docstrings follow the same first-sentence convention
+        # as class/function docstrings, so a multi-sentence module docstring
+        # is captured as just its leading sentence.
+        source = textwrap.dedent("""\
+            '''Top-level utility for greetings. Sub-module of pkg.'''
+
+            def hello() -> str:
+                pass
+        """)
+        module = extract_stub(source, "pkg/greet.py")
+        assert module.docstring_excerpt == "Top-level utility for greetings."
+
+    def test_module_no_docstring(self):
+        source = textwrap.dedent("""\
+            def hello() -> str:
+                pass
+        """)
+        module = extract_stub(source, "pkg/greet.py")
+        assert module.docstring_excerpt is None
+
     def test_kwargs_and_varargs(self):
         source = textwrap.dedent("""\
             def build(*args: str, **kwargs: int) -> None:
@@ -371,6 +392,20 @@ class TestRenderStub:
         output = render_stub(module)
         assert '"""Do the thing."""' in output
         assert '"""Do the thing."""\n    ...' in output
+
+    def test_module_docstring_rendered_at_top(self):
+        # The module docstring sits between the path-comment header and
+        # the imports block, matching where a real Python module's
+        # docstring lives.
+        module = StubModule(
+            rel_path="pkg/mod.py",
+            docstring_excerpt="Greetings utility.",
+            imports=["from typing import Final"],
+        )
+        output = render_stub(module)
+        assert output.startswith(
+            '# pkg/mod.py\n\n"""Greetings utility."""\n\nfrom typing import Final'
+        )
 
     def test_class_with_bases(self):
         module = StubModule(

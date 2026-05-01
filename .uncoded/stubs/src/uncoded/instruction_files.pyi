@@ -1,5 +1,7 @@
 # src/uncoded/instruction_files.py
 
+"""Maintain the uncoded navigation section in agent instruction files."""
+
 from pathlib import Path
 from uncoded.sync import sync_file
 

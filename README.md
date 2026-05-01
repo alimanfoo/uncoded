@@ -9,7 +9,8 @@ hallucinated understanding of code that's sitting right there, unread.
 at the start of a task and navigate deterministically to what they need —
 no guessing, no grep.
 
-Additionally, **uncoded** provides some convenience for setting up your coding agent with a language server, so they can reliably find symbol usages and rename, edit, or delete symbols safely.
+It also wires up a language server so the agent can find references,
+rename, and edit symbols by name — no grep, no manual find-and-replace.
 
 ## What it generates
 
@@ -206,6 +207,13 @@ Run all checks (the same suite CI runs):
 ```
 uv run pre-commit run --all-files
 ```
+
+### Note for Windows contributors
+
+`CLAUDE.md` is a symlink to `AGENTS.md` (single source). macOS and Linux
+handle this transparently; on Windows, git's `core.symlinks` setting must
+be enabled, or the checkout writes `CLAUDE.md` as a plain file containing
+the literal string `AGENTS.md` and the navigation section drifts.
 
 ## Releasing
 

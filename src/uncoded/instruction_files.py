@@ -4,6 +4,8 @@ Different coding agents read different instruction files from a repo's root.
 Claude Code reads ``CLAUDE.md``; an emerging cross-agent convention uses
 ``AGENTS.md``. Until the ecosystem converges, a project that wants to support
 both populations needs both files, with the same navigation guidance in each.
+Two configurations work: keep the two files as separate copies (sync writes
+each), or symlink one to the other (sync dedupes by inode and writes once).
 This module owns a delimited section in any such file and keeps it in sync.
 """
 
@@ -24,7 +26,7 @@ a symbol index over its source code, with
 [Serena](https://github.com/oraios/serena) providing language-server-backed
 tools over that index. The point of this scaffolding is one rule.
 
-### The rule
+### The dispatch rule
 
 **If your search term is the name of a Python symbol — a class, function,
 method, attribute, or module-level constant — use the index. If it's a
@@ -131,8 +133,8 @@ non-Serena tools stay correct:
 - Environments where Serena is unavailable, or the rare stub-less
   Python file that needs exploratory reading.
 
-The dispatch test is the search term: a symbol name → Serena; a regex
-or free-text phrase → grep."""
+The dispatch rule turns on the search term: a symbol name → Serena; a
+regex or free-text phrase → grep."""
 
 SECTION = f"{MARKER_START}\n{_SECTION_BODY}\n{MARKER_END}\n"
 

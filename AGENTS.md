@@ -41,6 +41,12 @@ an activated venv.
 # Generate (or update) the namespace map, stub files, and instruction-file section
 uv run uncoded sync
 
+# Verify the index without writing; exits non-zero if any file would change
+uv run uncoded check
+
+# Generate Serena + ty MCP and Claude Code configuration
+uv run uncoded setup
+
 # Run tests
 uv run pytest
 ```
@@ -53,7 +59,7 @@ a symbol index over its source code, with
 [Serena](https://github.com/oraios/serena) providing language-server-backed
 tools over that index. The point of this scaffolding is one rule.
 
-### The rule
+### The dispatch rule
 
 **If your search term is the name of a Python symbol — a class, function,
 method, attribute, or module-level constant — use the index. If it's a
@@ -160,6 +166,6 @@ non-Serena tools stay correct:
 - Environments where Serena is unavailable, or the rare stub-less
   Python file that needs exploratory reading.
 
-The dispatch test is the search term: a symbol name → Serena; a regex
-or free-text phrase → grep.
+The dispatch rule turns on the search term: a symbol name → Serena; a
+regex or free-text phrase → grep.
 <!-- uncoded:end -->

@@ -1,5 +1,7 @@
 # src/uncoded/config.py
 
+"""Read project metadata and uncoded configuration from pyproject.toml."""
+
 import tomllib
 from pathlib import Path
 from uncoded.instruction_files import DEFAULT_INSTRUCTION_FILES

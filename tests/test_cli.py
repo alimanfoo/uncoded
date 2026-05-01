@@ -69,6 +69,31 @@ class TestSyncApplyMode:
             (tmp_path / p).stat().st_mtime_ns for p in SKILL_OUTPUTS
         ] == skill_mtimes
 
+    def test_dedupes_when_claude_md_is_symlink_to_agents_md(self, tmp_path, capsys):
+        # When CLAUDE.md is a symlink to AGENTS.md, both configured
+        # instruction paths point to the same inode. Sync should process
+        # the file once and report it under its canonical (resolved)
+        # name, not iterate twice with asymmetric output.
+        _init_repo(tmp_path)
+        (tmp_path / "src" / "foo.py").write_text("def hello(): pass\n")
+        agents = tmp_path / "AGENTS.md"
+        agents.write_text("")
+        (tmp_path / "CLAUDE.md").symlink_to(agents)
+
+        assert cli._sync() == 0
+
+        # The section is written through the symlink to AGENTS.md.
+        assert "<!-- uncoded:start -->" in agents.read_text()
+
+        # Exactly one user-facing line for the instruction file, naming
+        # the canonical AGENTS.md.
+        instruction_lines = [
+            line
+            for line in capsys.readouterr().out.splitlines()
+            if line.endswith("AGENTS.md") or line.endswith("CLAUDE.md")
+        ]
+        assert instruction_lines == ["Updated AGENTS.md"]
+
     def test_error_when_no_pyproject_toml(self, tmp_path, capsys):
         os.chdir(tmp_path)
         assert cli._sync() == 1

@@ -1,5 +1,7 @@
 # src/uncoded/extract.py
 
+"""Extract symbols from Python source files using the AST."""
+
 import ast
 from collections.abc import Iterator
 from dataclasses import dataclass, field

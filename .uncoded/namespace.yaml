@@ -52,9 +52,10 @@ src/:
       build_map:
       render_map:
     serena_setup.py:
+      _Status:
       SERENA_VERSION:
       MCP_SERVER_SERENA:
-      SERENA_PROJECT_YML:
+      SERENA_PROJECT_FIELDS:
       SERENA_ALLOWED_TOOLS:
       _STATUS_VERB:
       _sync_mcp_json:
@@ -91,6 +92,7 @@ src/:
         methods:
       StubModule:
         rel_path:
+        docstring_excerpt:
         imports:
         constants:
         classes:
@@ -118,6 +120,7 @@ tests/:
     TestSyncApplyMode:
       test_writes_namespace_map_stubs_and_instruction_file:
       test_idempotent_second_run:
+      test_dedupes_when_claude_md_is_symlink_to_agents_md:
       test_error_when_no_pyproject_toml:
       test_error_when_source_root_missing:
     TestSyncCheckMode:
@@ -213,11 +216,13 @@ tests/:
   test_serena_setup.py:
     REPO_ROOT:
     EXPECTED_EXCLUDED_TOOLS:
+    EXPECTED_MCP_ARGS:
     TestSetup:
       _run:
       test_creates_all_three_files:
       test_mcp_json_is_valid_and_pins_version:
       test_serena_project_yml_uses_ty_and_ignores_uncoded:
+      test_serena_project_yml_escapes_yaml_special_chars_in_name:
       test_claude_settings_enables_serena_and_allowlists_tools:
       test_idempotent:
       test_merges_into_existing_mcp_json:
@@ -226,8 +231,9 @@ tests/:
       test_does_not_overwrite_existing_serena_project_yml:
       test_does_not_duplicate_on_second_merge:
       test_setup_uses_cwd_name_when_no_pyproject:
+      test_setup_reads_name_from_pyproject:
     TestRepoDogfooding:
-      test_repo_mcp_json_pins_same_serena_version:
+      test_repo_mcp_json_matches_template_contract:
       test_repo_claude_settings_allowlists_every_serena_tool:
       test_repo_serena_project_yml_matches_template_contract:
   test_skill.py:
@@ -254,6 +260,8 @@ tests/:
       test_class_no_bases:
       test_docstring_first_sentence_only:
       test_no_docstring:
+      test_module_docstring_extracted:
+      test_module_no_docstring:
       test_kwargs_and_varargs:
       test_imports_collected:
       test_syntax_error_raises:
@@ -277,6 +285,7 @@ tests/:
       test_async_function_prefix:
       test_function_with_annotations:
       test_docstring_excerpt_rendered:
+      test_module_docstring_rendered_at_top:
       test_class_with_bases:
       test_class_no_bases:
       test_attribute_with_annotation:

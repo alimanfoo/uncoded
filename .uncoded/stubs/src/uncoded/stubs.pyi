@@ -1,5 +1,7 @@
 # src/uncoded/stubs.py
 
+"""Generate .pyi stub files for agent navigation."""
+
 import ast
 import re
 from dataclasses import dataclass, field
@@ -106,6 +108,7 @@ class StubModule:
     """All symbols extracted from a single Python module."""
 
     rel_path: str
+    docstring_excerpt: str | None = None
     imports: list[str] = field(default_factory=list)
     constants: list[StubAssignment] = field(default_factory=list)
     classes: list[StubClass] = field(default_factory=list)

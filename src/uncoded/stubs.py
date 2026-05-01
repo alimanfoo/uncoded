@@ -63,6 +63,7 @@ class StubModule:
     """All symbols extracted from a single Python module."""
 
     rel_path: str
+    docstring_excerpt: str | None = None
     imports: list[str] = field(default_factory=list)
     constants: list[StubAssignment] = field(default_factory=list)
     classes: list[StubClass] = field(default_factory=list)
@@ -240,6 +241,7 @@ def extract_stub(source: str, rel_path: str) -> StubModule:
 
     return StubModule(
         rel_path=rel_path,
+        docstring_excerpt=_first_sentence(tree),
         imports=imports,
         constants=constants,
         classes=classes,
@@ -287,6 +289,10 @@ def _render_assignment(a: StubAssignment, indent: str = "") -> str:
 def render_stub(module: StubModule) -> str:
     """Render a StubModule as a .pyi file string."""
     lines: list[str] = [f"# {module.rel_path}", ""]
+
+    if module.docstring_excerpt:
+        lines.append(f'"""{module.docstring_excerpt}"""')
+        lines.append("")
 
     if module.imports:
         lines.extend(module.imports)

@@ -1,5 +1,7 @@
 # src/uncoded/namespace_map.py
 
+"""Generate a YAML namespace map from extracted symbols."""
+
 from pathlib import Path
 import yaml
 from uncoded.extract import ModuleInfo
