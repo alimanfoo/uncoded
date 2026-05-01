@@ -25,13 +25,13 @@ def _sync(*, root: Path | None = None, check: bool = False) -> int:
 
     ``root`` is the directory the upward walk for ``pyproject.toml``
     begins from; the parent of the located ``pyproject.toml`` becomes
-    the project anchor used to resolve source-root paths and to render
-    project-relative rel-paths in the namespace map and stubs.
-    Defaults to the current working directory at the CLI boundary.
-    Threading ``root`` through (rather than implicitly fetching cwd at
-    each downstream call site) keeps every working-directory dependency
-    visible in the signature and makes ``_sync`` testable against
-    arbitrary trees.
+    the project anchor used to resolve every project-relative input —
+    source-root paths, instruction-file paths, and the rel-paths
+    rendered into the namespace map and stubs. Defaults to the current
+    working directory at the CLI boundary. Threading ``root`` through
+    (rather than implicitly fetching cwd at each downstream call site)
+    keeps every working-directory dependency visible in the signature
+    and makes ``_sync`` testable against arbitrary trees.
 
     When ``check=True``, the on-disk tree is not mutated: each step reports
     whether it would write. Returns 1 if any step reports a prospective
@@ -81,17 +81,18 @@ def _sync(*, root: Path | None = None, check: bool = False) -> int:
     # through the symlink and reports the alias name while pass 2 finds
     # the file already in sync and reports nothing — asymmetric output
     # that hides the actual write target. Resolving collapses both aliases
-    # to the same canonical path, which we render relative to ``root`` for
-    # the user-facing line, falling back to the absolute resolved path when
-    # the file lives outside ``root``.
+    # to the same canonical path, which we render relative to
+    # ``project_root`` for the user-facing line (matching how source-root
+    # paths resolve), falling back to the absolute resolved path when
+    # the file lives outside ``project_root``.
     seen_resolved: set[Path] = set()
-    for path in read_instruction_files(root):
-        resolved = path.resolve()
+    for path in read_instruction_files(project_root):
+        resolved = (project_root / path).resolve()
         if resolved in seen_resolved:
             continue
         seen_resolved.add(resolved)
         try:
-            canonical = resolved.relative_to(root)
+            canonical = resolved.relative_to(project_root)
         except ValueError:
             canonical = resolved
         if sync_instruction_file(canonical, check=check):
