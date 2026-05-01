@@ -55,7 +55,7 @@ src/:
       _Status:
       SERENA_VERSION:
       MCP_SERVER_SERENA:
-      SERENA_PROJECT_YML:
+      SERENA_PROJECT_FIELDS:
       SERENA_ALLOWED_TOOLS:
       _STATUS_VERB:
       _sync_mcp_json:

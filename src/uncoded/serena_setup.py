@@ -70,7 +70,7 @@ MCP_SERVER_SERENA = {
 # malformed YAML or a parse exception. Field order is preserved by
 # ``sort_keys=False`` at dump time; ``project_name`` is placed first by
 # constructing the dict with it as the first key.
-SERENA_PROJECT_YML = {
+SERENA_PROJECT_FIELDS = {
     "languages": ["python_ty"],
     "ignored_paths": [".uncoded"],
     "excluded_tools": [
@@ -143,7 +143,7 @@ def _write_serena_project_if_absent(path: Path, project_name: str) -> _Status:
     if path.exists():
         return "unchanged"
     path.parent.mkdir(parents=True, exist_ok=True)
-    data = {"project_name": project_name, **SERENA_PROJECT_YML}
+    data = {"project_name": project_name, **SERENA_PROJECT_FIELDS}
     path.write_text(yaml.safe_dump(data, sort_keys=False))
     return "wrote"
 

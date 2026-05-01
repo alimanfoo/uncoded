@@ -15,7 +15,7 @@ REPO_ROOT = Path(__file__).parent.parent
 # Tools Serena exposes that we strip from the project. Kept in the test
 # module (not the source) so the test asserts the contract independently
 # of the constant it's validating: a typo or silent removal in
-# SERENA_PROJECT_YML shows up here.
+# SERENA_PROJECT_FIELDS shows up here.
 EXPECTED_EXCLUDED_TOOLS = {
     "execute_shell_command",
     "list_memories",
