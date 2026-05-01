@@ -1,7 +1,7 @@
 # tests/test_extract.py
 
 import textwrap
-from uncoded.extract import extract_module, walk_source
+from uncoded.extract import extract_module, extract_modules, walk_source
 
 class TestExtractModule:
 
@@ -59,4 +59,15 @@ class TestWalkSource:
         ...
 
     def test_skips_syntax_errors(self, tmp_path, capsys):
+        ...
+
+class TestExtractModules:
+
+    def test_returns_module_info_per_parseable_file(self):
+        ...
+
+    def test_preserves_source_order(self):
+        ...
+
+    def test_skips_files_with_no_symbols(self):
         ...

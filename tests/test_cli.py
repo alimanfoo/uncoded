@@ -123,6 +123,51 @@ class TestSyncApplyMode:
         assert cli._sync() == 1
         assert "Error" in capsys.readouterr().err
 
+    def test_skip_warning_emitted_once_per_broken_file(
+        self, tmp_path, monkeypatch, capsys
+    ):
+        _init_repo(tmp_path, monkeypatch)
+        (tmp_path / "src" / "good.py").write_text("def hello(): pass\n")
+        (tmp_path / "src" / "broken.py").write_text("def bad(:\n")
+
+        assert cli._sync() == 0
+
+        skip_warnings = [
+            line
+            for line in capsys.readouterr().err.splitlines()
+            if "skipping" in line and "broken.py" in line
+        ]
+        assert len(skip_warnings) == 1
+        assert skip_warnings[0].startswith("warning: skipping src/broken.py")
+        assert "SyntaxError" in skip_warnings[0]
+        assert (tmp_path / ".uncoded" / "stubs" / "src" / "good.pyi").exists()
+
+    def test_root_param_anchors_reads_at_project_root_when_cwd_is_subdir(
+        self, tmp_path, monkeypatch
+    ):
+        (tmp_path / "pyproject.toml").write_text(
+            textwrap.dedent(
+                """\
+                [project]
+                name = "demo"
+
+                [tool.uncoded]
+                source-roots = ["src"]
+                """
+            )
+        )
+        (tmp_path / "src").mkdir()
+        (tmp_path / "src" / "foo.py").write_text("def hello(): pass\n")
+        monkeypatch.chdir(tmp_path / "src")
+
+        assert cli._sync(root=tmp_path) == 0
+
+        namespace_path = tmp_path / "src" / ".uncoded" / "namespace.yaml"
+        assert namespace_path.exists()
+        content = namespace_path.read_text()
+        assert "src/:" in content
+        assert "foo.py:" in content
+
 
 class TestSyncCheckMode:
     def test_returns_one_and_does_not_write_on_empty_repo(self, tmp_path, monkeypatch):

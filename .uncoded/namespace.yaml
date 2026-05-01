@@ -35,6 +35,7 @@ src/:
       _assign_target_name:
       extract_module:
       iter_source_files:
+      extract_modules:
       walk_source:
     instruction_files.py:
       MARKER_START:
@@ -111,6 +112,7 @@ src/:
       _render_assignment:
       render_stub:
       _generate_stubs:
+      _write_stubs:
       build_stubs:
     sync.py:
       sync_file:
@@ -123,6 +125,8 @@ tests/:
       test_dedupes_when_claude_md_is_symlink_to_agents_md:
       test_error_when_no_pyproject_toml:
       test_error_when_source_root_missing:
+      test_skip_warning_emitted_once_per_broken_file:
+      test_root_param_anchors_reads_at_project_root_when_cwd_is_subdir:
     TestSyncCheckMode:
       test_returns_one_and_does_not_write_on_empty_repo:
       test_returns_zero_when_index_is_up_to_date:
@@ -179,6 +183,10 @@ tests/:
       test_includes_init_with_symbols:
       test_skips_empty_init:
       test_skips_syntax_errors:
+    TestExtractModules:
+      test_returns_module_info_per_parseable_file:
+      test_preserves_source_order:
+      test_skips_files_with_no_symbols:
   test_instruction_files.py:
     TestGenerateSection:
       test_contains_markers:
@@ -264,6 +272,7 @@ tests/:
       test_docstring_starting_with_ie_not_truncated:
       test_docstring_starting_with_us_initialism_not_truncated:
       test_no_docstring:
+      test_whitespace_only_docstring_yields_none:
       test_module_docstring_extracted:
       test_module_no_docstring:
       test_kwargs_and_varargs:
@@ -318,6 +327,10 @@ tests/:
       test_zero_changes_when_clean:
       test_detects_stale_stub_content:
       test_detects_orphan_stub_without_removing_it:
+    TestWriteStubs:
+      test_writes_stubs:
+      test_check_mode_does_not_write:
+      test_prunes_orphan_stubs:
   test_sync.py:
     TestSyncFile:
       test_creates_missing_file:

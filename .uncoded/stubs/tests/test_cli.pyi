@@ -29,6 +29,12 @@ class TestSyncApplyMode:
     def test_error_when_source_root_missing(self, tmp_path, monkeypatch, capsys):
         ...
 
+    def test_skip_warning_emitted_once_per_broken_file(self, tmp_path, monkeypatch, capsys):
+        ...
+
+    def test_root_param_anchors_reads_at_project_root_when_cwd_is_subdir(self, tmp_path, monkeypatch):
+        ...
+
 class TestSyncCheckMode:
 
     def test_returns_one_and_does_not_write_on_empty_repo(self, tmp_path, monkeypatch):

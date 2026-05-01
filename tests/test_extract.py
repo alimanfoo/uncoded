@@ -1,6 +1,6 @@
 import textwrap
 
-from uncoded.extract import extract_module, walk_source
+from uncoded.extract import extract_module, extract_modules, walk_source
 
 
 class TestExtractModule:
@@ -293,3 +293,39 @@ class TestWalkSource:
         err = capsys.readouterr().err
         assert "warning: skipping src/mypackage/bad.py" in err
         assert "SyntaxError" in err
+
+
+class TestExtractModules:
+    def test_returns_module_info_per_parseable_file(self):
+        files = [
+            ("def foo(): pass\n", "src/a.py"),
+            ("class Bar: pass\n", "src/b.py"),
+        ]
+
+        modules = extract_modules(files)
+
+        assert [m.rel_path for m in modules] == ["src/a.py", "src/b.py"]
+        assert modules[0].functions == ["foo"]
+        assert modules[1].classes[0].name == "Bar"
+
+    def test_preserves_source_order(self):
+        files = [
+            ("def a(): pass\n", "src/a.py"),
+            ("def b(): pass\n", "src/b.py"),
+            ("def c(): pass\n", "src/c.py"),
+        ]
+
+        modules = extract_modules(files)
+
+        assert [m.rel_path for m in modules] == ["src/a.py", "src/b.py", "src/c.py"]
+
+    def test_skips_files_with_no_symbols(self):
+        files = [
+            ("def foo(): pass\n", "src/a.py"),
+            ("# nothing here\n", "src/empty.py"),
+            ("class Bar: pass\n", "src/b.py"),
+        ]
+
+        modules = extract_modules(files)
+
+        assert [m.rel_path for m in modules] == ["src/a.py", "src/b.py"]
