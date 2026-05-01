@@ -129,6 +129,7 @@ tests/:
       test_returns_one_when_source_changes_after_sync:
       test_returns_one_when_source_file_deleted:
       test_returns_one_when_instruction_file_drifts:
+      test_dedupes_when_claude_md_is_symlink_to_agents_md:
       test_error_still_returns_one:
     TestMainDispatch:
       test_sync_subcommand_runs_in_apply_mode:

@@ -46,6 +46,9 @@ class TestSyncCheckMode:
     def test_returns_one_when_instruction_file_drifts(self, tmp_path, monkeypatch):
         ...
 
+    def test_dedupes_when_claude_md_is_symlink_to_agents_md(self, tmp_path, monkeypatch, capsys):
+        ...
+
     def test_error_still_returns_one(self, tmp_path, monkeypatch, capsys):
         ...
 

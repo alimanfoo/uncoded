@@ -177,6 +177,34 @@ class TestSyncCheckMode:
         assert cli._sync(check=True) == 1
         assert claude.read_text() == claude_before
 
+    def test_dedupes_when_claude_md_is_symlink_to_agents_md(
+        self, tmp_path, monkeypatch, capsys
+    ):
+        # Same symlink-dedup contract as apply mode, but in the freshness
+        # gate. With CLAUDE.md a symlink to AGENTS.md, check mode must
+        # report the instruction file once under its canonical AGENTS.md
+        # name — asymmetric reporting here would let CI miss what apply
+        # mode would do.
+        _init_repo(tmp_path, monkeypatch)
+        (tmp_path / "src" / "foo.py").write_text("def hello(): pass\n")
+        agents = tmp_path / "AGENTS.md"
+        agents.write_text("")
+        (tmp_path / "CLAUDE.md").symlink_to(agents)
+
+        assert cli._sync(check=True) == 1
+
+        # Check mode must not mutate — the symlinked file is still empty.
+        assert agents.read_text() == ""
+
+        # Exactly one user-facing line for the instruction file, naming
+        # the canonical AGENTS.md.
+        instruction_lines = [
+            line
+            for line in capsys.readouterr().out.splitlines()
+            if line.endswith("AGENTS.md") or line.endswith("CLAUDE.md")
+        ]
+        assert instruction_lines == ["Would update AGENTS.md"]
+
     def test_error_still_returns_one(self, tmp_path, monkeypatch, capsys):
         # Config error: check mode should report non-zero the same as apply mode.
         monkeypatch.chdir(tmp_path)
