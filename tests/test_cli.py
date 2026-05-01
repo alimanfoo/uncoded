@@ -123,6 +123,29 @@ class TestSyncApplyMode:
         assert cli._sync() == 1
         assert "Error" in capsys.readouterr().err
 
+    def test_skip_warning_emitted_once_per_broken_file(
+        self, tmp_path, monkeypatch, capsys
+    ):
+        # A syntax-erroring source file must produce exactly one stderr
+        # warning per ``uncoded sync`` invocation. Before the dedup fix,
+        # ``walk_source`` and ``_generate_stubs`` each ran
+        # ``iter_source_files`` separately and each warned, so a single
+        # broken file produced two identical lines on stderr.
+        _init_repo(tmp_path, monkeypatch)
+        (tmp_path / "src" / "good.py").write_text("def hello(): pass\n")
+        (tmp_path / "src" / "broken.py").write_text("def bad(:\n")
+
+        assert cli._sync() == 0
+
+        skip_warnings = [
+            line
+            for line in capsys.readouterr().err.splitlines()
+            if "skipping" in line and "broken.py" in line
+        ]
+        assert len(skip_warnings) == 1
+        assert skip_warnings[0].startswith("warning: skipping src/broken.py")
+        assert "SyntaxError" in skip_warnings[0]
+
 
 class TestSyncCheckMode:
     def test_returns_one_and_does_not_write_on_empty_repo(self, tmp_path, monkeypatch):

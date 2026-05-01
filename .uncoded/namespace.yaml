@@ -123,6 +123,7 @@ tests/:
       test_dedupes_when_claude_md_is_symlink_to_agents_md:
       test_error_when_no_pyproject_toml:
       test_error_when_source_root_missing:
+      test_skip_warning_emitted_once_per_broken_file:
     TestSyncCheckMode:
       test_returns_one_and_does_not_write_on_empty_repo:
       test_returns_zero_when_index_is_up_to_date:

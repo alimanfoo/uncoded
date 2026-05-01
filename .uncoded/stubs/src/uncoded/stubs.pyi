@@ -4,6 +4,7 @@
 
 import ast
 import re
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
 from uncoded.extract import _property_kind, iter_source_files
@@ -64,11 +65,11 @@ def render_stub(module: StubModule) -> str:
     """Render a StubModule as a .pyi file string."""
     ...
 
-def _generate_stubs(source_root: Path, base: Path | None) -> dict[Path, str]:
+def _generate_stubs(source_root: Path, base: Path | None, files: Iterable[tuple[str, str]] | None) -> dict[Path, str]:
     """Return a mapping from stub relative paths to rendered stub content."""
     ...
 
-def build_stubs(source_root: Path, output_dir: Path, base: Path | None, *, check: bool) -> int:
+def build_stubs(source_root: Path, output_dir: Path, base: Path | None, *, files: Iterable[tuple[str, str]] | None, check: bool) -> int:
     """Sync stub files for all symbols under source_root, removing any orphans."""
     ...
 

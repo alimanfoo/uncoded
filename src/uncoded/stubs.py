@@ -2,6 +2,7 @@
 
 import ast
 import re
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -337,10 +338,16 @@ def render_stub(module: StubModule) -> str:
     return "\n".join(lines).rstrip() + "\n"
 
 
-def _generate_stubs(source_root: Path, base: Path | None = None) -> dict[Path, str]:
+def _generate_stubs(
+    source_root: Path,
+    base: Path | None = None,
+    files: Iterable[tuple[str, str]] | None = None,
+) -> dict[Path, str]:
     """Return a mapping from stub relative paths to rendered stub content."""
+    if files is None:
+        files = iter_source_files(source_root, base)
     result: dict[Path, str] = {}
-    for source, rel_path in iter_source_files(source_root, base):
+    for source, rel_path in files:
         module = extract_stub(source, rel_path)
         if not module.classes and not module.functions and not module.constants:
             continue
@@ -356,6 +363,7 @@ def build_stubs(
     output_dir: Path = DEFAULT_STUBS_OUTPUT,
     base: Path | None = None,
     *,
+    files: Iterable[tuple[str, str]] | None = None,
     check: bool = False,
 ) -> int:
     """Sync stub files for all symbols under source_root, removing any orphans.
@@ -374,6 +382,14 @@ def build_stubs(
     ``source_root.relative_to(base)``, so ``base`` must be an ancestor of
     ``source_root`` for cleanup to run; otherwise cleanup is skipped.
 
+    When *files* is provided, stub generation consumes the iterable directly
+    (expected to be the output of :func:`iter_source_files`) instead of
+    re-scanning ``source_root``. This lets a caller drive a single
+    ``iter_source_files`` pass and feed both the namespace-map and the stub
+    pipelines from one read, so a syntax-erroring file is read, parsed, and
+    warned about exactly once per ``uncoded sync`` invocation. The orphan
+    cleanup still runs against ``source_root`` regardless.
+
     When ``check=True``, the on-disk tree is not mutated; instead, prospective
     writes and removals are reported and counted. Returns the number of
     changes (or prospective changes).
@@ -384,7 +400,9 @@ def build_stubs(
 
     changes = 0
     expected: set[Path] = set()
-    for rel_stub_path, content in _generate_stubs(source_root, base).items():
+    for rel_stub_path, content in _generate_stubs(
+        source_root, base, files=files
+    ).items():
         stub_path = output_dir / rel_stub_path
         if sync_file(stub_path, content, check=check):
             changes += 1

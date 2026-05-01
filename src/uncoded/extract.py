@@ -2,7 +2,7 @@
 
 import ast
 import sys
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -130,19 +130,36 @@ def iter_source_files(
         yield source, rel_path
 
 
-def walk_source(source_root: Path, base: Path | None = None) -> list[ModuleInfo]:
+def walk_source(
+    source_root: Path,
+    base: Path | None = None,
+    *,
+    files: Iterable[tuple[str, str]] | None = None,
+) -> list[ModuleInfo]:
     """Walk a source root and extract symbols from all Python files.
 
     Paths in the returned ModuleInfo are relative to *base* (defaults to
     cwd), so they can be used directly to open files from the repo root.
 
+    When *files* is provided, the file scan is skipped and the iterable
+    is consumed directly — the iterable is expected to be the output of
+    :func:`iter_source_files`. This lets a caller drive a single
+    ``iter_source_files`` pass and feed multiple consumers (e.g.
+    namespace map and stubs) from one read, so a syntax-erroring file
+    is read, parsed, and warned about exactly once per pass instead of
+    once per consumer. When *files* is provided, *source_root* and
+    *base* are unused.
+
     Skips files with no symbols. Files with syntax errors are filtered
     out upstream by ``iter_source_files`` (which emits a stderr warning
     naming the offending file).
     """
+    if files is None:
+        files = iter_source_files(source_root, base)
+
     modules: list[ModuleInfo] = []
 
-    for source, rel_path in iter_source_files(source_root, base):
+    for source, rel_path in files:
         module = extract_module(source, rel_path)
         if module.classes or module.functions or module.constants:
             modules.append(module)

@@ -4,7 +4,7 @@
 
 import ast
 import sys
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -24,7 +24,7 @@ def iter_source_files(source_root: Path, base: Path | None) -> Iterator[tuple[st
     """Yield (source_text, rel_path) for every parseable Python file in *source_root*."""
     ...
 
-def walk_source(source_root: Path, base: Path | None) -> list[ModuleInfo]:
+def walk_source(source_root: Path, base: Path | None, *, files: Iterable[tuple[str, str]] | None) -> list[ModuleInfo]:
     """Walk a source root and extract symbols from all Python files."""
     ...
 

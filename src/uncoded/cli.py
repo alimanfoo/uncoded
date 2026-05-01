@@ -9,7 +9,7 @@ from uncoded.config import (
     read_instruction_files,
     read_source_roots,
 )
-from uncoded.extract import walk_source
+from uncoded.extract import iter_source_files, walk_source
 from uncoded.instruction_files import sync_instruction_file
 from uncoded.namespace_map import build_map, render_map
 from uncoded.serena_setup import setup
@@ -66,15 +66,28 @@ def _sync(*, root: Path | None = None, check: bool = False) -> int:
 
     changes = 0
 
+    # Drive a single ``iter_source_files`` pass per source root and feed
+    # both the namespace map and the stubs pipeline from one read. Without
+    # this, each pipeline calls ``iter_source_files`` separately and a
+    # syntax-erroring file produces two identical ``warning: skipping``
+    # lines per ``uncoded sync`` invocation — the contract is one warning
+    # per broken file per sync.
+    roots_with_files = [
+        (src_root, list(iter_source_files(src_root, base=project_root)))
+        for src_root in source_roots
+    ]
+
     modules = [
-        m for src_root in source_roots for m in walk_source(src_root, base=project_root)
+        m
+        for src_root, files in roots_with_files
+        for m in walk_source(src_root, base=project_root, files=files)
     ]
     map_content = render_map(build_map(modules))
     if sync_file(DEFAULT_MAP_OUTPUT, map_content, check=check):
         changes += 1
 
-    for src_root in source_roots:
-        changes += build_stubs(src_root, base=project_root, check=check)
+    for src_root, files in roots_with_files:
+        changes += build_stubs(src_root, base=project_root, files=files, check=check)
 
     # Dedupe configured instruction paths by resolved (canonical) path.
     # Without this, if CLAUDE.md is a symlink to AGENTS.md, pass 1 writes
