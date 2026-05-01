@@ -66,6 +66,19 @@ roots, builds the index, and updates `CLAUDE.md`/`AGENTS.md`.
 Commit the generated `.uncoded/` directory so agents working
 in the repo always have a current index.
 
+## Set up the language server
+
+```
+uncoded setup
+```
+
+Generates the MCP and Claude Code configuration that wires up
+[Serena][serena] (language-server bridge) and [ty][ty] (Python backend),
+so agents can find references, rename, and edit symbols by name. Safe
+to re-run. See [Using uncoded with a language
+server](#using-uncoded-with-a-language-server) below for the generated
+files and notes on non-Claude-Code agents.
+
 ## Keep it current with pre-commit
 
 Add `uncoded sync` as a pre-commit hook so the index stays in sync
