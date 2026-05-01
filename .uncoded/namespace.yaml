@@ -229,6 +229,7 @@ tests/:
       test_does_not_overwrite_existing_serena_project_yml:
       test_does_not_duplicate_on_second_merge:
       test_setup_uses_cwd_name_when_no_pyproject:
+      test_setup_reads_name_from_pyproject:
     TestRepoDogfooding:
       test_repo_mcp_json_matches_template_contract:
       test_repo_claude_settings_allowlists_every_serena_tool:

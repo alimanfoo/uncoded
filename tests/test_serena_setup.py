@@ -195,6 +195,17 @@ class TestSetup:
         data = yaml.safe_load((tmp_path / ".serena" / "project.yml").read_text())
         assert data["project_name"] == tmp_path.name
 
+    def test_setup_reads_name_from_pyproject(self, tmp_path, monkeypatch):
+        # Sibling to ``test_setup_uses_cwd_name_when_no_pyproject`` but
+        # for the pyproject branch — covers the end-to-end composition of
+        # ``setup`` with ``read_project_name``'s pyproject path that the
+        # mock-based ``_run`` helper deliberately bypasses.
+        (tmp_path / "pyproject.toml").write_text('[project]\nname = "from-pyproject"\n')
+        monkeypatch.chdir(tmp_path)
+        setup(root=tmp_path)
+        data = yaml.safe_load((tmp_path / ".serena" / "project.yml").read_text())
+        assert data["project_name"] == "from-pyproject"
+
 
 class TestRepoDogfooding:
     """Catch drift between ``uncoded setup``'s templates and this repo's own config.

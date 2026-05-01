@@ -50,6 +50,9 @@ class TestSetup:
     def test_setup_uses_cwd_name_when_no_pyproject(self, tmp_path, monkeypatch):
         ...
 
+    def test_setup_reads_name_from_pyproject(self, tmp_path, monkeypatch):
+        ...
+
 class TestRepoDogfooding:
     """Catch drift between ``uncoded setup``'s templates and this repo's own config."""
 
