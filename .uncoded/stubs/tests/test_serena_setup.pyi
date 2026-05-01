@@ -24,6 +24,9 @@ class TestSetup:
     def test_serena_project_yml_uses_ty_and_ignores_uncoded(self, tmp_path):
         ...
 
+    def test_serena_project_yml_escapes_yaml_special_chars_in_name(self, tmp_path):
+        ...
+
     def test_claude_settings_enables_serena_and_allowlists_tools(self, tmp_path):
         ...
 

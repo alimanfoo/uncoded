@@ -78,6 +78,16 @@ class TestSetup:
         assert set(data["excluded_tools"]) == EXPECTED_EXCLUDED_TOOLS
         assert "initial_instructions" not in data["excluded_tools"]
 
+    def test_serena_project_yml_escapes_yaml_special_chars_in_name(self, tmp_path):
+        # The name carries characters that would corrupt the file under
+        # naive ``str.format`` interpolation: ``:`` is the YAML key/value
+        # separator, ``[`` opens a flow sequence, ``#`` starts a comment.
+        # ``yaml.safe_dump`` quotes the value so it round-trips cleanly.
+        risky_name = "weird: name [with] # chars"
+        self._run(tmp_path, name=risky_name)
+        data = yaml.safe_load((tmp_path / ".serena" / "project.yml").read_text())
+        assert data["project_name"] == risky_name
+
     def test_claude_settings_enables_serena_and_allowlists_tools(self, tmp_path):
         self._run(tmp_path)
         data = json.loads((tmp_path / ".claude" / "settings.json").read_text())

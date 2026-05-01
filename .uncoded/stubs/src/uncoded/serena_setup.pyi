@@ -3,6 +3,7 @@
 import json
 from pathlib import Path
 from typing import Literal
+import yaml
 from uncoded.config import read_project_name
 
 type _Status = Literal['wrote', 'updated', 'unchanged']

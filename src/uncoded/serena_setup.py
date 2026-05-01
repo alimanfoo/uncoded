@@ -29,6 +29,8 @@ import json
 from pathlib import Path
 from typing import Literal
 
+import yaml
+
 from uncoded.config import read_project_name
 
 # Closed set of one-word statuses returned by the three sync helpers and
@@ -61,23 +63,29 @@ MCP_SERVER_SERENA = {
     ],
 }
 
-SERENA_PROJECT_YML = """\
-project_name: "{project_name}"
-languages: ["python_ty"]
-ignored_paths:
-  - ".uncoded"
-excluded_tools:
-  - execute_shell_command
-  - list_memories
-  - read_memory
-  - write_memory
-  - edit_memory
-  - delete_memory
-  - rename_memory
-  - onboarding
-  - check_onboarding_performed
-  - open_dashboard
-"""
+# Static fields of ``.serena/project.yml``. ``project_name`` is injected
+# per call by ``_write_serena_project_if_absent`` and serialised via
+# ``yaml.safe_dump`` so YAML-special characters in the name (colons,
+# quotes, leading dashes, braces, etc.) are escaped instead of producing
+# malformed YAML or a parse exception. Field order is preserved by
+# ``sort_keys=False`` at dump time; ``project_name`` is placed first by
+# constructing the dict with it as the first key.
+SERENA_PROJECT_YML = {
+    "languages": ["python_ty"],
+    "ignored_paths": [".uncoded"],
+    "excluded_tools": [
+        "execute_shell_command",
+        "list_memories",
+        "read_memory",
+        "write_memory",
+        "edit_memory",
+        "delete_memory",
+        "rename_memory",
+        "onboarding",
+        "check_onboarding_performed",
+        "open_dashboard",
+    ],
+}
 
 SERENA_ALLOWED_TOOLS = [
     "mcp__serena__initial_instructions",
@@ -135,7 +143,8 @@ def _write_serena_project_if_absent(path: Path, project_name: str) -> _Status:
     if path.exists():
         return "unchanged"
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(SERENA_PROJECT_YML.format(project_name=project_name))
+    data = {"project_name": project_name, **SERENA_PROJECT_YML}
+    path.write_text(yaml.safe_dump(data, sort_keys=False))
     return "wrote"
 
 

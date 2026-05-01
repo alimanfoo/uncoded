@@ -220,6 +220,7 @@ tests/:
       test_creates_all_three_files:
       test_mcp_json_is_valid_and_pins_version:
       test_serena_project_yml_uses_ty_and_ignores_uncoded:
+      test_serena_project_yml_escapes_yaml_special_chars_in_name:
       test_claude_settings_enables_serena_and_allowlists_tools:
       test_idempotent:
       test_merges_into_existing_mcp_json:
