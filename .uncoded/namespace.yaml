@@ -260,6 +260,9 @@ tests/:
       test_class_with_bases:
       test_class_no_bases:
       test_docstring_first_sentence_only:
+      test_docstring_starting_with_eg_not_truncated:
+      test_docstring_starting_with_ie_not_truncated:
+      test_docstring_starting_with_us_initialism_not_truncated:
       test_no_docstring:
       test_module_docstring_extracted:
       test_module_no_docstring:

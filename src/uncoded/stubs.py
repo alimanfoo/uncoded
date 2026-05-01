@@ -78,7 +78,14 @@ def _first_sentence(
     if not docstring:
         return None
     text = docstring.strip()
-    match = re.match(r"(.+?\.)\s", text + " ")
+    # Sentence boundary: ``.`` followed by whitespace and a capital letter.
+    # The capital-letter requirement prevents truncation at common
+    # abbreviations whose period is followed by lowercase continuation
+    # (``e.g. parse...``, ``i.e. ...``, ``U.S. economic policy``). The
+    # appended ``" Z"`` sentinel acts as an end-of-text boundary so a
+    # single-sentence docstring (no follow-on text) is matched in full
+    # rather than falling through to the line-based fallback.
+    match = re.match(r"(.+?\.)\s+[A-Z]", text + " Z")
     if match:
         return match.group(1)
     return text.split("\n")[0].strip()

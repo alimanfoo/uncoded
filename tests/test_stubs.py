@@ -114,6 +114,39 @@ class TestExtractStub:
         module = extract_stub(source, "pkg/proc.py")
         assert module.functions[0].docstring_excerpt == "Parse the input."
 
+    def test_docstring_starting_with_eg_not_truncated(self):
+        # Sentence-boundary heuristic requires whitespace+capital after the
+        # period, so ``e.g.`` followed by lowercase isn't mistaken for the
+        # end of the first sentence.
+        source = textwrap.dedent("""\
+            def process():
+                '''e.g. parse a YAML file. Then validate it.'''
+                pass
+        """)
+        module = extract_stub(source, "pkg/proc.py")
+        assert module.functions[0].docstring_excerpt == "e.g. parse a YAML file."
+
+    def test_docstring_starting_with_ie_not_truncated(self):
+        source = textwrap.dedent("""\
+            def process():
+                '''i.e. validate the input. Then proceed.'''
+                pass
+        """)
+        module = extract_stub(source, "pkg/proc.py")
+        assert module.functions[0].docstring_excerpt == "i.e. validate the input."
+
+    def test_docstring_starting_with_us_initialism_not_truncated(self):
+        # Multi-character initialism with internal periods. The ``e`` after
+        # ``U.S.`` is lowercase, so the heuristic skips past the abbreviation
+        # and lands on the next capital-after-period.
+        source = textwrap.dedent("""\
+            def policy():
+                '''U.S. economic policy. Then global.'''
+                pass
+        """)
+        module = extract_stub(source, "pkg/policy.py")
+        assert module.functions[0].docstring_excerpt == "U.S. economic policy."
+
     def test_no_docstring(self):
         source = textwrap.dedent("""\
             def silent():
