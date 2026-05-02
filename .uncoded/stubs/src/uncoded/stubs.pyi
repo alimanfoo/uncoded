@@ -14,7 +14,7 @@ VALUE_WIDTH_CAP = 80
 DEFAULT_STUBS_OUTPUT = Path('.uncoded/stubs')
 
 def _first_sentence(node: ast.AsyncFunctionDef | ast.FunctionDef | ast.ClassDef | ast.Module) -> str | None:
-    """Return the first sentence of a node's docstring, or None."""
+    """Return the first sentence, or first line, of a node's docstring."""
     ...
 
 def _extract_params(args: ast.arguments) -> list[StubParam]:

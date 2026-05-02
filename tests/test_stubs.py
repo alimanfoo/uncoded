@@ -165,6 +165,47 @@ class TestExtractStub:
         module = extract_stub(source, "pkg/whitespace.py")
         assert module.functions[0].docstring_excerpt is None
 
+    def test_no_period_docstring_yields_first_line(self):
+        # Pins the "or its first line" half of _first_sentence's
+        # contract: a docstring with no sentence boundary still
+        # produces a usable excerpt rather than None.
+        source = textwrap.dedent("""\
+            def greet():
+                '''Hello world'''
+                pass
+        """)
+        module = extract_stub(source, "pkg/greet.py")
+        assert module.functions[0].docstring_excerpt == "Hello world"
+
+    def test_multiline_without_sentence_boundary_yields_first_line(self):
+        # Multi-line docstring whose first paragraph contains no
+        # period-then-capital boundary: the excerpt is the first
+        # line, not the joined paragraph.
+        source = textwrap.dedent("""\
+            def greet():
+                '''Hello world
+                more text on the next line
+                '''
+                pass
+        """)
+        module = extract_stub(source, "pkg/greet.py")
+        assert module.functions[0].docstring_excerpt == "Hello world"
+
+    def test_capital_abbreviation_truncates_as_documented_limit(self):
+        # Documented non-contract: docstrings starting with a
+        # capital-letter abbreviation (``Mr.``, ``Dr.``) truncate at
+        # the abbreviation because the heuristic cannot tell a
+        # title-plus-name from a real sentence break. Pinning the
+        # behaviour so a future contributor sees this is by design,
+        # not a regression to fix.
+        source = textwrap.dedent("""\
+            def describe():
+                '''Mr. Smith arrived. Then he left.'''
+                pass
+        """)
+        module = extract_stub(source, "pkg/describe.py")
+        assert module.functions[0].docstring_excerpt == "Mr."
+
     def test_module_docstring_extracted(self):
         # Module-level docstrings follow the same first-sentence convention
         # as class/function docstrings, so a multi-sentence module docstring

@@ -74,19 +74,39 @@ class StubModule:
 def _first_sentence(
     node: ast.AsyncFunctionDef | ast.FunctionDef | ast.ClassDef | ast.Module,
 ) -> str | None:
-    """Return the first sentence of a node's docstring, or None."""
+    """Return the first sentence, or first line, of a node's docstring.
+
+    The contract is "first sentence or first line, whichever comes
+    first," so the consumer (the stub renderer) always receives a
+    single-line excerpt suitable for a one-line ``.pyi`` docstring.
+
+    A sentence boundary is a period followed by whitespace and a
+    capital letter. The capital-letter requirement deliberately
+    avoids truncation at lowercase-after-period abbreviations like
+    ``e.g.``, ``i.e.``, and ``U.S.``. When no such boundary exists
+    in the docstring, the function falls back to the substring up
+    to the first newline, so single-line docstrings without a
+    trailing period and multi-line docstrings without an internal
+    sentence boundary still yield a usable excerpt.
+
+    Returns ``None`` only when the node has no docstring, or the
+    docstring is whitespace-only (after ``ast.get_docstring``'s
+    ``clean=True`` normalisation reduces it to ``""``).
+
+    Documented non-contract: docstrings starting with capital-letter
+    abbreviations such as ``Mr. Smith arrived.`` or ``Dr. Jones``
+    truncate at the abbreviation. The heuristic cannot tell a
+    title-plus-name from a true sentence break; disambiguating these
+    would require a tokeniser or a whitelist, which the function
+    deliberately stops short of.
+    """
     docstring = ast.get_docstring(node)
     if not docstring:
         return None
-    # Sentence boundary: ``.`` followed by whitespace and a capital.
-    # The capital-letter requirement avoids truncation at lowercase-
-    # after-period abbreviations like ``e.g.``, ``i.e.``, ``U.S.``.
-    # Known limitation: ``Mr. Smith arrived.`` still truncates at the
-    # abbreviation, because the capital is genuinely there.
-    # Disambiguating those would need a tokeniser or a whitelist.
     match = re.match(r"(.+?\.(?=\s+[A-Z])|.+?(?=\n))", docstring.strip() + "\n")
-    if match is None:
-        return None
+    # docstring is non-empty post-cleandoc, so .strip() leaves at least
+    # one non-whitespace character; alt-2 ``.+?(?=\n)`` always matches.
+    assert match is not None
     return match.group(1)
 
 

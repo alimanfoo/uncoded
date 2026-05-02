@@ -281,6 +281,9 @@ tests/:
       test_docstring_starting_with_us_initialism_not_truncated:
       test_no_docstring:
       test_whitespace_only_docstring_yields_none:
+      test_no_period_docstring_yields_first_line:
+      test_multiline_without_sentence_boundary_yields_first_line:
+      test_capital_abbreviation_truncates_as_documented_limit:
       test_module_docstring_extracted:
       test_module_no_docstring:
       test_kwargs_and_varargs:
