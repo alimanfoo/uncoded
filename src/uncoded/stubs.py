@@ -358,6 +358,7 @@ def _write_stubs(
     output_dir: Path,
     base: Path,
     *,
+    root: Path | None = None,
     check: bool,
 ) -> int:
     """Write *stubs* under *output_dir* and prune orphans under *source_root*.
@@ -377,6 +378,11 @@ def _write_stubs(
     pruned. Only the subtree corresponding to ``source_root`` is
     touched, so other source roots' stubs are not affected.
 
+    When ``root`` is provided, ``output_dir`` is treated as relative to
+    ``root`` for filesystem I/O while printed messages remain
+    project-relative. Without ``root``, paths resolve against the current
+    working directory.
+
     When ``check=True``, the on-disk tree is not mutated; instead,
     prospective writes and removals are reported and counted. Returns
     the number of changes (or prospective changes).
@@ -385,9 +391,10 @@ def _write_stubs(
     expected: set[Path] = set()
     for rel_stub_path, content in stubs.items():
         stub_path = output_dir / rel_stub_path
-        if sync_file(stub_path, content, check=check):
+        if sync_file(stub_path, content, root=root, check=check):
             changes += 1
-        expected.add(stub_path.resolve())
+        anchored = root / stub_path if root is not None else stub_path
+        expected.add(anchored.resolve())
 
     try:
         source_rel = source_root.resolve().relative_to(base)
@@ -395,18 +402,34 @@ def _write_stubs(
         # source_root is outside base; we have no safe subtree to clean.
         return changes
     stubs_root = output_dir / source_rel
-    if not stubs_root.exists():
+    abs_stubs_root = root / stubs_root if root is not None else stubs_root
+    if not abs_stubs_root.exists():
         return changes
 
-    for existing in stubs_root.rglob("*.pyi"):
-        if existing.resolve() not in expected and remove_file(existing, check=check):
+    for existing in abs_stubs_root.rglob("*.pyi"):
+        if existing.resolve() in expected:
+            continue
+        # Display path stays project-relative when we have a root anchor;
+        # falls back to the absolute path for files that somehow live
+        # outside it (which shouldn't happen given abs_stubs_root sits
+        # under root, but the fallback keeps display sensible either way).
+        if root is not None:
+            try:
+                display = existing.relative_to(root)
+            except ValueError:
+                display = existing
+        else:
+            display = existing
+        if remove_file(display, root=root, check=check):
             changes += 1
 
     if check:
         return changes
 
-    # Prune now-empty directories, deepest-first, but keep stubs_root itself.
-    for d in sorted(stubs_root.rglob("*"), key=lambda p: len(p.parts), reverse=True):
+    # Prune now-empty directories, deepest-first, but keep abs_stubs_root itself.
+    for d in sorted(
+        abs_stubs_root.rglob("*"), key=lambda p: len(p.parts), reverse=True
+    ):
         if d.is_dir() and not any(d.iterdir()):
             d.rmdir()
 
@@ -418,6 +441,7 @@ def build_stubs(
     output_dir: Path = DEFAULT_STUBS_OUTPUT,
     base: Path | None = None,
     *,
+    root: Path | None = None,
     check: bool = False,
 ) -> int:
     """Sync stub files for all symbols under source_root, removing any orphans.
@@ -428,6 +452,10 @@ def build_stubs(
     ``rel_path`` headers match the project-relative paths that
     :func:`walk_source` and the namespace map use.
 
+    When ``root`` is provided, ``output_dir`` is treated as relative to
+    ``root`` for filesystem I/O while printed messages remain
+    project-relative.
+
     When ``check=True``, the on-disk tree is not mutated; instead,
     prospective writes and removals are reported and counted. Returns
     the number of changes (or prospective changes).
@@ -436,4 +464,4 @@ def build_stubs(
         base = Path.cwd()
     base = base.resolve()
     stubs = _generate_stubs(iter_source_files(source_root, base))
-    return _write_stubs(stubs, source_root, output_dir, base, check=check)
+    return _write_stubs(stubs, source_root, output_dir, base, root=root, check=check)

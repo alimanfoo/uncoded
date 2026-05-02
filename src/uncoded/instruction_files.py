@@ -157,15 +157,25 @@ def _replace_or_append(existing: str, section: str) -> str:
     return prefix + section
 
 
-def sync_instruction_file(path: Path, *, check: bool = False) -> bool:
+def sync_instruction_file(
+    path: Path,
+    *,
+    root: Path | None = None,
+    check: bool = False,
+) -> bool:
     """Write or update the uncoded navigation section in an instruction file.
 
     When ``check=True``, reports a prospective change without touching disk.
     Returns ``True`` if a write was (or would be) performed.
+
+    When ``root`` is provided, ``path`` is resolved against ``root`` for
+    filesystem I/O while the printed message remains ``path`` for
+    project-relative display.
     """
     section = generate_section()
-    if not path.exists():
-        return sync_file(path, section, check=check)
-    existing = path.read_text()
+    target = root / path if root is not None else path
+    if not target.exists():
+        return sync_file(path, section, root=root, check=check)
+    existing = target.read_text()
     updated = _replace_or_append(existing, section)
-    return sync_file(path, updated, check=check)
+    return sync_file(path, updated, root=root, check=check)

@@ -745,3 +745,38 @@ class TestWriteStubs:
         assert not (out / "src" / "pkg" / "orphan.pyi").exists()
         assert not (out / "src" / "pkg").exists()
         assert (out / "src").exists()
+
+    def test_root_anchors_writes_independent_of_cwd(self, tmp_path, monkeypatch):
+        # output_dir is project-relative; root anchors the actual writes
+        # under tmp_path even when cwd is elsewhere.
+        sub = tmp_path / "subdir"
+        sub.mkdir()
+        monkeypatch.chdir(sub)
+        src = tmp_path / "src"
+        src.mkdir()
+        out = Path("stubs")
+        stubs = {Path("src/foo.pyi"): "# stub\n"}
+
+        changes = _write_stubs(stubs, src, out, tmp_path, root=tmp_path, check=False)
+
+        assert changes == 1
+        assert (tmp_path / out / "src" / "foo.pyi").read_text() == "# stub\n"
+        assert not (sub / out / "src" / "foo.pyi").exists()
+
+    def test_root_anchors_orphan_pruning_independent_of_cwd(
+        self, tmp_path, monkeypatch
+    ):
+        sub = tmp_path / "subdir"
+        sub.mkdir()
+        monkeypatch.chdir(sub)
+        src = tmp_path / "src"
+        src.mkdir()
+        out = Path("stubs")
+        (tmp_path / out / "src" / "pkg").mkdir(parents=True)
+        (tmp_path / out / "src" / "pkg" / "orphan.pyi").write_text("# stale\n")
+
+        changes = _write_stubs({}, src, out, tmp_path, root=tmp_path, check=False)
+
+        assert changes == 1
+        assert not (tmp_path / out / "src" / "pkg" / "orphan.pyi").exists()
+        assert not (tmp_path / out / "src" / "pkg").exists()

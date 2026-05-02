@@ -4,6 +4,7 @@
 
 import sys
 import textwrap
+from pathlib import Path
 import pytest
 from uncoded import cli
 from uncoded.skill import SKILL_OUTPUTS
@@ -32,7 +33,10 @@ class TestSyncApplyMode:
     def test_skip_warning_emitted_once_per_broken_file(self, tmp_path, monkeypatch, capsys):
         ...
 
-    def test_root_param_anchors_reads_at_project_root_when_cwd_is_subdir(self, tmp_path, monkeypatch):
+    def test_anchors_reads_and_writes_at_project_root_when_cwd_is_subdir(self, tmp_path, monkeypatch):
+        ...
+
+    def test_artefacts_match_when_run_from_subdir_vs_project_root(self, tmp_path, monkeypatch):
         ...
 
 class TestSyncCheckMode:

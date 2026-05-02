@@ -89,3 +89,34 @@ class TestSyncSkill:
 
         for path in LEGACY_SKILL_OUTPUTS:
             assert (tmp_path / path).exists()
+
+
+class TestSyncSkillRootAnchor:
+    def test_root_anchors_writes_independent_of_cwd(self, tmp_path, monkeypatch):
+        sub = tmp_path / "subdir"
+        sub.mkdir()
+        monkeypatch.chdir(sub)
+
+        sync_skill(root=tmp_path, check=False)
+
+        for path in SKILL_OUTPUTS:
+            assert (tmp_path / path).exists()
+            assert (tmp_path / path).read_text() == _SKILL_CONTENT
+            assert not (sub / path).exists()
+
+    def test_root_anchors_legacy_removal_independent_of_cwd(
+        self, tmp_path, monkeypatch
+    ):
+        sub = tmp_path / "subdir"
+        sub.mkdir()
+        monkeypatch.chdir(sub)
+
+        for path in LEGACY_SKILL_OUTPUTS:
+            legacy_path = tmp_path / path
+            legacy_path.parent.mkdir(parents=True, exist_ok=True)
+            legacy_path.write_text("old skill\n")
+
+        sync_skill(root=tmp_path, check=False)
+
+        for path in LEGACY_SKILL_OUTPUTS:
+            assert not (tmp_path / path).exists()

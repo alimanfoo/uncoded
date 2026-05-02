@@ -37,3 +37,11 @@ class TestSyncSkill:
 
     def test_check_mode_reports_legacy_skill_files_without_removing(self, tmp_path, monkeypatch):
         ...
+
+class TestSyncSkillRootAnchor:
+
+    def test_root_anchors_writes_independent_of_cwd(self, tmp_path, monkeypatch):
+        ...
+
+    def test_root_anchors_legacy_removal_independent_of_cwd(self, tmp_path, monkeypatch):
+        ...

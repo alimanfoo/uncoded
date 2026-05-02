@@ -25,15 +25,14 @@ def _sync(*, root: Path | None = None, check: bool = False) -> int:
 
     ``root`` is the directory the upward walk for ``pyproject.toml``
     begins from; the parent of the located ``pyproject.toml`` becomes
-    the project anchor used to resolve every project-relative *input* —
-    source-root paths, instruction-file paths, and the rel-paths
-    rendered into the namespace map and stubs. Defaults to the current
-    working directory at the CLI boundary. Output paths still resolve
-    relative to cwd: ``DEFAULT_MAP_OUTPUT``, ``DEFAULT_STUBS_OUTPUT``,
-    the skill output paths, and the instruction-file write target are
-    all cwd-relative, so running from a subdirectory of the project
-    will land artefacts under that subdirectory rather than the
-    project root.
+    the project anchor for every project-relative path — both the
+    *inputs* (source roots, instruction-file paths, the rel-paths
+    rendered into the namespace map and stubs) and the *outputs*
+    (``DEFAULT_MAP_OUTPUT``, ``DEFAULT_STUBS_OUTPUT``, the skill output
+    paths, and the instruction-file write target). Defaults to the
+    current working directory at the CLI boundary. Running from a
+    subdirectory of the project produces artefacts in the same
+    locations as running from the project root.
 
     When ``check=True``, the on-disk tree is not mutated: each step reports
     whether it would write. Returns 1 if any step reports a prospective
@@ -77,13 +76,18 @@ def _sync(*, root: Path | None = None, check: bool = False) -> int:
         m for _src_root, files in roots_with_files for m in extract_modules(files)
     ]
     map_content = render_map(build_map(modules))
-    if sync_file(DEFAULT_MAP_OUTPUT, map_content, check=check):
+    if sync_file(DEFAULT_MAP_OUTPUT, map_content, root=project_root, check=check):
         changes += 1
 
     for src_root, files in roots_with_files:
         stubs = _generate_stubs(files)
         changes += _write_stubs(
-            stubs, src_root, DEFAULT_STUBS_OUTPUT, project_root, check=check
+            stubs,
+            src_root,
+            DEFAULT_STUBS_OUTPUT,
+            project_root,
+            root=project_root,
+            check=check,
         )
 
     # Dedupe configured instruction paths by resolved (canonical) path.
@@ -104,10 +108,10 @@ def _sync(*, root: Path | None = None, check: bool = False) -> int:
             canonical = resolved.relative_to(project_root)
         except ValueError:
             canonical = resolved
-        if sync_instruction_file(canonical, check=check):
+        if sync_instruction_file(canonical, root=project_root, check=check):
             changes += 1
 
-    if sync_skill(check=check):
+    if sync_skill(root=project_root, check=check):
         changes += 1
 
     if check:

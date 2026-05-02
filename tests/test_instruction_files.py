@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from uncoded.instruction_files import (
     MARKER_END,
     MARKER_START,
@@ -90,3 +92,31 @@ class TestSyncInstructionFileCheckMode:
         sync_instruction_file(path)
         changed = sync_instruction_file(path, check=True)
         assert changed is False
+
+
+class TestSyncInstructionFileRootAnchor:
+    def test_root_anchors_create_independent_of_cwd(self, tmp_path, monkeypatch):
+        sub = tmp_path / "subdir"
+        sub.mkdir()
+        monkeypatch.chdir(sub)
+
+        rel = Path("CLAUDE.md")
+        changed = sync_instruction_file(rel, root=tmp_path)
+        assert changed is True
+        assert (tmp_path / rel).exists()
+        assert generate_section() in (tmp_path / rel).read_text()
+        assert not (sub / rel).exists()
+
+    def test_root_anchors_update_of_existing_file(self, tmp_path, monkeypatch):
+        sub = tmp_path / "subdir"
+        sub.mkdir()
+        monkeypatch.chdir(sub)
+
+        rel = Path("CLAUDE.md")
+        (tmp_path / rel).write_text("# My Project\n\nSome content.\n")
+
+        changed = sync_instruction_file(rel, root=tmp_path)
+        assert changed is True
+        content = (tmp_path / rel).read_text()
+        assert "# My Project" in content
+        assert generate_section() in content

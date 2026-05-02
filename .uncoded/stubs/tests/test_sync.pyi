@@ -1,5 +1,6 @@
 # tests/test_sync.py
 
+from pathlib import Path
 from uncoded.sync import remove_file, sync_file
 
 class TestSyncFile:
@@ -40,4 +41,20 @@ class TestRemoveFile:
         ...
 
     def test_check_mode_reports_noop_when_absent(self, tmp_path):
+        ...
+
+class TestSyncFileRootAnchor:
+
+    def test_root_anchors_write_independent_of_cwd(self, tmp_path, monkeypatch):
+        ...
+
+    def test_root_preserves_relative_path_in_message(self, tmp_path, monkeypatch, capsys):
+        ...
+
+    def test_absolute_path_makes_root_a_no_op(self, tmp_path, monkeypatch):
+        ...
+
+class TestRemoveFileRootAnchor:
+
+    def test_root_anchors_removal_independent_of_cwd(self, tmp_path, monkeypatch):
         ...

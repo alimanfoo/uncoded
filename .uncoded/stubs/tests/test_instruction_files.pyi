@@ -1,5 +1,6 @@
 # tests/test_instruction_files.py
 
+from pathlib import Path
 from uncoded.instruction_files import MARKER_END, MARKER_START, generate_section, sync_instruction_file
 
 class TestGenerateSection:
@@ -45,4 +46,12 @@ class TestSyncInstructionFileCheckMode:
         ...
 
     def test_reports_no_change_when_clean(self, tmp_path):
+        ...
+
+class TestSyncInstructionFileRootAnchor:
+
+    def test_root_anchors_create_independent_of_cwd(self, tmp_path, monkeypatch):
+        ...
+
+    def test_root_anchors_update_of_existing_file(self, tmp_path, monkeypatch):
         ...
