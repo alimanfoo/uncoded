@@ -373,12 +373,12 @@ DEFAULT_STUBS_OUTPUT = Path(".uncoded/stubs")
 
 
 def _write_stubs(
+    *,
     stubs: dict[Path, str],
     source_root: Path,
     output_dir: Path,
     base: Path,
-    *,
-    root: Path | None = None,
+    root: Path | None,
     check: bool,
 ) -> int:
     """Write *stubs* under *output_dir* and prune orphans under *source_root*.

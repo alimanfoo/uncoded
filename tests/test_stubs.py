@@ -774,7 +774,14 @@ class TestWriteStubs:
         out = tmp_path / "stubs"
         stubs = {Path("src/foo.pyi"): "# stub\n"}
 
-        changes = _write_stubs(stubs, src, out, tmp_path, check=False)
+        changes = _write_stubs(
+            stubs=stubs,
+            source_root=src,
+            output_dir=out,
+            base=tmp_path,
+            root=None,
+            check=False,
+        )
 
         assert changes == 1
         assert (out / "src" / "foo.pyi").read_text() == "# stub\n"
@@ -785,7 +792,14 @@ class TestWriteStubs:
         out = tmp_path / "stubs"
         stubs = {Path("src/foo.pyi"): "# stub\n"}
 
-        changes = _write_stubs(stubs, src, out, tmp_path, check=True)
+        changes = _write_stubs(
+            stubs=stubs,
+            source_root=src,
+            output_dir=out,
+            base=tmp_path,
+            root=None,
+            check=True,
+        )
 
         assert changes == 1
         assert not (out / "src" / "foo.pyi").exists()
@@ -797,7 +811,14 @@ class TestWriteStubs:
         (out / "src" / "pkg").mkdir(parents=True)
         (out / "src" / "pkg" / "orphan.pyi").write_text("# stale\n")
 
-        changes = _write_stubs({}, src, out, tmp_path, check=False)
+        changes = _write_stubs(
+            stubs={},
+            source_root=src,
+            output_dir=out,
+            base=tmp_path,
+            root=None,
+            check=False,
+        )
 
         assert changes == 1
         assert not (out / "src" / "pkg" / "orphan.pyi").exists()
@@ -815,7 +836,14 @@ class TestWriteStubs:
         out = Path("stubs")
         stubs = {Path("src/foo.pyi"): "# stub\n"}
 
-        changes = _write_stubs(stubs, src, out, tmp_path, root=tmp_path, check=False)
+        changes = _write_stubs(
+            stubs=stubs,
+            source_root=src,
+            output_dir=out,
+            base=tmp_path,
+            root=tmp_path,
+            check=False,
+        )
 
         assert changes == 1
         assert (tmp_path / out / "src" / "foo.pyi").read_text() == "# stub\n"
@@ -833,7 +861,14 @@ class TestWriteStubs:
         (tmp_path / out / "src" / "pkg").mkdir(parents=True)
         (tmp_path / out / "src" / "pkg" / "orphan.pyi").write_text("# stale\n")
 
-        changes = _write_stubs({}, src, out, tmp_path, root=tmp_path, check=False)
+        changes = _write_stubs(
+            stubs={},
+            source_root=src,
+            output_dir=out,
+            base=tmp_path,
+            root=tmp_path,
+            check=False,
+        )
 
         assert changes == 1
         assert not (tmp_path / out / "src" / "pkg" / "orphan.pyi").exists()
