@@ -620,7 +620,7 @@ class TestRenderStub:
 
 
 class TestBuildStubs:
-    """build_stubs writes expected stubs and removes orphans for its source root."""
+    """_build_stubs writes expected stubs and removes orphans for its source root."""
 
     def _setup(self, tmp_path):
         src = tmp_path / "src"
@@ -716,7 +716,7 @@ class TestBuildStubs:
 
 
 class TestBuildStubsCheckMode:
-    """build_stubs with check=True must report changes without mutating the tree."""
+    """_build_stubs with check=True must report changes without mutating the tree."""
 
     def _setup(self, tmp_path):
         src = tmp_path / "src"
