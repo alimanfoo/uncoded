@@ -216,7 +216,7 @@ tests/:
       test_class_with_attributes_and_methods:
       test_function_is_none:
       test_class_with_no_members:
-      test_source_order_preserved:
+      test_class_and_function_insertion_order_preserved:
       test_module_level_constants:
       test_constants_precede_classes_and_functions:
     TestRenderMap:

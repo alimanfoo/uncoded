@@ -24,7 +24,7 @@ class TestBuildMap:
     def test_class_with_no_members(self):
         ...
 
-    def test_source_order_preserved(self):
+    def test_class_and_function_insertion_order_preserved(self):
         ...
 
     def test_module_level_constants(self):

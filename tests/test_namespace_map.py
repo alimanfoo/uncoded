@@ -101,7 +101,7 @@ class TestBuildMap:
 
         assert result["src/"]["pkg/"]["types.py"]["Marker"] is None
 
-    def test_source_order_preserved(self):
+    def test_class_and_function_insertion_order_preserved(self):
         modules = [
             ModuleInfo(
                 rel_path="src/pkg/mixed.py",
