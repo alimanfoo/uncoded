@@ -69,11 +69,11 @@ def _generate_stubs(files: Iterable[tuple[str, str]]) -> dict[Path, str]:
     """Return a mapping from stub relative paths to rendered stub content."""
     ...
 
-def _write_stubs(stubs: dict[Path, str], source_root: Path, output_dir: Path, base: Path, *, root: Path | None, check: bool) -> int:
+def _write_stubs(*, stubs: dict[Path, str], source_root: Path, output_dir: Path, base: Path, root: Path | None, check: bool) -> int:
     """Write *stubs* under *output_dir* and prune orphans under *source_root*."""
     ...
 
-def build_stubs(source_root: Path, output_dir: Path, base: Path | None, *, root: Path | None, check: bool) -> int:
+def _build_stubs(*, source_root: Path, output_dir: Path, base: Path, check: bool) -> int:
     """Sync stub files for all symbols under source_root, removing any orphans."""
     ...
 

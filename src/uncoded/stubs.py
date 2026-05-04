@@ -373,12 +373,12 @@ DEFAULT_STUBS_OUTPUT = Path(".uncoded/stubs")
 
 
 def _write_stubs(
+    *,
     stubs: dict[Path, str],
     source_root: Path,
     output_dir: Path,
     base: Path,
-    *,
-    root: Path | None = None,
+    root: Path | None,
     check: bool,
 ) -> int:
     """Write *stubs* under *output_dir* and prune orphans under *source_root*.
@@ -446,32 +446,31 @@ def _write_stubs(
     return changes
 
 
-def build_stubs(
-    source_root: Path,
-    output_dir: Path = DEFAULT_STUBS_OUTPUT,
-    base: Path | None = None,
+def _build_stubs(
     *,
-    root: Path | None = None,
-    check: bool = False,
+    source_root: Path,
+    output_dir: Path,
+    base: Path,
+    check: bool,
 ) -> int:
     """Sync stub files for all symbols under source_root, removing any orphans.
 
-    Convenience wrapper around :func:`iter_source_files`,
-    :func:`_generate_stubs`, and :func:`_write_stubs`. Stub paths are
-    rendered relative to *base* (defaulting to cwd), so the rendered
-    ``rel_path`` headers match the project-relative paths that
-    :func:`walk_source` and the namespace map use.
-
-    When ``root`` is provided, ``output_dir`` is treated as relative to
-    ``root`` for filesystem I/O while printed messages remain
-    project-relative.
+    Internal end-to-end helper used by the test suite. Stub paths are
+    rendered relative to *base*, so the rendered ``rel_path`` headers
+    match the project-relative paths that :func:`walk_source` and the
+    namespace map use.
 
     When ``check=True``, the on-disk tree is not mutated; instead,
     prospective writes and removals are reported and counted. Returns
     the number of changes (or prospective changes).
     """
-    if base is None:
-        base = Path.cwd()
     base = base.resolve()
     stubs = _generate_stubs(iter_source_files(source_root, base))
-    return _write_stubs(stubs, source_root, output_dir, base, root=root, check=check)
+    return _write_stubs(
+        stubs=stubs,
+        source_root=source_root,
+        output_dir=output_dir,
+        base=base,
+        root=None,
+        check=check,
+    )

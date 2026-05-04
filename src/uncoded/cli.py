@@ -82,10 +82,10 @@ def _sync(*, root: Path | None = None, check: bool = False) -> int:
     for src_root, files in roots_with_files:
         stubs = _generate_stubs(files)
         changes += _write_stubs(
-            stubs,
-            src_root,
-            DEFAULT_STUBS_OUTPUT,
-            project_root,
+            stubs=stubs,
+            source_root=src_root,
+            output_dir=DEFAULT_STUBS_OUTPUT,
+            base=project_root,
             root=project_root,
             check=check,
         )

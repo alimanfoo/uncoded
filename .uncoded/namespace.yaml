@@ -113,7 +113,7 @@ src/:
       render_stub:
       _generate_stubs:
       _write_stubs:
-      build_stubs:
+      _build_stubs:
     sync.py:
       sync_file:
       remove_file:

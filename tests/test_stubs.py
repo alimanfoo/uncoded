@@ -9,8 +9,8 @@ from uncoded.stubs import (
     StubFunction,
     StubModule,
     StubParam,
+    _build_stubs,
     _write_stubs,
-    build_stubs,
     extract_stub,
     render_stub,
 )
@@ -620,7 +620,7 @@ class TestRenderStub:
 
 
 class TestBuildStubs:
-    """build_stubs writes expected stubs and removes orphans for its source root."""
+    """_build_stubs writes expected stubs and removes orphans for its source root."""
 
     def _setup(self, tmp_path):
         src = tmp_path / "src"
@@ -631,29 +631,29 @@ class TestBuildStubs:
     def test_writes_expected_stubs(self, tmp_path):
         src, out = self._setup(tmp_path)
         (src / "foo.py").write_text("def hello(): pass\n")
-        build_stubs(src, out, base=tmp_path)
+        _build_stubs(source_root=src, output_dir=out, base=tmp_path, check=False)
         assert (out / "src" / "foo.pyi").exists()
 
     def test_removes_orphan_stub_when_source_deleted(self, tmp_path):
         src, out = self._setup(tmp_path)
         (src / "foo.py").write_text("def hello(): pass\n")
         (src / "bar.py").write_text("def goodbye(): pass\n")
-        build_stubs(src, out, base=tmp_path)
+        _build_stubs(source_root=src, output_dir=out, base=tmp_path, check=False)
         assert (out / "src" / "bar.pyi").exists()
 
         (src / "bar.py").unlink()
-        build_stubs(src, out, base=tmp_path)
+        _build_stubs(source_root=src, output_dir=out, base=tmp_path, check=False)
         assert (out / "src" / "foo.pyi").exists()
         assert not (out / "src" / "bar.pyi").exists()
 
     def test_removes_orphan_stub_when_source_renamed(self, tmp_path):
         src, out = self._setup(tmp_path)
         (src / "old_name.py").write_text("def hello(): pass\n")
-        build_stubs(src, out, base=tmp_path)
+        _build_stubs(source_root=src, output_dir=out, base=tmp_path, check=False)
         assert (out / "src" / "old_name.pyi").exists()
 
         (src / "old_name.py").rename(src / "new_name.py")
-        build_stubs(src, out, base=tmp_path)
+        _build_stubs(source_root=src, output_dir=out, base=tmp_path, check=False)
         assert (out / "src" / "new_name.pyi").exists()
         assert not (out / "src" / "old_name.pyi").exists()
 
@@ -662,13 +662,13 @@ class TestBuildStubs:
         pkg = src / "pkg"
         pkg.mkdir()
         (pkg / "mod.py").write_text("def hello(): pass\n")
-        build_stubs(src, out, base=tmp_path)
+        _build_stubs(source_root=src, output_dir=out, base=tmp_path, check=False)
         assert (out / "src" / "pkg" / "mod.pyi").exists()
 
         # Remove the whole subpackage; the stub directory should be pruned.
         (pkg / "mod.py").unlink()
         pkg.rmdir()
-        build_stubs(src, out, base=tmp_path)
+        _build_stubs(source_root=src, output_dir=out, base=tmp_path, check=False)
         assert not (out / "src" / "pkg").exists()
 
     def test_does_not_touch_other_source_root(self, tmp_path):
@@ -678,39 +678,45 @@ class TestBuildStubs:
         (src / "foo.py").write_text("def hello(): pass\n")
         (tests / "test_foo.py").write_text("def test_hello(): pass\n")
 
-        build_stubs(src, out, base=tmp_path)
-        build_stubs(tests, out, base=tmp_path)
+        _build_stubs(source_root=src, output_dir=out, base=tmp_path, check=False)
+        _build_stubs(source_root=tests, output_dir=out, base=tmp_path, check=False)
         assert (out / "src" / "foo.pyi").exists()
         assert (out / "tests" / "test_foo.pyi").exists()
 
         # Rebuilding only `src` must leave the `tests` stub alone.
-        build_stubs(src, out, base=tmp_path)
+        _build_stubs(source_root=src, output_dir=out, base=tmp_path, check=False)
         assert (out / "tests" / "test_foo.pyi").exists()
 
     def test_no_op_when_clean(self, tmp_path):
         src, out = self._setup(tmp_path)
         (src / "foo.py").write_text("def hello(): pass\n")
-        build_stubs(src, out, base=tmp_path)
+        _build_stubs(source_root=src, output_dir=out, base=tmp_path, check=False)
         # Second build with no source changes should not error and should
         # leave the stub in place.
-        build_stubs(src, out, base=tmp_path)
+        _build_stubs(source_root=src, output_dir=out, base=tmp_path, check=False)
         assert (out / "src" / "foo.pyi").exists()
 
     def test_reports_count_on_first_build(self, tmp_path):
         src, out = self._setup(tmp_path)
         (src / "foo.py").write_text("def hello(): pass\n")
         (src / "bar.py").write_text("def goodbye(): pass\n")
-        assert build_stubs(src, out, base=tmp_path) == 2
+        assert (
+            _build_stubs(source_root=src, output_dir=out, base=tmp_path, check=False)
+            == 2
+        )
 
     def test_reports_zero_when_clean(self, tmp_path):
         src, out = self._setup(tmp_path)
         (src / "foo.py").write_text("def hello(): pass\n")
-        build_stubs(src, out, base=tmp_path)
-        assert build_stubs(src, out, base=tmp_path) == 0
+        _build_stubs(source_root=src, output_dir=out, base=tmp_path, check=False)
+        assert (
+            _build_stubs(source_root=src, output_dir=out, base=tmp_path, check=False)
+            == 0
+        )
 
 
 class TestBuildStubsCheckMode:
-    """build_stubs with check=True must report changes without mutating the tree."""
+    """_build_stubs with check=True must report changes without mutating the tree."""
 
     def _setup(self, tmp_path):
         src = tmp_path / "src"
@@ -721,31 +727,42 @@ class TestBuildStubsCheckMode:
     def test_does_not_write_stub_in_check_mode(self, tmp_path):
         src, out = self._setup(tmp_path)
         (src / "foo.py").write_text("def hello(): pass\n")
-        changes = build_stubs(src, out, base=tmp_path, check=True)
+        changes = _build_stubs(
+            source_root=src, output_dir=out, base=tmp_path, check=True
+        )
         assert changes == 1
         assert not (out / "src" / "foo.pyi").exists()
 
     def test_zero_changes_when_clean(self, tmp_path):
         src, out = self._setup(tmp_path)
         (src / "foo.py").write_text("def hello(): pass\n")
-        build_stubs(src, out, base=tmp_path)
-        assert build_stubs(src, out, base=tmp_path, check=True) == 0
+        _build_stubs(source_root=src, output_dir=out, base=tmp_path, check=False)
+        assert (
+            _build_stubs(source_root=src, output_dir=out, base=tmp_path, check=True)
+            == 0
+        )
 
     def test_detects_stale_stub_content(self, tmp_path):
         src, out = self._setup(tmp_path)
         (src / "foo.py").write_text("def hello(): pass\n")
-        build_stubs(src, out, base=tmp_path)
+        _build_stubs(source_root=src, output_dir=out, base=tmp_path, check=False)
         # Simulate a source edit that would change the stub.
         (src / "foo.py").write_text("def hello(name: str) -> str: pass\n")
-        assert build_stubs(src, out, base=tmp_path, check=True) == 1
+        assert (
+            _build_stubs(source_root=src, output_dir=out, base=tmp_path, check=True)
+            == 1
+        )
 
     def test_detects_orphan_stub_without_removing_it(self, tmp_path):
         src, out = self._setup(tmp_path)
         (src / "foo.py").write_text("def hello(): pass\n")
         (src / "bar.py").write_text("def goodbye(): pass\n")
-        build_stubs(src, out, base=tmp_path)
+        _build_stubs(source_root=src, output_dir=out, base=tmp_path, check=False)
         (src / "bar.py").unlink()
-        assert build_stubs(src, out, base=tmp_path, check=True) == 1
+        assert (
+            _build_stubs(source_root=src, output_dir=out, base=tmp_path, check=True)
+            == 1
+        )
         # Check mode must not mutate the tree — orphan is still there.
         assert (out / "src" / "bar.pyi").exists()
 
@@ -757,7 +774,14 @@ class TestWriteStubs:
         out = tmp_path / "stubs"
         stubs = {Path("src/foo.pyi"): "# stub\n"}
 
-        changes = _write_stubs(stubs, src, out, tmp_path, check=False)
+        changes = _write_stubs(
+            stubs=stubs,
+            source_root=src,
+            output_dir=out,
+            base=tmp_path,
+            root=None,
+            check=False,
+        )
 
         assert changes == 1
         assert (out / "src" / "foo.pyi").read_text() == "# stub\n"
@@ -768,7 +792,14 @@ class TestWriteStubs:
         out = tmp_path / "stubs"
         stubs = {Path("src/foo.pyi"): "# stub\n"}
 
-        changes = _write_stubs(stubs, src, out, tmp_path, check=True)
+        changes = _write_stubs(
+            stubs=stubs,
+            source_root=src,
+            output_dir=out,
+            base=tmp_path,
+            root=None,
+            check=True,
+        )
 
         assert changes == 1
         assert not (out / "src" / "foo.pyi").exists()
@@ -780,7 +811,14 @@ class TestWriteStubs:
         (out / "src" / "pkg").mkdir(parents=True)
         (out / "src" / "pkg" / "orphan.pyi").write_text("# stale\n")
 
-        changes = _write_stubs({}, src, out, tmp_path, check=False)
+        changes = _write_stubs(
+            stubs={},
+            source_root=src,
+            output_dir=out,
+            base=tmp_path,
+            root=None,
+            check=False,
+        )
 
         assert changes == 1
         assert not (out / "src" / "pkg" / "orphan.pyi").exists()
@@ -798,7 +836,14 @@ class TestWriteStubs:
         out = Path("stubs")
         stubs = {Path("src/foo.pyi"): "# stub\n"}
 
-        changes = _write_stubs(stubs, src, out, tmp_path, root=tmp_path, check=False)
+        changes = _write_stubs(
+            stubs=stubs,
+            source_root=src,
+            output_dir=out,
+            base=tmp_path,
+            root=tmp_path,
+            check=False,
+        )
 
         assert changes == 1
         assert (tmp_path / out / "src" / "foo.pyi").read_text() == "# stub\n"
@@ -816,7 +861,14 @@ class TestWriteStubs:
         (tmp_path / out / "src" / "pkg").mkdir(parents=True)
         (tmp_path / out / "src" / "pkg" / "orphan.pyi").write_text("# stale\n")
 
-        changes = _write_stubs({}, src, out, tmp_path, root=tmp_path, check=False)
+        changes = _write_stubs(
+            stubs={},
+            source_root=src,
+            output_dir=out,
+            base=tmp_path,
+            root=tmp_path,
+            check=False,
+        )
 
         assert changes == 1
         assert not (tmp_path / out / "src" / "pkg" / "orphan.pyi").exists()
