@@ -57,9 +57,10 @@ def _sync(*, root: Path | None = None, check: bool = False) -> int:
     except LookupError as e:
         print(f"Error: {e}", file=sys.stderr)
         return 1
-    source_roots = [(project_root / r).resolve() for r in configured_roots]
 
-    for configured, src_root in zip(configured_roots, source_roots, strict=True):
+    source_roots: list[Path] = []
+    for configured in configured_roots:
+        src_root = (project_root / configured).resolve()
         if not src_root.is_dir():
             print(
                 f"Error: source root {configured} is not a directory. "
@@ -67,6 +68,7 @@ def _sync(*, root: Path | None = None, check: bool = False) -> int:
                 file=sys.stderr,
             )
             return 1
+        source_roots.append(src_root)
 
     changes = 0
 
