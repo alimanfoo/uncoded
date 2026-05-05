@@ -35,9 +35,6 @@ class TestReadSourceRoots:
     def test_reads_source_roots(self, tmp_path):
         ...
 
-    def test_raises_if_no_pyproject_toml(self, tmp_path):
-        ...
-
     def test_raises_if_no_uncoded_section(self, tmp_path):
         ...
 

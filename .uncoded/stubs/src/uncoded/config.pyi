@@ -14,8 +14,8 @@ def read_project_name(start: Path) -> str:
     """Read the project name, falling back to the start-dir name."""
     ...
 
-def read_source_roots(start: Path) -> list[Path]:
-    """Read source roots from ``[tool.uncoded] source-roots`` in ``pyproject.toml``."""
+def read_source_roots(pyproject_path: Path) -> list[Path]:
+    """Read source roots from ``[tool.uncoded] source-roots``."""
     ...
 
 def read_instruction_files(start: Path) -> list[Path]:

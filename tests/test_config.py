@@ -45,20 +45,16 @@ class TestReadProjectName:
 
 class TestReadSourceRoots:
     def test_reads_source_roots(self, tmp_path):
-        (tmp_path / "pyproject.toml").write_text(
-            '[tool.uncoded]\nsource-roots = ["src", "tests"]\n'
-        )
-        roots = read_source_roots(start=tmp_path)
+        pyproject_path = tmp_path / "pyproject.toml"
+        pyproject_path.write_text('[tool.uncoded]\nsource-roots = ["src", "tests"]\n')
+        roots = read_source_roots(pyproject_path=pyproject_path)
         assert roots == [Path("src"), Path("tests")]
 
-    def test_raises_if_no_pyproject_toml(self, tmp_path):
-        with pytest.raises(FileNotFoundError):
-            read_source_roots(start=tmp_path)
-
     def test_raises_if_no_uncoded_section(self, tmp_path):
-        (tmp_path / "pyproject.toml").write_text("[tool.ruff]\n")
+        pyproject_path = tmp_path / "pyproject.toml"
+        pyproject_path.write_text("[tool.ruff]\n")
         with pytest.raises(LookupError) as excinfo:
-            read_source_roots(start=tmp_path)
+            read_source_roots(pyproject_path=pyproject_path)
         # KeyError would be wrong: its __str__ wraps the message in single
         # quotes, which surfaces as "Error: 'No [tool.uncoded] ...'" in
         # the CLI's f-string. LookupError is the parent type that

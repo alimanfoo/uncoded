@@ -156,7 +156,6 @@ tests/:
       test_falls_back_to_start_name_when_name_missing:
     TestReadSourceRoots:
       test_reads_source_roots:
-      test_raises_if_no_pyproject_toml:
       test_raises_if_no_uncoded_section:
     TestReadInstructionFiles:
       test_returns_default_when_no_pyproject_toml:

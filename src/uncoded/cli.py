@@ -53,7 +53,7 @@ def _sync(*, root: Path | None = None, check: bool = False) -> int:
     project_root = pyproject_path.parent
 
     try:
-        configured_roots = read_source_roots(project_root)
+        configured_roots = read_source_roots(pyproject_path)
     except LookupError as e:
         print(f"Error: {e}", file=sys.stderr)
         return 1

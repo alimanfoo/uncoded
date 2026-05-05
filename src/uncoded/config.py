@@ -42,18 +42,14 @@ def read_project_name(start: Path) -> str:
         return base.name
 
 
-def read_source_roots(start: Path) -> list[Path]:
-    """Read source roots from ``[tool.uncoded] source-roots`` in ``pyproject.toml``.
+def read_source_roots(pyproject_path: Path) -> list[Path]:
+    """Read source roots from ``[tool.uncoded] source-roots``.
 
-    ``start`` is the directory the upward walk begins from.
+    Reads the section from the given ``pyproject.toml``. Raises
+    :class:`LookupError` if the section is missing. Returns the
+    configured paths as a list of :class:`Path` instances on success.
     """
-    toml_path = find_pyproject_toml(start)
-    if toml_path is None:
-        raise FileNotFoundError(
-            "No pyproject.toml found. Add [tool.uncoded] source-roots to configure."
-        )
-
-    with toml_path.open("rb") as f:
+    with pyproject_path.open("rb") as f:
         data = tomllib.load(f)
 
     try:
