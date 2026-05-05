@@ -104,9 +104,18 @@ class TestSyncApplyMode:
         assert instruction_lines == ["Updated AGENTS.md"]
 
     def test_error_when_no_pyproject_toml(self, tmp_path, monkeypatch, capsys):
+        # Pins the problem statement, the recovery hint pointing at
+        # [tool.uncoded] source-roots, and the absence of any absolute
+        # path leak (this site's message has no path today; pinning
+        # the absence guards against future regressions).
         monkeypatch.chdir(tmp_path)
+
         assert cli._sync() == 1
-        assert "Error" in capsys.readouterr().err
+
+        err = capsys.readouterr().err
+        assert "Error: No pyproject.toml found." in err
+        assert "Add [tool.uncoded] source-roots to configure." in err
+        assert str(tmp_path) not in err
 
     def test_error_when_source_root_missing(self, tmp_path, monkeypatch, capsys):
         # The message must (a) report the source-root path as the user
