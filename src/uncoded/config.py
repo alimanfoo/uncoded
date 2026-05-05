@@ -45,9 +45,10 @@ def read_project_name(start: Path) -> str:
 def read_source_roots(pyproject_path: Path) -> list[Path]:
     """Read source roots from ``[tool.uncoded] source-roots``.
 
-    Reads the section from the given ``pyproject.toml``. Raises
-    :class:`LookupError` if the section is missing. Returns the
-    configured paths as a list of :class:`Path` instances on success.
+    Reads the section from the given ``pyproject.toml`` (which the
+    caller must guarantee exists). Raises :class:`LookupError` if the
+    section is missing. Returns the configured paths as a list of
+    :class:`Path` instances on success.
     """
     with pyproject_path.open("rb") as f:
         data = tomllib.load(f)
