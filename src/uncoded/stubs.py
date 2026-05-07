@@ -409,7 +409,7 @@ def _write_stubs(
     expected: set[Path] = set()
     for rel_stub_path, content in stubs.items():
         stub_path = output_dir / rel_stub_path
-        if sync_file(stub_path, content, root=project_root, check=check):
+        if sync_file(stub_path, content, project_root=project_root, check=check):
             changes += 1
         expected.add((project_root / stub_path).resolve())
 
@@ -427,7 +427,7 @@ def _write_stubs(
         if existing.resolve() in expected:
             continue
         display = existing.relative_to(project_root)
-        if remove_file(display, root=project_root, check=check):
+        if remove_file(display, project_root=project_root, check=check):
             changes += 1
 
     if check:

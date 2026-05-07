@@ -380,19 +380,20 @@ others raise, for the same kind of operation.</flag>
 """
 
 
-def sync_skill(*, root: Path | None = None, check: bool) -> bool:
+def sync_skill(*, project_root: Path | None = None, check: bool) -> bool:
     """Write the coherence-review skill file to all supported agent locations.
 
-    When ``root`` is provided, the configured output paths are resolved
-    against ``root`` for filesystem I/O while printed messages remain
-    project-relative. Without ``root``, paths resolve against the current
-    working directory.
+    When ``project_root`` is provided, the configured output paths are
+    resolved against ``project_root`` for filesystem I/O while printed
+    messages remain project-relative. Without ``project_root``, paths
+    resolve against the current working directory.
     """
     results = [
-        sync_file(path, _SKILL_CONTENT, root=root, check=check)
+        sync_file(path, _SKILL_CONTENT, project_root=project_root, check=check)
         for path in SKILL_OUTPUTS
     ]
     results.extend(
-        remove_file(path, root=root, check=check) for path in LEGACY_SKILL_OUTPUTS
+        remove_file(path, project_root=project_root, check=check)
+        for path in LEGACY_SKILL_OUTPUTS
     )
     return any(results)

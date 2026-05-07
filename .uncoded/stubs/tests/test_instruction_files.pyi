@@ -48,10 +48,10 @@ class TestSyncInstructionFileCheckMode:
     def test_reports_no_change_when_clean(self, tmp_path):
         ...
 
-class TestSyncInstructionFileRootAnchor:
+class TestSyncInstructionFileProjectRootAnchor:
 
-    def test_root_anchors_create_independent_of_cwd(self, tmp_path, monkeypatch):
+    def test_project_root_anchors_create_independent_of_cwd(self, tmp_path, monkeypatch):
         ...
 
-    def test_root_anchors_update_of_existing_file(self, tmp_path, monkeypatch):
+    def test_project_root_anchors_update_of_existing_file(self, tmp_path, monkeypatch):
         ...

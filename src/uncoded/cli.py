@@ -81,7 +81,9 @@ def _sync(*, root: Path | None = None, check: bool = False) -> int:
         m for _src_root, files in roots_with_files for m in extract_modules(files)
     ]
     map_content = render_map(build_map(modules))
-    if sync_file(DEFAULT_MAP_OUTPUT, map_content, root=project_root, check=check):
+    if sync_file(
+        DEFAULT_MAP_OUTPUT, map_content, project_root=project_root, check=check
+    ):
         changes += 1
 
     for src_root, files in roots_with_files:
@@ -112,10 +114,10 @@ def _sync(*, root: Path | None = None, check: bool = False) -> int:
             canonical = resolved.relative_to(project_root)
         except ValueError:
             canonical = resolved
-        if sync_instruction_file(canonical, root=project_root, check=check):
+        if sync_instruction_file(canonical, project_root=project_root, check=check):
             changes += 1
 
-    if sync_skill(root=project_root, check=check):
+    if sync_skill(project_root=project_root, check=check):
         changes += 1
 
     if check:

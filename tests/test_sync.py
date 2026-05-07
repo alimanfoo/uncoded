@@ -84,16 +84,16 @@ class TestRemoveFile:
         assert changed is False
 
 
-class TestSyncFileRootAnchor:
-    def test_root_anchors_write_independent_of_cwd(self, tmp_path, monkeypatch):
-        # path is project-relative; root anchors I/O at tmp_path even
-        # when cwd is elsewhere.
+class TestSyncFileProjectRootAnchor:
+    def test_project_root_anchors_write_independent_of_cwd(self, tmp_path, monkeypatch):
+        # path is project-relative; project_root anchors I/O at tmp_path
+        # even when cwd is elsewhere.
         sub = tmp_path / "subdir"
         sub.mkdir()
         monkeypatch.chdir(sub)
 
         rel = Path("nested/out.txt")
-        changed = sync_file(rel, "hello", root=tmp_path)
+        changed = sync_file(rel, "hello", project_root=tmp_path)
 
         assert changed is True
         assert (tmp_path / rel).read_text() == "hello"
@@ -105,24 +105,26 @@ class TestSyncFileRootAnchor:
     ):
         monkeypatch.chdir(tmp_path)
         rel = Path("out.txt")
-        sync_file(rel, "hello", root=tmp_path)
+        sync_file(rel, "hello", project_root=tmp_path)
         out = capsys.readouterr().out
         # Display stays project-relative; absolute path does not leak in.
         assert f"Wrote {rel}" in out
         assert str(tmp_path) not in out
 
     def test_absolute_path_makes_root_a_no_op(self, tmp_path, monkeypatch):
-        # When path is absolute, root is irrelevant under Path's join
-        # semantics — the absolute side wins.
+        # When path is absolute, project_root is irrelevant under Path's
+        # join semantics — the absolute side wins.
         other = tmp_path / "other"
         other.mkdir()
         target = tmp_path / "out.txt"
-        sync_file(target, "hello", root=other)
+        sync_file(target, "hello", project_root=other)
         assert target.read_text() == "hello"
 
 
-class TestRemoveFileRootAnchor:
-    def test_root_anchors_removal_independent_of_cwd(self, tmp_path, monkeypatch):
+class TestRemoveFileProjectRootAnchor:
+    def test_project_root_anchors_removal_independent_of_cwd(
+        self, tmp_path, monkeypatch
+    ):
         sub = tmp_path / "subdir"
         sub.mkdir()
         monkeypatch.chdir(sub)
@@ -132,6 +134,6 @@ class TestRemoveFileRootAnchor:
         target.parent.mkdir(parents=True)
         target.write_text("data")
 
-        changed = remove_file(rel, root=tmp_path)
+        changed = remove_file(rel, project_root=tmp_path)
         assert changed is True
         assert not target.exists()
