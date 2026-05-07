@@ -387,9 +387,9 @@ def _write_stubs(
     :func:`_generate_stubs`.
 
     ``project_root`` is the single project anchor and must already be
-    resolved. ``output_dir`` is treated as relative to it for filesystem
-    I/O while printed messages remain project-relative, and the
-    orphan-cleanup subtree is anchored at
+    resolved. ``output_dir`` is anchored at ``project_root`` for
+    filesystem I/O while printed messages remain project-relative, and
+    the orphan-cleanup subtree is anchored at
     ``output_dir / source_root.relative_to(project_root)`` (so
     ``project_root`` must be an ancestor of ``source_root`` for cleanup
     to run; otherwise cleanup is skipped).
