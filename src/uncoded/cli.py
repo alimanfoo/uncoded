@@ -20,10 +20,10 @@ from uncoded.sync import sync_file
 DEFAULT_MAP_OUTPUT = Path(".uncoded/namespace.yaml")
 
 
-def _sync(*, root: Path | None = None, check: bool = False) -> int:
+def _sync(*, start: Path | None = None, check: bool = False) -> int:
     """Sync (or verify) the namespace map, stub files, and instruction-file sections.
 
-    ``root`` is the directory the upward walk for ``pyproject.toml``
+    ``start`` is the directory the upward walk for ``pyproject.toml``
     begins from; the parent of the located ``pyproject.toml`` becomes
     the project anchor for every project-relative path — both the
     *inputs* (source roots, instruction-file paths, the rel-paths
@@ -39,10 +39,10 @@ def _sync(*, root: Path | None = None, check: bool = False) -> int:
     change (so CI can gate on a stale index), 0 if the tree is already in
     sync. In apply mode, returns 0 on success or 1 on configuration error.
     """
-    if root is None:
-        root = Path.cwd()
+    if start is None:
+        start = Path.cwd()
 
-    pyproject_path = find_pyproject_toml(root)
+    pyproject_path = find_pyproject_toml(start)
     if pyproject_path is None:
         print(
             "Error: No pyproject.toml found. "

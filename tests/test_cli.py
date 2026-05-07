@@ -202,7 +202,7 @@ class TestSyncApplyMode:
         (tmp_path / "src" / "foo.py").write_text("def hello(): pass\n")
         monkeypatch.chdir(tmp_path / "src")
 
-        assert cli._sync(root=tmp_path) == 0
+        assert cli._sync(start=tmp_path) == 0
 
         # Reads anchored: namespace map references the project-relative
         # source path, not a subdir-relative one.
