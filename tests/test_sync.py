@@ -100,7 +100,7 @@ class TestSyncFileProjectRootAnchor:
         # No write under cwd.
         assert not (sub / rel).exists()
 
-    def test_root_preserves_relative_path_in_message(
+    def test_project_root_preserves_relative_path_in_message(
         self, tmp_path, monkeypatch, capsys
     ):
         monkeypatch.chdir(tmp_path)
@@ -111,7 +111,7 @@ class TestSyncFileProjectRootAnchor:
         assert f"Wrote {rel}" in out
         assert str(tmp_path) not in out
 
-    def test_absolute_path_makes_root_a_no_op(self, tmp_path, monkeypatch):
+    def test_absolute_path_makes_project_root_a_no_op(self, tmp_path, monkeypatch):
         # When path is absolute, project_root is irrelevant under Path's
         # join semantics — the absolute side wins.
         other = tmp_path / "other"
