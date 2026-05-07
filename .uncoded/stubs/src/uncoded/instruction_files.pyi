@@ -19,6 +19,6 @@ def _replace_or_append(existing: str, section: str) -> str:
     """Replace the delimited section in existing text, or append it if absent."""
     ...
 
-def sync_instruction_file(path: Path, *, root: Path | None, check: bool) -> bool:
+def sync_instruction_file(path: Path, *, project_root: Path | None, check: bool) -> bool:
     """Write or update the uncoded navigation section in an instruction file."""
     ...

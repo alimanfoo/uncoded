@@ -20,29 +20,25 @@ from uncoded.sync import sync_file
 DEFAULT_MAP_OUTPUT = Path(".uncoded/namespace.yaml")
 
 
-def _sync(*, root: Path | None = None, check: bool = False) -> int:
+def _sync(*, start: Path | None = None, check: bool = False) -> int:
     """Sync (or verify) the namespace map, stub files, and instruction-file sections.
 
-    ``root`` is the directory the upward walk for ``pyproject.toml``
-    begins from; the parent of the located ``pyproject.toml`` becomes
-    the project anchor for every project-relative path — both the
-    *inputs* (source roots, instruction-file paths, the rel-paths
-    rendered into the namespace map and stubs) and the *outputs*
-    (``DEFAULT_MAP_OUTPUT``, ``DEFAULT_STUBS_OUTPUT``, the skill output
-    paths, and the instruction-file write target). Defaults to the
-    current working directory at the CLI boundary. Running from a
-    subdirectory of the project produces artefacts in the same
-    locations as running from the project root.
+    The upward walk for ``pyproject.toml`` begins at ``start`` (defaulting
+    to the current working directory at the CLI boundary). The parent of
+    the located ``pyproject.toml`` becomes ``project_root``: the single
+    anchor every writer uses for project-relative paths it reads or
+    writes. Running from a subdirectory of the project produces artefacts
+    in the same locations as running from the project root.
 
     When ``check=True``, the on-disk tree is not mutated: each step reports
     whether it would write. Returns 1 if any step reports a prospective
     change (so CI can gate on a stale index), 0 if the tree is already in
     sync. In apply mode, returns 0 on success or 1 on configuration error.
     """
-    if root is None:
-        root = Path.cwd()
+    if start is None:
+        start = Path.cwd()
 
-    pyproject_path = find_pyproject_toml(root)
+    pyproject_path = find_pyproject_toml(start)
     if pyproject_path is None:
         print(
             "Error: No pyproject.toml found. "
@@ -81,7 +77,9 @@ def _sync(*, root: Path | None = None, check: bool = False) -> int:
         m for _src_root, files in roots_with_files for m in extract_modules(files)
     ]
     map_content = render_map(build_map(modules))
-    if sync_file(DEFAULT_MAP_OUTPUT, map_content, root=project_root, check=check):
+    if sync_file(
+        DEFAULT_MAP_OUTPUT, map_content, project_root=project_root, check=check
+    ):
         changes += 1
 
     for src_root, files in roots_with_files:
@@ -90,8 +88,7 @@ def _sync(*, root: Path | None = None, check: bool = False) -> int:
             stubs=stubs,
             source_root=src_root,
             output_dir=DEFAULT_STUBS_OUTPUT,
-            base=project_root,
-            root=project_root,
+            project_root=project_root,
             check=check,
         )
 
@@ -113,10 +110,10 @@ def _sync(*, root: Path | None = None, check: bool = False) -> int:
             canonical = resolved.relative_to(project_root)
         except ValueError:
             canonical = resolved
-        if sync_instruction_file(canonical, root=project_root, check=check):
+        if sync_instruction_file(canonical, project_root=project_root, check=check):
             changes += 1
 
-    if sync_skill(root=project_root, check=check):
+    if sync_skill(project_root=project_root, check=check):
         changes += 1
 
     if check:

@@ -227,8 +227,8 @@ class TestWriteStubs:
     def test_prunes_orphan_stubs(self, tmp_path):
         ...
 
-    def test_root_anchors_writes_independent_of_cwd(self, tmp_path, monkeypatch):
+    def test_project_root_anchors_writes_independent_of_cwd(self, tmp_path, monkeypatch):
         ...
 
-    def test_root_anchors_orphan_pruning_independent_of_cwd(self, tmp_path, monkeypatch):
+    def test_project_root_anchors_orphan_pruning_independent_of_cwd(self, tmp_path, monkeypatch):
         ...

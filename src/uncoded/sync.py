@@ -17,7 +17,7 @@ def sync_file(
     path: Path,
     content: str,
     *,
-    root: Path | None = None,
+    project_root: Path | None = None,
     check: bool = False,
 ) -> bool:
     """Write ``content`` to ``path`` if it differs from what's on disk.
@@ -27,14 +27,13 @@ def sync_file(
     performed, ``False`` if the file was already up to date. Parent
     directories are created as needed.
 
-    When ``root`` is provided, ``path`` is treated as relative to ``root``
-    for filesystem I/O while the printed message still names ``path`` as
-    given. This lets callers anchor writes at a project root regardless of
-    the current working directory while keeping log lines project-relative.
-    Passing an absolute ``path`` makes ``root`` a no-op (the absolute side
-    wins under ``Path``'s join semantics).
+    When ``project_root`` is given, the file is written to
+    ``project_root / path``. The log line still names ``path`` as given,
+    so messages stay project-relative regardless of where the caller is
+    running from. If ``path`` is absolute, it's used as-is and
+    ``project_root`` has no effect.
     """
-    target = root / path if root is not None else path
+    target = project_root / path if project_root is not None else path
     if not target.exists():
         if not check:
             target.parent.mkdir(parents=True, exist_ok=True)
@@ -52,7 +51,7 @@ def sync_file(
 def remove_file(
     path: Path,
     *,
-    root: Path | None = None,
+    project_root: Path | None = None,
     check: bool = False,
 ) -> bool:
     """Remove ``path`` if it exists.
@@ -61,11 +60,12 @@ def remove_file(
     Returns ``True`` if a removal was (or would be) performed, ``False``
     if the file was already absent.
 
-    When ``root`` is provided, ``path`` is treated as relative to ``root``
-    for filesystem I/O while the printed message still names ``path`` as
-    given.
+    When ``project_root`` is given, the file removed is
+    ``project_root / path``. The log line still names ``path`` as given,
+    so messages stay project-relative regardless of where the caller is
+    running from.
     """
-    target = root / path if root is not None else path
+    target = project_root / path if project_root is not None else path
     if not target.exists():
         return False
     if not check:

@@ -16,7 +16,7 @@ from uncoded.sync import sync_file
 
 DEFAULT_MAP_OUTPUT = Path('.uncoded/namespace.yaml')
 
-def _sync(*, root: Path | None, check: bool) -> int:
+def _sync(*, start: Path | None, check: bool) -> int:
     """Sync (or verify) the namespace map, stub files, and instruction-file sections."""
     ...
 
