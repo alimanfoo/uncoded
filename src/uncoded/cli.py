@@ -90,8 +90,7 @@ def _sync(*, root: Path | None = None, check: bool = False) -> int:
             stubs=stubs,
             source_root=src_root,
             output_dir=DEFAULT_STUBS_OUTPUT,
-            base=project_root,
-            root=project_root,
+            project_root=project_root,
             check=check,
         )
 

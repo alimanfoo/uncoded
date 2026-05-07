@@ -377,19 +377,24 @@ def _write_stubs(
     stubs: dict[Path, str],
     source_root: Path,
     output_dir: Path,
-    base: Path,
-    root: Path | None,
+    project_root: Path | None,
     check: bool,
 ) -> int:
     """Write *stubs* under *output_dir* and prune orphans under *source_root*.
 
     *stubs* maps each stub's relative path (under *output_dir*) to its
     rendered content; typically the return value of
-    :func:`_generate_stubs`. *base* must already be resolved — it
-    anchors the orphan-cleanup subtree at
-    ``output_dir / source_root.relative_to(base)``, so ``base`` must
-    be an ancestor of ``source_root`` for cleanup to run; otherwise
-    cleanup is skipped.
+    :func:`_generate_stubs`.
+
+    ``project_root`` is the single project anchor. When provided, it
+    must already be resolved; ``output_dir`` is treated as relative to
+    it for filesystem I/O while printed messages remain
+    project-relative, and the orphan-cleanup subtree is anchored at
+    ``output_dir / source_root.relative_to(project_root)`` (so
+    ``project_root`` must be an ancestor of ``source_root`` for cleanup
+    to run; otherwise cleanup is skipped). When ``None``, paths resolve
+    against the current working directory and the cleanup anchor uses
+    ``Path.cwd()`` in place of ``project_root``.
 
     Writes only files whose content has changed. After reconciling the
     current set of stubs, any pre-existing ``.pyi`` files in the
@@ -398,39 +403,39 @@ def _write_stubs(
     pruned. Only the subtree corresponding to ``source_root`` is
     touched, so other source roots' stubs are not affected.
 
-    When ``root`` is provided, ``output_dir`` is treated as relative to
-    ``root`` for filesystem I/O while printed messages remain
-    project-relative. Without ``root``, paths resolve against the current
-    working directory.
-
     When ``check=True``, the on-disk tree is not mutated; instead,
     prospective writes and removals are reported and counted. Returns
     the number of changes (or prospective changes).
     """
+    anchor = project_root if project_root is not None else Path.cwd()
     changes = 0
     expected: set[Path] = set()
     for rel_stub_path, content in stubs.items():
         stub_path = output_dir / rel_stub_path
-        if sync_file(stub_path, content, root=root, check=check):
+        if sync_file(stub_path, content, root=project_root, check=check):
             changes += 1
-        anchored = root / stub_path if root is not None else stub_path
+        anchored = project_root / stub_path if project_root is not None else stub_path
         expected.add(anchored.resolve())
 
     try:
-        source_rel = source_root.resolve().relative_to(base)
+        source_rel = source_root.resolve().relative_to(anchor)
     except ValueError:
-        # source_root is outside base; we have no safe subtree to clean.
+        # source_root is outside the anchor; no safe subtree to clean.
         return changes
     stubs_root = output_dir / source_rel
-    abs_stubs_root = root / stubs_root if root is not None else stubs_root
+    abs_stubs_root = (
+        project_root / stubs_root if project_root is not None else stubs_root
+    )
     if not abs_stubs_root.exists():
         return changes
 
     for existing in abs_stubs_root.rglob("*.pyi"):
         if existing.resolve() in expected:
             continue
-        display = existing.relative_to(root) if root is not None else existing
-        if remove_file(display, root=root, check=check):
+        display = (
+            existing.relative_to(project_root) if project_root is not None else existing
+        )
+        if remove_file(display, root=project_root, check=check):
             changes += 1
 
     if check:
@@ -450,27 +455,26 @@ def _build_stubs(
     *,
     source_root: Path,
     output_dir: Path,
-    base: Path,
+    project_root: Path,
     check: bool,
 ) -> int:
     """Sync stub files for all symbols under source_root, removing any orphans.
 
     Internal end-to-end helper used by the test suite. Stub paths are
-    rendered relative to *base*, so the rendered ``rel_path`` headers
-    match the project-relative paths that :func:`walk_source` and the
-    namespace map use.
+    rendered relative to *project_root*, so the rendered ``rel_path``
+    headers match the project-relative paths that :func:`walk_source`
+    and the namespace map use.
 
     When ``check=True``, the on-disk tree is not mutated; instead,
     prospective writes and removals are reported and counted. Returns
     the number of changes (or prospective changes).
     """
-    base = base.resolve()
-    stubs = _generate_stubs(iter_source_files(source_root, base))
+    project_root = project_root.resolve()
+    stubs = _generate_stubs(iter_source_files(source_root, project_root))
     return _write_stubs(
         stubs=stubs,
         source_root=source_root,
         output_dir=output_dir,
-        base=base,
-        root=None,
+        project_root=project_root,
         check=check,
     )
