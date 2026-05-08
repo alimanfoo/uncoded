@@ -108,8 +108,8 @@ def iter_source_files(
 
     Files that fail to parse are skipped with a single ``warning:
     skipping ...`` line on stderr — centralising the syntax-error
-    decision here lets downstream consumers (``walk_source``,
-    ``_generate_stubs``) trust they only receive parseable source.
+    decision here lets ``extract_modules`` and ``_generate_stubs``
+    trust they only receive parseable source.
     """
     source_root = source_root.resolve()
     project_root = project_root.resolve()

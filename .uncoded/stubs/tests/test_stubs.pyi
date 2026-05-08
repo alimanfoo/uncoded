@@ -175,6 +175,9 @@ class TestBuildStubs:
     def _setup(self, tmp_path):
         ...
 
+    def _build(self, source_root, out, tmp_path, *, check):
+        ...
+
     def test_writes_expected_stubs(self, tmp_path):
         ...
 
@@ -203,6 +206,9 @@ class TestBuildStubsCheckMode:
     """build_stubs with check=True must report changes without mutating the tree."""
 
     def _setup(self, tmp_path):
+        ...
+
+    def _build(self, source_root, out, tmp_path, *, check):
         ...
 
     def test_does_not_write_stub_in_check_mode(self, tmp_path):

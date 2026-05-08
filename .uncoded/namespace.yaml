@@ -320,6 +320,7 @@ tests/:
       test_unannotated_class_attribute_rendered:
     TestBuildStubs:
       _setup:
+      _build:
       test_writes_expected_stubs:
       test_removes_orphan_stub_when_source_deleted:
       test_removes_orphan_stub_when_source_renamed:
@@ -330,6 +331,7 @@ tests/:
       test_reports_zero_when_clean:
     TestBuildStubsCheckMode:
       _setup:
+      _build:
       test_does_not_write_stub_in_check_mode:
       test_zero_changes_when_clean:
       test_detects_stale_stub_content:

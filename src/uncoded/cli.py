@@ -33,10 +33,10 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
     found anywhere up from ``start``, stderr names the missing file and
     tells the user to create one with a ``[tool.uncoded]`` ``source-roots``
     entry. If the located ``pyproject.toml`` has no ``[tool.uncoded]``
-    ``source-roots`` entry, the ``LookupError`` from ``read_source_roots``
-    is re-printed verbatim as ``Error: {e}``. If a configured source root
-    is not a directory, stderr names the entry as the user wrote it and
-    points at the ``[tool.uncoded]`` ``source-roots`` key.
+    ``source-roots`` entry, stderr names the missing section and tells
+    the user to add it. If a configured source root is not a directory,
+    stderr names the entry as the user wrote it and points at the
+    ``[tool.uncoded]`` ``source-roots`` key.
 
     After configuration validates, ``check=True`` reports each prospective
     write without mutating the on-disk tree, returning 1 if any step would

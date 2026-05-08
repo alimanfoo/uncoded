@@ -462,7 +462,10 @@ def build_stubs(
     source paths in ``files`` are already relative to it (so each
     stub's rendered ``rel_path`` header matches :func:`walk_source`
     and the namespace map), and each stub is written to
-    ``project_root / output_dir / <rel>``.
+    ``project_root / output_dir / <rel>``. The same ``project_root``
+    must therefore be passed to :func:`iter_source_files` (for
+    relativising) and to ``build_stubs`` (for writing); mismatched
+    anchors silently produce wrong-looking stub paths.
 
     When ``check=True``, the on-disk tree is not mutated; instead,
     prospective writes and removals are reported and counted. Returns
