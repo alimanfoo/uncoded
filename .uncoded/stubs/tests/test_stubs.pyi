@@ -3,6 +3,7 @@
 import textwrap
 from pathlib import Path
 import pytest
+from uncoded.extract import iter_source_files
 from uncoded.stubs import StubAssignment, StubClass, StubFunction, StubModule, StubParam, _build_stubs, _write_stubs, extract_stub, render_stub
 
 class TestExtractStub:

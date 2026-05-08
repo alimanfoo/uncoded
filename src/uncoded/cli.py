@@ -14,7 +14,7 @@ from uncoded.instruction_files import sync_instruction_file
 from uncoded.namespace_map import build_map, render_map
 from uncoded.serena_setup import setup
 from uncoded.skill import sync_skill
-from uncoded.stubs import _generate_stubs, _write_stubs
+from uncoded.stubs import _build_stubs
 from uncoded.sync import sync_file
 
 
@@ -84,9 +84,8 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
         changes += 1
 
     for src_root, files in roots_with_files:
-        stubs = _generate_stubs(files)
-        changes += _write_stubs(
-            stubs=stubs,
+        changes += _build_stubs(
+            files=files,
             source_root=src_root,
             output_dir=Path(".uncoded/stubs"),
             project_root=project_root,

@@ -6,7 +6,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from uncoded.extract import _property_kind, iter_source_files
+from uncoded.extract import _property_kind
 from uncoded.sync import remove_file, sync_file
 
 # Width cap for inlining the right-hand side of an assignment. If the unparsed
@@ -443,6 +443,7 @@ def _write_stubs(
 
 def _build_stubs(
     *,
+    files: Iterable[tuple[str, str]],
     source_root: Path,
     output_dir: Path,
     project_root: Path,
@@ -450,18 +451,25 @@ def _build_stubs(
 ) -> int:
     """Sync stub files for all symbols under source_root, removing any orphans.
 
-    Internal end-to-end helper used by the test suite. ``project_root``
-    is the anchor for both ends of the pipeline: source paths are made
-    relative to it (so each stub's rendered ``rel_path`` header matches
-    :func:`walk_source` and the namespace map), and each stub is
-    written to ``project_root / output_dir / <rel>``.
+    The single stubs pipeline path: shared by ``cli._sync`` and the
+    test suite so both callers run the same ``_generate_stubs`` →
+    ``_write_stubs`` sequence. ``files`` is the materialised output of
+    :func:`iter_source_files` — pre-iterated so callers that also need
+    the files for other steps (the namespace map) do not walk source
+    twice.
+
+    ``project_root`` is the anchor for both ends of the pipeline:
+    source paths in ``files`` are already relative to it (so each
+    stub's rendered ``rel_path`` header matches :func:`walk_source`
+    and the namespace map), and each stub is written to
+    ``project_root / output_dir / <rel>``.
 
     When ``check=True``, the on-disk tree is not mutated; instead,
     prospective writes and removals are reported and counted. Returns
     the number of changes (or prospective changes).
     """
     project_root = project_root.resolve()
-    stubs = _generate_stubs(iter_source_files(source_root, project_root))
+    stubs = _generate_stubs(files)
     return _write_stubs(
         stubs=stubs,
         source_root=source_root,
