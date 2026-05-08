@@ -14,7 +14,7 @@ from uncoded.instruction_files import sync_instruction_file
 from uncoded.namespace_map import build_map, render_map
 from uncoded.serena_setup import setup
 from uncoded.skill import sync_skill
-from uncoded.stubs import _generate_stubs, _write_stubs
+from uncoded.stubs import build_stubs
 from uncoded.sync import sync_file
 
 
@@ -28,10 +28,10 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
     writes. Running from a subdirectory of the project produces artefacts
     in the same locations as running from the project root.
 
-    When ``check=True``, the on-disk tree is not mutated: each step reports
-    whether it would write. Returns 1 if any step reports a prospective
-    change (so CI can gate on a stale index), 0 if the tree is already in
-    sync. In apply mode, returns 0 on success or 1 on configuration error.
+    When ``check=True``, the on-disk tree is not mutated; the function
+    reports each prospective write, returns 1 if anything would change
+    (so CI can gate on a stale index), and 0 otherwise. Configuration
+    errors return 1 in either mode.
     """
     if start is None:
         start = Path.cwd()
@@ -40,7 +40,7 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
     if pyproject_path is None:
         print(
             "Error: No pyproject.toml found. "
-            "Add [tool.uncoded] source-roots to configure.",
+            "Create one with a [tool.uncoded] source-roots entry.",
             file=sys.stderr,
         )
         return 1
@@ -84,9 +84,8 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
         changes += 1
 
     for src_root, files in roots_with_files:
-        stubs = _generate_stubs(files)
-        changes += _write_stubs(
-            stubs=stubs,
+        changes += build_stubs(
+            files=files,
             source_root=src_root,
             output_dir=Path(".uncoded/stubs"),
             project_root=project_root,

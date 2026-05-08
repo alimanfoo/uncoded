@@ -7,7 +7,7 @@ import re
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
-from uncoded.extract import _property_kind, iter_source_files
+from uncoded.extract import property_kind
 from uncoded.sync import remove_file, sync_file
 
 VALUE_WIDTH_CAP = 80
@@ -72,7 +72,7 @@ def _write_stubs(*, stubs: dict[Path, str], source_root: Path, output_dir: Path,
     """Write *stubs* under *output_dir* and prune orphans under *source_root*."""
     ...
 
-def _build_stubs(*, source_root: Path, output_dir: Path, project_root: Path, check: bool) -> int:
+def build_stubs(*, files: Iterable[tuple[str, str]], source_root: Path, output_dir: Path, project_root: Path, check: bool) -> int:
     """Sync stub files for all symbols under source_root, removing any orphans."""
     ...
 

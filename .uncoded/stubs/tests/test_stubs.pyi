@@ -3,7 +3,8 @@
 import textwrap
 from pathlib import Path
 import pytest
-from uncoded.stubs import StubAssignment, StubClass, StubFunction, StubModule, StubParam, _build_stubs, _write_stubs, extract_stub, render_stub
+from uncoded.extract import iter_source_files
+from uncoded.stubs import StubAssignment, StubClass, StubFunction, StubModule, StubParam, _write_stubs, build_stubs, extract_stub, render_stub
 
 class TestExtractStub:
 
@@ -169,9 +170,12 @@ class TestRenderStub:
         ...
 
 class TestBuildStubs:
-    """_build_stubs writes expected stubs and removes orphans for its source root."""
+    """build_stubs writes expected stubs and removes orphans for its source root."""
 
     def _setup(self, tmp_path):
+        ...
+
+    def _build(self, source_root, out, tmp_path, *, check):
         ...
 
     def test_writes_expected_stubs(self, tmp_path):
@@ -199,9 +203,12 @@ class TestBuildStubs:
         ...
 
 class TestBuildStubsCheckMode:
-    """_build_stubs with check=True must report changes without mutating the tree."""
+    """build_stubs with check=True must report changes without mutating the tree."""
 
     def _setup(self, tmp_path):
+        ...
+
+    def _build(self, source_root, out, tmp_path, *, check):
         ...
 
     def test_does_not_write_stub_in_check_mode(self, tmp_path):

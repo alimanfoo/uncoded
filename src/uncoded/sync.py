@@ -17,7 +17,7 @@ def sync_file(
     path: Path,
     content: str,
     *,
-    project_root: Path | None = None,
+    project_root: Path,
     check: bool = False,
 ) -> bool:
     """Write ``content`` to ``path`` if it differs from what's on disk.
@@ -27,13 +27,12 @@ def sync_file(
     performed, ``False`` if the file was already up to date. Parent
     directories are created as needed.
 
-    When ``project_root`` is given, the file is written to
-    ``project_root / path``. The log line still names ``path`` as given,
-    so messages stay project-relative regardless of where the caller is
-    running from. If ``path`` is absolute, it's used as-is and
-    ``project_root`` has no effect.
+    The file is written to ``project_root / path``. The log line still
+    names ``path`` as given, so messages stay project-relative
+    regardless of where the caller is running from. If ``path`` is
+    absolute, it's used as-is and ``project_root`` has no effect.
     """
-    target = project_root / path if project_root is not None else path
+    target = project_root / path
     if not target.exists():
         if not check:
             target.parent.mkdir(parents=True, exist_ok=True)
@@ -51,7 +50,7 @@ def sync_file(
 def remove_file(
     path: Path,
     *,
-    project_root: Path | None = None,
+    project_root: Path,
     check: bool = False,
 ) -> bool:
     """Remove ``path`` if it exists.
@@ -60,13 +59,12 @@ def remove_file(
     Returns ``True`` if a removal was (or would be) performed, ``False``
     if the file was already absent.
 
-    When ``project_root`` is given, the file removed is
-    ``project_root / path``. The log line still names ``path`` as given,
-    so messages stay project-relative regardless of where the caller is
-    running from. If ``path`` is absolute, it's used as-is and
-    ``project_root`` has no effect.
+    The file removed is ``project_root / path``. The log line still
+    names ``path`` as given, so messages stay project-relative
+    regardless of where the caller is running from. If ``path`` is
+    absolute, it's used as-is and ``project_root`` has no effect.
     """
-    target = project_root / path if project_root is not None else path
+    target = project_root / path
     if not target.exists():
         return False
     if not check:

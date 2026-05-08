@@ -160,7 +160,7 @@ def _replace_or_append(existing: str, section: str) -> str:
 def sync_instruction_file(
     path: Path,
     *,
-    project_root: Path | None = None,
+    project_root: Path,
     check: bool = False,
 ) -> bool:
     """Write or update the uncoded navigation section in an instruction file.
@@ -168,14 +168,13 @@ def sync_instruction_file(
     When ``check=True``, reports a prospective change without touching disk.
     Returns ``True`` if a write was (or would be) performed.
 
-    When ``project_root`` is given, the file is written to
-    ``project_root / path``. The log line still names ``path`` as given,
-    so messages stay project-relative regardless of where the caller is
-    running from. If ``path`` is absolute, it's used as-is and
-    ``project_root`` has no effect.
+    The file is written to ``project_root / path``. The log line still
+    names ``path`` as given, so messages stay project-relative
+    regardless of where the caller is running from. If ``path`` is
+    absolute, it's used as-is and ``project_root`` has no effect.
     """
     section = generate_section()
-    target = project_root / path if project_root is not None else path
+    target = project_root / path
     if not target.exists():
         return sync_file(path, section, project_root=project_root, check=check)
     existing = target.read_text()

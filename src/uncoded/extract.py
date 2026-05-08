@@ -26,7 +26,7 @@ class ModuleInfo:
     functions: list[str] = field(default_factory=list)
 
 
-def _property_kind(
+def property_kind(
     node: ast.FunctionDef | ast.AsyncFunctionDef,
 ) -> str | None:
     """Classify a method by its property-related decorators.
@@ -71,7 +71,7 @@ def extract_module(source: str, rel_path: str) -> ModuleInfo:
                     if name:
                         attributes.append(name)
                 elif isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                    kind = _property_kind(n)
+                    kind = property_kind(n)
                     if kind == "setter" or kind == "deleter":
                         continue
                     if kind == "property":
@@ -99,22 +99,18 @@ def extract_module(source: str, rel_path: str) -> ModuleInfo:
 
 
 def iter_source_files(
-    source_root: Path, project_root: Path | None = None
+    source_root: Path, project_root: Path
 ) -> Iterator[tuple[str, str]]:
     """Yield (source_text, rel_path) for every parseable Python file in *source_root*.
 
-    When ``project_root`` is given, each yielded ``rel_path`` is the
-    file's path relative to ``project_root``; without it, paths are
-    relative to the current working directory.
+    Each yielded ``rel_path`` is the file's path relative to
+    ``project_root``.
 
     Files that fail to parse are skipped with a single ``warning:
     skipping ...`` line on stderr — centralising the syntax-error
-    decision here lets downstream consumers (``walk_source``,
-    ``_generate_stubs``) trust they only receive parseable source.
+    decision here lets ``extract_modules`` and ``_generate_stubs``
+    trust they only receive parseable source.
     """
-    if project_root is None:
-        project_root = Path.cwd()
-
     source_root = source_root.resolve()
     project_root = project_root.resolve()
 
@@ -149,15 +145,11 @@ def extract_modules(files: Iterable[tuple[str, str]]) -> list[ModuleInfo]:
     return modules
 
 
-def walk_source(
-    source_root: Path, project_root: Path | None = None
-) -> list[ModuleInfo]:
+def walk_source(source_root: Path, project_root: Path) -> list[ModuleInfo]:
     """Walk a source root and extract symbols from all Python files.
 
-    When ``project_root`` is given, each returned
-    ``ModuleInfo.rel_path`` is the file's path relative to
-    ``project_root``; without it, paths are relative to the current
-    working directory.
+    Each returned ``ModuleInfo.rel_path`` is the file's path relative
+    to ``project_root``.
 
     Convenience wrapper around :func:`iter_source_files` and
     :func:`extract_modules`. Files with syntax errors are filtered out

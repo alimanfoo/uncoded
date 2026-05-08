@@ -8,7 +8,7 @@ from collections.abc import Iterable, Iterator
 from dataclasses import dataclass, field
 from pathlib import Path
 
-def _property_kind(node: ast.FunctionDef | ast.AsyncFunctionDef) -> str | None:
+def property_kind(node: ast.FunctionDef | ast.AsyncFunctionDef) -> str | None:
     """Classify a method by its property-related decorators."""
     ...
 
@@ -20,7 +20,7 @@ def extract_module(source: str, rel_path: str) -> ModuleInfo:
     """Parse Python source and extract classes, functions, and constants."""
     ...
 
-def iter_source_files(source_root: Path, project_root: Path | None) -> Iterator[tuple[str, str]]:
+def iter_source_files(source_root: Path, project_root: Path) -> Iterator[tuple[str, str]]:
     """Yield (source_text, rel_path) for every parseable Python file in *source_root*."""
     ...
 
@@ -28,7 +28,7 @@ def extract_modules(files: Iterable[tuple[str, str]]) -> list[ModuleInfo]:
     """Extract a :class:`ModuleInfo` for each file in *files*."""
     ...
 
-def walk_source(source_root: Path, project_root: Path | None) -> list[ModuleInfo]:
+def walk_source(source_root: Path, project_root: Path) -> list[ModuleInfo]:
     """Walk a source root and extract symbols from all Python files."""
     ...
 
