@@ -114,7 +114,7 @@ class TestSyncApplyMode:
 
         err = capsys.readouterr().err
         assert "Error: No pyproject.toml found." in err
-        assert "Add [tool.uncoded] source-roots to configure." in err
+        assert "Create one with a [tool.uncoded] source-roots entry." in err
         assert str(tmp_path) not in err
 
     def test_error_when_source_root_missing(self, tmp_path, monkeypatch, capsys):

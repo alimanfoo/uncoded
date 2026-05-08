@@ -40,7 +40,7 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
     if pyproject_path is None:
         print(
             "Error: No pyproject.toml found. "
-            "Add [tool.uncoded] source-roots to configure.",
+            "Create one with a [tool.uncoded] source-roots entry.",
             file=sys.stderr,
         )
         return 1
