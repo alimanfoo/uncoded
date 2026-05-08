@@ -28,20 +28,10 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
     writes. Running from a subdirectory of the project produces artefacts
     in the same locations as running from the project root.
 
-    Configuration errors return 1 in both modes; the three sites are
-    checked before the apply/check branch. If no ``pyproject.toml`` is
-    found anywhere up from ``start``, stderr names the missing file and
-    tells the user to create one with a ``[tool.uncoded]`` ``source-roots``
-    entry. If the located ``pyproject.toml`` has no ``[tool.uncoded]``
-    ``source-roots`` entry, stderr names the missing section and tells
-    the user to add it. If a configured source root is not a directory,
-    stderr names the entry as the user wrote it and points at the
-    ``[tool.uncoded]`` ``source-roots`` key.
-
-    After configuration validates, ``check=True`` reports each prospective
-    write without mutating the on-disk tree, returning 1 if any step would
-    write (so CI can gate on a stale index) and 0 if the tree is already
-    in sync. Apply mode performs those writes and returns 0.
+    When ``check=True``, the on-disk tree is not mutated; the function
+    reports each prospective write, returns 1 if anything would change
+    (so CI can gate on a stale index), and 0 otherwise. Configuration
+    errors return 1 in either mode.
     """
     if start is None:
         start = Path.cwd()
