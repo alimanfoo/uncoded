@@ -287,6 +287,7 @@ tests/:
       test_function_with_annotations:
       test_class_with_bases:
       test_class_no_bases:
+      test_class_with_no_members_renders_body:
       test_attribute_with_annotation:
       test_method_indented:
       test_ends_with_newline:

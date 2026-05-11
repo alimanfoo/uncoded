@@ -285,6 +285,11 @@ def render_stub(module: StubModule) -> str:
         bases_str = f"({', '.join(cls.bases)})" if cls.bases else ""
         lines.append(f"class {cls.name}{bases_str}:")
 
+        if not cls.attributes and not cls.methods:
+            lines.append("    ...")
+            lines.append("")
+            continue
+
         for attr in cls.attributes:
             lines.append(_render_assignment(attr, indent="    "))
         if cls.attributes:

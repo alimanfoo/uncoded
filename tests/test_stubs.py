@@ -355,6 +355,17 @@ class TestRenderStub:
         )
         assert "class Plain:" in render_stub(module)
 
+    def test_class_with_no_members_renders_body(self):
+        # A class with no attributes and no methods needs an explicit
+        # body so the rendered stub is valid Python.
+        module = StubModule(
+            rel_path="pkg/mod.py",
+            classes=[StubClass(name="Sentinel")],
+        )
+        output = render_stub(module)
+        assert "class Sentinel:\n    ...\n" in output
+        compile(output, "pkg/mod.pyi", "exec")
+
     def test_attribute_with_annotation(self):
         module = StubModule(
             rel_path="pkg/mod.py",

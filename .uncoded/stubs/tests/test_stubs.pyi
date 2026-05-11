@@ -98,6 +98,9 @@ class TestRenderStub:
     def test_class_no_bases(self):
         ...
 
+    def test_class_with_no_members_renders_body(self):
+        ...
+
     def test_attribute_with_annotation(self):
         ...
 
