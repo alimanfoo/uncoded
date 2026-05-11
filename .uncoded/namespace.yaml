@@ -40,7 +40,6 @@ src/:
       DEFAULT_INSTRUCTION_FILES:
       _SECTION_BODY:
       SECTION:
-      generate_section:
       _replace_or_append:
       sync_instruction_file:
     namespace_map.py:
@@ -185,7 +184,7 @@ tests/:
       test_module_with_only_constants_is_kept:
       test_skips_files_with_no_symbols:
   test_instruction_files.py:
-    TestGenerateSection:
+    TestSection:
       test_contains_markers:
       test_markers_in_order:
       test_ends_with_newline:
