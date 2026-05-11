@@ -1,6 +1,6 @@
 import textwrap
 
-from uncoded.extract import extract_module, extract_modules, walk_source
+from uncoded.extract import extract_module, extract_modules, iter_source_files
 
 
 class TestExtractModule:
@@ -112,17 +112,6 @@ class TestExtractModule:
         cls = result.classes[0]
         assert cls.attributes == ["items", "_cache", "count"]
 
-    def test_module_with_only_constants_is_kept(self, tmp_path):
-        src = tmp_path / "src"
-        pkg = src / "mypackage"
-        pkg.mkdir(parents=True)
-        (pkg / "__init__.py").write_text('__version__ = "1.0"\n')
-
-        modules = walk_source(src, project_root=tmp_path)
-
-        rel_paths = [m.rel_path for m in modules]
-        assert "src/mypackage/__init__.py" in rel_paths
-
     def test_annotated_attributes(self):
         source = textwrap.dedent("""\
             from dataclasses import dataclass
@@ -205,7 +194,7 @@ class TestExtractModule:
         assert result.classes[0].methods == ["omega", "alpha"]
 
 
-class TestWalkSource:
+class TestIterAndExtract:
     def test_basic_walk(self, tmp_path):
         # Simulate repo structure: src/mypackage/...
         src = tmp_path / "src"
@@ -225,7 +214,7 @@ class TestWalkSource:
         (pkg / "_internal.py").write_text("def helper(): pass\n")
         (pkg / "empty.py").write_text("# nothing here\n")
 
-        modules = walk_source(src, project_root=tmp_path)
+        modules = extract_modules(iter_source_files(src, project_root=tmp_path))
 
         rel_paths = [m.rel_path for m in modules]
         assert "src/mypackage/core.py" in rel_paths
@@ -242,7 +231,7 @@ class TestWalkSource:
         (sub / "__init__.py").write_text("")
         (sub / "formatting.py").write_text("def format_output(): pass\n")
 
-        modules = walk_source(src, project_root=tmp_path)
+        modules = extract_modules(iter_source_files(src, project_root=tmp_path))
 
         rel_paths = [m.rel_path for m in modules]
         assert "src/mypackage/utils/formatting.py" in rel_paths
@@ -254,7 +243,7 @@ class TestWalkSource:
         (pkg / "__init__.py").write_text("def create(): pass\n")
         (pkg / "core.py").write_text("def run(): pass\n")
 
-        modules = walk_source(src, project_root=tmp_path)
+        modules = extract_modules(iter_source_files(src, project_root=tmp_path))
 
         rel_paths = [m.rel_path for m in modules]
         assert "src/mypackage/__init__.py" in rel_paths
@@ -267,7 +256,7 @@ class TestWalkSource:
         (pkg / "__init__.py").write_text("")
         (pkg / "core.py").write_text("def run(): pass\n")
 
-        modules = walk_source(src, project_root=tmp_path)
+        modules = extract_modules(iter_source_files(src, project_root=tmp_path))
 
         rel_paths = [m.rel_path for m in modules]
         assert not any("__init__.py" in p for p in rel_paths)
@@ -280,7 +269,7 @@ class TestWalkSource:
         (pkg / "good.py").write_text("def works(): pass\n")
         (pkg / "bad.py").write_text("def broken(:\n")
 
-        modules = walk_source(src, project_root=tmp_path)
+        modules = extract_modules(iter_source_files(src, project_root=tmp_path))
 
         rel_paths = [m.rel_path for m in modules]
         assert "src/mypackage/good.py" in rel_paths
@@ -318,6 +307,13 @@ class TestExtractModules:
         modules = extract_modules(files)
 
         assert [m.rel_path for m in modules] == ["src/a.py", "src/b.py", "src/c.py"]
+
+    def test_module_with_only_constants_is_kept(self):
+        files = [('__version__ = "1.0"\n', "src/mypackage/__init__.py")]
+
+        modules = extract_modules(files)
+
+        assert [m.rel_path for m in modules] == ["src/mypackage/__init__.py"]
 
     def test_skips_files_with_no_symbols(self):
         files = [

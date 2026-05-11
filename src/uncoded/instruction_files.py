@@ -139,11 +139,6 @@ regex or free-text phrase → grep."""
 SECTION = f"{MARKER_START}\n{_SECTION_BODY}\n{MARKER_END}\n"
 
 
-def generate_section() -> str:
-    """Return the full delimited uncoded section for an instruction file."""
-    return SECTION
-
-
 def _replace_or_append(existing: str, section: str) -> str:
     """Replace the delimited section in existing text, or append it if absent."""
     start = existing.find(MARKER_START)
@@ -173,7 +168,7 @@ def sync_instruction_file(
     regardless of where the caller is running from. If ``path`` is
     absolute, it's used as-is and ``project_root`` has no effect.
     """
-    section = generate_section()
+    section = SECTION
     target = project_root / path
     if not target.exists():
         return sync_file(path, section, project_root=project_root, check=check)

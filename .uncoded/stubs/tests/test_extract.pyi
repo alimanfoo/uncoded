@@ -1,7 +1,7 @@
 # tests/test_extract.py
 
 import textwrap
-from uncoded.extract import extract_module, extract_modules, walk_source
+from uncoded.extract import extract_module, extract_modules, iter_source_files
 
 class TestExtractModule:
 
@@ -29,9 +29,6 @@ class TestExtractModule:
     def test_unannotated_class_variable(self):
         ...
 
-    def test_module_with_only_constants_is_kept(self, tmp_path):
-        ...
-
     def test_annotated_attributes(self):
         ...
 
@@ -44,7 +41,7 @@ class TestExtractModule:
     def test_preserves_source_order(self):
         ...
 
-class TestWalkSource:
+class TestIterAndExtract:
 
     def test_basic_walk(self, tmp_path):
         ...
@@ -67,6 +64,9 @@ class TestExtractModules:
         ...
 
     def test_preserves_source_order(self):
+        ...
+
+    def test_module_with_only_constants_is_kept(self):
         ...
 
     def test_skips_files_with_no_symbols(self):

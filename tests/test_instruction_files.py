@@ -3,23 +3,21 @@ from pathlib import Path
 from uncoded.instruction_files import (
     MARKER_END,
     MARKER_START,
-    generate_section,
+    SECTION,
     sync_instruction_file,
 )
 
 
-class TestGenerateSection:
+class TestSection:
     def test_contains_markers(self):
-        section = generate_section()
-        assert MARKER_START in section
-        assert MARKER_END in section
+        assert MARKER_START in SECTION
+        assert MARKER_END in SECTION
 
     def test_markers_in_order(self):
-        section = generate_section()
-        assert section.index(MARKER_START) < section.index(MARKER_END)
+        assert SECTION.index(MARKER_START) < SECTION.index(MARKER_END)
 
     def test_ends_with_newline(self):
-        assert generate_section().endswith("\n")
+        assert SECTION.endswith("\n")
 
 
 class TestSyncInstructionFile:
@@ -27,7 +25,7 @@ class TestSyncInstructionFile:
         path = tmp_path / "CLAUDE.md"
         sync_instruction_file(path, project_root=tmp_path)
         assert path.exists()
-        assert generate_section() in path.read_text()
+        assert SECTION in path.read_text()
 
     def test_appends_to_existing_file(self, tmp_path):
         path = tmp_path / "CLAUDE.md"
@@ -35,7 +33,7 @@ class TestSyncInstructionFile:
         sync_instruction_file(path, project_root=tmp_path)
         content = path.read_text()
         assert "# My Project" in content
-        assert generate_section() in content
+        assert SECTION in content
 
     def test_replaces_existing_section(self, tmp_path):
         path = tmp_path / "CLAUDE.md"
@@ -44,7 +42,7 @@ class TestSyncInstructionFile:
         sync_instruction_file(path, project_root=tmp_path)
         content = path.read_text()
         assert "old content" not in content
-        assert generate_section() in content
+        assert SECTION in content
         assert "# My Project" in content
 
     def test_preserves_content_after_section(self, tmp_path):
@@ -106,7 +104,7 @@ class TestSyncInstructionFileProjectRootAnchor:
         changed = sync_instruction_file(rel, project_root=tmp_path)
         assert changed is True
         assert (tmp_path / rel).exists()
-        assert generate_section() in (tmp_path / rel).read_text()
+        assert SECTION in (tmp_path / rel).read_text()
         assert not (sub / rel).exists()
 
     def test_project_root_anchors_update_of_existing_file(self, tmp_path, monkeypatch):
@@ -121,4 +119,4 @@ class TestSyncInstructionFileProjectRootAnchor:
         assert changed is True
         content = (tmp_path / rel).read_text()
         assert "# My Project" in content
-        assert generate_section() in content
+        assert SECTION in content

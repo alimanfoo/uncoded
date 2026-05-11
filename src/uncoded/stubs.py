@@ -460,7 +460,7 @@ def build_stubs(
 
     ``project_root`` is the anchor for both ends of the pipeline:
     source paths in ``files`` are already relative to it (so each
-    stub's rendered ``rel_path`` header matches :func:`walk_source`
+    stub's rendered ``rel_path`` header matches :func:`iter_source_files`
     and the namespace map), and each stub is written to
     ``project_root / output_dir / <rel>``. The same ``project_root``
     must therefore be passed to :func:`iter_source_files` (for
