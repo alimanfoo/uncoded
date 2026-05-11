@@ -28,10 +28,6 @@ def extract_modules(files: Iterable[tuple[str, str]]) -> list[ModuleInfo]:
     """Extract a :class:`ModuleInfo` for each file in *files*."""
     ...
 
-def walk_source(source_root: Path, project_root: Path) -> list[ModuleInfo]:
-    """Walk a source root and extract symbols from all Python files."""
-    ...
-
 class ClassInfo:
     """A class with its attributes and methods."""
 

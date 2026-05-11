@@ -1,7 +1,7 @@
 # tests/test_extract.py
 
 import textwrap
-from uncoded.extract import extract_module, extract_modules, walk_source
+from uncoded.extract import extract_module, extract_modules, iter_source_files
 
 class TestExtractModule:
 
@@ -44,7 +44,7 @@ class TestExtractModule:
     def test_preserves_source_order(self):
         ...
 
-class TestWalkSource:
+class TestIterAndExtract:
 
     def test_basic_walk(self, tmp_path):
         ...

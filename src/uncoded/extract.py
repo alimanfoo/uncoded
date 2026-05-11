@@ -143,17 +143,3 @@ def extract_modules(files: Iterable[tuple[str, str]]) -> list[ModuleInfo]:
         if module.classes or module.functions or module.constants:
             modules.append(module)
     return modules
-
-
-def walk_source(source_root: Path, project_root: Path) -> list[ModuleInfo]:
-    """Walk a source root and extract symbols from all Python files.
-
-    Each returned ``ModuleInfo.rel_path`` is the file's path relative
-    to ``project_root``.
-
-    Convenience wrapper around :func:`iter_source_files` and
-    :func:`extract_modules`. Files with syntax errors are filtered out
-    by ``iter_source_files`` (which emits a stderr warning naming the
-    offending file).
-    """
-    return extract_modules(iter_source_files(source_root, project_root))
