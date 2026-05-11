@@ -124,7 +124,7 @@ Agents following that protocol:
 2. Read the relevant `.pyi` stubs to understand imports, signatures, constants, and class members.
 3. Use Serena's `find_symbol(..., include_body=True)` when they need implementation detail for a specific symbol.
 
-The split is deliberate: `uncoded` provides a stable map and semantic summary;
+The split is deliberate: `uncoded` provides a stable map and signature index;
 Serena resolves the current source body. No grep, no stale line-number
 coordinates, no offset arithmetic.
 

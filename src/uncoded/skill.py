@@ -148,10 +148,11 @@ Detection: identify name collisions in the namespace, then compare signatures
 ## Step 3: Promissory sweep
 
 Examine each public symbol's name / signature / docstring triple for internal
-disagreement. Names and signatures come from the stub; docstrings come from
-the source. For each non-trivial public symbol (skip trivial one-liners and
-`__init__` with no meaningful body), read the stub for name and signature,
-then call Serena's `find_symbol` with `include_body=True` for the docstring.
+disagreement. Load each source file's stub once for the names and signatures
+across that file's symbols. Then, for each non-trivial public symbol (skip
+trivial one-liners and `__init__` with no meaningful body), call Serena's
+`find_symbol` with `include_body=True` to read the docstring — the call also
+returns the body, available if a finding needs it.
 
 **Name–signature mismatch.** Does the name's verb fit the signature's return? A
 function called `validate_*` that returns the validated object rather than
@@ -176,12 +177,11 @@ Quote evidence verbatim. The stub excerpt is the evidence for name and
 signature findings; the docstring returned by `find_symbol` with
 `include_body=True` is the evidence for any docstring-related finding.
 
-**When to read further.** `find_symbol` with `include_body=True` returns the
-whole symbol — name, signature, docstring, and body — so the body is already
-in the same response if a finding's confidence needs it: a name–behaviour
-mismatch the docstring alone doesn't settle, or a defensive docstring you want
-to verify against the body. Targeted to the symbol, no offset arithmetic, no
-risk of over-reading. Never read a whole source file during this sweep.
+**When to read further.** Read the body when a finding's confidence needs it:
+a name–behaviour mismatch the docstring alone doesn't settle, or a defensive
+docstring you want to verify against the body. Targeted to the symbol, no
+offset arithmetic, no risk of over-reading. Never read a whole source file
+during this sweep.
 
 ## Step 4: Structural sweep
 
