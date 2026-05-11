@@ -7,7 +7,6 @@ from uncoded.extract import iter_source_files
 from uncoded.stubs import StubAssignment, StubClass, StubFunction, StubModule, StubParam, _write_stubs, build_stubs, extract_stub, render_stub
 
 class TestExtractStub:
-
     def test_simple_function(self):
         ...
 
@@ -27,39 +26,6 @@ class TestExtractStub:
         ...
 
     def test_class_no_bases(self):
-        ...
-
-    def test_docstring_first_sentence_only(self):
-        ...
-
-    def test_docstring_starting_with_eg_not_truncated(self):
-        ...
-
-    def test_docstring_starting_with_ie_not_truncated(self):
-        ...
-
-    def test_docstring_starting_with_us_initialism_not_truncated(self):
-        ...
-
-    def test_no_docstring(self):
-        ...
-
-    def test_whitespace_only_docstring_yields_none(self):
-        ...
-
-    def test_no_period_docstring_yields_first_line(self):
-        ...
-
-    def test_multiline_without_sentence_boundary_yields_first_line(self):
-        ...
-
-    def test_capital_abbreviation_truncates_as_documented_limit(self):
-        ...
-
-    def test_module_docstring_extracted(self):
-        ...
-
-    def test_module_no_docstring(self):
         ...
 
     def test_kwargs_and_varargs(self):
@@ -111,7 +77,6 @@ class TestExtractStub:
         ...
 
 class TestRenderStub:
-
     def test_header_contains_path(self):
         ...
 
@@ -127,16 +92,13 @@ class TestRenderStub:
     def test_function_with_annotations(self):
         ...
 
-    def test_docstring_excerpt_rendered(self):
-        ...
-
-    def test_module_docstring_rendered_at_top(self):
-        ...
-
     def test_class_with_bases(self):
         ...
 
     def test_class_no_bases(self):
+        ...
+
+    def test_class_with_no_members_renders_body(self):
         ...
 
     def test_attribute_with_annotation(self):
@@ -170,8 +132,6 @@ class TestRenderStub:
         ...
 
 class TestBuildStubs:
-    """build_stubs writes expected stubs and removes orphans for its source root."""
-
     def _setup(self, tmp_path):
         ...
 
@@ -203,8 +163,6 @@ class TestBuildStubs:
         ...
 
 class TestBuildStubsCheckMode:
-    """build_stubs with check=True must report changes without mutating the tree."""
-
     def _setup(self, tmp_path):
         ...
 
@@ -224,7 +182,6 @@ class TestBuildStubsCheckMode:
         ...
 
 class TestWriteStubs:
-
     def test_writes_stubs(self, tmp_path):
         ...
 

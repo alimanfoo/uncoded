@@ -1,7 +1,5 @@
 # src/uncoded/extract.py
 
-"""Extract symbols from Python source files using the AST."""
-
 import ast
 import sys
 from collections.abc import Iterable, Iterator
@@ -9,35 +7,26 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 def property_kind(node: ast.FunctionDef | ast.AsyncFunctionDef) -> str | None:
-    """Classify a method by its property-related decorators."""
     ...
 
 def _assign_target_name(node: ast.Assign | ast.AnnAssign) -> str | None:
-    """Return the single-name target of an assignment, or None if not a simple name."""
     ...
 
 def extract_module(source: str, rel_path: str) -> ModuleInfo:
-    """Parse Python source and extract classes, functions, and constants."""
     ...
 
 def iter_source_files(source_root: Path, project_root: Path) -> Iterator[tuple[str, str]]:
-    """Yield (source_text, rel_path) for every parseable Python file in *source_root*."""
     ...
 
 def extract_modules(files: Iterable[tuple[str, str]]) -> list[ModuleInfo]:
-    """Extract a :class:`ModuleInfo` for each file in *files*."""
     ...
 
 class ClassInfo:
-    """A class with its attributes and methods."""
-
     name: str
     attributes: list[str] = field(default_factory=list)
     methods: list[str] = field(default_factory=list)
 
 class ModuleInfo:
-    """Symbols found in a single Python module."""
-
     rel_path: str
     constants: list[str] = field(default_factory=list)
     classes: list[ClassInfo] = field(default_factory=list)

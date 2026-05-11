@@ -4,7 +4,6 @@ from pathlib import Path
 from uncoded.instruction_files import MARKER_END, MARKER_START, SECTION, sync_instruction_file
 
 class TestSection:
-
     def test_contains_markers(self):
         ...
 
@@ -15,7 +14,6 @@ class TestSection:
         ...
 
 class TestSyncInstructionFile:
-
     def test_creates_file_if_missing(self, tmp_path):
         ...
 
@@ -38,7 +36,6 @@ class TestSyncInstructionFile:
         ...
 
 class TestSyncInstructionFileCheckMode:
-
     def test_does_not_create_file(self, tmp_path):
         ...
 
@@ -49,7 +46,6 @@ class TestSyncInstructionFileCheckMode:
         ...
 
 class TestSyncInstructionFileProjectRootAnchor:
-
     def test_project_root_anchors_create_independent_of_cwd(self, tmp_path, monkeypatch):
         ...
 

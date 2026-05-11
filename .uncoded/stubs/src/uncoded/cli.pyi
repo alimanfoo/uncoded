@@ -1,7 +1,5 @@
 # src/uncoded/cli.py
 
-"""CLI entry point for uncoded."""
-
 import argparse
 import sys
 from pathlib import Path
@@ -15,9 +13,7 @@ from uncoded.stubs import build_stubs
 from uncoded.sync import sync_file
 
 def _sync(*, start: Path | None, check: bool) -> int:
-    """Sync (or verify) the namespace map, stub files, and instruction-file sections."""
     ...
 
 def main() -> int:
-    """Dispatch the uncoded CLI."""
     ...

@@ -1,7 +1,6 @@
 """Generate .pyi stub files for agent navigation."""
 
 import ast
-import re
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -29,7 +28,6 @@ class StubFunction:
     name: str
     params: list[StubParam] = field(default_factory=list)
     return_annotation: str | None = None
-    docstring_excerpt: str | None = None
     is_async: bool = False
 
 
@@ -54,7 +52,6 @@ class StubClass:
 
     name: str
     bases: list[str] = field(default_factory=list)
-    docstring_excerpt: str | None = None
     attributes: list[StubAssignment] = field(default_factory=list)
     methods: list[StubFunction] = field(default_factory=list)
 
@@ -64,50 +61,10 @@ class StubModule:
     """All symbols extracted from a single Python module."""
 
     rel_path: str
-    docstring_excerpt: str | None = None
     imports: list[str] = field(default_factory=list)
     constants: list[StubAssignment] = field(default_factory=list)
     classes: list[StubClass] = field(default_factory=list)
     functions: list[StubFunction] = field(default_factory=list)
-
-
-def _first_sentence(
-    node: ast.AsyncFunctionDef | ast.FunctionDef | ast.ClassDef | ast.Module,
-) -> str | None:
-    """Return the first sentence, or first line, of a node's docstring.
-
-    The contract is "first sentence or first line, whichever comes
-    first," so the consumer (the stub renderer) always receives a
-    single-line excerpt suitable for a one-line ``.pyi`` docstring.
-
-    A sentence boundary is a period followed by whitespace and a
-    capital letter. The capital-letter requirement deliberately
-    avoids truncation at lowercase-after-period abbreviations like
-    ``e.g.``, ``i.e.``, and ``U.S.``. When no such boundary exists
-    in the docstring, the function falls back to the substring up
-    to the first newline, so single-line docstrings without a
-    trailing period and multi-line docstrings without an internal
-    sentence boundary still yield a usable excerpt.
-
-    Returns ``None`` only when the node has no docstring or the
-    docstring is whitespace-only. (``ast.get_docstring(clean=True)``
-    normalises whitespace-only docstrings to ``""``.)
-
-    Documented non-contract: docstrings starting with capital-letter
-    abbreviations such as ``Mr. Smith arrived.`` or ``Dr. Jones``
-    truncate at the abbreviation. The heuristic cannot tell a
-    title-plus-name from a true sentence break; disambiguating these
-    would require a tokeniser or a whitelist, which the function
-    deliberately stops short of.
-    """
-    docstring = ast.get_docstring(node)
-    if not docstring:
-        return None
-    match = re.match(r"(.+?\.(?=\s+[A-Z])|.+?(?=\n))", docstring.strip() + "\n")
-    # docstring is non-empty post-cleandoc, so .strip() leaves at least
-    # one non-whitespace character; alt-2 ``.+?(?=\n)`` always matches.
-    assert match is not None
-    return match.group(1)
 
 
 def _extract_params(args: ast.arguments) -> list[StubParam]:
@@ -198,7 +155,6 @@ def _extract_function(
         name=node.name,
         params=_extract_params(node.args),
         return_annotation=ast.unparse(node.returns) if node.returns else None,
-        docstring_excerpt=_first_sentence(node),
         is_async=isinstance(node, ast.AsyncFunctionDef),
     )
 
@@ -239,7 +195,6 @@ def _extract_class(node: ast.ClassDef) -> StubClass:
     return StubClass(
         name=node.name,
         bases=bases,
-        docstring_excerpt=_first_sentence(node),
         attributes=attributes,
         methods=methods,
     )
@@ -267,7 +222,6 @@ def extract_stub(source: str, rel_path: str) -> StubModule:
 
     return StubModule(
         rel_path=rel_path,
-        docstring_excerpt=_first_sentence(tree),
         imports=imports,
         constants=constants,
         classes=classes,
@@ -290,8 +244,6 @@ def _render_function(func: StubFunction, indent: str = "") -> list[str]:
     ret = f" -> {func.return_annotation}" if func.return_annotation else ""
     prefix = "async def" if func.is_async else "def"
     lines = [f"{indent}{prefix} {func.name}({params_str}){ret}:"]
-    if func.docstring_excerpt:
-        lines.append(f'{indent}    """{func.docstring_excerpt}"""')
     lines.append(f"{indent}    ...")
     return lines
 
@@ -316,10 +268,6 @@ def render_stub(module: StubModule) -> str:
     """Render a StubModule as a .pyi file string."""
     lines: list[str] = [f"# {module.rel_path}", ""]
 
-    if module.docstring_excerpt:
-        lines.append(f'"""{module.docstring_excerpt}"""')
-        lines.append("")
-
     if module.imports:
         lines.extend(module.imports)
         lines.append("")
@@ -336,9 +284,11 @@ def render_stub(module: StubModule) -> str:
     for cls in module.classes:
         bases_str = f"({', '.join(cls.bases)})" if cls.bases else ""
         lines.append(f"class {cls.name}{bases_str}:")
-        if cls.docstring_excerpt:
-            lines.append(f'    """{cls.docstring_excerpt}"""')
-        lines.append("")
+
+        if not cls.attributes and not cls.methods:
+            lines.append("    ...")
+            lines.append("")
+            continue
 
         for attr in cls.attributes:
             lines.append(_render_assignment(attr, indent="    "))

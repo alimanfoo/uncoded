@@ -30,7 +30,6 @@ class TestExtractStub:
         assert f.name == "greet"
         assert f.params == [StubParam("name", "str")]
         assert f.return_annotation == "str"
-        assert f.docstring_excerpt == "Say hello."
 
     def test_function_no_annotations(self):
         source = textwrap.dedent("""\
@@ -81,7 +80,6 @@ class TestExtractStub:
         assert len(module.classes) == 1
         cls = module.classes[0]
         assert cls.name == "Record"
-        assert cls.docstring_excerpt == "Stores a named value."
         assert [(a.name, a.annotation) for a in cls.attributes] == [
             ("name", "str"),
             ("value", "int"),
@@ -106,127 +104,6 @@ class TestExtractStub:
         """)
         module = extract_stub(source, "pkg/plain.py")
         assert module.classes[0].bases == []
-
-    def test_docstring_first_sentence_only(self):
-        source = textwrap.dedent("""\
-            def process():
-                '''Parse the input. Then validate it. Then return.'''
-                pass
-        """)
-        module = extract_stub(source, "pkg/proc.py")
-        assert module.functions[0].docstring_excerpt == "Parse the input."
-
-    def test_docstring_starting_with_eg_not_truncated(self):
-        # Sentence-boundary heuristic requires whitespace+capital after the
-        # period, so ``e.g.`` followed by lowercase isn't mistaken for the
-        # end of the first sentence.
-        source = textwrap.dedent("""\
-            def process():
-                '''e.g. parse a YAML file. Then validate it.'''
-                pass
-        """)
-        module = extract_stub(source, "pkg/proc.py")
-        assert module.functions[0].docstring_excerpt == "e.g. parse a YAML file."
-
-    def test_docstring_starting_with_ie_not_truncated(self):
-        source = textwrap.dedent("""\
-            def process():
-                '''i.e. validate the input. Then proceed.'''
-                pass
-        """)
-        module = extract_stub(source, "pkg/proc.py")
-        assert module.functions[0].docstring_excerpt == "i.e. validate the input."
-
-    def test_docstring_starting_with_us_initialism_not_truncated(self):
-        # Multi-character initialism with internal periods. The ``e`` after
-        # ``U.S.`` is lowercase, so the heuristic skips past the abbreviation
-        # and lands on the next capital-after-period.
-        source = textwrap.dedent("""\
-            def policy():
-                '''U.S. economic policy. Then global.'''
-                pass
-        """)
-        module = extract_stub(source, "pkg/policy.py")
-        assert module.functions[0].docstring_excerpt == "U.S. economic policy."
-
-    def test_no_docstring(self):
-        source = textwrap.dedent("""\
-            def silent():
-                pass
-        """)
-        module = extract_stub(source, "pkg/silent.py")
-        assert module.functions[0].docstring_excerpt is None
-
-    def test_whitespace_only_docstring_yields_none(self):
-        source = textwrap.dedent("""\
-            def whitespace_only():
-                '''   '''
-                pass
-        """)
-        module = extract_stub(source, "pkg/whitespace.py")
-        assert module.functions[0].docstring_excerpt is None
-
-    def test_no_period_docstring_yields_first_line(self):
-        # Pins the "or its first line" half of _first_sentence's
-        # contract: a docstring with no sentence boundary still
-        # produces a usable excerpt rather than None.
-        source = textwrap.dedent("""\
-            def greet():
-                '''Hello world'''
-                pass
-        """)
-        module = extract_stub(source, "pkg/greet.py")
-        assert module.functions[0].docstring_excerpt == "Hello world"
-
-    def test_multiline_without_sentence_boundary_yields_first_line(self):
-        # Multi-line docstring whose first paragraph contains no
-        # period-then-capital boundary: the excerpt is the first
-        # line, not the joined paragraph.
-        source = textwrap.dedent("""\
-            def greet():
-                '''Hello world
-                more text on the next line
-                '''
-                pass
-        """)
-        module = extract_stub(source, "pkg/greet.py")
-        assert module.functions[0].docstring_excerpt == "Hello world"
-
-    def test_capital_abbreviation_truncates_as_documented_limit(self):
-        # Documented non-contract: docstrings starting with a
-        # capital-letter abbreviation (``Mr.``, ``Dr.``) truncate at
-        # the abbreviation because the heuristic cannot tell a
-        # title-plus-name from a real sentence break. Pinning the
-        # behaviour so a future contributor sees this is by design,
-        # not a regression to fix.
-        source = textwrap.dedent("""\
-            def describe():
-                '''Mr. Smith arrived. Then he left.'''
-                pass
-        """)
-        module = extract_stub(source, "pkg/describe.py")
-        assert module.functions[0].docstring_excerpt == "Mr."
-
-    def test_module_docstring_extracted(self):
-        # Module-level docstrings follow the same first-sentence convention
-        # as class/function docstrings, so a multi-sentence module docstring
-        # is captured as just its leading sentence.
-        source = textwrap.dedent("""\
-            '''Top-level utility for greetings. Sub-module of pkg.'''
-
-            def hello() -> str:
-                pass
-        """)
-        module = extract_stub(source, "pkg/greet.py")
-        assert module.docstring_excerpt == "Top-level utility for greetings."
-
-    def test_module_no_docstring(self):
-        source = textwrap.dedent("""\
-            def hello() -> str:
-                pass
-        """)
-        module = extract_stub(source, "pkg/greet.py")
-        assert module.docstring_excerpt is None
 
     def test_kwargs_and_varargs(self):
         source = textwrap.dedent("""\
@@ -464,34 +341,6 @@ class TestRenderStub:
         )
         assert "def greet(name: str) -> str:" in render_stub(module)
 
-    def test_docstring_excerpt_rendered(self):
-        module = StubModule(
-            rel_path="pkg/mod.py",
-            functions=[
-                StubFunction(
-                    name="go",
-                    docstring_excerpt="Do the thing.",
-                )
-            ],
-        )
-        output = render_stub(module)
-        assert '"""Do the thing."""' in output
-        assert '"""Do the thing."""\n    ...' in output
-
-    def test_module_docstring_rendered_at_top(self):
-        # The module docstring sits between the path-comment header and
-        # the imports block, matching where a real Python module's
-        # docstring lives.
-        module = StubModule(
-            rel_path="pkg/mod.py",
-            docstring_excerpt="Greetings utility.",
-            imports=["from typing import Final"],
-        )
-        output = render_stub(module)
-        assert output.startswith(
-            '# pkg/mod.py\n\n"""Greetings utility."""\n\nfrom typing import Final'
-        )
-
     def test_class_with_bases(self):
         module = StubModule(
             rel_path="pkg/mod.py",
@@ -505,6 +354,17 @@ class TestRenderStub:
             classes=[StubClass(name="Plain")],
         )
         assert "class Plain:" in render_stub(module)
+
+    def test_class_with_no_members_renders_body(self):
+        # A class with no attributes and no methods needs an explicit
+        # body so the rendered stub is valid Python.
+        module = StubModule(
+            rel_path="pkg/mod.py",
+            classes=[StubClass(name="Sentinel")],
+        )
+        output = render_stub(module)
+        assert "class Sentinel:\n    ...\n" in output
+        compile(output, "pkg/mod.pyi", "exec")
 
     def test_attribute_with_annotation(self):
         module = StubModule(

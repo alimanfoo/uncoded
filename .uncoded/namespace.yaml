@@ -73,7 +73,6 @@ src/:
         name:
         params:
         return_annotation:
-        docstring_excerpt:
         is_async:
       StubAssignment:
         name:
@@ -83,17 +82,14 @@ src/:
       StubClass:
         name:
         bases:
-        docstring_excerpt:
         attributes:
         methods:
       StubModule:
         rel_path:
-        docstring_excerpt:
         imports:
         constants:
         classes:
         functions:
-      _first_sentence:
       _extract_params:
       _render_value:
       _extract_assignment:
@@ -267,17 +263,6 @@ tests/:
       test_class_with_attributes_and_methods:
       test_class_with_bases:
       test_class_no_bases:
-      test_docstring_first_sentence_only:
-      test_docstring_starting_with_eg_not_truncated:
-      test_docstring_starting_with_ie_not_truncated:
-      test_docstring_starting_with_us_initialism_not_truncated:
-      test_no_docstring:
-      test_whitespace_only_docstring_yields_none:
-      test_no_period_docstring_yields_first_line:
-      test_multiline_without_sentence_boundary_yields_first_line:
-      test_capital_abbreviation_truncates_as_documented_limit:
-      test_module_docstring_extracted:
-      test_module_no_docstring:
       test_kwargs_and_varargs:
       test_imports_collected:
       test_syntax_error_raises:
@@ -300,10 +285,9 @@ tests/:
       test_rendered_stub_has_no_line_range_comments:
       test_async_function_prefix:
       test_function_with_annotations:
-      test_docstring_excerpt_rendered:
-      test_module_docstring_rendered_at_top:
       test_class_with_bases:
       test_class_no_bases:
+      test_class_with_no_members_renders_body:
       test_attribute_with_annotation:
       test_method_indented:
       test_ends_with_newline:

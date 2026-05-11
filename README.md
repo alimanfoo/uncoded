@@ -22,8 +22,8 @@ all configured source roots. An agent can load this at the start of a task
 and immediately know the full vocabulary of the codebase.
 
 **`.uncoded/stubs/`** — one `.pyi` stub per source file, with imports, full
-signatures (parameter names, types, return types), first-sentence docstrings,
-module constants, and class attributes.
+signatures (parameter names, types, return types), module constants, and
+class attributes.
 
 **`.claude/skills/coherence-review/SKILL.md`** and
 **`.agents/skills/coherence-review/SKILL.md`** — a coherence review skill,
@@ -121,10 +121,10 @@ the configured instruction files (by default, `CLAUDE.md` and `AGENTS.md`).
 Agents following that protocol:
 
 1. Read `.uncoded/namespace.yaml` to orient — every symbol, at a glance.
-2. Read the relevant `.pyi` stubs to understand imports, signatures, constants, class members, and docstring summaries.
+2. Read the relevant `.pyi` stubs to understand imports, signatures, constants, and class members.
 3. Use Serena's `find_symbol(..., include_body=True)` when they need implementation detail for a specific symbol.
 
-The split is deliberate: `uncoded` provides a stable map and semantic summary;
+The split is deliberate: `uncoded` provides a stable map and signature index;
 Serena resolves the current source body. No grep, no stale line-number
 coordinates, no offset arithmetic.
 
@@ -148,8 +148,9 @@ The review works in four sweeps:
 2. **Lexical** — scans the namespace for naming inconsistency: concept
    duplication, qualifier accretion (`_v2`, `_legacy`, `_final`), vocabulary
    islands, name collision with drift.
-3. **Promissory** — reads stubs, checking each symbol's name / signature /
-   docstring triple for internal disagreement.
+3. **Promissory** — checks each public symbol's name / signature / docstring
+   triple for internal disagreement. Names and signatures come from the
+   stub; docstrings come from Serena's `find_symbol(include_body=True)`.
 4. **Structural** — checks for boundary violations (private symbols imported
    across modules), overgrown public surfaces, cross-domain imports, and
    zero-caller public symbols.

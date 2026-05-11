@@ -76,8 +76,9 @@ The review proceeds in four sweeps, each building on the previous:
 
 1. **Orient** — load the navigation index and form a mental map.
 2. **Lexical sweep** — read the namespace, look for naming-level inconsistency.
-3. **Promissory sweep** — read stubs, check each symbol's name / signature /
-   docstring for internal disagreement.
+3. **Promissory sweep** — check each symbol's name / signature / docstring
+   for internal disagreement; names and signatures from the stub, docstrings
+   via `find_symbol(include_body=True)`.
 4. **Structural sweep** — combine namespace and imports to find boundary and
    shape symptoms.
 
@@ -116,8 +117,9 @@ interchangeably. Two classes called `UserRecord` and `AccountProfile` that
 model the same entity.
 
 Detection: scan the namespace for symbol clusters with verb or noun overlap.
-Where suspicion arises, spot-check the relevant stubs to confirm they overlap
-in meaning.
+Where suspicion arises, check the stub signatures and the source docstrings
+(via Serena's `find_symbol` with `include_body=True`) to confirm the
+candidates overlap in meaning.
 
 **Qualifier accretion.** Names carrying modifiers that are fossils of
 iteration: `_new`, `_v2`, `_updated`, `_legacy`, `_real`, `_proper`, `_final`,
@@ -139,16 +141,18 @@ with the rest of the codebase.
 subtly different meanings — visible as different signatures, different docstring
 content, or different domain associations.
 
-Detection: identify name collisions in the namespace, then examine the stubs to
-see whether the uses agree.
+Detection: identify name collisions in the namespace, then compare signatures
+(from the stubs) and docstrings (via Serena's `find_symbol` with
+`include_body=True`) to see whether the uses agree.
 
 ## Step 3: Promissory sweep
 
-Working from stubs, examine each public symbol's name / signature / docstring
-triple for internal disagreement.
-
-For each non-trivial public symbol (skip trivial one-liners and `__init__` with
-no meaningful body):
+Examine each public symbol's name / signature / docstring triple for internal
+disagreement. Load each source file's stub once for the names and signatures
+across that file's symbols. Then, for each non-trivial public symbol (skip
+trivial one-liners and `__init__` with no meaningful body), call Serena's
+`find_symbol` with `include_body=True` to read the docstring — the call also
+returns the body, available if a finding needs it.
 
 **Name–signature mismatch.** Does the name's verb fit the signature's return? A
 function called `validate_*` that returns the validated object rather than
@@ -169,18 +173,15 @@ describe it. "Note: this does not actually X despite the name." "Do not use
 this for Y; use Z instead." These are confessions — someone noticed drift and
 documented it rather than fixing it.
 
-The stub itself is the evidence. Quote the stub excerpt (name, signature,
-first-line docstring) verbatim in the finding.
+Quote evidence verbatim. The stub excerpt is the evidence for name and
+signature findings; the docstring returned by `find_symbol` with
+`include_body=True` is the evidence for any docstring-related finding.
 
-**When to read source.** The stub is usually sufficient for discovery — the
-inconsistency IS the mismatch between name, signature, and docstring, all of
-which the stub provides. Read the symbol body when a finding is already
-identified but confidence is genuinely uncertain: an undocumented parameter
-where significance depends on what it controls; a name–behaviour mismatch where
-the stub alone doesn't confirm it; a defensive docstring you want to verify is
-accurate. Use Serena's `find_symbol` with `include_body=True` — targeted to the
-symbol, no offset arithmetic, no risk of over-reading. Never read a whole source
-file during this sweep.
+**When to read further.** Read the body when a finding's confidence needs it:
+a name–behaviour mismatch the docstring alone doesn't settle, or a defensive
+docstring you want to verify against the body. Targeted to the symbol, no
+offset arithmetic, no risk of over-reading. Never read a whole source file
+during this sweep.
 
 ## Step 4: Structural sweep
 
@@ -264,7 +265,8 @@ Regions with two or more findings — examine these first:
 **Confidence:** high | medium | low
 
 **Evidence:**
-> Verbatim quote from namespace.yaml, stub, or import statement.
+> Verbatim quote from namespace.yaml, stub, source docstring (via
+> `find_symbol`), or import statement.
 
 One or two sentences describing the inconsistency. Not a diagnosis. Not a fix.
 
@@ -281,14 +283,14 @@ clear evidence is useful — the human can filter. A dropped finding is not.
 
 **Confidence is part of the finding, not a gate.**
 
-- `high` — the inconsistency is explicit; evidence is directly in the stub or
-  namespace
+- `high` — the inconsistency is explicit; evidence is directly in the
+  namespace, the stub, or the source docstring
 - `medium` — strongly implied but depends on judgement about intent
 - `low` — pattern-based suspicion that needs human interpretation
 
 **Evidence must be verbatim.** Quote the relevant namespace line, stub excerpt,
-or import statement exactly. A finding the human cannot quickly verify is worse
-than no finding.
+source docstring, or import statement exactly. A finding the human cannot
+quickly verify is worse than no finding.
 
 **One finding per inconsistency.** If a single symbol has a name–signature
 mismatch and a docstring–name mismatch, that is two findings on the same

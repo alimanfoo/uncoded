@@ -6,7 +6,6 @@ from uncoded.config import find_pyproject_toml, read_instruction_files, read_pro
 from uncoded.instruction_files import DEFAULT_INSTRUCTION_FILES
 
 class TestFindPyprojectToml:
-
     def test_finds_at_start(self, tmp_path):
         ...
 
@@ -17,7 +16,6 @@ class TestFindPyprojectToml:
         ...
 
 class TestReadProjectName:
-
     def test_reads_name_from_pyproject_toml(self, tmp_path):
         ...
 
@@ -31,7 +29,6 @@ class TestReadProjectName:
         ...
 
 class TestReadSourceRoots:
-
     def test_reads_source_roots(self, tmp_path):
         ...
 
@@ -39,7 +36,6 @@ class TestReadSourceRoots:
         ...
 
 class TestReadInstructionFiles:
-
     def test_returns_default_when_no_pyproject_toml(self, tmp_path):
         ...
 

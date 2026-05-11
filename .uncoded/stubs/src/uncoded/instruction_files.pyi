@@ -1,7 +1,5 @@
 # src/uncoded/instruction_files.py
 
-"""Maintain the uncoded navigation section in agent instruction files."""
-
 from pathlib import Path
 from uncoded.sync import sync_file
 
@@ -12,9 +10,7 @@ _SECTION_BODY = ...
 SECTION = f'{MARKER_START}\n{_SECTION_BODY}\n{MARKER_END}\n'
 
 def _replace_or_append(existing: str, section: str) -> str:
-    """Replace the delimited section in existing text, or append it if absent."""
     ...
 
 def sync_instruction_file(path: Path, *, project_root: Path, check: bool) -> bool:
-    """Write or update the uncoded navigation section in an instruction file."""
     ...

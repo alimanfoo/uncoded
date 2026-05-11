@@ -71,11 +71,10 @@ tests/test_foo.py   →  .uncoded/stubs/tests/test_foo.pyi
 
 Every file you intend to touch or reference, including tests. The stub
 contains imports, every signature with types, module-level assignments,
-class attributes, and first-sentence docstrings — enough for most
-navigation. Skipping straight to source means reading many lines to
-learn what the stub would have told you in one. If no stub exists at
-the expected path, the file has no symbols indexed; in that narrow
-case, read source directly.
+and class attributes — enough for most navigation. Skipping straight to
+source means reading many lines to learn what the stub would have told
+you in one. If no stub exists at the expected path, the file has no
+symbols indexed; in that narrow case, read source directly.
 
 **Step 3 — Act. Use Serena to find, read, rename, edit, and delete symbols.**
 With the map and stub loaded, you have the exact `relative_path` and

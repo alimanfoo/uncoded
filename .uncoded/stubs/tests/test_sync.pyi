@@ -4,7 +4,6 @@ from pathlib import Path
 from uncoded.sync import remove_file, sync_file
 
 class TestSyncFile:
-
     def test_creates_missing_file(self, tmp_path):
         ...
 
@@ -30,7 +29,6 @@ class TestSyncFile:
         ...
 
 class TestRemoveFile:
-
     def test_removes_existing_file(self, tmp_path):
         ...
 
@@ -44,7 +42,6 @@ class TestRemoveFile:
         ...
 
 class TestSyncFileProjectRootAnchor:
-
     def test_project_root_anchors_write_independent_of_cwd(self, tmp_path, monkeypatch):
         ...
 
@@ -55,6 +52,5 @@ class TestSyncFileProjectRootAnchor:
         ...
 
 class TestRemoveFileProjectRootAnchor:
-
     def test_project_root_anchors_removal_independent_of_cwd(self, tmp_path, monkeypatch):
         ...
