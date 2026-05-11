@@ -55,33 +55,28 @@ def build_stubs(*, files: Iterable[tuple[str, str]], source_root: Path, output_d
     ...
 
 class StubParam:
-
     name: str
     annotation: str | None = None
 
 class StubFunction:
-
     name: str
     params: list[StubParam] = field(default_factory=list)
     return_annotation: str | None = None
     is_async: bool = False
 
 class StubAssignment:
-
     name: str
     annotation: str | None = None
     value_source: str | None = None
     is_type_alias: bool = False
 
 class StubClass:
-
     name: str
     bases: list[str] = field(default_factory=list)
     attributes: list[StubAssignment] = field(default_factory=list)
     methods: list[StubFunction] = field(default_factory=list)
 
 class StubModule:
-
     rel_path: str
     imports: list[str] = field(default_factory=list)
     constants: list[StubAssignment] = field(default_factory=list)

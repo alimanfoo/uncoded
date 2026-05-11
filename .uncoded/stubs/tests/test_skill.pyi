@@ -4,7 +4,6 @@ from pathlib import Path
 from uncoded.skill import _SKILL_CONTENT, LEGACY_SKILL_OUTPUTS, SKILL_OUTPUTS, sync_skill
 
 class TestSyncSkill:
-
     def test_skill_name_and_output_paths(self):
         ...
 
@@ -39,7 +38,6 @@ class TestSyncSkill:
         ...
 
 class TestSyncSkillProjectRootAnchor:
-
     def test_project_root_anchors_writes_independent_of_cwd(self, tmp_path, monkeypatch):
         ...
 

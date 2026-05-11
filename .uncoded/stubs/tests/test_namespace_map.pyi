@@ -5,7 +5,6 @@ from uncoded.extract import ClassInfo, ModuleInfo
 from uncoded.namespace_map import HEADER, build_map, render_map
 
 class TestBuildMap:
-
     def test_single_file(self):
         ...
 
@@ -28,7 +27,6 @@ class TestBuildMap:
         ...
 
 class TestRenderMap:
-
     def test_roundtrips_through_yaml(self):
         ...
 

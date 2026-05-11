@@ -7,7 +7,6 @@ from uncoded.extract import iter_source_files
 from uncoded.stubs import StubAssignment, StubClass, StubFunction, StubModule, StubParam, _write_stubs, build_stubs, extract_stub, render_stub
 
 class TestExtractStub:
-
     def test_simple_function(self):
         ...
 
@@ -78,7 +77,6 @@ class TestExtractStub:
         ...
 
 class TestRenderStub:
-
     def test_header_contains_path(self):
         ...
 
@@ -131,7 +129,6 @@ class TestRenderStub:
         ...
 
 class TestBuildStubs:
-
     def _setup(self, tmp_path):
         ...
 
@@ -163,7 +160,6 @@ class TestBuildStubs:
         ...
 
 class TestBuildStubsCheckMode:
-
     def _setup(self, tmp_path):
         ...
 
@@ -183,7 +179,6 @@ class TestBuildStubsCheckMode:
         ...
 
 class TestWriteStubs:
-
     def test_writes_stubs(self, tmp_path):
         ...
 

@@ -22,13 +22,11 @@ def extract_modules(files: Iterable[tuple[str, str]]) -> list[ModuleInfo]:
     ...
 
 class ClassInfo:
-
     name: str
     attributes: list[str] = field(default_factory=list)
     methods: list[str] = field(default_factory=list)
 
 class ModuleInfo:
-
     rel_path: str
     constants: list[str] = field(default_factory=list)
     classes: list[ClassInfo] = field(default_factory=list)

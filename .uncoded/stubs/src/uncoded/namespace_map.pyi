@@ -13,6 +13,5 @@ def render_map(namespace: dict) -> str:
     ...
 
 class _CleanDumper(yaml.SafeDumper):
-
     def increase_indent(self, flow, indentless):
         ...
