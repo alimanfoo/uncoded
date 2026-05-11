@@ -210,6 +210,7 @@ tests/:
       test_single_file:
       test_nested_subpackage:
       test_class_with_methods:
+      test_class_with_attributes_and_methods:
       test_function_is_none:
       test_class_with_no_members:
       test_module_level_constants:

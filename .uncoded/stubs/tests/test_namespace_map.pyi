@@ -15,6 +15,9 @@ class TestBuildMap:
     def test_class_with_methods(self):
         ...
 
+    def test_class_with_attributes_and_methods(self):
+        ...
+
     def test_function_is_none(self):
         ...
 

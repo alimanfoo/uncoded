@@ -57,6 +57,26 @@ class TestBuildMap:
             "delete": None,
         }
 
+    def test_class_with_attributes_and_methods(self):
+        modules = [
+            ModuleInfo(
+                rel_path="src/pkg/models.py",
+                classes=[
+                    ClassInfo(
+                        name="User",
+                        attributes=["name", "email"],
+                        methods=["save"],
+                    )
+                ],
+                functions=[],
+            ),
+        ]
+
+        result = build_map(modules)
+
+        members = result["src/"]["pkg/"]["models.py"]["User"]
+        assert members == {"name": None, "email": None, "save": None}
+
     def test_function_is_none(self):
         modules = [
             ModuleInfo(rel_path="src/pkg/utils.py", classes=[], functions=["compute"]),
