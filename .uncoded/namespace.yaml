@@ -297,6 +297,7 @@ tests/:
       test_constant_bare_annotation_rendered:
       test_type_alias_pep695_rendered:
       test_unannotated_class_attribute_rendered:
+      test_renders_valid_python_for_representative_source:
     TestBuildStubs:
       _setup:
       _build:

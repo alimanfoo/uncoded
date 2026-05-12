@@ -128,6 +128,9 @@ class TestRenderStub:
     def test_unannotated_class_attribute_rendered(self):
         ...
 
+    def test_renders_valid_python_for_representative_source(self):
+        ...
+
 class TestBuildStubs:
     def _setup(self, tmp_path):
         ...

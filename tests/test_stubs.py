@@ -472,6 +472,42 @@ class TestRenderStub:
         assert "class Registry:\n    items = []\n" in output
         assert "# L" not in output
 
+    def test_renders_valid_python_for_representative_source(self):
+        source = textwrap.dedent("""\
+            import os
+            from pathlib import Path
+
+            MAX: int = 3
+            TIMEOUT = 30
+            type Ids = list[int]
+
+            def greet(name: str) -> str:
+                return f"hi {name}"
+
+            async def fetch(url: str) -> bytes:
+                return b""
+
+            class Record:
+                name: str
+                value: int
+
+                @property
+                def display(self) -> str:
+                    return self.name
+
+                def save(self) -> None:
+                    pass
+
+            class Sentinel:
+                pass
+
+            class Dog(Animal):
+                pass
+        """)
+        module = extract_stub(source, "pkg/representative.py")
+        output = render_stub(module)
+        compile(output, "pkg/representative.pyi", "exec")
+
 
 class TestBuildStubs:
     """build_stubs writes expected stubs and removes orphans for its source root."""
