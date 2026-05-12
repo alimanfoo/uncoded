@@ -315,10 +315,9 @@ class TestRenderStub:
             ],
         )
         output = render_stub(module)
-        assert "VALUE = 1" in output
-        assert "def run():\n    ..." in output
-        assert "class Worker:" in output
-        assert "    def work(self):" in output
+        assert "VALUE = 1\n" in output
+        assert "def run():\n    ...\n" in output
+        assert "class Worker:\n    def work(self):\n        ...\n" in output
         assert "# L" not in output
 
     def test_async_function_prefix(self):
