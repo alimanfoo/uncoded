@@ -326,7 +326,7 @@ class TestRenderStub:
             rel_path="pkg/mod.py",
             functions=[StubFunction(name="fetch", is_async=True)],
         )
-        assert "async def fetch" in render_stub(module)
+        assert "async def fetch():\n    ...\n" in render_stub(module)
 
     def test_function_with_annotations(self):
         module = StubModule(
@@ -339,21 +339,14 @@ class TestRenderStub:
                 )
             ],
         )
-        assert "def greet(name: str) -> str:" in render_stub(module)
+        assert "def greet(name: str) -> str:\n    ...\n" in render_stub(module)
 
     def test_class_with_bases(self):
         module = StubModule(
             rel_path="pkg/mod.py",
             classes=[StubClass(name="Dog", bases=["Animal"])],
         )
-        assert "class Dog(Animal):" in render_stub(module)
-
-    def test_class_no_bases(self):
-        module = StubModule(
-            rel_path="pkg/mod.py",
-            classes=[StubClass(name="Plain")],
-        )
-        assert "class Plain:" in render_stub(module)
+        assert "class Dog(Animal):\n    ...\n" in render_stub(module)
 
     def test_class_with_no_members_renders_body(self):
         # A class with no attributes and no methods needs an explicit
@@ -376,7 +369,7 @@ class TestRenderStub:
                 )
             ],
         )
-        assert "    name: str" in render_stub(module)
+        assert "class Record:\n    name: str\n" in render_stub(module)
 
     def test_method_indented(self):
         module = StubModule(
@@ -394,7 +387,7 @@ class TestRenderStub:
             ],
         )
         output = render_stub(module)
-        assert "    def bar(self):" in output
+        assert "class Foo:\n    def bar(self):\n        ...\n" in output
 
     def test_ends_with_newline(self):
         module = StubModule(rel_path="pkg/mod.py")
@@ -413,7 +406,7 @@ class TestRenderStub:
         """)
         module = extract_stub(source, "pkg/cfg.py")
         output = render_stub(module)
-        assert "    path: Path" in output
+        assert "class Config:\n    path: Path\n" in output
         assert "def path" not in output
 
     def test_constant_with_value_rendered(self):
@@ -421,7 +414,7 @@ class TestRenderStub:
             rel_path="pkg/mod.py",
             constants=[StubAssignment(name="TIMEOUT", value_source="30")],
         )
-        assert "TIMEOUT = 30" in render_stub(module)
+        assert "TIMEOUT = 30\n" in render_stub(module)
 
     def test_constant_annotated_with_value_rendered(self):
         module = StubModule(
@@ -434,14 +427,14 @@ class TestRenderStub:
                 )
             ],
         )
-        assert "MAX: int = 3" in render_stub(module)
+        assert "MAX: int = 3\n" in render_stub(module)
 
     def test_constant_elided_rendered(self):
         module = StubModule(
             rel_path="pkg/mod.py",
             constants=[StubAssignment(name="BIG", value_source="...")],
         )
-        assert "BIG = ..." in render_stub(module)
+        assert "BIG = ...\n" in render_stub(module)
 
     def test_constant_bare_annotation_rendered(self):
         module = StubModule(
@@ -463,7 +456,7 @@ class TestRenderStub:
                 )
             ],
         )
-        assert "type UserId = int" in render_stub(module)
+        assert "type UserId = int\n" in render_stub(module)
 
     def test_unannotated_class_attribute_rendered(self):
         module = StubModule(
@@ -476,7 +469,7 @@ class TestRenderStub:
             ],
         )
         output = render_stub(module)
-        assert "    items = []" in output
+        assert "class Registry:\n    items = []\n" in output
         assert "# L" not in output
 
 

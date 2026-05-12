@@ -95,9 +95,6 @@ class TestRenderStub:
     def test_class_with_bases(self):
         ...
 
-    def test_class_no_bases(self):
-        ...
-
     def test_class_with_no_members_renders_body(self):
         ...
 
