@@ -3,7 +3,7 @@ import textwrap
 from uncoded.extract import extract_module, extract_modules, iter_source_files
 
 
-class TestExtractModule:
+class TestExtractModuleFromSource:
     def test_classes_and_functions(self):
         source = textwrap.dedent("""\
             class MyClass:
@@ -284,7 +284,7 @@ class TestIterAndExtract:
         assert "SyntaxError" in err
 
 
-class TestExtractModules:
+class TestExtractModulesFromFiles:
     def test_returns_module_info_per_parseable_file(self):
         files = [
             ("def foo(): pass\n", "src/a.py"),

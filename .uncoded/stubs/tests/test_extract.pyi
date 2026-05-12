@@ -3,7 +3,7 @@
 import textwrap
 from uncoded.extract import extract_module, extract_modules, iter_source_files
 
-class TestExtractModule:
+class TestExtractModuleFromSource:
     def test_classes_and_functions(self):
         ...
 
@@ -56,7 +56,7 @@ class TestIterAndExtract:
     def test_skips_syntax_errors(self, tmp_path, capsys):
         ...
 
-class TestExtractModules:
+class TestExtractModulesFromFiles:
     def test_returns_module_info_per_parseable_file(self):
         ...
 

@@ -155,7 +155,7 @@ tests/:
       test_reads_configured_list:
       test_empty_list_is_respected:
   test_extract.py:
-    TestExtractModule:
+    TestExtractModuleFromSource:
       test_classes_and_functions:
       test_async_functions_and_methods:
       test_empty_module:
@@ -174,7 +174,7 @@ tests/:
       test_includes_init_with_symbols:
       test_skips_empty_init:
       test_skips_syntax_errors:
-    TestExtractModules:
+    TestExtractModulesFromFiles:
       test_returns_module_info_per_parseable_file:
       test_preserves_source_order:
       test_module_with_only_constants_is_kept:
