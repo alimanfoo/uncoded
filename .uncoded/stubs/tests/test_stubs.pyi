@@ -28,9 +28,6 @@ class TestExtractStub:
     def test_class_no_bases(self):
         ...
 
-    def test_kwargs_and_varargs(self):
-        ...
-
     def test_extract_params_covers_input_kind(self, source, expected):
         ...
 

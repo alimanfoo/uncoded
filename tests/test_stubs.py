@@ -103,18 +103,6 @@ class TestExtractStub:
         module = extract_stub(source, "pkg/plain.py")
         assert module.classes[0].bases == []
 
-    def test_kwargs_and_varargs(self):
-        source = textwrap.dedent("""\
-            def build(*args: str, **kwargs: int) -> None:
-                pass
-        """)
-        module = extract_stub(source, "pkg/build.py")
-        f = module.functions[0]
-        assert f.params == [
-            StubParam("*args", "str"),
-            StubParam("**kwargs", "int"),
-        ]
-
     @pytest.mark.parametrize(
         "source,expected",
         [
@@ -127,6 +115,11 @@ class TestExtractStub:
                 "def f(x: str): pass\n",
                 [StubParam("x", "str")],
                 id="regular_positional_annotated",
+            ),
+            pytest.param(
+                "def f(x: int = 0): pass\n",
+                [StubParam("x", "int")],
+                id="defaults_dropped_positional",
             ),
             pytest.param(
                 "def f(*args): pass\n",
@@ -167,6 +160,21 @@ class TestExtractStub:
                 "def f(*, x: str): pass\n",
                 [StubParam("*"), StubParam("x", "str")],
                 id="kwonly_annotated",
+            ),
+            pytest.param(
+                "def f(*, x: int = 0): pass\n",
+                [StubParam("*"), StubParam("x", "int")],
+                id="defaults_dropped_kwonly",
+            ),
+            pytest.param(
+                "def f(*args, x): pass\n",
+                [StubParam("*args"), StubParam("x")],
+                id="vararg_with_kwonly",
+            ),
+            pytest.param(
+                "def f(*args, **kwargs): pass\n",
+                [StubParam("*args"), StubParam("**kwargs")],
+                id="vararg_with_kwarg",
             ),
         ],
     )
@@ -599,6 +607,9 @@ class TestRenderStub:
                 pass
 
             def separators(x, /, *, y):
+                pass
+
+            def configure(retries: int = 3) -> None:
                 pass
 
             class Record:
