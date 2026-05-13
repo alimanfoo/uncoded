@@ -31,6 +31,9 @@ class TestExtractStub:
     def test_kwargs_and_varargs(self):
         ...
 
+    def test_extract_params_covers_input_kind(self, source, expected):
+        ...
+
     def test_imports_collected(self):
         ...
 

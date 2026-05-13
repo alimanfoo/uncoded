@@ -85,9 +85,7 @@ class TestExtractStub:
             ("value", "int"),
             ("_internal", "float"),
         ]
-        assert len(cls.methods) == 2
-        assert cls.methods[0].name == "save"
-        assert cls.methods[1].name == "_validate"
+        assert [m.name for m in cls.methods] == ["save", "_validate"]
 
     def test_class_with_bases(self):
         source = textwrap.dedent("""\
@@ -112,8 +110,70 @@ class TestExtractStub:
         """)
         module = extract_stub(source, "pkg/build.py")
         f = module.functions[0]
-        assert StubParam("*args", "str") in f.params
-        assert StubParam("**kwargs", "int") in f.params
+        assert f.params == [
+            StubParam("*args", "str"),
+            StubParam("**kwargs", "int"),
+        ]
+
+    @pytest.mark.parametrize(
+        "source,expected",
+        [
+            pytest.param(
+                "def f(x): pass\n",
+                [StubParam("x")],
+                id="regular_positional_bare",
+            ),
+            pytest.param(
+                "def f(x: str): pass\n",
+                [StubParam("x", "str")],
+                id="regular_positional_annotated",
+            ),
+            pytest.param(
+                "def f(*args): pass\n",
+                [StubParam("*args")],
+                id="varargs_bare",
+            ),
+            pytest.param(
+                "def f(*args: str): pass\n",
+                [StubParam("*args", "str")],
+                id="varargs_annotated",
+            ),
+            pytest.param(
+                "def f(**kwargs): pass\n",
+                [StubParam("**kwargs")],
+                id="kwargs_bare",
+            ),
+            pytest.param(
+                "def f(**kwargs: int): pass\n",
+                [StubParam("**kwargs", "int")],
+                id="kwargs_annotated",
+            ),
+            pytest.param(
+                "def f(x, /): pass\n",
+                [StubParam("x"), StubParam("/")],
+                id="posonly_bare",
+            ),
+            pytest.param(
+                "def f(x: str, /): pass\n",
+                [StubParam("x", "str"), StubParam("/")],
+                id="posonly_annotated",
+            ),
+            pytest.param(
+                "def f(*, x): pass\n",
+                [StubParam("*"), StubParam("x")],
+                id="kwonly_bare",
+            ),
+            pytest.param(
+                "def f(*, x: str): pass\n",
+                [StubParam("*"), StubParam("x", "str")],
+                id="kwonly_annotated",
+            ),
+        ],
+    )
+    def test_extract_params_covers_input_kind(self, source, expected):
+        module = extract_stub(source, "pkg/f.py")
+        f = module.functions[0]
+        assert f.params == expected
 
     def test_imports_collected(self):
         source = textwrap.dedent("""\
