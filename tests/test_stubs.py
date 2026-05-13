@@ -327,18 +327,57 @@ class TestRenderStub:
         )
         assert "async def fetch():\n    ...\n" in render_stub(module)
 
-    def test_function_with_annotations(self):
+    @pytest.mark.parametrize(
+        "params,expected",
+        [
+            pytest.param(
+                [StubParam("x")],
+                "def f(x):",
+                id="regular_positional_bare",
+            ),
+            pytest.param(
+                [StubParam("x", "str")],
+                "def f(x: str):",
+                id="regular_positional_annotated",
+            ),
+            pytest.param(
+                [StubParam("*args")],
+                "def f(*args):",
+                id="varargs_bare",
+            ),
+            pytest.param(
+                [StubParam("*args", "str")],
+                "def f(*args: str):",
+                id="varargs_annotated",
+            ),
+            pytest.param(
+                [StubParam("**kwargs")],
+                "def f(**kwargs):",
+                id="kwargs_bare",
+            ),
+            pytest.param(
+                [StubParam("**kwargs", "int")],
+                "def f(**kwargs: int):",
+                id="kwargs_annotated",
+            ),
+            pytest.param(
+                [StubParam("/")],
+                "def f(/):",
+                id="positional_only_separator",
+            ),
+            pytest.param(
+                [StubParam("*")],
+                "def f(*):",
+                id="keyword_only_separator",
+            ),
+        ],
+    )
+    def test_render_param_covers_input_kind(self, params, expected):
         module = StubModule(
             rel_path="pkg/mod.py",
-            functions=[
-                StubFunction(
-                    name="greet",
-                    params=[StubParam("name", "str")],
-                    return_annotation="str",
-                )
-            ],
+            functions=[StubFunction(name="f", params=params)],
         )
-        assert "def greet(name: str) -> str:\n    ...\n" in render_stub(module)
+        assert expected in render_stub(module)
 
     def test_class_with_bases(self):
         module = StubModule(
@@ -487,6 +526,12 @@ class TestRenderStub:
                 return b""
 
             def build(*args: str, **kwargs: int) -> None:
+                pass
+
+            def collect(*args, **kwargs):
+                pass
+
+            def separators(x, /, *, y):
                 pass
 
             class Record:

@@ -284,7 +284,7 @@ tests/:
       test_imports_rendered:
       test_rendered_stub_has_no_line_range_comments:
       test_async_function_prefix:
-      test_function_with_annotations:
+      test_render_param_covers_input_kind:
       test_class_with_bases:
       test_class_with_no_members_renders_body:
       test_attribute_with_annotation:

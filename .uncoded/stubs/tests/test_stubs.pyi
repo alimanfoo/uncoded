@@ -89,7 +89,7 @@ class TestRenderStub:
     def test_async_function_prefix(self):
         ...
 
-    def test_function_with_annotations(self):
+    def test_render_param_covers_input_kind(self, params, expected):
         ...
 
     def test_class_with_bases(self):
