@@ -85,9 +85,7 @@ class TestExtractStub:
             ("value", "int"),
             ("_internal", "float"),
         ]
-        assert len(cls.methods) == 2
-        assert cls.methods[0].name == "save"
-        assert cls.methods[1].name == "_validate"
+        assert [m.name for m in cls.methods] == ["save", "_validate"]
 
     def test_class_with_bases(self):
         source = textwrap.dedent("""\
