@@ -117,6 +117,66 @@ class TestExtractStub:
             StubParam("**kwargs", "int"),
         ]
 
+    @pytest.mark.parametrize(
+        "source,expected",
+        [
+            pytest.param(
+                "def f(x): pass\n",
+                [StubParam("x")],
+                id="regular_positional_bare",
+            ),
+            pytest.param(
+                "def f(x: str): pass\n",
+                [StubParam("x", "str")],
+                id="regular_positional_annotated",
+            ),
+            pytest.param(
+                "def f(*args): pass\n",
+                [StubParam("*args")],
+                id="vararg_bare",
+            ),
+            pytest.param(
+                "def f(*args: str): pass\n",
+                [StubParam("*args", "str")],
+                id="vararg_annotated",
+            ),
+            pytest.param(
+                "def f(**kwargs): pass\n",
+                [StubParam("**kwargs")],
+                id="kwarg_bare",
+            ),
+            pytest.param(
+                "def f(**kwargs: int): pass\n",
+                [StubParam("**kwargs", "int")],
+                id="kwarg_annotated",
+            ),
+            pytest.param(
+                "def f(x, /): pass\n",
+                [StubParam("x"), StubParam("/")],
+                id="posonly_bare",
+            ),
+            pytest.param(
+                "def f(x: str, /): pass\n",
+                [StubParam("x", "str"), StubParam("/")],
+                id="posonly_annotated",
+            ),
+            pytest.param(
+                "def f(*, x): pass\n",
+                [StubParam("*"), StubParam("x")],
+                id="kwonly_bare",
+            ),
+            pytest.param(
+                "def f(*, x: str): pass\n",
+                [StubParam("*"), StubParam("x", "str")],
+                id="kwonly_annotated",
+            ),
+        ],
+    )
+    def test_extract_params_covers_input_kind(self, source, expected):
+        module = extract_stub(source, "pkg/f.py")
+        f = module.functions[0]
+        assert f.params == expected
+
     def test_imports_collected(self):
         source = textwrap.dedent("""\
             import os

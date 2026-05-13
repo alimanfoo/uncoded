@@ -264,6 +264,7 @@ tests/:
       test_class_with_bases:
       test_class_no_bases:
       test_kwargs_and_varargs:
+      test_extract_params_covers_input_kind:
       test_imports_collected:
       test_syntax_error_raises:
       test_source_order_preserved:
