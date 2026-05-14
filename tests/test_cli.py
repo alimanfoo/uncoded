@@ -103,6 +103,32 @@ class TestSyncApplyMode:
         ]
         assert instruction_lines == ["Updated AGENTS.md"]
 
+    def test_instruction_file_outside_project_uses_absolute_path(
+        self, tmp_path, monkeypatch
+    ):
+        project = tmp_path / "project"
+        project.mkdir()
+        (project / "src").mkdir()
+        (project / "pyproject.toml").write_text(
+            textwrap.dedent(
+                """\
+                [project]
+                name = "demo"
+
+                [tool.uncoded]
+                source-roots = ["src"]
+                instruction-files = ["../outside.md"]
+                """
+            )
+        )
+        monkeypatch.chdir(project)
+
+        assert cli._sync() == 0
+
+        outside_file = tmp_path / "outside.md"
+        assert outside_file.exists()
+        assert "<!-- uncoded:start -->" in outside_file.read_text()
+
     def test_error_when_no_pyproject_toml(self, tmp_path, monkeypatch, capsys):
         # Pins the problem statement, the recovery hint pointing at
         # [tool.uncoded] source-roots, and the absence of any absolute

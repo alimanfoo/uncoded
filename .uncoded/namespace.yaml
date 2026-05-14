@@ -114,6 +114,7 @@ tests/:
       test_writes_namespace_map_stubs_and_instruction_file:
       test_idempotent_second_run:
       test_dedupes_when_claude_md_is_symlink_to_agents_md:
+      test_instruction_file_outside_project_uses_absolute_path:
       test_error_when_no_pyproject_toml:
       test_error_when_source_root_missing:
       test_error_when_uncoded_section_missing:
@@ -163,10 +164,13 @@ tests/:
       test_type_alias_classic:
       test_type_alias_pep695:
       test_tuple_unpacking_skipped:
+      test_chained_assignment_skipped:
       test_unannotated_class_variable:
+      test_class_tuple_unpacking_skipped:
       test_annotated_attributes:
       test_property_classified_as_attribute:
       test_property_setter_and_deleter_suppressed:
+      test_non_property_decorator_classified_as_method:
       test_preserves_source_order:
     TestIterAndExtract:
       test_basic_walk:
@@ -232,6 +236,7 @@ tests/:
       test_merges_into_existing_claude_settings:
       test_does_not_overwrite_existing_serena_project_yml:
       test_does_not_duplicate_on_second_merge:
+      test_appends_missing_allowed_tool_to_existing_settings:
       test_setup_uses_root_name_when_no_pyproject:
       test_setup_reads_name_from_pyproject:
     TestRepoDogfooding:
@@ -275,6 +280,8 @@ tests/:
       test_type_alias_classic:
       test_type_alias_pep695:
       test_tuple_unpacking_skipped:
+      test_ann_assign_non_name_target_skipped:
+      test_class_tuple_unpacking_skipped:
       test_class_with_unannotated_attribute:
       test_property_rendered_as_attribute:
       test_property_without_return_annotation:
@@ -310,6 +317,7 @@ tests/:
       test_no_op_when_clean:
       test_reports_count_on_first_build:
       test_reports_zero_when_clean:
+      test_skips_module_with_no_symbols:
     TestBuildStubsCheckMode:
       _setup:
       _build:
@@ -323,6 +331,7 @@ tests/:
       test_prunes_orphan_stubs:
       test_project_root_anchors_writes_independent_of_cwd:
       test_project_root_anchors_orphan_pruning_independent_of_cwd:
+      test_source_root_outside_project_root_skips_cleanup:
   test_sync.py:
     TestSyncFile:
       test_creates_missing_file:

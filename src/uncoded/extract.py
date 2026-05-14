@@ -87,7 +87,7 @@ def extract_module(source: str, rel_path: str) -> ModuleInfo:
             name = _assign_target_name(node)
             if name:
                 constants.append(name)
-        elif isinstance(node, ast.TypeAlias) and isinstance(node.name, ast.Name):
+        elif isinstance(node, ast.TypeAlias):
             constants.append(node.name.id)
 
     return ModuleInfo(

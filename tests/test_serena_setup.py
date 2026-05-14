@@ -4,6 +4,7 @@ from pathlib import Path
 import yaml
 
 from uncoded.serena_setup import (
+    MCP_SERVER_SERENA,
     SERENA_ALLOWED_TOOLS,
     SERENA_VERSION,
     setup,
@@ -172,6 +173,26 @@ class TestSetup:
         assert claude["enabledMcpjsonServers"].count("serena") == 1
         for tool in SERENA_ALLOWED_TOOLS:
             assert claude["permissions"]["allow"].count(tool) == 1
+
+    def test_appends_missing_allowed_tool_to_existing_settings(self, tmp_path):
+        (tmp_path / ".mcp.json").write_text(
+            json.dumps({"mcpServers": {"serena": MCP_SERVER_SERENA}})
+        )
+        claude_path = tmp_path / ".claude" / "settings.json"
+        claude_path.parent.mkdir()
+        missing_tool = SERENA_ALLOWED_TOOLS[-1]
+        claude_path.write_text(
+            json.dumps(
+                {
+                    "enabledMcpjsonServers": ["serena"],
+                    "permissions": {"allow": list(SERENA_ALLOWED_TOOLS[:-1])},
+                }
+            )
+        )
+        self._run(tmp_path)
+        data = json.loads(claude_path.read_text())
+        assert missing_tool in data["permissions"]["allow"]
+        assert set(data["permissions"]["allow"]) >= set(SERENA_ALLOWED_TOOLS)
 
     def test_setup_uses_root_name_when_no_pyproject(self, tmp_path):
         # No ``pyproject.toml`` anywhere from ``tmp_path`` up to the

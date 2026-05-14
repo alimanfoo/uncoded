@@ -20,6 +20,9 @@ class TestSyncApplyMode:
     def test_dedupes_when_claude_md_is_symlink_to_agents_md(self, tmp_path, monkeypatch, capsys):
         ...
 
+    def test_instruction_file_outside_project_uses_absolute_path(self, tmp_path, monkeypatch):
+        ...
+
     def test_error_when_no_pyproject_toml(self, tmp_path, monkeypatch, capsys):
         ...
 

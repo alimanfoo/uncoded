@@ -3,7 +3,7 @@
 import json
 from pathlib import Path
 import yaml
-from uncoded.serena_setup import SERENA_ALLOWED_TOOLS, SERENA_VERSION, setup
+from uncoded.serena_setup import MCP_SERVER_SERENA, SERENA_ALLOWED_TOOLS, SERENA_VERSION, setup
 
 REPO_ROOT = Path(__file__).parent.parent
 EXPECTED_EXCLUDED_TOOLS = ...
@@ -44,6 +44,9 @@ class TestSetup:
         ...
 
     def test_does_not_duplicate_on_second_merge(self, tmp_path):
+        ...
+
+    def test_appends_missing_allowed_tool_to_existing_settings(self, tmp_path):
         ...
 
     def test_setup_uses_root_name_when_no_pyproject(self, tmp_path):

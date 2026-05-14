@@ -288,6 +288,19 @@ class TestExtractStub:
         module = extract_stub(source, "pkg/mod.py")
         assert module.constants == []
 
+    def test_ann_assign_non_name_target_skipped(self):
+        source = "obj.x: int = 1\n"
+        module = extract_stub(source, "pkg/mod.py")
+        assert module.constants == []
+
+    def test_class_tuple_unpacking_skipped(self):
+        source = textwrap.dedent("""\
+            class C:
+                a, b = 1, 2
+        """)
+        module = extract_stub(source, "pkg/mod.py")
+        assert module.classes[0].attributes == []
+
     def test_class_with_unannotated_attribute(self):
         source = textwrap.dedent("""\
             class Registry:
@@ -732,6 +745,14 @@ class TestBuildStubs:
         self._build(src, out, tmp_path)
         assert self._build(src, out, tmp_path) == 0
 
+    def test_skips_module_with_no_symbols(self, tmp_path):
+        src, out = self._setup(tmp_path)
+        (src / "empty.py").write_text('"""Only a module docstring."""\n')
+        (src / "foo.py").write_text("def hello(): pass\n")
+        self._build(src, out, tmp_path)
+        assert not (out / "src" / "empty.pyi").exists()
+        assert (out / "src" / "foo.pyi").exists()
+
 
 class TestBuildStubsCheckMode:
     """build_stubs with check=True must report changes without mutating the tree."""
@@ -886,3 +907,20 @@ class TestWriteStubs:
         assert changes == 1
         assert not (tmp_path / out / "src" / "pkg" / "orphan.pyi").exists()
         assert not (tmp_path / out / "src" / "pkg").exists()
+
+    def test_source_root_outside_project_root_skips_cleanup(self, tmp_path):
+        project = tmp_path / "project"
+        project.mkdir()
+        outside = tmp_path / "outside"
+        outside.mkdir()
+        out = project / "stubs"
+
+        changes = _write_stubs(
+            stubs={},
+            source_root=outside,
+            output_dir=out,
+            project_root=project,
+            check=False,
+        )
+
+        assert changes == 0

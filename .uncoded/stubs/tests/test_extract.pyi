@@ -25,7 +25,13 @@ class TestExtractModuleFromSource:
     def test_tuple_unpacking_skipped(self):
         ...
 
+    def test_chained_assignment_skipped(self):
+        ...
+
     def test_unannotated_class_variable(self):
+        ...
+
+    def test_class_tuple_unpacking_skipped(self):
         ...
 
     def test_annotated_attributes(self):
@@ -35,6 +41,9 @@ class TestExtractModuleFromSource:
         ...
 
     def test_property_setter_and_deleter_suppressed(self):
+        ...
+
+    def test_non_property_decorator_classified_as_method(self):
         ...
 
     def test_preserves_source_order(self):

@@ -119,8 +119,6 @@ def _extract_assignment(
     unpacking or attribute assignment), which we can't represent cleanly.
     """
     if isinstance(node, ast.TypeAlias):
-        if not isinstance(node.name, ast.Name):
-            return None
         return StubAssignment(
             name=node.name.id,
             value_source=_render_value(node.value),
@@ -373,7 +371,10 @@ def _write_stubs(
         if existing.resolve() in expected:
             continue
         display = existing.relative_to(project_root)
-        if remove_file(display, project_root=project_root, check=check):
+        # .pyi may have been removed between rglob and remove_file
+        if remove_file(  # pragma: no branch
+            display, project_root=project_root, check=check
+        ):
             changes += 1
 
     if check:
