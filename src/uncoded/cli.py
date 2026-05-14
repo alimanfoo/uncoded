@@ -168,12 +168,14 @@ def _body(*, name_path: str, in_path: str) -> int:
 def main() -> int:
     """Dispatch the uncoded CLI.
 
-    Four subcommands: ``sync`` builds or refreshes the navigation index;
-    ``check`` verifies the index matches what a rebuild would produce
-    (exits non-zero on drift, useful in CI); ``setup`` generates
-    MCP and Claude Code config for the recommended Serena + ty LSP
-    integration; ``body`` prints the source body of a named symbol to
-    stdout.
+    Four subcommands:
+
+    - ``sync`` — builds or refreshes the navigation index.
+    - ``check`` — verifies the index matches what a rebuild would produce;
+      exits non-zero on drift, useful in CI.
+    - ``setup`` — generates MCP and Claude Code config for the recommended
+      Serena + ty LSP integration.
+    - ``body`` — prints the source body of a named symbol to stdout.
 
     Each subparser binds its own ``action`` callable via
     ``set_defaults``; ``main`` then dispatches via ``args.action()``.
