@@ -25,6 +25,7 @@ classifiers = [
 dev = [
     "pre-commit>=3.0",
     "pytest>=8.0",
+    "pytest-cov>=6.0",
 ]
 
 [project.scripts]
@@ -42,6 +43,15 @@ source-roots = ["src", "tests"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = "--cov"
+
+[tool.coverage.run]
+source = ["src"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 97
 
 [tool.ruff]
 src = ["src"]
