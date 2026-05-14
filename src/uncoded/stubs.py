@@ -375,6 +375,8 @@ def _write_stubs(
         display = existing.relative_to(project_root)
         if remove_file(display, project_root=project_root, check=check):
             changes += 1
+        else:  # pragma: no cover
+            pass  # .pyi found by rglob then disappeared before remove_file ran
 
     if check:
         return changes
