@@ -114,6 +114,27 @@ file is byte-identical to what a rebuild would produce, and 1 otherwise
 mode (agents read misleading names and signatures), so gating on this in
 CI is worthwhile even alongside a pre-commit hook.
 
+## Retrieve a symbol body
+
+Use the `body` subcommand when you need a symbol's implementation, not just
+its signature from the stub:
+
+```
+uncoded body <name_path> --in <relative_path>
+```
+
+`name_path` follows Serena convention: one segment (`fn`) for a top-level
+symbol, two for a class member (`Class/method`). `--in` is the source file's
+path relative to the project root. The command prints the source text of the
+symbol to stdout, byte-identical to what's on disk — no reformatting, no
+`ast.unparse` normalisation.
+
+For example, to retrieve the body of `resolve_body` from `src/uncoded/body.py`:
+
+```
+uncoded body resolve_body --in src/uncoded/body.py
+```
+
 ## How agents use it
 
 When `uncoded` is set up, a navigation section is automatically maintained in

@@ -47,6 +47,9 @@ uv run uncoded check
 # Generate Serena + ty MCP and Claude Code configuration
 uv run uncoded setup
 
+# Print the source body of a named symbol to stdout
+uv run uncoded body <name_path> --in <relative_path>
+
 # Run tests (branch coverage enforced; see [tool.coverage.report] in pyproject.toml)
 uv run pytest
 
