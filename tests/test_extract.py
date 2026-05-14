@@ -99,6 +99,13 @@ class TestExtractModuleFromSource:
 
         assert result.constants == []
 
+    def test_chained_assignment_skipped(self):
+        source = "x = y = 1\n"
+
+        result = extract_module(source, "chain.py")
+
+        assert result.constants == []
+
     def test_unannotated_class_variable(self):
         source = textwrap.dedent("""\
             class Registry:
@@ -111,6 +118,16 @@ class TestExtractModuleFromSource:
 
         cls = result.classes[0]
         assert cls.attributes == ["items", "_cache", "count"]
+
+    def test_class_tuple_unpacking_skipped(self):
+        source = textwrap.dedent("""\
+            class C:
+                a, b = 1, 2
+        """)
+
+        result = extract_module(source, "c.py")
+
+        assert result.classes[0].attributes == []
 
     def test_annotated_attributes(self):
         source = textwrap.dedent("""\
@@ -171,6 +188,20 @@ class TestExtractModuleFromSource:
         cls = result.classes[0]
         assert cls.attributes == ["path"]
         assert cls.methods == []
+
+    def test_non_property_decorator_classified_as_method(self):
+        source = textwrap.dedent("""\
+            class Util:
+                @staticmethod
+                def helper():
+                    pass
+        """)
+
+        result = extract_module(source, "util.py")
+
+        cls = result.classes[0]
+        assert cls.methods == ["helper"]
+        assert cls.attributes == []
 
     def test_preserves_source_order(self):
         source = textwrap.dedent("""\

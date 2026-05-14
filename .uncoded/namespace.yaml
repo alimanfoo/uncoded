@@ -164,10 +164,13 @@ tests/:
       test_type_alias_classic:
       test_type_alias_pep695:
       test_tuple_unpacking_skipped:
+      test_chained_assignment_skipped:
       test_unannotated_class_variable:
+      test_class_tuple_unpacking_skipped:
       test_annotated_attributes:
       test_property_classified_as_attribute:
       test_property_setter_and_deleter_suppressed:
+      test_non_property_decorator_classified_as_method:
       test_preserves_source_order:
     TestIterAndExtract:
       test_basic_walk:
