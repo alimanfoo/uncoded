@@ -210,10 +210,17 @@ uv sync --extra dev
 uv run pre-commit install
 ```
 
-Run the tests:
+Run the tests (branch coverage is enforced; see `[tool.coverage.report]` in
+`pyproject.toml` for the threshold):
 
 ```
 uv run pytest
+```
+
+To run a subset of tests without the coverage gate:
+
+```
+uv run pytest tests/test_stubs.py --no-cov
 ```
 
 Run all checks (the same suite CI runs):

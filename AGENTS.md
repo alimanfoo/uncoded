@@ -47,8 +47,11 @@ uv run uncoded check
 # Generate Serena + ty MCP and Claude Code configuration
 uv run uncoded setup
 
-# Run tests
+# Run tests (branch coverage enforced; see [tool.coverage.report] in pyproject.toml)
 uv run pytest
+
+# Run a subset of tests without the coverage gate
+uv run pytest tests/test_stubs.py --no-cov
 ```
 
 <!-- uncoded:start -->
