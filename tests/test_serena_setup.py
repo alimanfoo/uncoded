@@ -174,6 +174,47 @@ class TestSetup:
         for tool in SERENA_ALLOWED_TOOLS:
             assert claude["permissions"]["allow"].count(tool) == 1
 
+    def test_prunes_stale_serena_tool_from_existing_settings(self, tmp_path):
+        claude_path = tmp_path / ".claude" / "settings.json"
+        claude_path.parent.mkdir()
+        stale_tools = ["mcp__serena__find_symbol", "mcp__serena__old_tool"]
+        claude_path.write_text(
+            json.dumps(
+                {
+                    "enabledMcpjsonServers": ["serena"],
+                    "permissions": {"allow": list(SERENA_ALLOWED_TOOLS) + stale_tools},
+                }
+            )
+        )
+        self._run(tmp_path)
+        data = json.loads(claude_path.read_text())
+        for stale_tool in stale_tools:
+            assert stale_tool not in data["permissions"]["allow"]
+        assert set(data["permissions"]["allow"]) == set(SERENA_ALLOWED_TOOLS)
+
+    def test_prune_leaves_non_serena_entries_untouched(self, tmp_path):
+        claude_path = tmp_path / ".claude" / "settings.json"
+        claude_path.parent.mkdir()
+        stale_serena = "mcp__serena__find_symbol"
+        non_serena = ["Bash(echo hello)", "Edit(some/path)"]
+        claude_path.write_text(
+            json.dumps(
+                {
+                    "enabledMcpjsonServers": ["serena"],
+                    "permissions": {
+                        "allow": (
+                            list(SERENA_ALLOWED_TOOLS) + [stale_serena] + non_serena
+                        ),
+                    },
+                }
+            )
+        )
+        self._run(tmp_path)
+        data = json.loads(claude_path.read_text())
+        assert stale_serena not in data["permissions"]["allow"]
+        for entry in non_serena:
+            assert entry in data["permissions"]["allow"]
+
     def test_appends_missing_allowed_tool_to_existing_settings(self, tmp_path):
         (tmp_path / ".mcp.json").write_text(
             json.dumps({"mcpServers": {"serena": MCP_SERVER_SERENA}})
@@ -236,10 +277,18 @@ class TestRepoDogfooding:
 
     def test_repo_claude_settings_allowlists_every_serena_tool(self):
         settings = json.loads((REPO_ROOT / ".claude" / "settings.json").read_text())
-        missing = set(SERENA_ALLOWED_TOOLS) - set(settings["permissions"]["allow"])
+        allowed = set(settings["permissions"]["allow"])
+        missing = set(SERENA_ALLOWED_TOOLS) - allowed
         assert not missing, (
             f"repo's .claude/settings.json is missing allowlist entries "
             f"that `uncoded setup` would write: {sorted(missing)}"
+        )
+        serena_in_file = {t for t in allowed if t.startswith("mcp__serena__")}
+        stale = serena_in_file - set(SERENA_ALLOWED_TOOLS)
+        assert not stale, (
+            f"repo's .claude/settings.json has stale mcp__serena__ entries "
+            f"not in SERENA_ALLOWED_TOOLS: {sorted(stale)}. "
+            f"Re-run `uncoded setup` to prune them."
         )
 
     def test_repo_serena_project_yml_matches_template_contract(self):

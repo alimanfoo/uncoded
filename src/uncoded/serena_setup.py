@@ -14,11 +14,11 @@ automatically:
   project-wide view, so Serena's memory-based project understanding is
   redundant and noisy alongside it.
 * ``.claude/settings.json`` — enables the Serena server and allowlists
-  the nine tools (``initial_instructions`` plus the eight LSP tools —
-  symbol lookup, reference search, and the edit family) so they run
-  without a prompt. This is the file that finally narrows Serena's
-  active surface to pure LSP operations; the YAML's exclusions remove
-  the worst offenders, and the allowlist completes the narrowing.
+  the eight tools (``initial_instructions`` plus the seven LSP tools —
+  reference search, overview, and the edit family) so they run without
+  a prompt. This is the file that finally narrows Serena's active surface
+  to pure LSP operations; the YAML's exclusions remove the worst
+  offenders, and the allowlist completes the narrowing.
 
 The exclusions in :data:`SERENA_PROJECT_FIELDS` defend in depth alongside
 the prose ``Skip activate_project and check_onboarding_performed`` line
@@ -98,7 +98,6 @@ SERENA_PROJECT_FIELDS = {
 
 SERENA_ALLOWED_TOOLS = [
     "mcp__serena__initial_instructions",
-    "mcp__serena__find_symbol",
     "mcp__serena__find_referencing_symbols",
     "mcp__serena__get_symbols_overview",
     "mcp__serena__rename_symbol",
@@ -158,7 +157,12 @@ def _write_serena_project_if_absent(path: Path, project_name: str) -> _Status:
 
 
 def _sync_claude_settings(path: Path) -> _Status:
-    """Write or merge Serena allowlist into ``.claude/settings.json``.
+    """Sync the Serena allowlist in ``.claude/settings.json``.
+
+    Makes ``permissions.allow`` match ``SERENA_ALLOWED_TOOLS`` for
+    ``mcp__serena__*`` entries: adds any missing tool and removes any
+    stale ``mcp__serena__*`` entry no longer in the list. Non-Serena
+    entries are left untouched.
 
     Returns ``wrote``, ``updated``, or ``unchanged``.
     """
@@ -182,6 +186,16 @@ def _sync_claude_settings(path: Path) -> _Status:
             allow.append(tool)
             if status == "unchanged":
                 status = "updated"
+
+    stale = [
+        entry
+        for entry in allow
+        if entry.startswith("mcp__serena__") and entry not in SERENA_ALLOWED_TOOLS
+    ]
+    for entry in stale:
+        allow.remove(entry)
+        if status == "unchanged":
+            status = "updated"
 
     if status == "unchanged":
         return status

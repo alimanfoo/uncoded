@@ -290,6 +290,8 @@ tests/:
       test_merges_into_existing_claude_settings:
       test_does_not_overwrite_existing_serena_project_yml:
       test_does_not_duplicate_on_second_merge:
+      test_prunes_stale_serena_tool_from_existing_settings:
+      test_prune_leaves_non_serena_entries_untouched:
       test_appends_missing_allowed_tool_to_existing_settings:
       test_setup_uses_root_name_when_no_pyproject:
       test_setup_reads_name_from_pyproject:

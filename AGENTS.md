@@ -73,14 +73,15 @@ pattern, regex, or free-text phrase, use grep.**
 
 This applies to every tool call where you are trying to find code, not
 just the first one in the session. The pretrained reflex for "find X" is
-grep, and that reflex is wrong here. `grep -rn 'WriteResult'` to locate a
-class is the rule firing — that is `find_symbol`. `grep -rn 'function_name'`
-to check whether something has callers before a refactor is the rule
-firing — that is `find_referencing_symbols`. `grep` then `Edit` to delete
-dead code is the rule firing — that is `safe_delete_symbol`. The grep
-version of any of these is noisier and less complete: grep misses
-re-exports, and adds false positives from comments, strings, and unrelated
-attribute lookups on other types. The language server does not.
+grep, and that reflex is wrong here. `grep -rn 'def resolve_body'` to read a
+function's body is the rule firing — that is `uncoded body`. `grep -rn
+'function_name'` to check whether something has callers before a refactor is
+the rule firing — that is `find_referencing_symbols`. `grep` then `Edit` to
+delete dead code is the rule firing — that is `safe_delete_symbol`. The grep
+version of any of these is noisier and less reliable: grep matches comments,
+strings, and unrelated attributes; grep misses re-exports (so caller and
+delete checks come back incomplete); grep forces offset arithmetic to slice a
+body. The indexed tools don't.
 
 ### How to execute the rule
 
@@ -115,15 +116,16 @@ source means reading many lines to learn what the stub would have told
 you in one. If no stub exists at the expected path, the file has no
 symbols indexed; in that narrow case, read source directly.
 
-**Step 3 — Act. Use Serena to find, read, rename, edit, and delete symbols.**
+**Step 3 — Act. Use `uncoded body` to read a symbol's body; use Serena to find callers,
+rename, edit, and delete symbols.**
 With the map and stub loaded, you have the exact `relative_path` and
-`name_path` each Serena tool needs (`ClassName/method` for a method,
+`name_path` each tool needs (`ClassName/method` for a method,
 `function_name` for a top-level function). Per task:
 
-- **Find a symbol's definition, or read its body.** `find_symbol` —
-  with `include_body=True` when you need implementation detail the
-  stub does not show. Returns exactly the symbol; no offset arithmetic,
-  no risk of reading too much. Stay on stubs for a wider sweep.
+- **Read a symbol's body.** `uncoded body <name_path> --in <relative_path>` —
+  prints the symbol's source text to stdout, byte-identical to disk.
+  Returns exactly the symbol; no offset arithmetic, no risk of reading
+  too much. Stay on stubs for a wider sweep.
 
 - **Find callers, or check whether a symbol is dead.**
   `find_referencing_symbols`. Returns every reference resolved by the
@@ -167,10 +169,10 @@ non-Serena tools stay correct:
   decorator usage, alias declarations) — these are not symbol-name
   lookups even though they sit inside source.
 - Partial-line edits inside a symbol body, once you have retrieved it
-  through Serena.
+  via `uncoded body`.
 - Environments where Serena is unavailable, or the rare stub-less
   Python file that needs exploratory reading.
 
-The dispatch rule turns on the search term: a symbol name → Serena; a
+The dispatch rule turns on the search term: a symbol name → the index; a
 regex or free-text phrase → grep.
 <!-- uncoded:end -->

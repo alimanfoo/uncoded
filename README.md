@@ -143,11 +143,11 @@ Agents following that protocol:
 
 1. Read `.uncoded/namespace.yaml` to orient — every symbol, at a glance.
 2. Read the relevant `.pyi` stubs to understand imports, signatures, constants, and class members.
-3. Use Serena's `find_symbol(..., include_body=True)` when they need implementation detail for a specific symbol.
+3. Run `uncoded body <name_path> --in <relative_path>` when they need implementation detail for a specific symbol.
 
 The split is deliberate: `uncoded` provides a stable map and signature index;
-Serena resolves the current source body. No grep, no stale line-number
-coordinates, no offset arithmetic.
+`uncoded body` resolves the current source body. No grep, no stale
+line-number coordinates, no offset arithmetic.
 
 ## Coherence review
 
@@ -171,7 +171,7 @@ The review works in four sweeps:
    islands, name collision with drift.
 3. **Promissory** — checks each public symbol's name / signature / docstring
    triple for internal disagreement. Names and signatures come from the
-   stub; docstrings come from Serena's `find_symbol(include_body=True)`.
+   stub; docstrings come from `uncoded body`.
 4. **Structural** — checks for boundary violations (private symbols imported
    across modules), overgrown public surfaces, cross-domain imports, and
    zero-caller public symbols.
@@ -183,8 +183,8 @@ what to follow up.
 
 ## Using uncoded with a language server
 
-Symbol-level operations — finding callers, reading or editing a single
-symbol, renaming, safe deletion — are better served by a language server
+Symbol-level operations — finding callers, editing a single symbol,
+renaming, safe deletion — are better served by a language server
 than by grep and freeform text edits. Uncoded's map supplies the
 `name_path` and `relative_path` these tools take as input.
 
