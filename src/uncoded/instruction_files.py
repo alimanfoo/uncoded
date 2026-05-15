@@ -22,9 +22,11 @@ _SECTION_BODY = """\
 ## How to read and edit code in this codebase
 
 This repo uses [uncoded](https://github.com/alimanfoo/uncoded) to maintain
-a symbol index over its source code, with
-[Serena](https://github.com/oraios/serena) providing language-server-backed
-tools over that index. The point of this scaffolding is one rule.
+a symbol index over its source code, with two peer tools over that index:
+`uncoded body` for reading a symbol's body, and
+[Serena](https://github.com/oraios/serena) for cross-symbol operations —
+finding references, renaming, editing by symbol, and safe-deleting.
+The point of this scaffolding is one rule.
 
 ### The dispatch rule
 
@@ -121,8 +123,8 @@ deliberately disables. Both calls produce only noise.
 
 ### Where Read, Edit, and grep are still the right tools
 
-The rule is about source navigation by symbol name. Outside that, the
-non-Serena tools stay correct:
+The rule is about source navigation by symbol name. Outside that, Read,
+Edit, and grep stay correct:
 
 - Free-text or pattern search outside source: Markdown, YAML, TOML,
   configs, commit messages, notebook JSON, fixture data.
