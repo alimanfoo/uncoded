@@ -2,7 +2,7 @@
 
 import ast
 from pathlib import Path
-from uncoded.extract import _assign_target_name, property_kind
+from uncoded.ast_helpers import assign_target_name, property_kind
 
 def resolve_body(name_path: str, in_path: Path) -> str:
     ...

@@ -6,6 +6,12 @@ import pytest
 from uncoded.extract import iter_source_files
 from uncoded.stubs import StubAssignment, StubClass, StubFunction, StubModule, StubParam, _write_stubs, build_stubs, extract_stub, render_stub
 
+def _setup(tmp_path):
+    ...
+
+def _build(source_root, out, tmp_path, *, check):
+    ...
+
 class TestExtractStub:
     def test_simple_function(self):
         ...
@@ -141,12 +147,6 @@ class TestRenderStub:
         ...
 
 class TestBuildStubs:
-    def _setup(self, tmp_path):
-        ...
-
-    def _build(self, source_root, out, tmp_path, *, check):
-        ...
-
     def test_writes_expected_stubs(self, tmp_path):
         ...
 
@@ -175,12 +175,6 @@ class TestBuildStubs:
         ...
 
 class TestBuildStubsCheckMode:
-    def _setup(self, tmp_path):
-        ...
-
-    def _build(self, source_root, out, tmp_path, *, check):
-        ...
-
     def test_does_not_write_stub_in_check_mode(self, tmp_path):
         ...
 

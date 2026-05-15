@@ -5,12 +5,7 @@ import sys
 from collections.abc import Iterable, Iterator
 from dataclasses import dataclass, field
 from pathlib import Path
-
-def property_kind(node: ast.FunctionDef | ast.AsyncFunctionDef) -> str | None:
-    ...
-
-def _assign_target_name(node: ast.Assign | ast.AnnAssign) -> str | None:
-    ...
+from uncoded.ast_helpers import assign_target_name, property_kind
 
 def extract_module(source: str, rel_path: str) -> ModuleInfo:
     ...

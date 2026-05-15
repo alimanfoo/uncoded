@@ -5,7 +5,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from uncoded.extract import property_kind
+from uncoded.ast_helpers import property_kind
 from uncoded.sync import remove_file, sync_file
 
 # Width cap for inlining the right-hand side of an assignment. If the unparsed

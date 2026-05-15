@@ -3,7 +3,7 @@
 import ast
 from pathlib import Path
 
-from uncoded.extract import _assign_target_name, property_kind
+from uncoded.ast_helpers import assign_target_name, property_kind
 
 
 class BodyNotFound(Exception):
@@ -39,7 +39,7 @@ def resolve_body(name_path: str, in_path: Path) -> str:
         if matches_class or matches_function:
             match = node
         elif isinstance(node, (ast.Assign, ast.AnnAssign)) and tail is None:
-            name = _assign_target_name(node)
+            name = assign_target_name(node)
             if name == head:
                 match = node
         elif isinstance(node, ast.TypeAlias) and tail is None and node.name.id == head:
@@ -72,7 +72,7 @@ def _resolve_class_member(
 
     for node in ast.iter_child_nodes(class_node):
         if isinstance(node, (ast.Assign, ast.AnnAssign)):
-            name = _assign_target_name(node)
+            name = assign_target_name(node)
             if name == member_name:
                 match = node
         elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
