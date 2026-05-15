@@ -15,3 +15,6 @@ def _extract_body(*, node: ast.stmt, lines: list[str]) -> str:
 
 class BodyNotFound(Exception):
     ...
+
+class UnsupportedNamePath(Exception):
+    ...

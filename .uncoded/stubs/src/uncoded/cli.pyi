@@ -3,7 +3,7 @@
 import argparse
 import sys
 from pathlib import Path
-from uncoded.body import BodyNotFound, resolve_body
+from uncoded.body import BodyNotFound, UnsupportedNamePath, resolve_body
 from uncoded.config import find_pyproject_toml, read_instruction_files, read_source_roots
 from uncoded.extract import extract_modules, iter_source_files
 from uncoded.instruction_files import sync_instruction_file

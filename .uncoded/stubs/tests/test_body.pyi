@@ -2,7 +2,7 @@
 
 import textwrap
 import pytest
-from uncoded.body import BodyNotFound, resolve_body
+from uncoded.body import BodyNotFound, UnsupportedNamePath, resolve_body
 
 class TestResolveBodyTopLevel:
     def test_function_without_decorators(self, tmp_path):
@@ -67,6 +67,27 @@ class TestResolveBodyClassMember:
         ...
 
     def test_not_found_in_class(self, tmp_path):
+        ...
+
+class TestUnsupportedNamePath:
+    SUPPORTED_SHAPES = ("'name'", "'Class/member'")
+
+    def _assert_raises(self, name_path, tmp_path):
+        ...
+
+    def test_three_segment_path(self, tmp_path):
+        ...
+
+    def test_nested_class_shape(self, tmp_path):
+        ...
+
+    def test_empty_leading_segment(self, tmp_path):
+        ...
+
+    def test_empty_trailing_segment(self, tmp_path):
+        ...
+
+    def test_empty_middle_segment(self, tmp_path):
         ...
 
 class TestResolveBodyByteIdentical:

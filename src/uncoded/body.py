@@ -10,22 +10,35 @@ class BodyNotFound(Exception):
     """Raised when name_path cannot be found in the given file."""
 
 
+class UnsupportedNamePath(Exception):
+    """Raised when name_path does not match a supported shape.
+
+    Supported shapes are 'name' (one segment) or 'Class/member' (two segments),
+    both non-empty.
+    """
+
+
 def resolve_body(name_path: str, in_path: Path) -> str:
     """Return the source text for the symbol named by name_path in in_path.
 
     name_path is a slash-separated path: a single segment names a top-level
     symbol; two segments name a class member as Class/member (a method,
     property, or attribute).
-    Raises BodyNotFound if the symbol is not present. Lets FileNotFoundError
-    propagate if in_path does not exist, and SyntaxError if in_path cannot
-    be parsed.
+    Raises UnsupportedNamePath if name_path has more than two segments or any
+    empty segment. Raises BodyNotFound if the symbol is not present. Lets
+    FileNotFoundError propagate if in_path does not exist, and SyntaxError if
+    in_path cannot be parsed.
     """
+    all_segments = name_path.split("/")
+    if len(all_segments) > 2 or any(s == "" for s in all_segments):
+        raise UnsupportedNamePath(
+            f"Unsupported name_path {name_path!r}: use 'name' or 'Class/member'"
+        )
     source = in_path.read_text()
     tree = ast.parse(source, filename=str(in_path))
     lines = source.splitlines(keepends=True)
-    segments = name_path.split("/", maxsplit=1)
-    head = segments[0]
-    tail = segments[1] if len(segments) == 2 else None
+    head = all_segments[0]
+    tail = all_segments[1] if len(all_segments) == 2 else None
 
     match: ast.stmt | None = None
 

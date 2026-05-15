@@ -2,7 +2,7 @@ import textwrap
 
 import pytest
 
-from uncoded.body import BodyNotFound, resolve_body
+from uncoded.body import BodyNotFound, UnsupportedNamePath, resolve_body
 
 
 class TestResolveBodyTopLevel:
@@ -277,6 +277,34 @@ class TestResolveBodyClassMember:
 
         with pytest.raises(BodyNotFound, match="missing"):
             resolve_body("Foo/missing", path)
+
+
+class TestUnsupportedNamePath:
+    SUPPORTED_SHAPES = ("'name'", "'Class/member'")
+
+    def _assert_raises(self, name_path, tmp_path):
+        path = tmp_path / "m.py"
+        path.write_text("def foo(): pass\n")
+        with pytest.raises(UnsupportedNamePath) as exc_info:
+            resolve_body(name_path, path)
+        msg = str(exc_info.value)
+        for shape in self.SUPPORTED_SHAPES:
+            assert shape in msg
+
+    def test_three_segment_path(self, tmp_path):
+        self._assert_raises("A/B/C", tmp_path)
+
+    def test_nested_class_shape(self, tmp_path):
+        self._assert_raises("Outer/Inner/method", tmp_path)
+
+    def test_empty_leading_segment(self, tmp_path):
+        self._assert_raises("/foo", tmp_path)
+
+    def test_empty_trailing_segment(self, tmp_path):
+        self._assert_raises("foo/", tmp_path)
+
+    def test_empty_middle_segment(self, tmp_path):
+        self._assert_raises("foo//bar", tmp_path)
 
 
 class TestResolveBodyByteIdentical:
