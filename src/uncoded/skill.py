@@ -78,7 +78,7 @@ The review proceeds in four sweeps, each building on the previous:
 2. **Lexical sweep** — read the namespace, look for naming-level inconsistency.
 3. **Promissory sweep** — check each symbol's name / signature / docstring
    for internal disagreement; names and signatures from the stub, docstrings
-   via `find_symbol(include_body=True)`.
+   via `uncoded body`.
 4. **Structural sweep** — combine namespace and imports to find boundary and
    shape symptoms.
 
@@ -118,8 +118,7 @@ model the same entity.
 
 Detection: scan the namespace for symbol clusters with verb or noun overlap.
 Where suspicion arises, check the stub signatures and the source docstrings
-(via Serena's `find_symbol` with `include_body=True`) to confirm the
-candidates overlap in meaning.
+(via `uncoded body`) to confirm the candidates overlap in meaning.
 
 **Qualifier accretion.** Names carrying modifiers that are fossils of
 iteration: `_new`, `_v2`, `_updated`, `_legacy`, `_real`, `_proper`, `_final`,
@@ -142,17 +141,18 @@ subtly different meanings — visible as different signatures, different docstri
 content, or different domain associations.
 
 Detection: identify name collisions in the namespace, then compare signatures
-(from the stubs) and docstrings (via Serena's `find_symbol` with
-`include_body=True`) to see whether the uses agree.
+(from the stubs) and docstrings (via `uncoded body`) to see whether the uses
+agree.
 
 ## Step 3: Promissory sweep
 
 Examine each public symbol's name / signature / docstring triple for internal
 disagreement. Load each source file's stub once for the names and signatures
 across that file's symbols. Then, for each non-trivial public symbol (skip
-trivial one-liners and `__init__` with no meaningful body), call Serena's
-`find_symbol` with `include_body=True` to read the docstring — the call also
-returns the body, available if a finding needs it.
+trivial one-liners and `__init__` with no meaningful body), run
+`uncoded body <name_path> --in <relative_path>` to read the symbol's source.
+The docstring is at the top; the rest of the body is available for any
+finding that needs it.
 
 **Name–signature mismatch.** Does the name's verb fit the signature's return? A
 function called `validate_*` that returns the validated object rather than
@@ -174,11 +174,12 @@ this for Y; use Z instead." These are confessions — someone noticed drift and
 documented it rather than fixing it.
 
 Quote evidence verbatim. The stub excerpt is the evidence for name and
-signature findings; the docstring returned by `find_symbol` with
-`include_body=True` is the evidence for any docstring-related finding.
+signature findings; the docstring read via `uncoded body` is the evidence
+for any docstring-related finding.
 
-**When to read further.** Read the body when a finding's confidence needs it:
-a name–behaviour mismatch the docstring alone doesn't settle, or a defensive
+**When confidence needs the body.** Consult the implementation in the body,
+not just the docstring, when a finding's confidence needs it: a
+name–behaviour mismatch the docstring alone doesn't settle, or a defensive
 docstring you want to verify against the body. Targeted to the symbol, no
 offset arithmetic, no risk of over-reading. Never read a whole source file
 during this sweep.
@@ -224,8 +225,7 @@ function in the same module where the function's sole body is `return
 <constant>`. Both symbols being public exposes an implementation detail
 unnecessarily — only one needs to be public. Detection: use the stubs to find
 public parameterless functions near public constants, then verify each
-candidate body with Serena's `find_symbol` with `include_body=True` before
-reporting.
+candidate body with `uncoded body` before reporting.
 
 ## Report format
 
@@ -266,7 +266,7 @@ Regions with two or more findings — examine these first:
 
 **Evidence:**
 > Verbatim quote from namespace.yaml, stub, source docstring (via
-> `find_symbol`), or import statement.
+> `uncoded body`), or import statement.
 
 One or two sentences describing the inconsistency. Not a diagnosis. Not a fix.
 
