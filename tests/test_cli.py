@@ -474,11 +474,15 @@ class TestBodyCommand:
         assert cli._body(name_path="broken", in_path="src/foo.py") == 1
         assert "foo.py" in capsys.readouterr().err
 
-    def test_no_pyproject_toml_exits_one(self, tmp_path, monkeypatch, capsys):
-        monkeypatch.chdir(tmp_path)
+    def test_in_path_resolves_relative_to_cwd(self, tmp_path, monkeypatch, capsys):
+        _init_repo(tmp_path, monkeypatch)
+        (tmp_path / "src" / "foo.py").write_text("def fn():\n    pass\n")
+        subdir = tmp_path / "subdir"
+        subdir.mkdir()
+        monkeypatch.chdir(subdir)
 
-        assert cli._body(name_path="fn", in_path="src/foo.py") == 1
-        assert "No pyproject.toml found" in capsys.readouterr().err
+        assert cli._body(name_path="fn", in_path="../src/foo.py") == 0
+        assert capsys.readouterr().out == "def fn():\n    pass\n"
 
     def test_stdout_is_exact_body(self, tmp_path, monkeypatch, capsys):
         _init_repo(tmp_path, monkeypatch)

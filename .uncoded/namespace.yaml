@@ -185,7 +185,7 @@ tests/:
       test_symbol_not_found_exits_one:
       test_file_not_found_exits_one:
       test_syntax_error_exits_one:
-      test_no_pyproject_toml_exits_one:
+      test_in_path_resolves_relative_to_cwd:
       test_stdout_is_exact_body:
       test_unsupported_name_path_exits_one:
       test_missing_in_flag_exits_with_two:

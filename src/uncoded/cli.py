@@ -140,15 +140,11 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
 def _body(*, name_path: str, in_path: str) -> int:
     """Print the source body of name_path in in_path to stdout.
 
-    Returns 0 on success. Returns 1 if no pyproject.toml is found, if
+    Returns 0 on success. Returns 1 if name_path is unsupported, if
     name_path is not present in the file, if the file does not exist,
     or if the file has a syntax error.
     """
-    project_root = _find_project_root(start=Path.cwd())
-    if project_root is None:
-        return 1
-
-    target = project_root / in_path
+    target = Path(in_path)
     try:
         body = resolve_body(name_path, target)
     except UnsupportedNamePath as e:
@@ -232,7 +228,7 @@ def main() -> int:
         dest="in_path",
         required=True,
         metavar="PATH",
-        help="Source file path relative to the project root.",
+        help="Source file path.",
     )
     body_parser.set_defaults(
         action=lambda: _body(name_path=args.name_path, in_path=args.in_path)
