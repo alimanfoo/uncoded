@@ -2,7 +2,6 @@
 
 import ast
 from pathlib import Path
-from typing import cast
 
 from uncoded.ast_helpers import assign_target_name, property_kind
 
@@ -56,8 +55,11 @@ def resolve_name_position(name_path: str, in_path: Path) -> tuple[int, int]:
         return (node.target.lineno - 1, node.target.col_offset)
     if isinstance(node, ast.Assign):
         return (node.targets[0].lineno - 1, node.targets[0].col_offset)
-    alias = cast(ast.TypeAlias, node)
-    return (alias.name.lineno - 1, alias.name.col_offset)
+    if isinstance(node, ast.TypeAlias):
+        return (node.name.lineno - 1, node.name.col_offset)
+    raise UnsupportedNamePath(
+        f"Cannot extract name position from {type(node).__name__} for {name_path!r}"
+    )
 
 
 def resolve_body(name_path: str, in_path: Path) -> str:

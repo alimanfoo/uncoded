@@ -1,5 +1,6 @@
 import ast
 import textwrap
+from unittest import mock
 
 import pytest
 
@@ -449,6 +450,16 @@ class TestResolveNamePosition:
         path.write_text(source)
 
         assert resolve_name_position("Dog/bark", path) == (1, 8)
+
+    def test_unexpected_node_type_raises_unsupported_name_path(self, tmp_path):
+        path = tmp_path / "m.py"
+        path.write_text("pass\n")
+
+        with (
+            mock.patch("uncoded.body.resolve_ast_node", return_value=ast.Pass()),
+            pytest.raises(UnsupportedNamePath),
+        ):
+            resolve_name_position("anything", path)
 
 
 class TestResolveBodyByteIdentical:

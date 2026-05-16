@@ -190,6 +190,7 @@ tests/:
       test_unannotated_assignment:
       test_type_alias:
       test_class_method:
+      test_unexpected_node_type_raises_unsupported_name_path:
     TestResolveBodyByteIdentical:
       test_exact_source_returned:
   test_cli.py:

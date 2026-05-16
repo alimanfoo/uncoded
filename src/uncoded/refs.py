@@ -52,6 +52,8 @@ def find_refs(name_path: str, in_path: Path) -> list[Reference]:
 def query_references(in_path: Path, position: tuple[int, int]) -> list[_LSPLocation]:
     """Return raw LSP reference locations for the symbol at position in in_path.
 
+    in_path must be an absolute path; a relative path raises ValueError when
+    converted to a file URI internally.
     Spawns ty as a one-shot LSP subprocess and performs the full
     initialize/didOpen/references/shutdown exchange.
     position follows LSP convention: (line, character), both 0-indexed.

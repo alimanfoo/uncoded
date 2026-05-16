@@ -2,7 +2,6 @@
 
 import ast
 from pathlib import Path
-from typing import cast
 from uncoded.ast_helpers import assign_target_name, property_kind
 
 def resolve_ast_node(name_path: str, in_path: Path) -> ast.stmt:

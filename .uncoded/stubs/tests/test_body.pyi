@@ -2,6 +2,7 @@
 
 import ast
 import textwrap
+from unittest import mock
 import pytest
 from uncoded.body import BodyNotFound, UnsupportedNamePath, resolve_ast_node, resolve_body, resolve_name_position
 
@@ -133,6 +134,9 @@ class TestResolveNamePosition:
         ...
 
     def test_class_method(self, tmp_path):
+        ...
+
+    def test_unexpected_node_type_raises_unsupported_name_path(self, tmp_path):
         ...
 
 class TestResolveBodyByteIdentical:
