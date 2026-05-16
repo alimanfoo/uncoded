@@ -333,6 +333,7 @@ tests/:
       test_class_method_shape:
       test_results_are_sorted:
       test_line_and_col_are_one_indexed:
+      test_path_with_spaces_is_not_percent_encoded:
     TestToRelPath:
       test_returns_relative_path_when_under_cwd:
       test_returns_absolute_path_when_outside_cwd:

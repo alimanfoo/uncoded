@@ -112,6 +112,19 @@ class TestFindRefs:
         assert refs[0].line == 2
         assert refs[0].col == 1
 
+    def test_path_with_spaces_is_not_percent_encoded(self, tmp_path):
+        root = tmp_path / "my project"
+        root.mkdir()
+        (root / "pyproject.toml").write_text('[project]\nname = "t"\n')
+        (root / "a.py").write_text("def foo():\n    pass\n")
+        (root / "b.py").write_text("from a import foo\nfoo()\n")
+
+        refs = find_refs("foo", root / "a.py")
+
+        assert len(refs) == 1
+        assert "%20" not in str(refs[0].rel_path)
+        assert " " in str(refs[0].rel_path)
+
 
 class TestToRelPath:
     def test_returns_relative_path_when_under_cwd(self, tmp_path, monkeypatch):

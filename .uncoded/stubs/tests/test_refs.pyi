@@ -34,6 +34,9 @@ class TestFindRefs:
     def test_line_and_col_are_one_indexed(self, tmp_path):
         ...
 
+    def test_path_with_spaces_is_not_percent_encoded(self, tmp_path):
+        ...
+
 class TestToRelPath:
     def test_returns_relative_path_when_under_cwd(self, tmp_path, monkeypatch):
         ...

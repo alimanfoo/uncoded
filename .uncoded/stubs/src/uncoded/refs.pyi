@@ -7,7 +7,7 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 from typing import IO, cast
-from urllib.parse import urlparse
+from urllib.parse import unquote, urlparse
 from uncoded.body import resolve_name_position
 from uncoded.config import find_pyproject_toml
 

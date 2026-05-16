@@ -8,7 +8,7 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 from typing import IO, cast
-from urllib.parse import urlparse
+from urllib.parse import unquote, urlparse
 
 from uncoded.body import resolve_name_position
 from uncoded.config import find_pyproject_toml
@@ -222,4 +222,4 @@ def _read_response(*, stream: IO[bytes], request_id: int) -> dict:
 
 
 def _uri_to_path(uri: str) -> Path:
-    return Path(urlparse(uri).path)
+    return Path(unquote(urlparse(uri).path))
