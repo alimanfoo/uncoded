@@ -26,10 +26,10 @@ Two-level index:
    imports, full signatures (parameter names, types, return types),
    module constants, and class attributes.
 
-Alongside the index, uncoded also ships a one-shot setup for a language
-server, so agents can find references, rename, and safely delete symbols
-by name rather than via grep and text edits. See "How to read and edit
-code in this codebase" below for the dispatch rule.
+Alongside the index, uncoded ships `uncoded body` to read symbol bodies and
+`uncoded refs` to list all call sites, plus a one-shot language-server setup
+so agents can rename and safely delete symbols by name. See "How to read and
+edit code in this codebase" below for the dispatch rule.
 
 ## Commands
 
