@@ -5,7 +5,7 @@ from unittest import mock
 import pytest
 
 from uncoded.body import (
-    BodyNotFound,
+    SymbolNotFound,
     UnsupportedNamePath,
     resolve_ast_node,
     resolve_body,
@@ -139,7 +139,7 @@ class TestResolveBodyTopLevel:
         path = tmp_path / "m.py"
         path.write_text("def other(): pass\n")
 
-        with pytest.raises(BodyNotFound, match="missing"):
+        with pytest.raises(SymbolNotFound, match="missing"):
             resolve_body("missing", path)
 
     def test_file_not_found_propagates(self, tmp_path):
@@ -271,7 +271,7 @@ class TestResolveBodyClassMember:
         path = tmp_path / "m.py"
         path.write_text(source)
 
-        with pytest.raises(BodyNotFound, match="first_only"):
+        with pytest.raises(SymbolNotFound, match="first_only"):
             resolve_body("Foo/first_only", path)
 
     def test_not_found_in_class(self, tmp_path):
@@ -283,7 +283,7 @@ class TestResolveBodyClassMember:
         path = tmp_path / "m.py"
         path.write_text(source)
 
-        with pytest.raises(BodyNotFound, match="missing"):
+        with pytest.raises(SymbolNotFound, match="missing"):
             resolve_body("Foo/missing", path)
 
 
@@ -347,7 +347,7 @@ class TestResolveAstNode:
         path = tmp_path / "m.py"
         path.write_text("def other(): pass\n")
 
-        with pytest.raises(BodyNotFound, match="missing"):
+        with pytest.raises(SymbolNotFound, match="missing"):
             resolve_ast_node("missing", path)
 
     def test_raises_unsupported_name_path(self, tmp_path):

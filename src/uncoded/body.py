@@ -6,7 +6,7 @@ from pathlib import Path
 from uncoded.ast_helpers import assign_target_name, property_kind
 
 
-class BodyNotFound(Exception):
+class SymbolNotFound(Exception):
     """Raised when name_path cannot be found in the given file."""
 
 
@@ -25,7 +25,7 @@ def resolve_ast_node(name_path: str, in_path: Path) -> ast.stmt:
     symbol; two segments name a class member as Class/member (a method,
     property, or attribute).
     Raises UnsupportedNamePath if name_path has more than two segments or any
-    empty segment. Raises BodyNotFound if the symbol is not present. Lets
+    empty segment. Raises SymbolNotFound if the symbol is not present. Lets
     FileNotFoundError propagate if in_path does not exist, and SyntaxError if
     in_path cannot be parsed.
     """
@@ -41,7 +41,7 @@ def resolve_name_position(name_path: str, in_path: Path) -> tuple[int, int]:
     Follows LSP convention: both line and character are 0-indexed.
     For def/async def/class, character points past the keyword to the identifier.
     For assignments and type aliases, character points at the start of the target name.
-    Raises UnsupportedNamePath, BodyNotFound, FileNotFoundError, and SyntaxError
+    Raises UnsupportedNamePath, SymbolNotFound, FileNotFoundError, and SyntaxError
     under the same conditions as resolve_ast_node.
     """
     node = resolve_ast_node(name_path, in_path)
@@ -69,7 +69,7 @@ def resolve_body(name_path: str, in_path: Path) -> str:
     symbol; two segments name a class member as Class/member (a method,
     property, or attribute).
     Raises UnsupportedNamePath if name_path has more than two segments or any
-    empty segment. Raises BodyNotFound if the symbol is not present. Lets
+    empty segment. Raises SymbolNotFound if the symbol is not present. Lets
     FileNotFoundError propagate if in_path does not exist, and SyntaxError if
     in_path cannot be parsed.
     """
@@ -114,7 +114,7 @@ def _resolve_ast_node_from_source(
             top_match = node
 
     if top_match is None:
-        raise BodyNotFound(f"{name_path!r} not found in {in_path}")
+        raise SymbolNotFound(f"{name_path!r} not found in {in_path}")
 
     if tail is not None and isinstance(top_match, ast.ClassDef):
         return _resolve_class_member(
@@ -149,7 +149,7 @@ def _resolve_class_member(
                 match = node
 
     if match is None:
-        raise BodyNotFound(f"{name_path!r} not found in {in_path}")
+        raise SymbolNotFound(f"{name_path!r} not found in {in_path}")
 
     return match
 

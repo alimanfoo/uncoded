@@ -32,7 +32,7 @@ def find_refs(name_path: str, in_path: Path) -> list[Reference]:
     references, and returns results with 1-indexed line/col sorted by
     (rel_path, line, col). rel_path is relative to the current working
     directory when possible; otherwise absolute.
-    Propagates UnsupportedNamePath, BodyNotFound, FileNotFoundError, and
+    Propagates UnsupportedNamePath, SymbolNotFound, FileNotFoundError, and
     SyntaxError from resolve_name_position.
     """
     position = resolve_name_position(name_path, in_path)

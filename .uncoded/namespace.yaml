@@ -15,7 +15,7 @@ src/:
       property_kind:
       assign_target_name:
     body.py:
-      BodyNotFound:
+      SymbolNotFound:
       UnsupportedNamePath:
       resolve_ast_node:
       resolve_name_position:
