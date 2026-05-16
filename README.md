@@ -204,9 +204,7 @@ Generates three files, tailored for Claude Code:
 
 - **`.mcp.json`** — registers Serena as an MCP server, launched via `uvx`.
 - **`.serena/project.yml`** — picks ty as the backend, ignores `.uncoded/`,
-  and narrows Serena's tool surface (drops `execute_shell_command` and
-  `find_symbol`, the memory tools, onboarding helpers, and the dashboard
-  opener).
+  and narrows Serena's tool surface.
 - **`.claude/settings.json`** — enables the Serena server and allowlists
   its navigation and edit tools.
 

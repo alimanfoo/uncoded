@@ -8,17 +8,15 @@ automatically:
   it via ``uvx`` on session start, with the web dashboard disabled.
 * ``.serena/project.yml`` — selects ty over Serena's default backend
   (pyright), keeps Serena out of uncoded's generated stubs, and drops
-  the noisier tool surfaces (memory, onboarding, dashboard, shell-exec)
-  that uncoded's index already covers or that have no role in our
-  workflow. uncoded's namespace map and stubs already give agents a
-  project-wide view, so Serena's memory-based project understanding is
-  redundant and noisy alongside it.
+  the noisier tool surfaces that uncoded's index already covers or that
+  have no role in our workflow. uncoded's namespace map and stubs already
+  give agents a project-wide view, so Serena's memory-based project
+  understanding is redundant and noisy alongside it.
 * ``.claude/settings.json`` — enables the Serena server and allowlists
-  the eight tools (``initial_instructions`` plus the seven LSP tools —
-  reference search, overview, and the edit family) so they run without
-  a prompt. This is the file that finally narrows Serena's active surface
-  to pure LSP operations; the YAML's exclusions remove the worst
-  offenders, and the allowlist completes the narrowing.
+  its tools so they run without a prompt. This is the file that
+  finally narrows Serena's active surface to pure LSP operations; the
+  YAML's exclusions remove the worst offenders, and the allowlist
+  completes the narrowing.
 
 The exclusions in :data:`SERENA_PROJECT_FIELDS` defend in depth alongside
 ``instruction_files._SECTION_BODY``: the prose routes agents toward the
