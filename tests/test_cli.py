@@ -9,6 +9,7 @@ contract.
 import sys
 import textwrap
 from pathlib import Path
+from unittest import mock
 
 import pytest
 
@@ -523,3 +524,139 @@ class TestBodyCommand:
 
         assert exc.value.code == 2
         assert capsys.readouterr().err != ""
+
+
+class TestRefsCommand:
+    def test_happy_path_dispatch(self, tmp_path, monkeypatch, capsys):
+        pkg = tmp_path / "pkg"
+        pkg.mkdir()
+        (tmp_path / "pyproject.toml").write_text('[project]\nname = "t"\n')
+        (pkg / "a.py").write_text("def foo():\n    return 42\n")
+        (pkg / "b.py").write_text("from pkg.a import foo\nfoo()\n")
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.setattr(sys, "argv", ["uncoded", "refs", "foo", "--in", "pkg/a.py"])
+
+        assert cli.main() == 0
+        out = capsys.readouterr().out
+        assert "pkg/b.py:2:1" in out
+
+    def test_class_method_form(self, tmp_path, monkeypatch, capsys):
+        pkg = tmp_path / "pkg"
+        pkg.mkdir()
+        (tmp_path / "pyproject.toml").write_text('[project]\nname = "t"\n')
+        (pkg / "a.py").write_text(
+            textwrap.dedent("""\
+                class Dog:
+                    def bark(self):
+                        pass
+            """)
+        )
+        (pkg / "b.py").write_text(
+            "from pkg.a import Dog\nd = Dog()\nd.bark()\nd.bark()\n"
+        )
+        monkeypatch.chdir(tmp_path)
+
+        assert cli._refs(name_path="Dog/bark", in_path="pkg/a.py") == 0
+        out = capsys.readouterr().out
+        lines = out.strip().splitlines()
+        assert len(lines) == 2
+        assert all("pkg/b.py" in line for line in lines)
+
+    def test_symbol_not_found_exits_one(self, tmp_path, monkeypatch, capsys):
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / "m.py").write_text("def other(): pass\n")
+
+        assert cli._refs(name_path="missing", in_path="m.py") == 1
+        err = capsys.readouterr().err
+        assert "missing" in err
+        assert "m.py" in err
+
+    def test_file_not_found_exits_one(self, tmp_path, monkeypatch, capsys):
+        monkeypatch.chdir(tmp_path)
+
+        assert cli._refs(name_path="fn", in_path="nonexistent.py") == 1
+        assert "nonexistent.py" in capsys.readouterr().err
+
+    def test_syntax_error_exits_one(self, tmp_path, monkeypatch, capsys):
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / "m.py").write_text("def broken(:\n")
+
+        assert cli._refs(name_path="broken", in_path="m.py") == 1
+        assert "m.py" in capsys.readouterr().err
+
+    def test_works_without_project_root(self, tmp_path, monkeypatch, capsys):
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / "a.py").write_text("def foo():\n    pass\n")
+        (tmp_path / "b.py").write_text("from a import foo\nfoo()\n")
+
+        assert cli._refs(name_path="foo", in_path="a.py") == 0
+        assert capsys.readouterr().err == ""
+
+    def test_in_path_resolves_relative_to_cwd(self, tmp_path, monkeypatch, capsys):
+        pkg = tmp_path / "pkg"
+        pkg.mkdir()
+        (tmp_path / "pyproject.toml").write_text('[project]\nname = "t"\n')
+        (pkg / "a.py").write_text("def foo():\n    pass\n")
+        (pkg / "b.py").write_text("from pkg.a import foo\nfoo()\n")
+        subdir = tmp_path / "subdir"
+        subdir.mkdir()
+        monkeypatch.chdir(subdir)
+
+        assert cli._refs(name_path="foo", in_path="../pkg/a.py") == 0
+        assert capsys.readouterr().err == ""
+
+    def test_unsupported_name_path_exits_one(self, tmp_path, monkeypatch, capsys):
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / "m.py").write_text("def fn(): pass\n")
+
+        assert cli._refs(name_path="A/B/C", in_path="m.py") == 1
+        err = capsys.readouterr().err
+        assert "Error:" in err
+        assert "'name'" in err
+        assert "'Class/member'" in err
+
+    def test_missing_in_flag_exits_with_two(self, tmp_path, monkeypatch, capsys):
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.setattr(sys, "argv", ["uncoded", "refs", "fn"])
+
+        with pytest.raises(SystemExit) as exc:
+            cli.main()
+
+        assert exc.value.code == 2
+        assert capsys.readouterr().err != ""
+
+    def test_zero_references_exits_zero_with_empty_stdout(
+        self, tmp_path, monkeypatch, capsys
+    ):
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / "m.py").write_text("def uncalled():\n    pass\n")
+
+        assert cli._refs(name_path="uncalled", in_path="m.py") == 0
+        out, err = capsys.readouterr()
+        assert out == ""
+        assert err == ""
+
+    def test_multiple_references_prints_sorted(self, tmp_path, monkeypatch, capsys):
+        pkg = tmp_path / "pkg"
+        pkg.mkdir()
+        (tmp_path / "pyproject.toml").write_text('[project]\nname = "t"\n')
+        (pkg / "a.py").write_text("def foo():\n    return 42\n")
+        (pkg / "b.py").write_text(
+            "from pkg.a import foo\nresult = foo()\nother = foo()\n"
+        )
+        monkeypatch.chdir(tmp_path)
+
+        assert cli._refs(name_path="foo", in_path="pkg/a.py") == 0
+        lines = capsys.readouterr().out.strip().splitlines()
+        assert len(lines) == 2
+        assert lines[0] == "pkg/b.py:2:10"
+        assert lines[1] == "pkg/b.py:3:9"
+
+    def test_lsp_failure_exits_one(self, tmp_path, monkeypatch, capsys):
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / "m.py").write_text("def foo(): pass\n")
+
+        with mock.patch("uncoded.cli.find_refs", side_effect=RuntimeError("ty error")):
+            assert cli._refs(name_path="foo", in_path="m.py") == 1
+
+        assert "ty error" in capsys.readouterr().err

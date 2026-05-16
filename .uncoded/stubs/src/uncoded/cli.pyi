@@ -8,6 +8,7 @@ from uncoded.config import find_pyproject_toml, read_instruction_files, read_sou
 from uncoded.extract import extract_modules, iter_source_files
 from uncoded.instruction_files import sync_instruction_file
 from uncoded.namespace_map import build_map, render_map
+from uncoded.refs import find_refs
 from uncoded.serena_setup import setup
 from uncoded.skill import sync_skill
 from uncoded.stubs import build_stubs
@@ -20,6 +21,9 @@ def _sync(*, start: Path | None, check: bool) -> int:
     ...
 
 def _body(*, name_path: str, in_path: str) -> int:
+    ...
+
+def _refs(*, name_path: str, in_path: str) -> int:
     ...
 
 def main() -> int:

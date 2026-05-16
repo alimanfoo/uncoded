@@ -13,6 +13,7 @@ from uncoded.config import (
 from uncoded.extract import extract_modules, iter_source_files
 from uncoded.instruction_files import sync_instruction_file
 from uncoded.namespace_map import build_map, render_map
+from uncoded.refs import find_refs
 from uncoded.serena_setup import setup
 from uncoded.skill import sync_skill
 from uncoded.stubs import build_stubs
@@ -164,10 +165,40 @@ def _body(*, name_path: str, in_path: str) -> int:
     return 0
 
 
+def _refs(*, name_path: str, in_path: str) -> int:
+    """Find all references to name_path in in_path and print them to stdout.
+
+    Returns 0 on success. Each reference is printed as rel_path:line:col.
+    Returns 1 on any error.
+    """
+    target = Path(in_path).resolve()
+    try:
+        refs = find_refs(name_path, target)
+    except UnsupportedNamePath as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
+    except BodyNotFound:
+        print(f"Error: {name_path!r} not found in {in_path}", file=sys.stderr)
+        return 1
+    except FileNotFoundError:
+        print(f"Error: {in_path}: file not found.", file=sys.stderr)
+        return 1
+    except SyntaxError as e:
+        print(f"Error: {in_path}: {e}", file=sys.stderr)
+        return 1
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
+
+    for ref in refs:
+        print(f"{ref.rel_path}:{ref.line}:{ref.col}")
+    return 0
+
+
 def main() -> int:
     """Dispatch the uncoded CLI.
 
-    Four subcommands:
+    Five subcommands:
 
     - ``sync`` — builds or refreshes the navigation index.
     - ``check`` — verifies the index matches what a rebuild would produce;
@@ -175,6 +206,7 @@ def main() -> int:
     - ``setup`` — generates MCP and Claude Code config for the recommended
       Serena + ty LSP integration.
     - ``body`` — prints the source body of a named symbol to stdout.
+    - ``refs`` — finds all references to a named symbol and prints them.
 
     Each subparser binds its own ``action`` callable via
     ``set_defaults``; ``main`` then dispatches via ``args.action()``.
@@ -232,6 +264,25 @@ def main() -> int:
     )
     body_parser.set_defaults(
         action=lambda: _body(name_path=args.name_path, in_path=args.in_path)
+    )
+
+    refs_parser = subparsers.add_parser(
+        "refs",
+        help="Find all references to a named symbol and print them to stdout.",
+    )
+    refs_parser.add_argument(
+        "name_path",
+        help="Symbol path: one segment for top-level, two for Class/member.",
+    )
+    refs_parser.add_argument(
+        "--in",
+        dest="in_path",
+        required=True,
+        metavar="PATH",
+        help="Source file path (relative to current directory).",
+    )
+    refs_parser.set_defaults(
+        action=lambda: _refs(name_path=args.name_path, in_path=args.in_path)
     )
 
     args = parser.parse_args()

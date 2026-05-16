@@ -3,6 +3,7 @@
 import sys
 import textwrap
 from pathlib import Path
+from unittest import mock
 import pytest
 from uncoded import cli
 from uncoded.skill import SKILL_OUTPUTS
@@ -111,4 +112,41 @@ class TestBodyCommand:
         ...
 
     def test_missing_in_flag_exits_with_two(self, tmp_path, monkeypatch, capsys):
+        ...
+
+class TestRefsCommand:
+    def test_happy_path_dispatch(self, tmp_path, monkeypatch, capsys):
+        ...
+
+    def test_class_method_form(self, tmp_path, monkeypatch, capsys):
+        ...
+
+    def test_symbol_not_found_exits_one(self, tmp_path, monkeypatch, capsys):
+        ...
+
+    def test_file_not_found_exits_one(self, tmp_path, monkeypatch, capsys):
+        ...
+
+    def test_syntax_error_exits_one(self, tmp_path, monkeypatch, capsys):
+        ...
+
+    def test_works_without_project_root(self, tmp_path, monkeypatch, capsys):
+        ...
+
+    def test_in_path_resolves_relative_to_cwd(self, tmp_path, monkeypatch, capsys):
+        ...
+
+    def test_unsupported_name_path_exits_one(self, tmp_path, monkeypatch, capsys):
+        ...
+
+    def test_missing_in_flag_exits_with_two(self, tmp_path, monkeypatch, capsys):
+        ...
+
+    def test_zero_references_exits_zero_with_empty_stdout(self, tmp_path, monkeypatch, capsys):
+        ...
+
+    def test_multiple_references_prints_sorted(self, tmp_path, monkeypatch, capsys):
+        ...
+
+    def test_lsp_failure_exits_one(self, tmp_path, monkeypatch, capsys):
         ...
