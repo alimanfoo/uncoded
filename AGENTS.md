@@ -127,7 +127,9 @@ With the map and stub loaded, you have the exact `relative_path` and
 - **Read a symbol's body.** `uncoded body <name_path> --in <relative_path>` —
   prints the symbol's source text to stdout, byte-identical to disk.
   Returns exactly the symbol; no offset arithmetic, no risk of reading
-  too much. Stay on stubs for a wider sweep.
+  too much. Its output is exactly the text `Edit` needs as `old_string`
+  — no extra `Read` required for partial edits. Stay on stubs for a
+  wider sweep.
 
 - **Find callers, or check whether a symbol is dead.**
   `find_referencing_symbols`. Returns every reference resolved by the
