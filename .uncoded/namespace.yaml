@@ -85,7 +85,7 @@ src/:
       UnsupportedNamePath:
       resolve_ast_node:
       resolve_name_position:
-      _resolve_ast_node_from_source:
+      resolve_ast_node_from_source:
       _resolve_class_member:
     serena_setup.py:
       _Status:

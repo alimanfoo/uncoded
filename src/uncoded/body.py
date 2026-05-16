@@ -3,7 +3,7 @@
 import ast
 from pathlib import Path
 
-from uncoded.resolver import NamePath, _resolve_ast_node_from_source
+from uncoded.resolver import NamePath, resolve_ast_node_from_source
 
 
 def resolve_body(name_path: NamePath, in_path: Path) -> str:
@@ -14,7 +14,7 @@ def resolve_body(name_path: NamePath, in_path: Path) -> str:
     in_path cannot be parsed.
     """
     source = in_path.read_text()
-    node = _resolve_ast_node_from_source(
+    node = resolve_ast_node_from_source(
         name_path=name_path, source=source, in_path=in_path
     )
     return _extract_body(node=node, lines=source.splitlines(keepends=True))

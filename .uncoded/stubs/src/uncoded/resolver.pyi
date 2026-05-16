@@ -11,7 +11,7 @@ def resolve_ast_node(name_path: NamePath, in_path: Path) -> ast.stmt:
 def resolve_name_position(name_path: NamePath, in_path: Path) -> tuple[int, int]:
     ...
 
-def _resolve_ast_node_from_source(*, name_path: NamePath, source: str, in_path: Path) -> ast.stmt:
+def resolve_ast_node_from_source(*, name_path: NamePath, source: str, in_path: Path) -> ast.stmt:
     ...
 
 def _resolve_class_member(*, name_path: NamePath, in_path: Path, class_node: ast.ClassDef, member_name: str) -> ast.stmt:

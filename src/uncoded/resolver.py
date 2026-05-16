@@ -52,7 +52,7 @@ def resolve_ast_node(name_path: NamePath, in_path: Path) -> ast.stmt:
     in_path cannot be parsed.
     """
     source = in_path.read_text()
-    return _resolve_ast_node_from_source(
+    return resolve_ast_node_from_source(
         name_path=name_path, source=source, in_path=in_path
     )
 
@@ -85,12 +85,21 @@ def resolve_name_position(name_path: NamePath, in_path: Path) -> tuple[int, int]
     )
 
 
-def _resolve_ast_node_from_source(
+def resolve_ast_node_from_source(
     *,
     name_path: NamePath,
     source: str,
     in_path: Path,
 ) -> ast.stmt:
+    """Return the ast.stmt for name_path given an already-read source string.
+
+    The primitive that lets resolve_ast_node and resolve_body share a single
+    file read. Callers that already have the source string call this directly
+    to avoid reading in_path again. in_path is used only for ast.parse's
+    filename argument and for error messages.
+    Raises SymbolNotFound if the symbol is not present; propagates SyntaxError
+    if source cannot be parsed.
+    """
     tree = ast.parse(source, filename=str(in_path))
     head = name_path.head
     tail = name_path.tail

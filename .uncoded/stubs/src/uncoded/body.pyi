@@ -2,7 +2,7 @@
 
 import ast
 from pathlib import Path
-from uncoded.resolver import NamePath, _resolve_ast_node_from_source
+from uncoded.resolver import NamePath, resolve_ast_node_from_source
 
 def resolve_body(name_path: NamePath, in_path: Path) -> str:
     ...
