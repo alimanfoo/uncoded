@@ -13,7 +13,7 @@ automatically:
   give agents a project-wide view, so Serena's memory-based project
   understanding is redundant and noisy alongside it.
 * ``.claude/settings.json`` — enables the Serena server and allowlists
-  the eight tools so they run without a prompt. This is the file that
+  its tools so they run without a prompt. This is the file that
   finally narrows Serena's active surface to pure LSP operations; the
   YAML's exclusions remove the worst offenders, and the allowlist
   completes the narrowing.
