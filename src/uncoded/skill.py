@@ -66,9 +66,8 @@ Verify by reading `.uncoded/namespace.yaml` — if it exists and is non-empty,
 proceed. If not, stop and tell the user to run `uncoded sync` first; the review
 depends on the index.
 
-If Serena MCP tools are available (`mcp__serena__*`), the structural sweep has
-more leverage. The review still works without Serena but will be weaker on
-cross-file reference checks.
+The structural sweep uses `uncoded refs` for cross-file reference checks —
+it ships with uncoded itself and is always available when the index is present.
 
 ## Workflow
 
@@ -186,8 +185,8 @@ during this sweep.
 
 ## Step 4: Structural sweep
 
-Combine the namespace with the import graph and, if available, Serena's
-reference resolution.
+Combine the namespace with the import graph and `uncoded refs` for
+cross-file reference resolution.
 
 **Overgrown public surfaces / god modules.** A module or class whose public
 namespace is much larger than its siblings, or spans obviously different
@@ -213,8 +212,8 @@ Check systematically, not by spot-check:
 2. Cross-reference with stub import sections — any symbol imported by another
    source module is live; remove it from the candidate list. This culls the
    obvious cases cheaply.
-3. For remaining candidates, use Serena's `find_referencing_symbols` to verify.
-   If Serena is unavailable, note findings as lower confidence.
+3. For remaining candidates, use `uncoded refs <name_path> --in <relative_path>`
+   to verify. Empty output confirms zero callers.
 4. Distinguish two sub-cases when reporting:
    - *No callers anywhere* — dead code; highest priority.
    - *Callers only in tests* — the symbol is tested but not used in source;
