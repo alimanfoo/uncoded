@@ -4,7 +4,7 @@ import ast
 import textwrap
 from unittest import mock
 import pytest
-from uncoded.body import SymbolNotFound, UnsupportedNamePath, resolve_ast_node, resolve_body, resolve_name_position
+from uncoded.body import NamePath, SymbolNotFound, UnsupportedNamePath, parse_name_path, resolve_ast_node, resolve_body, resolve_name_position
 
 class TestResolveBodyTopLevel:
     def test_function_without_decorators(self, tmp_path):
@@ -102,7 +102,7 @@ class TestResolveAstNode:
     def test_raises_body_not_found(self, tmp_path):
         ...
 
-    def test_raises_unsupported_name_path(self, tmp_path):
+    def test_raises_unsupported_name_path(self):
         ...
 
     def test_file_not_found_propagates(self, tmp_path):

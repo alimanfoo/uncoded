@@ -7,6 +7,7 @@ from unittest import mock
 
 import pytest
 
+from uncoded.body import NamePath
 from uncoded.refs import (
     Reference,
     _find_root,
@@ -45,7 +46,7 @@ class TestFindRefs:
         (tmp_path / "pyproject.toml").write_text('[project]\nname = "t"\n')
         (pkg / "a.py").write_text("def uncalled():\n    pass\n")
 
-        refs = find_refs("uncalled", pkg / "a.py")
+        refs = find_refs(NamePath("uncalled"), pkg / "a.py")
 
         assert refs == []
 
@@ -58,7 +59,7 @@ class TestFindRefs:
             "from pkg.a import foo\nresult = foo()\nother = foo()\n"
         )
 
-        refs = find_refs("foo", pkg / "a.py")
+        refs = find_refs(NamePath("foo"), pkg / "a.py")
 
         assert len(refs) == 2
         assert all(isinstance(r, Reference) for r in refs)
@@ -81,7 +82,7 @@ class TestFindRefs:
             "from pkg.a import Dog\nd = Dog()\nd.bark()\nd.bark()\n"
         )
 
-        refs = find_refs("Dog/bark", pkg / "a.py")
+        refs = find_refs(NamePath("Dog", "bark"), pkg / "a.py")
 
         assert len(refs) == 2
         assert all(r.rel_path == pkg / "b.py" for r in refs)
@@ -95,7 +96,7 @@ class TestFindRefs:
             "from pkg.a import foo\nresult = foo()\nother = foo()\n"
         )
 
-        refs = find_refs("foo", pkg / "a.py")
+        refs = find_refs(NamePath("foo"), pkg / "a.py")
 
         assert refs == sorted(refs, key=lambda r: (r.rel_path, r.line, r.col))
 
@@ -106,7 +107,7 @@ class TestFindRefs:
         (pkg / "a.py").write_text("def foo():\n    return 42\n")
         (pkg / "b.py").write_text("from pkg.a import foo\nfoo()\n")
 
-        refs = find_refs("foo", pkg / "a.py")
+        refs = find_refs(NamePath("foo"), pkg / "a.py")
 
         assert len(refs) == 1
         assert refs[0].line == 2
@@ -119,7 +120,7 @@ class TestFindRefs:
         (root / "a.py").write_text("def foo():\n    pass\n")
         (root / "b.py").write_text("from a import foo\nfoo()\n")
 
-        refs = find_refs("foo", root / "a.py")
+        refs = find_refs(NamePath("foo"), root / "a.py")
 
         assert len(refs) == 1
         assert "%20" not in str(refs[0].rel_path)

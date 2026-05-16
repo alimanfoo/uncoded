@@ -2,8 +2,19 @@
 
 import ast
 from pathlib import Path
+from typing import NamedTuple
 
 from uncoded.ast_helpers import assign_target_name, property_kind
+
+
+class NamePath(NamedTuple):
+    """A validated name path: one segment for top-level, two for Class/member."""
+
+    head: str
+    tail: str | None = None
+
+    def __str__(self) -> str:
+        return f"{self.head}/{self.tail}" if self.tail is not None else self.head
 
 
 class SymbolNotFound(Exception):
@@ -18,14 +29,25 @@ class UnsupportedNamePath(Exception):
     """
 
 
-def resolve_ast_node(name_path: str, in_path: Path) -> ast.stmt:
+def parse_name_path(s: str) -> NamePath:
+    """Parse a raw name_path string into a validated NamePath.
+
+    Raises UnsupportedNamePath for more than two segments or any empty segment.
+    """
+    segments = s.split("/")
+    if len(segments) > 2 or any(seg == "" for seg in segments):
+        raise UnsupportedNamePath(
+            f"Unsupported name_path {s!r}: use 'name' or 'Class/member'"
+        )
+    head = segments[0]
+    tail = segments[1] if len(segments) == 2 else None
+    return NamePath(head=head, tail=tail)
+
+
+def resolve_ast_node(name_path: NamePath, in_path: Path) -> ast.stmt:
     """Return the ast.stmt for the symbol named by name_path in in_path.
 
-    name_path is a slash-separated path: a single segment names a top-level
-    symbol; two segments name a class member as Class/member (a method,
-    property, or attribute).
-    Raises UnsupportedNamePath if name_path has more than two segments or any
-    empty segment. Raises SymbolNotFound if the symbol is not present. Lets
+    Raises SymbolNotFound if the symbol is not present. Lets
     FileNotFoundError propagate if in_path does not exist, and SyntaxError if
     in_path cannot be parsed.
     """
@@ -35,14 +57,14 @@ def resolve_ast_node(name_path: str, in_path: Path) -> ast.stmt:
     )
 
 
-def resolve_name_position(name_path: str, in_path: Path) -> tuple[int, int]:
+def resolve_name_position(name_path: NamePath, in_path: Path) -> tuple[int, int]:
     """Return the 0-indexed (line, character) position of the name token for name_path.
 
     Follows LSP convention: both line and character are 0-indexed.
     For def/async def/class, character points past the keyword to the identifier.
     For assignments and type aliases, character points at the start of the target name.
-    Raises UnsupportedNamePath, SymbolNotFound, FileNotFoundError, and SyntaxError
-    under the same conditions as resolve_ast_node.
+    Raises SymbolNotFound, FileNotFoundError, and SyntaxError under the same
+    conditions as resolve_ast_node.
     """
     node = resolve_ast_node(name_path, in_path)
     if isinstance(node, ast.FunctionDef):
@@ -57,19 +79,16 @@ def resolve_name_position(name_path: str, in_path: Path) -> tuple[int, int]:
         return (node.targets[0].lineno - 1, node.targets[0].col_offset)
     if isinstance(node, ast.TypeAlias):
         return (node.name.lineno - 1, node.name.col_offset)
+    node_type = type(node).__name__
     raise UnsupportedNamePath(
-        f"Cannot extract name position from {type(node).__name__} for {name_path!r}"
+        f"Cannot extract name position from {node_type} for {str(name_path)!r}"
     )
 
 
-def resolve_body(name_path: str, in_path: Path) -> str:
+def resolve_body(name_path: NamePath, in_path: Path) -> str:
     """Return the source text for the symbol named by name_path in in_path.
 
-    name_path is a slash-separated path: a single segment names a top-level
-    symbol; two segments name a class member as Class/member (a method,
-    property, or attribute).
-    Raises UnsupportedNamePath if name_path has more than two segments or any
-    empty segment. Raises SymbolNotFound if the symbol is not present. Lets
+    Raises SymbolNotFound if the symbol is not present. Lets
     FileNotFoundError propagate if in_path does not exist, and SyntaxError if
     in_path cannot be parsed.
     """
@@ -82,18 +101,13 @@ def resolve_body(name_path: str, in_path: Path) -> str:
 
 def _resolve_ast_node_from_source(
     *,
-    name_path: str,
+    name_path: NamePath,
     source: str,
     in_path: Path,
 ) -> ast.stmt:
-    all_segments = name_path.split("/")
-    if len(all_segments) > 2 or any(s == "" for s in all_segments):
-        raise UnsupportedNamePath(
-            f"Unsupported name_path {name_path!r}: use 'name' or 'Class/member'"
-        )
     tree = ast.parse(source, filename=str(in_path))
-    head = all_segments[0]
-    tail = all_segments[1] if len(all_segments) == 2 else None
+    head = name_path.head
+    tail = name_path.tail
 
     top_match: ast.stmt | None = None
 
@@ -114,7 +128,7 @@ def _resolve_ast_node_from_source(
             top_match = node
 
     if top_match is None:
-        raise SymbolNotFound(f"{name_path!r} not found in {in_path}")
+        raise SymbolNotFound(f"{str(name_path)!r} not found in {in_path}")
 
     if tail is not None and isinstance(top_match, ast.ClassDef):
         return _resolve_class_member(
@@ -129,7 +143,7 @@ def _resolve_ast_node_from_source(
 
 def _resolve_class_member(
     *,
-    name_path: str,
+    name_path: NamePath,
     in_path: Path,
     class_node: ast.ClassDef,
     member_name: str,
@@ -149,7 +163,7 @@ def _resolve_class_member(
                 match = node
 
     if match is None:
-        raise SymbolNotFound(f"{name_path!r} not found in {in_path}")
+        raise SymbolNotFound(f"{str(name_path)!r} not found in {in_path}")
 
     return match
 

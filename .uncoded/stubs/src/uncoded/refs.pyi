@@ -8,12 +8,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import IO, cast
 from urllib.parse import unquote, urlparse
-from uncoded.body import resolve_name_position
+from uncoded.body import NamePath, resolve_name_position
 from uncoded.config import find_pyproject_toml
 
 TY_VERSION = '0.0.37'
 
-def find_refs(name_path: str, in_path: Path) -> list[Reference]:
+def find_refs(name_path: NamePath, in_path: Path) -> list[Reference]:
     ...
 
 def query_references(in_path: Path, position: tuple[int, int]) -> list[_LSPLocation]:

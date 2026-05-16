@@ -7,6 +7,7 @@ import textwrap
 from pathlib import Path
 from unittest import mock
 import pytest
+from uncoded.body import NamePath
 from uncoded.refs import Reference, _find_root, _LSPLocation, _read_message, _read_response, _run_exchange, _terminate, _to_rel_path, find_refs, query_references
 
 def _lsp_stream(*msgs: dict) -> io.BytesIO:

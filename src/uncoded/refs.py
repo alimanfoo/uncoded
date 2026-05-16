@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import IO, cast
 from urllib.parse import unquote, urlparse
 
-from uncoded.body import resolve_name_position
+from uncoded.body import NamePath, resolve_name_position
 from uncoded.config import find_pyproject_toml
 
 TY_VERSION = "0.0.37"
@@ -25,15 +25,15 @@ class Reference:
     col: int
 
 
-def find_refs(name_path: str, in_path: Path) -> list[Reference]:
+def find_refs(name_path: NamePath, in_path: Path) -> list[Reference]:
     """Return all references to the symbol named by name_path in in_path.
 
     Resolves the symbol's name-token position, queries ty's LSP server for
     references, and returns results with 1-indexed line/col sorted by
     (rel_path, line, col). rel_path is relative to the current working
     directory when possible; otherwise absolute.
-    Propagates UnsupportedNamePath, SymbolNotFound, FileNotFoundError, and
-    SyntaxError from resolve_name_position.
+    Propagates SymbolNotFound, FileNotFoundError, and SyntaxError from
+    resolve_name_position.
     """
     position = resolve_name_position(name_path, in_path)
     raw_refs = query_references(in_path, position)

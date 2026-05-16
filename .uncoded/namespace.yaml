@@ -15,8 +15,13 @@ src/:
       property_kind:
       assign_target_name:
     body.py:
+      NamePath:
+        head:
+        tail:
+        __str__:
       SymbolNotFound:
       UnsupportedNamePath:
+      parse_name_path:
       resolve_ast_node:
       resolve_name_position:
       resolve_body:

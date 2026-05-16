@@ -4,7 +4,12 @@ import argparse
 import sys
 from pathlib import Path
 
-from uncoded.body import SymbolNotFound, UnsupportedNamePath, resolve_body
+from uncoded.body import (
+    SymbolNotFound,
+    UnsupportedNamePath,
+    parse_name_path,
+    resolve_body,
+)
 from uncoded.config import (
     find_pyproject_toml,
     read_instruction_files,
@@ -147,7 +152,7 @@ def _body(*, name_path: str, in_path: str) -> int:
     """
     target = Path(in_path)
     try:
-        body = resolve_body(name_path, target)
+        body = resolve_body(parse_name_path(name_path), target)
     except UnsupportedNamePath as e:
         print(f"Error: {e}", file=sys.stderr)
         return 1
@@ -175,7 +180,7 @@ def _refs(*, name_path: str, in_path: str) -> int:
     # raises ValueError on a relative path.
     target = Path(in_path).resolve()
     try:
-        refs = find_refs(name_path, target)
+        refs = find_refs(parse_name_path(name_path), target)
     except UnsupportedNamePath as e:
         print(f"Error: {e}", file=sys.stderr)
         return 1
