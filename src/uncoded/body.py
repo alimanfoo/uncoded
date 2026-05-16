@@ -29,12 +29,41 @@ def resolve_ast_node(name_path: str, in_path: Path) -> ast.stmt:
     FileNotFoundError propagate if in_path does not exist, and SyntaxError if
     in_path cannot be parsed.
     """
+    source = in_path.read_text()
+    return _resolve_ast_node_from_source(
+        name_path=name_path, source=source, in_path=in_path
+    )
+
+
+def resolve_body(name_path: str, in_path: Path) -> str:
+    """Return the source text for the symbol named by name_path in in_path.
+
+    name_path is a slash-separated path: a single segment names a top-level
+    symbol; two segments name a class member as Class/member (a method,
+    property, or attribute).
+    Raises UnsupportedNamePath if name_path has more than two segments or any
+    empty segment. Raises BodyNotFound if the symbol is not present. Lets
+    FileNotFoundError propagate if in_path does not exist, and SyntaxError if
+    in_path cannot be parsed.
+    """
+    source = in_path.read_text()
+    node = _resolve_ast_node_from_source(
+        name_path=name_path, source=source, in_path=in_path
+    )
+    return _extract_body(node=node, lines=source.splitlines(keepends=True))
+
+
+def _resolve_ast_node_from_source(
+    *,
+    name_path: str,
+    source: str,
+    in_path: Path,
+) -> ast.stmt:
     all_segments = name_path.split("/")
     if len(all_segments) > 2 or any(s == "" for s in all_segments):
         raise UnsupportedNamePath(
             f"Unsupported name_path {name_path!r}: use 'name' or 'Class/member'"
         )
-    source = in_path.read_text()
     tree = ast.parse(source, filename=str(in_path))
     head = all_segments[0]
     tail = all_segments[1] if len(all_segments) == 2 else None
@@ -69,22 +98,6 @@ def resolve_ast_node(name_path: str, in_path: Path) -> ast.stmt:
         )
 
     return top_match
-
-
-def resolve_body(name_path: str, in_path: Path) -> str:
-    """Return the source text for the symbol named by name_path in in_path.
-
-    name_path is a slash-separated path: a single segment names a top-level
-    symbol; two segments name a class member as Class/member (a method,
-    property, or attribute).
-    Raises UnsupportedNamePath if name_path has more than two segments or any
-    empty segment. Raises BodyNotFound if the symbol is not present. Lets
-    FileNotFoundError propagate if in_path does not exist, and SyntaxError if
-    in_path cannot be parsed.
-    """
-    node = resolve_ast_node(name_path, in_path)
-    lines = in_path.read_text().splitlines(keepends=True)
-    return _extract_body(node=node, lines=lines)
 
 
 def _resolve_class_member(

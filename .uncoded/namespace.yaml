@@ -19,6 +19,7 @@ src/:
       UnsupportedNamePath:
       resolve_ast_node:
       resolve_body:
+      _resolve_ast_node_from_source:
       _resolve_class_member:
       _extract_body:
     cli.py:

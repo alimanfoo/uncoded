@@ -10,6 +10,9 @@ def resolve_ast_node(name_path: str, in_path: Path) -> ast.stmt:
 def resolve_body(name_path: str, in_path: Path) -> str:
     ...
 
+def _resolve_ast_node_from_source(*, name_path: str, source: str, in_path: Path) -> ast.stmt:
+    ...
+
 def _resolve_class_member(*, name_path: str, in_path: Path, class_node: ast.ClassDef, member_name: str) -> ast.stmt:
     ...
 
