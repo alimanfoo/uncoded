@@ -60,6 +60,20 @@ src/:
         increase_indent:
       build_map:
       render_map:
+    refs.py:
+      TY_VERSION:
+      Reference:
+        path:
+        line:
+        character:
+      query_references:
+      _find_root:
+      _terminate:
+      _run_exchange:
+      _write_message:
+      _read_message:
+      _read_response:
+      _uri_to_path:
     serena_setup.py:
       _Status:
       SERENA_VERSION:
@@ -292,6 +306,26 @@ tests/:
       test_header_appears_at_top:
       test_header_mentions_stub_pointer:
       test_header_does_not_break_yaml_parse:
+  test_refs.py:
+    TestQueryReferences:
+      test_finds_call_sites:
+      test_returns_empty_list_when_no_references:
+    TestRunExchange:
+      test_lsp_error_raises:
+      test_empty_result_list_returns_empty:
+    TestFindRoot:
+      test_returns_pyproject_parent_when_found:
+      test_returns_in_path_parent_when_not_found:
+    TestTerminate:
+      test_kills_on_timeout:
+    TestReadMessage:
+      test_raises_on_closed_stream:
+      test_parses_framed_message:
+    TestReadResponse:
+      test_skips_notifications_until_matching_id:
+    _lsp_stream:
+    _init_response:
+    _shutdown_response:
   test_serena_setup.py:
     REPO_ROOT:
     EXPECTED_EXCLUDED_TOOLS:
