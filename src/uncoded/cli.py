@@ -15,7 +15,6 @@ from uncoded.instruction_files import sync_instruction_file
 from uncoded.namespace_map import build_map, render_map
 from uncoded.refs import find_refs
 from uncoded.resolver import NamePath, SymbolNotFound, UnsupportedNamePath
-from uncoded.serena_setup import setup
 from uncoded.skill import sync_skill
 from uncoded.stubs import build_stubs
 from uncoded.sync import sync_file
@@ -201,13 +200,11 @@ def _refs(*, name_path: str, in_path: str) -> int:
 def main() -> int:
     """Dispatch the uncoded CLI.
 
-    Five subcommands:
+    Four subcommands:
 
     - ``sync`` — builds or refreshes the navigation index.
     - ``check`` — verifies the index matches what a rebuild would produce;
       exits non-zero on drift, useful in CI.
-    - ``setup`` — generates MCP and Claude Code config for the recommended
-      Serena + ty LSP integration.
     - ``body`` — prints the source body of a named symbol to stdout.
     - ``refs`` — finds all references to a named symbol and prints them.
 
@@ -240,15 +237,6 @@ def main() -> int:
         ),
     )
     check_parser.set_defaults(action=lambda: _sync(check=True))
-
-    setup_parser = subparsers.add_parser(
-        "setup",
-        help=(
-            "Write .mcp.json, .serena/project.yml, and .claude/settings.json "
-            "for the recommended Serena + ty LSP integration."
-        ),
-    )
-    setup_parser.set_defaults(action=lambda: setup())
 
     body_parser = subparsers.add_parser(
         "body",

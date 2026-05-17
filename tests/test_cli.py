@@ -411,12 +411,6 @@ class TestMainDispatch:
         monkeypatch.setattr(sys, "argv", ["uncoded", "check"])
         assert cli.main() == 0
 
-    def test_setup_subcommand(self, tmp_path, monkeypatch):
-        _init_repo(tmp_path, monkeypatch)
-        monkeypatch.setattr(sys, "argv", ["uncoded", "setup"])
-        assert cli.main() == 0
-        assert (tmp_path / ".mcp.json").exists()
-
     def test_no_subcommand_is_an_error(self, tmp_path, monkeypatch):
         # Argparse enforces subparsers.required=True and exits with code 2
         # when no subcommand is given. This keeps the CLI honest: there is

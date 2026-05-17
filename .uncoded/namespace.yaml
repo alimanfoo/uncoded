@@ -87,17 +87,6 @@ src/:
       resolve_name_position:
       resolve_ast_node_from_source:
       _resolve_class_member:
-    serena_setup.py:
-      _Status:
-      SERENA_VERSION:
-      MCP_SERVER_SERENA:
-      SERENA_PROJECT_FIELDS:
-      SERENA_ALLOWED_TOOLS:
-      _STATUS_VERB:
-      _sync_mcp_json:
-      _write_serena_project_if_absent:
-      _sync_claude_settings:
-      setup:
     skill.py:
       SKILL_OUTPUTS:
       LEGACY_SKILL_OUTPUTS:
@@ -223,7 +212,6 @@ tests/:
       test_sync_subcommand_runs_in_apply_mode:
       test_check_subcommand_runs_in_check_mode:
       test_check_subcommand_returns_zero_on_fresh_index:
-      test_setup_subcommand:
       test_no_subcommand_is_an_error:
       test_unknown_subcommand_is_an_error:
     TestBodyCommand:
@@ -366,32 +354,6 @@ tests/:
     _lsp_stream:
     _init_response:
     _shutdown_response:
-  test_serena_setup.py:
-    REPO_ROOT:
-    EXPECTED_EXCLUDED_TOOLS:
-    EXPECTED_MCP_ARGS:
-    TestSetup:
-      _run:
-      test_creates_all_three_files:
-      test_mcp_json_is_valid_and_pins_version:
-      test_serena_project_yml_uses_ty_and_ignores_uncoded:
-      test_serena_project_yml_escapes_yaml_special_chars_in_name:
-      test_claude_settings_enables_serena_and_allowlists_tools:
-      test_idempotent:
-      test_merges_into_existing_mcp_json:
-      test_refreshes_stale_serena_entry_in_mcp_json:
-      test_merges_into_existing_claude_settings:
-      test_does_not_overwrite_existing_serena_project_yml:
-      test_does_not_duplicate_on_second_merge:
-      test_prunes_stale_serena_tool_from_existing_settings:
-      test_prune_leaves_non_serena_entries_untouched:
-      test_appends_missing_allowed_tool_to_existing_settings:
-      test_setup_uses_root_name_when_no_pyproject:
-      test_setup_reads_name_from_pyproject:
-    TestRepoDogfooding:
-      test_repo_mcp_json_matches_template_contract:
-      test_repo_claude_settings_allowlists_every_serena_tool:
-      test_repo_serena_project_yml_matches_template_contract:
   test_skill.py:
     TestSyncSkill:
       test_skill_name_and_output_paths:
