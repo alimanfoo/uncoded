@@ -40,8 +40,8 @@ def _shutdown_response() -> dict:
     return {"jsonrpc": "2.0", "id": 3, "result": None}
 
 
+@pytest.mark.integration
 class TestFindRefs:
-    @pytest.mark.integration
     def test_returns_empty_for_dead_symbol(self, tmp_path):
         pkg = tmp_path / "pkg"
         pkg.mkdir()
@@ -52,7 +52,6 @@ class TestFindRefs:
 
         assert refs == []
 
-    @pytest.mark.integration
     def test_finds_multiple_references_across_files(self, tmp_path):
         pkg = tmp_path / "pkg"
         pkg.mkdir()
@@ -70,7 +69,6 @@ class TestFindRefs:
         assert [r.line for r in refs] == [2, 3]
         assert all(r.col >= 1 for r in refs)
 
-    @pytest.mark.integration
     def test_class_method_shape(self, tmp_path):
         pkg = tmp_path / "pkg"
         pkg.mkdir()
@@ -91,7 +89,6 @@ class TestFindRefs:
         assert len(refs) == 2
         assert all(r.rel_path == pkg / "b.py" for r in refs)
 
-    @pytest.mark.integration
     def test_results_are_sorted(self, tmp_path):
         pkg = tmp_path / "pkg"
         pkg.mkdir()
@@ -105,7 +102,6 @@ class TestFindRefs:
 
         assert refs == sorted(refs, key=lambda r: (r.rel_path, r.line, r.col))
 
-    @pytest.mark.integration
     def test_line_and_col_are_one_indexed(self, tmp_path):
         pkg = tmp_path / "pkg"
         pkg.mkdir()
@@ -119,7 +115,6 @@ class TestFindRefs:
         assert refs[0].line == 2
         assert refs[0].col == 1
 
-    @pytest.mark.integration
     def test_path_with_spaces_is_not_percent_encoded(self, tmp_path):
         root = tmp_path / "my project"
         root.mkdir()
