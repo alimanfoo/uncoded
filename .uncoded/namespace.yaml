@@ -66,7 +66,7 @@ src/:
         line:
         character:
       find_refs:
-      query_references:
+      _query_references:
       _find_root:
       _terminate:
       _to_rel_path:

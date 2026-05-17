@@ -38,7 +38,7 @@ def find_refs(name_path: NamePath, in_path: Path) -> list[Reference]:
     resolve_name_position.
     """
     position = resolve_name_position(name_path, in_path)
-    raw_refs = query_references(in_path, position)
+    raw_refs = _query_references(in_path=in_path, position=position)
     result = [
         Reference(
             rel_path=_to_rel_path(path=ref.path),
@@ -51,7 +51,9 @@ def find_refs(name_path: NamePath, in_path: Path) -> list[Reference]:
     return result
 
 
-def query_references(in_path: Path, position: tuple[int, int]) -> list[_LSPLocation]:
+def _query_references(
+    *, in_path: Path, position: tuple[int, int]
+) -> list[_LSPLocation]:
     """Return raw LSP reference locations for the symbol at position in in_path.
 
     in_path must be an absolute path; a relative path raises ValueError.
@@ -60,7 +62,9 @@ def query_references(in_path: Path, position: tuple[int, int]) -> list[_LSPLocat
     position follows LSP convention: (line, character), both 0-indexed.
     """
     if not in_path.is_absolute():
-        raise ValueError(f"query_references requires an absolute path; got {in_path!r}")
+        raise ValueError(
+            f"_query_references requires an absolute path; got {in_path!r}"
+        )
     root = _find_root(in_path)
     try:
         proc = subprocess.Popen(
