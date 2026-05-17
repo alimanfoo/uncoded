@@ -8,6 +8,7 @@ from unittest import mock
 import pytest
 
 from uncoded.refs import (
+    TY_VERSION,
     Reference,
     _find_root,
     _LSPLocation,
@@ -40,6 +41,7 @@ def _shutdown_response() -> dict:
 
 
 class TestFindRefs:
+    @pytest.mark.integration
     def test_returns_empty_for_dead_symbol(self, tmp_path):
         pkg = tmp_path / "pkg"
         pkg.mkdir()
@@ -50,6 +52,7 @@ class TestFindRefs:
 
         assert refs == []
 
+    @pytest.mark.integration
     def test_finds_multiple_references_across_files(self, tmp_path):
         pkg = tmp_path / "pkg"
         pkg.mkdir()
@@ -67,6 +70,7 @@ class TestFindRefs:
         assert [r.line for r in refs] == [2, 3]
         assert all(r.col >= 1 for r in refs)
 
+    @pytest.mark.integration
     def test_class_method_shape(self, tmp_path):
         pkg = tmp_path / "pkg"
         pkg.mkdir()
@@ -87,6 +91,7 @@ class TestFindRefs:
         assert len(refs) == 2
         assert all(r.rel_path == pkg / "b.py" for r in refs)
 
+    @pytest.mark.integration
     def test_results_are_sorted(self, tmp_path):
         pkg = tmp_path / "pkg"
         pkg.mkdir()
@@ -100,6 +105,7 @@ class TestFindRefs:
 
         assert refs == sorted(refs, key=lambda r: (r.rel_path, r.line, r.col))
 
+    @pytest.mark.integration
     def test_line_and_col_are_one_indexed(self, tmp_path):
         pkg = tmp_path / "pkg"
         pkg.mkdir()
@@ -113,6 +119,7 @@ class TestFindRefs:
         assert refs[0].line == 2
         assert refs[0].col == 1
 
+    @pytest.mark.integration
     def test_path_with_spaces_is_not_percent_encoded(self, tmp_path):
         root = tmp_path / "my project"
         root.mkdir()
@@ -148,6 +155,7 @@ class TestToRelPath:
 
 
 class TestQueryReferences:
+    @pytest.mark.integration
     def test_finds_call_sites(self, tmp_path):
         pkg = tmp_path / "pkg"
         pkg.mkdir()
@@ -178,6 +186,7 @@ class TestQueryReferences:
         with pytest.raises(ValueError, match="absolute path"):
             _query_references(in_path=Path("relative/m.py"), position=(0, 0))
 
+    @pytest.mark.integration
     def test_returns_empty_list_when_no_references(self, tmp_path):
         (tmp_path / "pyproject.toml").write_text('[project]\nname = "t"\n')
         m = tmp_path / "m.py"
@@ -186,6 +195,40 @@ class TestQueryReferences:
         refs = _query_references(in_path=m, position=(0, 2))
 
         assert refs == []
+
+    def test_returns_lsp_locations_when_popen_succeeds(self, tmp_path):
+        in_path = tmp_path / "m.py"
+        in_path.write_text("def foo(): pass\n")
+        ref_path = tmp_path / "other.py"
+        references_response = {
+            "jsonrpc": "2.0",
+            "id": 2,
+            "result": [
+                {
+                    "uri": ref_path.as_uri(),
+                    "range": {"start": {"line": 3, "character": 7}},
+                }
+            ],
+        }
+        mock_proc = mock.Mock(spec=subprocess.Popen)
+        mock_proc.stdin = io.BytesIO()
+        mock_proc.stdout = _lsp_stream(
+            _init_response(), references_response, _shutdown_response()
+        )
+
+        with mock.patch(
+            "uncoded.refs.subprocess.Popen", return_value=mock_proc
+        ) as mock_popen:
+            refs = _query_references(in_path=in_path, position=(0, 4))
+
+        assert refs == [_LSPLocation(path=ref_path, line=3, character=7)]
+        mock_popen.assert_called_once_with(
+            ["uvx", "--from", f"ty=={TY_VERSION}", "ty", "server"],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+        )
+        mock_proc.wait.assert_called()
 
 
 class TestRunExchange:

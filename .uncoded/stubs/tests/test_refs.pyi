@@ -7,7 +7,7 @@ import textwrap
 from pathlib import Path
 from unittest import mock
 import pytest
-from uncoded.refs import Reference, _find_root, _LSPLocation, _query_references, _read_message, _read_response, _run_exchange, _terminate, _to_rel_path, find_refs
+from uncoded.refs import TY_VERSION, Reference, _find_root, _LSPLocation, _query_references, _read_message, _read_response, _run_exchange, _terminate, _to_rel_path, find_refs
 from uncoded.resolver import NamePath
 
 def _lsp_stream(*msgs: dict) -> io.BytesIO:
@@ -56,6 +56,9 @@ class TestQueryReferences:
         ...
 
     def test_returns_empty_list_when_no_references(self, tmp_path):
+        ...
+
+    def test_returns_lsp_locations_when_popen_succeeds(self, tmp_path):
         ...
 
 class TestRunExchange:
