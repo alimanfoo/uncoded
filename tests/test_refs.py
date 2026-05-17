@@ -8,16 +8,17 @@ from unittest import mock
 import pytest
 
 from uncoded.refs import (
+    TY_VERSION,
     Reference,
     _find_root,
     _LSPLocation,
+    _query_references,
     _read_message,
     _read_response,
     _run_exchange,
     _terminate,
     _to_rel_path,
     find_refs,
-    query_references,
 )
 from uncoded.resolver import NamePath
 
@@ -39,6 +40,7 @@ def _shutdown_response() -> dict:
     return {"jsonrpc": "2.0", "id": 3, "result": None}
 
 
+@pytest.mark.integration
 class TestFindRefs:
     def test_returns_empty_for_dead_symbol(self, tmp_path):
         pkg = tmp_path / "pkg"
@@ -148,6 +150,7 @@ class TestToRelPath:
 
 
 class TestQueryReferences:
+    @pytest.mark.integration
     def test_finds_call_sites(self, tmp_path):
         pkg = tmp_path / "pkg"
         pkg.mkdir()
@@ -157,7 +160,7 @@ class TestQueryReferences:
             "from pkg.a import foo\nresult = foo()\nother = foo()\n"
         )
 
-        refs = query_references(pkg / "a.py", (0, 4))
+        refs = _query_references(in_path=pkg / "a.py", position=(0, 4))
 
         assert len(refs) == 2
         assert all(isinstance(r, _LSPLocation) for r in refs)
@@ -172,20 +175,55 @@ class TestQueryReferences:
             mock.patch("uncoded.refs.subprocess.Popen", side_effect=FileNotFoundError),
             pytest.raises(RuntimeError, match="uvx not found"),
         ):
-            query_references(in_path, (0, 4))
+            _query_references(in_path=in_path, position=(0, 4))
 
     def test_relative_path_raises_value_error(self):
         with pytest.raises(ValueError, match="absolute path"):
-            query_references(Path("relative/m.py"), (0, 0))
+            _query_references(in_path=Path("relative/m.py"), position=(0, 0))
 
+    @pytest.mark.integration
     def test_returns_empty_list_when_no_references(self, tmp_path):
         (tmp_path / "pyproject.toml").write_text('[project]\nname = "t"\n')
         m = tmp_path / "m.py"
         m.write_text("# just a comment\ndef foo(): pass\n")
 
-        refs = query_references(m, (0, 2))
+        refs = _query_references(in_path=m, position=(0, 2))
 
         assert refs == []
+
+    def test_returns_lsp_locations_when_popen_succeeds(self, tmp_path):
+        in_path = tmp_path / "m.py"
+        in_path.write_text("def foo(): pass\n")
+        ref_path = tmp_path / "other.py"
+        references_response = {
+            "jsonrpc": "2.0",
+            "id": 2,
+            "result": [
+                {
+                    "uri": ref_path.as_uri(),
+                    "range": {"start": {"line": 3, "character": 7}},
+                }
+            ],
+        }
+        mock_proc = mock.Mock(spec=subprocess.Popen)
+        mock_proc.stdin = io.BytesIO()
+        mock_proc.stdout = _lsp_stream(
+            _init_response(), references_response, _shutdown_response()
+        )
+
+        with mock.patch(
+            "uncoded.refs.subprocess.Popen", return_value=mock_proc
+        ) as mock_popen:
+            refs = _query_references(in_path=in_path, position=(0, 4))
+
+        assert refs == [_LSPLocation(path=ref_path, line=3, character=7)]
+        mock_popen.assert_called_once_with(
+            ["uvx", "--from", f"ty=={TY_VERSION}", "ty", "server"],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+        )
+        mock_proc.wait.assert_called()
 
 
 class TestRunExchange:

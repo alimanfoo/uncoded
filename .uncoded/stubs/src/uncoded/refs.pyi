@@ -16,7 +16,7 @@ TY_VERSION = '0.0.37'
 def find_refs(name_path: NamePath, in_path: Path) -> list[Reference]:
     ...
 
-def query_references(in_path: Path, position: tuple[int, int]) -> list[_LSPLocation]:
+def _query_references(*, in_path: Path, position: tuple[int, int]) -> list[_LSPLocation]:
     ...
 
 def _find_root(in_path: Path) -> Path:

@@ -43,7 +43,8 @@ source-roots = ["src", "tests"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "--cov"
+addopts = "--cov -m 'not integration'"
+markers = ["integration: spawns real ty subprocess (requires uvx)"]
 
 [tool.coverage.run]
 source = ["src"]
