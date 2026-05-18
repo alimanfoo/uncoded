@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "uncoded"
 dynamic = ["version"]
-description = "Symbol indexes and language-server setup for AI-assisted code navigation"
+description = "Symbol index with `uncoded body` and `uncoded refs` for AI coding agent navigation"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.12"
