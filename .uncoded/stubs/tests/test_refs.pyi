@@ -52,9 +52,6 @@ class TestQueryReferences:
     def test_uvx_not_found_raises_runtime_error(self, tmp_path):
         ...
 
-    def test_relative_path_raises_value_error(self):
-        ...
-
     def test_returns_empty_list_when_no_references(self, tmp_path):
         ...
 

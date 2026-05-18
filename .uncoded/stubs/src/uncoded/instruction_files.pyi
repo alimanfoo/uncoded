@@ -1,12 +1,13 @@
 # src/uncoded/instruction_files.py
 
+from importlib.resources import files
 from pathlib import Path
 from uncoded.sync import sync_file
 
 MARKER_START = '<!-- uncoded:start -->'
 MARKER_END = '<!-- uncoded:end -->'
 DEFAULT_INSTRUCTION_FILES = [Path('CLAUDE.md'), Path('AGENTS.md')]
-_SECTION_BODY = ...
+_SECTION_BODY = (files('uncoded') / 'dispatch_rule.md').read_text(encoding='utf-8').rstrip('\n')
 SECTION = f'{MARKER_START}\n{_SECTION_BODY}\n{MARKER_END}\n'
 
 def _replace_or_append(existing: str, section: str) -> str:

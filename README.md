@@ -10,7 +10,7 @@ at the start of a task and navigate deterministically to what they need —
 no guessing, no grep.
 
 It also ships `uncoded body` to read symbol bodies and `uncoded refs` for
-impact analysis — callers, dead-symbol checks, pre-rename footprint.
+finding every reference to a symbol — callers, dead-symbol checks, pre-rename footprint.
 
 ## What it generates
 
@@ -33,17 +33,9 @@ written to both Claude Code and Codex skill directories (see
 `uncoded` also injects a navigation protocol into `CLAUDE.md`/`AGENTS.md`, so agents
 working in the repo pick up the instructions automatically.
 
-## Install
+## Install uv
 
-```
-pip install uncoded
-```
-
-Or with uv:
-
-```
-uv add uncoded
-```
+uncoded runs via [uv](https://docs.astral.sh/uv/). Install uv if you don't already have it; no separate uncoded install is needed — `uvx` runs it from PyPI on demand.
 
 ## Configure
 
@@ -57,7 +49,7 @@ source-roots = ["src", "tests"]
 ## Use
 
 ```
-uncoded sync
+uvx uncoded sync
 ```
 
 Run it from the repo root. It reads `pyproject.toml` to find your source
@@ -76,7 +68,7 @@ automatically:
   hooks:
     - id: uncoded
       name: uncoded
-      entry: uncoded sync
+      entry: uvx uncoded sync
       language: system
       pass_filenames: false
 ```
@@ -92,7 +84,7 @@ For CI or scripted checks that must not modify the working tree, use
 the `check` subcommand:
 
 ```
-uncoded check
+uvx uncoded check
 ```
 
 It runs the same pipeline but writes nothing. Exits 0 if every generated
@@ -107,7 +99,7 @@ Use the `body` subcommand when you need a symbol's implementation, not just
 its signature from the stub:
 
 ```
-uncoded body <name_path> --in <relative_path>
+uvx uncoded body <name_path> --in <relative_path>
 ```
 
 `name_path` is a slash-separated path: one segment (`fn`) for a top-level
@@ -119,7 +111,7 @@ symbol to stdout, byte-identical to what's on disk — no reformatting, no
 For example, to retrieve the body of `resolve_body` from `src/uncoded/body.py`:
 
 ```
-uncoded body resolve_body --in src/uncoded/body.py
+uvx uncoded body resolve_body --in src/uncoded/body.py
 ```
 
 ## Find references to a symbol
@@ -128,18 +120,18 @@ Use the `refs` subcommand for impact analysis: run it before a rename,
 signature change, or delete, or to confirm a symbol is dead before removing it:
 
 ```
-uncoded refs <name_path> --in <relative_path>
+uvx uncoded refs <name_path> --in <relative_path>
 ```
 
 `name_path` follows the same convention as `body`: one segment for a top-level
 symbol, two for a class member (`Class/method`). Output is one reference per
 line as `<rel_path>:<line>:<col>`, with line and column 1-indexed and results
-sorted by path, then line, then column. Exits 0 on success; empty output means no callers.
+sorted by path, then line, then column. Exits 0 on success; empty output means no references.
 
 For example, to find all callers of `resolve_body`:
 
 ```
-uncoded refs resolve_body --in src/uncoded/body.py
+uvx uncoded refs resolve_body --in src/uncoded/body.py
 ```
 
 ## How agents use it
@@ -150,15 +142,15 @@ Agents following that protocol:
 
 1. Read `.uncoded/namespace.yaml` to orient — every symbol, at a glance.
 2. Read the relevant `.pyi` stubs to understand imports, signatures, constants, and class members.
-3. Run `uncoded body <name_path> --in <relative_path>` when they need implementation detail for a specific symbol.
-4. Run `uncoded refs <name_path> --in <relative_path>` for impact analysis — callers, dead-symbol checks. See [Find references to a symbol](#find-references-to-a-symbol) for detail.
+3. Run `uvx uncoded body <name_path> --in <relative_path>` when they need implementation detail for a specific symbol.
+4. Run `uvx uncoded refs <name_path> --in <relative_path>` to find every reference to a symbol — callers, dead-symbol checks. See [Find references to a symbol](#find-references-to-a-symbol) for detail.
 5. Edit a symbol using `Edit` with `uncoded body`'s output as `old_string`.
 6. Rename across the codebase using `uncoded refs` to enumerate every site, then `Edit` at each.
 7. Safely delete by running `uncoded refs` first — the output must be empty — then `Edit` to remove.
 
 The split is deliberate: `uncoded` provides a stable map and signature index;
-`uncoded body` resolves a symbol's source body; `uncoded refs` maps call
-sites. No grep, no stale line-number coordinates, no offset arithmetic.
+`uncoded body` resolves a symbol's source body; `uncoded refs` maps every
+reference. No grep, no stale line-number coordinates, no offset arithmetic.
 
 ## Coherence review
 

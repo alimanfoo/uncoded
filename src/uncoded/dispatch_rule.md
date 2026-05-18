@@ -1,62 +1,3 @@
-# uncoded
-
-## Problem
-
-AI coding agents navigate codebases poorly. They grep for guessed keywords,
-skim the first few lines of files, and fill gaps from pretraining rather than
-reading the actual code. System prompts encourage this with "make reasonable
-assumptions." The result is plausible-looking output built on a hallucinated
-understanding of code that's sitting right there, unread.
-
-## Approach
-
-A static, pre-computed index gives agents a top-down view of a codebase.
-The agent loads the index at the start of a task, sees the full vocabulary
-of the code, and navigates deterministically to what it needs — no guessing,
-no grep.
-
-Two-level index:
-
-1. **Namespace map** (`.uncoded/namespace.yaml`) — a hierarchical YAML file
-   listing all symbols: directories, files, classes (with attributes
-   and methods), and functions. Covers both source and tests. Loaded into
-   context before any task begins. Gives the agent a world view.
-
-2. **Stub files** (`.uncoded/stubs/`) — one `.pyi` per source file, with
-   imports, full signatures (parameter names, types, return types),
-   module constants, and class attributes.
-
-Alongside the index, uncoded ships `uncoded body` to read symbol bodies and
-`uncoded refs` to find all references. See "How to read and edit code in
-this codebase" below for the dispatch rule.
-
-## Commands
-
-This project uses [uv](https://docs.astral.sh/uv/). Run `uncoded` commands
-via `uvx` so they run the published package without needing to install it;
-run project tooling (`pytest`, `pre-commit`) via `uv run`.
-
-```
-# Generate (or update) the namespace map, stub files, and instruction-file section
-uvx uncoded sync
-
-# Verify the index without writing; exits non-zero if any file would change
-uvx uncoded check
-
-# Print the source body of a named symbol to stdout
-uvx uncoded body <name_path> --in <relative_path>
-
-# Find references to a symbol
-uvx uncoded refs <name_path> --in <relative_path>
-
-# Run tests (branch coverage enforced; see [tool.coverage.report] in pyproject.toml)
-uv run pytest
-
-# Run a subset of tests without the coverage gate
-uv run pytest tests/test_stubs.py --no-cov
-```
-
-<!-- uncoded:start -->
 ## How to read and edit code in this codebase
 
 This repo uses [uncoded](https://github.com/alimanfoo/uncoded) to maintain
@@ -161,4 +102,3 @@ Edit, and grep stay correct:
 
 The dispatch rule turns on the search term: a symbol name → the index; a
 regex or free-text phrase → grep.
-<!-- uncoded:end -->
