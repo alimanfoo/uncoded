@@ -32,22 +32,20 @@ this codebase" below for the dispatch rule.
 
 ## Commands
 
-This project uses [uv](https://docs.astral.sh/uv/). Run commands via
-`uv run` so they execute inside the project environment without needing
-an activated venv.
+This project uses [uv](https://docs.astral.sh/uv/). Run `uncoded` commands via `uvx` so they run the published package without needing to install it; run project tooling (`pytest`, `pre-commit`) via `uv run`.
 
 ```
 # Generate (or update) the namespace map, stub files, and instruction-file section
-uv run uncoded sync
+uvx uncoded sync
 
 # Verify the index without writing; exits non-zero if any file would change
-uv run uncoded check
+uvx uncoded check
 
 # Print the source body of a named symbol to stdout
-uv run uncoded body <name_path> --in <relative_path>
+uvx uncoded body <name_path> --in <relative_path>
 
 # Find references to a symbol
-uv run uncoded refs <name_path> --in <relative_path>
+uvx uncoded refs <name_path> --in <relative_path>
 
 # Run tests (branch coverage enforced; see [tool.coverage.report] in pyproject.toml)
 uv run pytest
