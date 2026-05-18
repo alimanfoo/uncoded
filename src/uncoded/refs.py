@@ -56,13 +56,10 @@ def _query_references(
 ) -> list[_LSPLocation]:
     """Return raw LSP reference locations for the symbol at position in in_path.
 
-    in_path must be an absolute path; a relative path raises ValueError.
     Spawns ty as a one-shot LSP subprocess and performs the full
     initialize/didOpen/references/shutdown exchange.
     position follows LSP convention: (line, character), both 0-indexed.
     """
-    if not in_path.is_absolute():
-        raise ValueError(f"absolute path required; got {in_path!r}")
     root = _find_root(in_path)
     try:
         proc = subprocess.Popen(
@@ -124,6 +121,8 @@ def _run_exchange(
     position: tuple[int, int],
     root: Path,
 ) -> list[_LSPLocation]:
+    in_path = in_path.resolve()
+    root = root.resolve()
     root_uri = root.as_uri()
     file_uri = in_path.as_uri()
 

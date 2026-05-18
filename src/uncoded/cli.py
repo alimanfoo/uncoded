@@ -171,11 +171,8 @@ def _refs(*, name_path: str, in_path: str) -> int:
     Returns 0 on success. Each reference is printed as rel_path:line:col.
     Returns 1 on any error.
     """
-    # resolve() is required: _query_references calls Path.as_uri(), which
-    # raises ValueError on a relative path.
-    target = Path(in_path).resolve()
     try:
-        refs = find_refs(NamePath.parse(name_path), target)
+        refs = find_refs(NamePath.parse(name_path), Path(in_path))
     except UnsupportedNamePath as e:
         print(f"Error: {e}", file=sys.stderr)
         return 1
