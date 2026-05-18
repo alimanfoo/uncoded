@@ -157,7 +157,7 @@ Agents following that protocol:
 7. Safely delete by running `uncoded refs` first — the output must be empty — then `Edit` to remove.
 
 The split is deliberate: `uncoded` provides a stable map and signature index;
-`uncoded body` resolves the current source body; `uncoded refs` maps call
+`uncoded body` resolves a symbol's source body; `uncoded refs` maps call
 sites. No grep, no stale line-number coordinates, no offset arithmetic.
 
 ## Coherence review
