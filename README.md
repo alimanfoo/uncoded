@@ -10,7 +10,8 @@ at the start of a task and navigate deterministically to what they need —
 no guessing, no grep.
 
 It also ships `uncoded body` to read symbol bodies and `uncoded refs` for
-finding every reference to a symbol — callers, dead-symbol checks, pre-rename footprint.
+finding every reference to a symbol — callers, dead-symbol checks,
+pre-rename footprint.
 
 ## What it generates
 
@@ -30,12 +31,14 @@ class attributes.
 written to both Claude Code and Codex skill directories (see
 [Coherence review](#coherence-review) below).
 
-`uncoded` also injects a navigation protocol into `CLAUDE.md`/`AGENTS.md`, so agents
-working in the repo pick up the instructions automatically.
+`uncoded` also injects a navigation protocol into `CLAUDE.md`/`AGENTS.md`,
+so agents working in the repo pick up the instructions automatically.
 
 ## Install uv
 
-uncoded runs via [uv](https://docs.astral.sh/uv/). Install uv if you don't already have it; no separate uncoded install is needed — `uvx` runs it from PyPI on demand.
+uncoded runs via [uv](https://docs.astral.sh/uv/). Install uv if you don't
+already have it; no separate uncoded install is needed — `uvx` runs it
+from PyPI on demand.
 
 ## Configure
 
@@ -48,7 +51,7 @@ source-roots = ["src", "tests"]
 
 ## Use
 
-```
+```sh
 uvx uncoded sync
 ```
 
@@ -76,14 +79,15 @@ automatically:
 Like `ruff format`: if `uncoded sync` modifies any files, the commit
 fails and you stage the updated index before committing again.
 
-You can also set up your CI to run `pre-commit run --all-files` to verify the index is up to date.
+You can also set up your CI to run `pre-commit run --all-files` to verify
+the index is up to date.
 
 ## Verify the index is fresh
 
 For CI or scripted checks that must not modify the working tree, use
 the `check` subcommand:
 
-```
+```sh
 uvx uncoded check
 ```
 
@@ -98,7 +102,7 @@ CI is worthwhile even alongside a pre-commit hook.
 Use the `body` subcommand when you need a symbol's implementation, not just
 its signature from the stub:
 
-```
+```sh
 uvx uncoded body <name_path> --in <relative_path>
 ```
 
@@ -110,7 +114,7 @@ symbol to stdout, byte-identical to what's on disk — no reformatting, no
 
 For example, to retrieve the body of `resolve_body` from `src/uncoded/body.py`:
 
-```
+```sh
 uvx uncoded body resolve_body --in src/uncoded/body.py
 ```
 
@@ -119,18 +123,19 @@ uvx uncoded body resolve_body --in src/uncoded/body.py
 Use the `refs` subcommand for impact analysis: run it before a rename,
 signature change, or delete, or to confirm a symbol is dead before removing it:
 
-```
+```sh
 uvx uncoded refs <name_path> --in <relative_path>
 ```
 
 `name_path` follows the same convention as `body`: one segment for a top-level
 symbol, two for a class member (`Class/method`). Output is one reference per
 line as `<rel_path>:<line>:<col>`, with line and column 1-indexed and results
-sorted by path, then line, then column. Exits 0 on success; empty output means no references.
+sorted by path, then line, then column. Exits 0 on success; empty output
+means no references.
 
 For example, to find all callers of `resolve_body`:
 
-```
+```sh
 uvx uncoded refs resolve_body --in src/uncoded/body.py
 ```
 
@@ -141,12 +146,18 @@ the configured instruction files (by default, `CLAUDE.md` and `AGENTS.md`).
 Agents following that protocol:
 
 1. Read `.uncoded/namespace.yaml` to orient — every symbol, at a glance.
-2. Read the relevant `.pyi` stubs to understand imports, signatures, constants, and class members.
-3. Run `uvx uncoded body <name_path> --in <relative_path>` when they need implementation detail for a specific symbol.
-4. Run `uvx uncoded refs <name_path> --in <relative_path>` to find every reference to a symbol — callers, dead-symbol checks. See [Find references to a symbol](#find-references-to-a-symbol) for detail.
+2. Read the relevant `.pyi` stubs to understand imports, signatures,
+   constants, and class members.
+3. Run `uvx uncoded body <name_path> --in <relative_path>` when they
+   need implementation detail for a specific symbol.
+4. Run `uvx uncoded refs <name_path> --in <relative_path>` to find
+   every reference to a symbol — callers, dead-symbol checks. See
+   [Find references to a symbol](#find-references-to-a-symbol) for detail.
 5. Edit a symbol using `Edit` with `uncoded body`'s output as `old_string`.
-6. Rename across the codebase using `uncoded refs` to enumerate every site, then `Edit` at each.
-7. Safely delete by running `uncoded refs` first — the output must be empty — then `Edit` to remove.
+6. Rename across the codebase using `uncoded refs` to enumerate every site,
+   then `Edit` at each.
+7. Safely delete by running `uncoded refs` first — the output must be
+   empty — then `Edit` to remove.
 
 The split is deliberate: `uncoded` provides a stable map and signature index;
 `uncoded body` resolves a symbol's source body; `uncoded refs` maps every
@@ -162,7 +173,7 @@ find these problems.
 
 Invoke it in Claude Code:
 
-```
+```text
 /coherence-review
 ```
 
@@ -177,7 +188,7 @@ The review works in four sweeps:
    stub; docstrings come from `uncoded body`.
 4. **Structural** — checks for boundary violations (private symbols imported
    across modules), overgrown public surfaces, cross-domain imports, and
-   zero-caller public symbols.
+   zero-reference public symbols.
 
 Output is a timestamped Markdown report saved to `.uncoded/reviews/`, with
 verbatim evidence and a confidence level (high / medium / low) for each
@@ -188,7 +199,7 @@ what to follow up.
 
 Clone, install dependencies, and wire up the pre-commit hooks:
 
-```
+```sh
 git clone https://github.com/alimanfoo/uncoded
 cd uncoded
 uv sync --extra dev
@@ -198,19 +209,19 @@ uv run pre-commit install
 Run the tests (branch coverage is enforced; see `[tool.coverage.report]` in
 `pyproject.toml` for the threshold):
 
-```
+```sh
 uv run pytest
 ```
 
 To run a subset of tests without the coverage gate:
 
-```
+```sh
 uv run pytest tests/test_stubs.py --no-cov
 ```
 
 Run the same checks CI's lint job runs:
 
-```
+```sh
 uv run pre-commit run --all-files
 ```
 

@@ -1,0 +1,5 @@
+config:
+  MD013:
+    line_length: 88
+  MD033: false
+  MD041: false

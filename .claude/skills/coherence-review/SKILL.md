@@ -42,7 +42,7 @@ find these disagreements — not to diagnose root cause and not to fix them.
 ## Prerequisites
 
 Verify by reading `.uncoded/namespace.yaml` — if it exists and is non-empty,
-proceed. If not, stop and tell the user to run `uncoded sync` first; the review
+proceed. If not, stop and tell the user to run `uvx uncoded sync` first; the review
 depends on the index.
 
 The structural sweep uses `uncoded refs` for cross-file reference checks —
@@ -128,7 +128,7 @@ Examine each public symbol's name / signature / docstring triple for internal
 disagreement. Load each source file's stub once for the names and signatures
 across that file's symbols. Then, for each non-trivial public symbol (skip
 trivial one-liners and `__init__` with no meaningful body), run
-`uncoded body <name_path> --in <relative_path>` to read the symbol's source.
+`uvx uncoded body <name_path> --in <relative_path>` to read the symbol's source.
 The docstring is at the top; the rest of the body is available for any
 finding that needs it.
 
@@ -182,7 +182,7 @@ domain; a module in domain A importing from domain B when those domains appear
 meant to be independent. Flag candidates and note the direction; let the human
 decide.
 
-**Zero-caller public symbols.** A public symbol (no leading underscore) with no
+**Zero-reference public symbols.** A public symbol (no leading underscore) with no
 references anywhere in the codebase. Either dead code or an unused API surface.
 
 Check systematically, not by spot-check:
@@ -191,11 +191,11 @@ Check systematically, not by spot-check:
 2. Cross-reference with stub import sections — any symbol imported by another
    source module is live; remove it from the candidate list. This culls the
    obvious cases cheaply.
-3. For remaining candidates, use `uncoded refs <name_path> --in <relative_path>`
-   to verify. Empty output confirms zero callers.
+3. For remaining candidates, use `uvx uncoded refs <name_path> --in <relative_path>`
+   to verify. Empty output confirms no references.
 4. Distinguish two sub-cases when reporting:
-   - *No callers anywhere* — dead code; highest priority.
-   - *Callers only in tests* — the symbol is tested but not used in source;
+   - *No references anywhere* — dead code; highest priority.
+   - *References only in tests* — the symbol is tested but not used in source;
      may be an exposed internal that should be private.
 
 **Redundant public surface.** A public constant and a public parameterless
@@ -203,7 +203,7 @@ function in the same module where the function's sole body is `return
 <constant>`. Both symbols being public exposes an implementation detail
 unnecessarily — only one needs to be public. Detection: use the stubs to find
 public parameterless functions near public constants, then verify each
-candidate body with `uncoded body` before reporting.
+candidate body with `uvx uncoded body` before reporting.
 
 ## Report format
 
@@ -236,9 +236,10 @@ Regions with two or more findings — examine these first:
 
 **Category:** lexical | promissory | structural
 **Symptom:** concept-duplication | qualifier-accretion | vocabulary-island |
-  collision-with-drift | name-signature-mismatch | docstring-signature-mismatch |
-  docstring-name-mismatch | defensive-docstring | god-module |
-  boundary-violation | cross-vocabulary-import | zero-caller
+  collision-with-drift | name-signature-mismatch |
+  docstring-signature-mismatch | docstring-name-mismatch |
+  defensive-docstring | god-module |
+  boundary-violation | cross-vocabulary-import | zero-reference
 **Location:** `path/to/file.py` · `ClassName/method_name`
 **Confidence:** high | medium | low
 
