@@ -51,6 +51,9 @@ def _generate_stubs(files: Iterable[tuple[str, str]]) -> dict[Path, str]:
 def _write_stubs(*, stubs: dict[Path, str], source_root: Path, output_dir: Path, project_root: Path, check: bool) -> int:
     ...
 
+def remove_all_stubs(output_dir: Path, *, project_root: Path, check: bool) -> int:
+    ...
+
 def build_stubs(*, files: Iterable[tuple[str, str]], source_root: Path, output_dir: Path, project_root: Path, check: bool) -> int:
     ...
 

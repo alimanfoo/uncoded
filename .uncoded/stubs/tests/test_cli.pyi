@@ -191,6 +191,9 @@ class TestSyncDocRoots:
     def test_check_returns_one_when_docs_yaml_stale(self, tmp_path, monkeypatch):
         ...
 
+    def test_check_returns_one_when_stubs_should_be_removed(self, tmp_path, monkeypatch):
+        ...
+
     def test_check_returns_one_when_docs_yaml_should_be_removed(self, tmp_path, monkeypatch):
         ...
 

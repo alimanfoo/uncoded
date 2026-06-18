@@ -145,6 +145,7 @@ src/:
       render_stub:
       _generate_stubs:
       _write_stubs:
+      remove_all_stubs:
       build_stubs:
     sync.py:
       sync_file:
@@ -269,6 +270,7 @@ tests/:
       test_source_root_removal_cleans_code_artefacts:
       test_doc_root_removal_cleans_docs_yaml:
       test_check_returns_one_when_docs_yaml_stale:
+      test_check_returns_one_when_stubs_should_be_removed:
       test_check_returns_one_when_docs_yaml_should_be_removed:
       test_idempotent_doc_only:
     _init_repo:
@@ -540,6 +542,15 @@ tests/:
       test_project_root_anchors_writes_independent_of_cwd:
       test_project_root_anchors_orphan_pruning_independent_of_cwd:
       test_source_root_outside_project_root_skips_cleanup:
+    TestRemoveAllStubs:
+      _make_stubs:
+      test_noop_when_output_dir_absent:
+      test_removes_pyi_file_and_directory:
+      test_removes_nested_structure:
+      test_empty_directory_removed:
+      test_check_mode_reports_without_removing:
+      test_check_mode_noop_when_absent:
+      test_returns_count_of_pyi_files:
     _setup:
     _build:
   test_sync.py:

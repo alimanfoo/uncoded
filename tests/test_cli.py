@@ -848,9 +848,7 @@ class TestSyncDocRoots:
         )
         assert cli._sync() == 0
         assert not (tmp_path / ".uncoded" / "namespace.yaml").exists()
-        # _write_stubs prunes .pyi files; the stubs dir root itself may remain empty.
-        stubs_dir = tmp_path / ".uncoded" / "stubs"
-        assert not list(stubs_dir.rglob("*.pyi")) if stubs_dir.exists() else True
+        assert not (tmp_path / ".uncoded" / "stubs").exists()
 
     def test_doc_root_removal_cleans_docs_yaml(self, tmp_path, monkeypatch):
         # First sync with doc-roots; then drop them.
@@ -896,6 +894,42 @@ class TestSyncDocRoots:
         cli._sync()
         # Modify the doc source.
         (tmp_path / "docs" / "guide.md").write_text("# Guide\n## New Section\n")
+        assert cli._sync(check=True) == 1
+
+    def test_check_returns_one_when_stubs_should_be_removed(
+        self, tmp_path, monkeypatch
+    ):
+        # Stubs exist from a prior sync; source-roots dropped → check returns 1.
+        _init_doc_repo(tmp_path, monkeypatch)
+        (tmp_path / "src").mkdir()
+        (tmp_path / "src" / "foo.py").write_text("def hello(): pass\n")
+        (tmp_path / "pyproject.toml").write_text(
+            textwrap.dedent(
+                """\
+                [project]
+                name = "demo"
+
+                [tool.uncoded]
+                source-roots = ["src"]
+                doc-roots = ["docs"]
+                """
+            )
+        )
+        cli._sync()
+        assert (tmp_path / ".uncoded" / "stubs").exists()
+
+        # Drop source-roots.
+        (tmp_path / "pyproject.toml").write_text(
+            textwrap.dedent(
+                """\
+                [project]
+                name = "demo"
+
+                [tool.uncoded]
+                doc-roots = ["docs"]
+                """
+            )
+        )
         assert cli._sync(check=True) == 1
 
     def test_check_returns_one_when_docs_yaml_should_be_removed(

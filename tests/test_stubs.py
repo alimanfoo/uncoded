@@ -13,6 +13,7 @@ from uncoded.stubs import (
     _write_stubs,
     build_stubs,
     extract_stub,
+    remove_all_stubs,
     render_stub,
 )
 
@@ -911,3 +912,72 @@ class TestWriteStubs:
         )
 
         assert changes == 0
+
+
+class TestRemoveAllStubs:
+    def _make_stubs(self, tmp_path, rel_pyi="src/foo.pyi"):
+        """Create a stubs directory with one .pyi file; return (stubs_dir, pyi)."""
+        stubs_dir = tmp_path / ".uncoded" / "stubs"
+        pyi = stubs_dir / rel_pyi
+        pyi.parent.mkdir(parents=True, exist_ok=True)
+        pyi.write_text("# stub\n")
+        return stubs_dir, pyi
+
+    def test_noop_when_output_dir_absent(self, tmp_path):
+        changes = remove_all_stubs(
+            Path(".uncoded/stubs"), project_root=tmp_path, check=False
+        )
+        assert changes == 0
+
+    def test_removes_pyi_file_and_directory(self, tmp_path):
+        stubs_dir, pyi = self._make_stubs(tmp_path)
+        changes = remove_all_stubs(
+            Path(".uncoded/stubs"), project_root=tmp_path, check=False
+        )
+        assert changes == 1
+        assert not pyi.exists()
+        assert not stubs_dir.exists()
+
+    def test_removes_nested_structure(self, tmp_path):
+        stubs_dir, pyi = self._make_stubs(tmp_path, "src/pkg/bar.pyi")
+        changes = remove_all_stubs(
+            Path(".uncoded/stubs"), project_root=tmp_path, check=False
+        )
+        assert changes == 1
+        assert not stubs_dir.exists()
+
+    def test_empty_directory_removed(self, tmp_path):
+        # Stubs dir exists but has no .pyi files — directory still removed.
+        stubs_dir = tmp_path / ".uncoded" / "stubs"
+        stubs_dir.mkdir(parents=True)
+        changes = remove_all_stubs(
+            Path(".uncoded/stubs"), project_root=tmp_path, check=False
+        )
+        assert changes == 0
+        assert not stubs_dir.exists()
+
+    def test_check_mode_reports_without_removing(self, tmp_path):
+        stubs_dir, pyi = self._make_stubs(tmp_path)
+        changes = remove_all_stubs(
+            Path(".uncoded/stubs"), project_root=tmp_path, check=True
+        )
+        assert changes == 1
+        assert pyi.exists()
+        assert stubs_dir.exists()
+
+    def test_check_mode_noop_when_absent(self, tmp_path):
+        changes = remove_all_stubs(
+            Path(".uncoded/stubs"), project_root=tmp_path, check=True
+        )
+        assert changes == 0
+
+    def test_returns_count_of_pyi_files(self, tmp_path):
+        stubs_dir = tmp_path / ".uncoded" / "stubs"
+        (stubs_dir / "src").mkdir(parents=True)
+        (stubs_dir / "src" / "a.pyi").write_text("# a\n")
+        (stubs_dir / "src" / "b.pyi").write_text("# b\n")
+        changes = remove_all_stubs(
+            Path(".uncoded/stubs"), project_root=tmp_path, check=False
+        )
+        assert changes == 2
+        assert not stubs_dir.exists()

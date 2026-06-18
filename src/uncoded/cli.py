@@ -13,7 +13,7 @@ from uncoded.namespace_map import build_map, render_map
 from uncoded.refs import find_refs
 from uncoded.resolver import NamePath, SymbolNotFound, UnsupportedNamePath
 from uncoded.skill import sync_skill
-from uncoded.stubs import build_stubs
+from uncoded.stubs import build_stubs, remove_all_stubs
 from uncoded.sync import remove_file, sync_file
 
 
@@ -102,13 +102,8 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
             Path(".uncoded/namespace.yaml"), project_root=project_root, check=check
         ):
             changes += 1
-        # Reuse build_stubs orphan-pruning with source_root=project_root so
-        # its _write_stubs computes source_rel=Path(".") and prunes the
-        # entire .uncoded/stubs/ tree, matching the per-source-root pattern.
-        changes += build_stubs(
-            files=[],
-            source_root=project_root,
-            output_dir=Path(".uncoded/stubs"),
+        changes += remove_all_stubs(
+            Path(".uncoded/stubs"),
             project_root=project_root,
             check=check,
         )

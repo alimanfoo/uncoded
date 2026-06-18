@@ -4,7 +4,7 @@ import textwrap
 from pathlib import Path
 import pytest
 from uncoded.extract import iter_source_files
-from uncoded.stubs import StubAssignment, StubClass, StubFunction, StubModule, StubParam, _write_stubs, build_stubs, extract_stub, render_stub
+from uncoded.stubs import StubAssignment, StubClass, StubFunction, StubModule, StubParam, _write_stubs, build_stubs, extract_stub, remove_all_stubs, render_stub
 
 def _setup(tmp_path):
     ...
@@ -204,4 +204,29 @@ class TestWriteStubs:
         ...
 
     def test_source_root_outside_project_root_skips_cleanup(self, tmp_path):
+        ...
+
+class TestRemoveAllStubs:
+    def _make_stubs(self, tmp_path, rel_pyi):
+        ...
+
+    def test_noop_when_output_dir_absent(self, tmp_path):
+        ...
+
+    def test_removes_pyi_file_and_directory(self, tmp_path):
+        ...
+
+    def test_removes_nested_structure(self, tmp_path):
+        ...
+
+    def test_empty_directory_removed(self, tmp_path):
+        ...
+
+    def test_check_mode_reports_without_removing(self, tmp_path):
+        ...
+
+    def test_check_mode_noop_when_absent(self, tmp_path):
+        ...
+
+    def test_returns_count_of_pyi_files(self, tmp_path):
         ...

@@ -390,6 +390,43 @@ def _write_stubs(
     return changes
 
 
+def remove_all_stubs(output_dir: Path, *, project_root: Path, check: bool) -> int:
+    """Remove all .pyi stubs under output_dir, then remove the root directory.
+
+    Removes every .pyi file under ``output_dir``, reporting each as
+    apply/check mode dictates, then (in apply mode) prunes now-empty
+    directories deepest-first and removes the root itself. In check mode,
+    reports prospective removals without touching disk. Returns the number
+    of files removed (or that would be).
+    """
+    project_root = project_root.resolve()
+    abs_output_dir = project_root / output_dir
+    if not abs_output_dir.exists():
+        return 0
+
+    changes = 0
+    for pyi_file in sorted(abs_output_dir.rglob("*.pyi")):
+        display = pyi_file.relative_to(project_root)
+        if remove_file(  # pragma: no branch
+            display, project_root=project_root, check=check
+        ):
+            changes += 1
+
+    if check:
+        return changes
+
+    # After removing all .pyi files, rglob("*") returns only directories.
+    for d in sorted(
+        abs_output_dir.rglob("*"), key=lambda p: len(p.parts), reverse=True
+    ):
+        if d.is_dir() and not any(d.iterdir()):  # pragma: no branch
+            d.rmdir()
+    if not any(abs_output_dir.iterdir()):  # pragma: no branch
+        abs_output_dir.rmdir()
+
+    return changes
+
+
 def build_stubs(
     *,
     files: Iterable[tuple[str, str]],

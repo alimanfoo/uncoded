@@ -12,7 +12,7 @@ from uncoded.namespace_map import build_map, render_map
 from uncoded.refs import find_refs
 from uncoded.resolver import NamePath, SymbolNotFound, UnsupportedNamePath
 from uncoded.skill import sync_skill
-from uncoded.stubs import build_stubs
+from uncoded.stubs import build_stubs, remove_all_stubs
 from uncoded.sync import remove_file, sync_file
 
 def _sync(*, start: Path | None, check: bool) -> int:
