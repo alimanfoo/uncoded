@@ -11,6 +11,9 @@ DOCS_HEADER = """\
 #
 # Pure key hierarchy (no lists, no values); indent to zoom in.
 # Directory keys end with "/". Leaf headings map to null.
+#
+# A " (N)" suffix marks the Nth occurrence of a repeated heading at that level.
+# To navigate to it, grep the base heading text and take the Nth match.
 """
 
 
