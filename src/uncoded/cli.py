@@ -94,13 +94,12 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
             m for _root, files in roots_with_files for m in extract_modules(files)
         ]
         map_content = render_map(build_map(modules))
-        if sync_file(
+        changes += sync_file(
             Path(".uncoded/namespace.yaml"),
             map_content,
             project_root=project_root,
             check=check,
-        ):
-            changes += 1
+        )
         for src_root, files in roots_with_files:
             changes += build_stubs(
                 files=files,
@@ -110,10 +109,9 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
                 check=check,
             )
     else:
-        if remove_file(
+        changes += remove_file(
             Path(".uncoded/namespace.yaml"), project_root=project_root, check=check
-        ):
-            changes += 1
+        )
         changes += remove_all_stubs(
             Path(".uncoded/stubs"),
             project_root=project_root,
@@ -148,18 +146,16 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
         for dr in doc_roots:
             all_doc_files.extend(iter_doc_files(dr, project_root))
         docs_content = render_docs_map(build_docs_map(all_doc_files))
-        if sync_file(
+        changes += sync_file(
             Path(".uncoded/docs.yaml"),
             docs_content,
             project_root=project_root,
             check=check,
-        ):
-            changes += 1
+        )
     else:
-        if remove_file(
+        changes += remove_file(
             Path(".uncoded/docs.yaml"), project_root=project_root, check=check
-        ):
-            changes += 1
+        )
 
     # Instruction sections — each present only when its root type is configured.
     code_section = SECTION_CODE if config.source_roots else None
@@ -183,17 +179,15 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
             canonical = resolved.relative_to(project_root)
         except ValueError:
             canonical = resolved
-        if sync_instruction_file(
+        changes += sync_instruction_file(
             canonical,
             code_section=code_section,
             docs_section=docs_section,
             project_root=project_root,
             check=check,
-        ):
-            changes += 1
+        )
 
-    if sync_skill(project_root=project_root, check=check):
-        changes += 1
+    changes += sync_skill(project_root=project_root, check=check)
 
     if check:
         if changes:
