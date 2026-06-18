@@ -6,7 +6,7 @@ from pathlib import Path
 from uncoded.body import resolve_body
 from uncoded.config import read_config
 from uncoded.extract import extract_modules, iter_source_files
-from uncoded.instruction_files import sync_instruction_file
+from uncoded.instruction_files import SECTION_CODE, sync_instruction_file
 from uncoded.namespace_map import build_map, render_map
 from uncoded.refs import find_refs
 from uncoded.resolver import NamePath, SymbolNotFound, UnsupportedNamePath

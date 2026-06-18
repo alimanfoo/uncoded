@@ -7,7 +7,7 @@ from pathlib import Path
 from uncoded.body import resolve_body
 from uncoded.config import read_config
 from uncoded.extract import extract_modules, iter_source_files
-from uncoded.instruction_files import sync_instruction_file
+from uncoded.instruction_files import SECTION_CODE, sync_instruction_file
 from uncoded.namespace_map import build_map, render_map
 from uncoded.refs import find_refs
 from uncoded.resolver import NamePath, SymbolNotFound, UnsupportedNamePath
@@ -112,7 +112,13 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
             canonical = resolved.relative_to(project_root)
         except ValueError:
             canonical = resolved
-        if sync_instruction_file(canonical, project_root=project_root, check=check):
+        if sync_instruction_file(
+            canonical,
+            code_section=SECTION_CODE,
+            docs_section=None,
+            project_root=project_root,
+            check=check,
+        ):
             changes += 1
 
     if sync_skill(project_root=project_root, check=check):
