@@ -1,9 +1,20 @@
 """Read project metadata and uncoded configuration from pyproject.toml."""
 
 import tomllib
+from dataclasses import dataclass
 from pathlib import Path
 
 from uncoded.instruction_files import DEFAULT_INSTRUCTION_FILES
+
+
+@dataclass(frozen=True)
+class Config:
+    """Uncoded configuration loaded from a project's config file."""
+
+    project_root: Path
+    source_roots: list[Path]
+    doc_roots: list[Path]
+    instruction_files: list[Path]
 
 
 def find_pyproject_toml(start: Path) -> Path | None:
@@ -19,46 +30,38 @@ def find_pyproject_toml(start: Path) -> Path | None:
         current = parent
 
 
-def read_source_roots(pyproject_path: Path) -> list[Path]:
-    """Read source roots from ``[tool.uncoded] source-roots``.
+def read_config(start: Path) -> Config | None:
+    """Locate pyproject.toml and read all uncoded settings from it.
 
-    Reads the section from the given ``pyproject.toml`` (which the
-    caller must guarantee exists). Raises :class:`LookupError` if the
-    section is missing. Returns the configured paths as a list of
-    :class:`Path` instances on success.
+    Walks up from ``start``. Returns None if no pyproject.toml is found.
+    A found pyproject.toml with no ``[tool.uncoded]`` section returns a
+    Config with empty root lists — the caller is responsible for raising
+    a "nothing to index" error when both root lists are empty.
     """
+    pyproject_path = find_pyproject_toml(start)
+    if pyproject_path is None:
+        return None
+
     with pyproject_path.open("rb") as f:
         data = tomllib.load(f)
 
     try:
-        roots = data["tool"]["uncoded"]["source-roots"]
+        section = data["tool"]["uncoded"]
     except KeyError:
-        raise LookupError(
-            "No [tool.uncoded] source-roots found in pyproject.toml. "
-            "Add [tool.uncoded] source-roots to configure."
-        ) from None
+        section = {}
 
-    return [Path(r) for r in roots]
+    source_roots = [Path(r) for r in section.get("source-roots", [])]
+    doc_roots = [Path(r) for r in section.get("doc-roots", [])]
 
+    raw_instruction_files = section.get("instruction-files")
+    if raw_instruction_files is None:
+        instruction_files = list(DEFAULT_INSTRUCTION_FILES)
+    else:
+        instruction_files = [Path(f) for f in raw_instruction_files]
 
-def read_instruction_files(start: Path) -> list[Path]:
-    """Read ``[tool.uncoded] instruction-files`` from ``pyproject.toml``.
-
-    ``start`` is the directory the upward walk begins from. Falls back
-    to ``DEFAULT_INSTRUCTION_FILES`` if the key is absent or no
-    ``pyproject.toml`` is found, so that ``uncoded`` works on a fresh
-    repo without explicit configuration.
-    """
-    toml_path = find_pyproject_toml(start)
-    if toml_path is None:
-        return list(DEFAULT_INSTRUCTION_FILES)
-
-    with toml_path.open("rb") as f:
-        data = tomllib.load(f)
-
-    try:
-        files = data["tool"]["uncoded"]["instruction-files"]
-    except KeyError:
-        return list(DEFAULT_INSTRUCTION_FILES)
-
-    return [Path(f) for f in files]
+    return Config(
+        project_root=pyproject_path.parent,
+        source_roots=source_roots,
+        doc_roots=doc_roots,
+        instruction_files=instruction_files,
+    )

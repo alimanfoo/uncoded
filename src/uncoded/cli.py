@@ -5,11 +5,7 @@ import sys
 from pathlib import Path
 
 from uncoded.body import resolve_body
-from uncoded.config import (
-    find_pyproject_toml,
-    read_instruction_files,
-    read_source_roots,
-)
+from uncoded.config import read_config
 from uncoded.extract import extract_modules, iter_source_files
 from uncoded.instruction_files import sync_instruction_file
 from uncoded.namespace_map import build_map, render_map
@@ -20,32 +16,15 @@ from uncoded.stubs import build_stubs
 from uncoded.sync import sync_file
 
 
-def _find_project_root(*, start: Path) -> Path | None:
-    """Return the project root for start, or None if no pyproject.toml is found.
-
-    Prints the error message to stderr before returning None so the caller
-    only needs to check the return value and return 1.
-    """
-    pyproject_path = find_pyproject_toml(start)
-    if pyproject_path is None:
-        print(
-            "Error: No pyproject.toml found. "
-            "Create one with a [tool.uncoded] source-roots entry.",
-            file=sys.stderr,
-        )
-        return None
-    return pyproject_path.parent
-
-
 def _sync(*, start: Path | None = None, check: bool = False) -> int:
     """Sync (or verify) the namespace map, stub files, and instruction-file sections.
 
-    The upward walk for ``pyproject.toml`` begins at ``start`` (defaulting
+    The upward walk for the config file begins at ``start`` (defaulting
     to the current working directory at the CLI boundary). The parent of
-    the located ``pyproject.toml`` becomes ``project_root``: the single
-    anchor every writer uses for project-relative paths it reads or
-    writes. Running from a subdirectory of the project produces artefacts
-    in the same locations as running from the project root.
+    the located config file becomes ``project_root``: the single anchor
+    every writer uses for project-relative paths it reads or writes.
+    Running from a subdirectory of the project produces artefacts in the
+    same locations as running from the project root.
 
     When ``check=True``, the on-disk tree is not mutated; the function
     reports each prospective write, returns 1 if anything would change
@@ -55,18 +34,27 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
     if start is None:
         start = Path.cwd()
 
-    project_root = _find_project_root(start=start)
-    if project_root is None:
+    config = read_config(start)
+    if config is None:
+        print(
+            "Error: No pyproject.toml found. "
+            "Create one with a [tool.uncoded] source-roots entry.",
+            file=sys.stderr,
+        )
         return 1
 
-    try:
-        configured_roots = read_source_roots(project_root / "pyproject.toml")
-    except LookupError as e:
-        print(f"Error: {e}", file=sys.stderr)
+    if not config.source_roots and not config.doc_roots:
+        print(
+            "Error: nothing to index. "
+            "Add source-roots or doc-roots to [tool.uncoded] in pyproject.toml.",
+            file=sys.stderr,
+        )
         return 1
+
+    project_root = config.project_root
 
     source_roots: list[Path] = []
-    for configured in configured_roots:
+    for configured in config.source_roots:
         src_root = (project_root / configured).resolve()
         if not src_root.is_dir():
             print(
@@ -114,7 +102,7 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
     # ``project_root`` for the user-facing line, falling back to the
     # absolute resolved path when the file lives outside ``project_root``.
     seen_resolved: set[Path] = set()
-    for path in read_instruction_files(project_root):
+    for path in config.instruction_files:
         resolved = (project_root / path).resolve()
         if resolved in seen_resolved:
             continue

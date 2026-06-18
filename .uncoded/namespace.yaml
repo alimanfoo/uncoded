@@ -18,15 +18,18 @@ src/:
       resolve_body:
       _extract_body:
     cli.py:
-      _find_project_root:
       _sync:
       _body:
       _refs:
       main:
     config.py:
+      Config:
+        project_root:
+        source_roots:
+        doc_roots:
+        instruction_files:
       find_pyproject_toml:
-      read_source_roots:
-      read_instruction_files:
+      read_config:
     extract.py:
       ClassInfo:
         name:
@@ -245,14 +248,17 @@ tests/:
       test_finds_at_start:
       test_finds_in_parent_of_start:
       test_returns_none_if_not_found:
-    TestReadSourceRoots:
-      test_reads_source_roots:
-      test_raises_if_no_uncoded_section:
-    TestReadInstructionFiles:
-      test_returns_default_when_no_pyproject_toml:
-      test_returns_default_when_key_absent:
-      test_reads_configured_list:
-      test_empty_list_is_respected:
+    TestReadConfig:
+      test_returns_none_when_no_pyproject:
+      test_source_roots_read:
+      test_doc_roots_read:
+      test_both_roots_empty_when_section_absent:
+      test_project_root_is_pyproject_parent:
+      test_finds_in_parent_directory:
+      test_instruction_files_default_when_key_absent:
+      test_instruction_files_configured:
+      test_instruction_files_empty_list_respected:
+      test_returns_frozen_dataclass:
   test_extract.py:
     TestExtractModuleFromSource:
       test_classes_and_functions:
