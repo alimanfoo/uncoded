@@ -37,8 +37,8 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
     config = read_config(start)
     if config is None:
         print(
-            "Error: No pyproject.toml found. "
-            "Create one with a [tool.uncoded] source-roots entry.",
+            "Error: No pyproject.toml or .uncoded.toml found. "
+            "Create one to configure uncoded.",
             file=sys.stderr,
         )
         return 1
@@ -46,7 +46,8 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
     if not config.source_roots and not config.doc_roots:
         print(
             "Error: nothing to index. "
-            "Add source-roots or doc-roots to [tool.uncoded] in pyproject.toml.",
+            "Add source-roots or doc-roots to [tool.uncoded] in pyproject.toml, "
+            "or as top-level keys in .uncoded.toml.",
             file=sys.stderr,
         )
         return 1
@@ -59,7 +60,7 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
         if not src_root.is_dir():
             print(
                 f"Error: source root {configured} is not a directory. "
-                "Check [tool.uncoded] source-roots in pyproject.toml.",
+                "Check source-roots in your uncoded config file.",
                 file=sys.stderr,
             )
             return 1

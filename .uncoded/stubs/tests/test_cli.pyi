@@ -24,7 +24,7 @@ class TestSyncApplyMode:
     def test_instruction_file_outside_project_uses_absolute_path(self, tmp_path, monkeypatch):
         ...
 
-    def test_error_when_no_pyproject_toml(self, tmp_path, monkeypatch, capsys):
+    def test_error_when_no_config_file(self, tmp_path, monkeypatch, capsys):
         ...
 
     def test_error_when_source_root_missing(self, tmp_path, monkeypatch, capsys):

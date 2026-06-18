@@ -130,25 +130,24 @@ class TestSyncApplyMode:
         assert outside_file.exists()
         assert "<!-- uncoded:start -->" in outside_file.read_text()
 
-    def test_error_when_no_pyproject_toml(self, tmp_path, monkeypatch, capsys):
-        # Pins the problem statement, the recovery hint pointing at
-        # [tool.uncoded] source-roots, and the absence of any absolute
-        # path leak (this site's message has no path today; pinning
-        # the absence guards against future regressions).
+    def test_error_when_no_config_file(self, tmp_path, monkeypatch, capsys):
+        # Pins the problem statement (names both supported config files)
+        # and the absence of any absolute path leak.
         monkeypatch.chdir(tmp_path)
 
         assert cli._sync() == 1
 
         err = capsys.readouterr().err
-        assert "Error: No pyproject.toml found." in err
-        assert "Create one with a [tool.uncoded] source-roots entry." in err
+        assert "Error:" in err
+        assert "pyproject.toml" in err
+        assert ".uncoded.toml" in err
         assert str(tmp_path) not in err
 
     def test_error_when_source_root_missing(self, tmp_path, monkeypatch, capsys):
         # The message must (a) report the source-root path as the user
-        # typed it in [tool.uncoded] source-roots, not the resolved
-        # absolute path (which leaks the developer's filesystem layout),
-        # and (b) include a recovery hint pointing at the config key.
+        # typed it in source-roots, not the resolved absolute path (which
+        # leaks the developer's filesystem layout), and (b) include a
+        # recovery hint that names the config file.
         (tmp_path / "pyproject.toml").write_text(
             textwrap.dedent(
                 """\
@@ -166,14 +165,14 @@ class TestSyncApplyMode:
 
         err = capsys.readouterr().err
         assert "Error: source root nope is not a directory." in err
-        assert "Check [tool.uncoded] source-roots in pyproject.toml." in err
+        assert "source-roots" in err
+        assert "config" in err
         assert str(tmp_path) not in err
 
     def test_error_when_uncoded_section_missing(self, tmp_path, monkeypatch, capsys):
         # User has pyproject.toml but no [tool.uncoded] section, so both
         # root lists are empty. The message must name both configurable
-        # keys (source-roots and doc-roots) so the user knows either one
-        # would satisfy the check.
+        # keys and both config file options.
         (tmp_path / "pyproject.toml").write_text("[tool.ruff]\n")
         monkeypatch.chdir(tmp_path)
 
@@ -183,6 +182,7 @@ class TestSyncApplyMode:
         assert "nothing to index" in err
         assert "source-roots" in err
         assert "doc-roots" in err
+        assert ".uncoded.toml" in err
 
     def test_skip_warning_emitted_once_per_broken_file(
         self, tmp_path, monkeypatch, capsys

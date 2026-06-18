@@ -29,6 +29,7 @@ src/:
         doc_roots:
         instruction_files:
       find_pyproject_toml:
+      _find_config_file:
       read_config:
     extract.py:
       ClassInfo:
@@ -198,7 +199,7 @@ tests/:
       test_idempotent_second_run:
       test_dedupes_when_claude_md_is_symlink_to_agents_md:
       test_instruction_file_outside_project_uses_absolute_path:
-      test_error_when_no_pyproject_toml:
+      test_error_when_no_config_file:
       test_error_when_source_root_missing:
       test_error_when_uncoded_section_missing:
       test_skip_warning_emitted_once_per_broken_file:
@@ -249,16 +250,22 @@ tests/:
       test_finds_in_parent_of_start:
       test_returns_none_if_not_found:
     TestReadConfig:
-      test_returns_none_when_no_pyproject:
-      test_source_roots_read:
-      test_doc_roots_read:
+      test_returns_none_when_no_config_file:
+      test_source_roots_read_from_pyproject:
+      test_doc_roots_read_from_pyproject:
       test_both_roots_empty_when_section_absent:
-      test_project_root_is_pyproject_parent:
-      test_finds_in_parent_directory:
+      test_project_root_is_config_file_parent:
+      test_finds_pyproject_in_parent_directory:
       test_instruction_files_default_when_key_absent:
       test_instruction_files_configured:
       test_instruction_files_empty_list_respected:
       test_returns_frozen_dataclass:
+      test_finds_uncoded_toml_when_no_pyproject:
+      test_uncoded_toml_top_level_keys:
+      test_pyproject_wins_when_both_in_same_directory:
+      test_uncoded_toml_wins_when_nearer_than_pyproject:
+      test_pyproject_wins_when_nearer_than_uncoded_toml:
+      test_skips_uncoded_directory_as_config_home:
   test_extract.py:
     TestExtractModuleFromSource:
       test_classes_and_functions:

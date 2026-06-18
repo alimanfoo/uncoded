@@ -15,22 +15,22 @@ class TestFindPyprojectToml:
         ...
 
 class TestReadConfig:
-    def test_returns_none_when_no_pyproject(self, tmp_path):
+    def test_returns_none_when_no_config_file(self, tmp_path):
         ...
 
-    def test_source_roots_read(self, tmp_path):
+    def test_source_roots_read_from_pyproject(self, tmp_path):
         ...
 
-    def test_doc_roots_read(self, tmp_path):
+    def test_doc_roots_read_from_pyproject(self, tmp_path):
         ...
 
     def test_both_roots_empty_when_section_absent(self, tmp_path):
         ...
 
-    def test_project_root_is_pyproject_parent(self, tmp_path):
+    def test_project_root_is_config_file_parent(self, tmp_path):
         ...
 
-    def test_finds_in_parent_directory(self, tmp_path):
+    def test_finds_pyproject_in_parent_directory(self, tmp_path):
         ...
 
     def test_instruction_files_default_when_key_absent(self, tmp_path):
@@ -43,4 +43,22 @@ class TestReadConfig:
         ...
 
     def test_returns_frozen_dataclass(self, tmp_path):
+        ...
+
+    def test_finds_uncoded_toml_when_no_pyproject(self, tmp_path):
+        ...
+
+    def test_uncoded_toml_top_level_keys(self, tmp_path):
+        ...
+
+    def test_pyproject_wins_when_both_in_same_directory(self, tmp_path):
+        ...
+
+    def test_uncoded_toml_wins_when_nearer_than_pyproject(self, tmp_path):
+        ...
+
+    def test_pyproject_wins_when_nearer_than_uncoded_toml(self, tmp_path):
+        ...
+
+    def test_skips_uncoded_directory_as_config_home(self, tmp_path):
         ...

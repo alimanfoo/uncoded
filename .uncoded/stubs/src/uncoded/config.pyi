@@ -8,6 +8,9 @@ from uncoded.instruction_files import DEFAULT_INSTRUCTION_FILES
 def find_pyproject_toml(start: Path) -> Path | None:
     ...
 
+def _find_config_file(*, start: Path) -> Path | None:
+    ...
+
 def read_config(start: Path) -> Config | None:
     ...
 
