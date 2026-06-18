@@ -80,8 +80,7 @@ def sync_instruction_file(
 
     The file is written to ``project_root / path``. The log line still
     names ``path`` as given, so messages stay project-relative
-    regardless of where the caller is running from. If ``path`` is
-    absolute, it's used as-is and ``project_root`` has no effect.
+    regardless of where the caller is running from.
     """
     target = project_root / path
     if not target.exists() and code_section is None and docs_section is None:

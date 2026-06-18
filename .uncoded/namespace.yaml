@@ -577,7 +577,6 @@ tests/:
     TestSyncFileProjectRootAnchor:
       test_project_root_anchors_write_independent_of_cwd:
       test_project_root_preserves_relative_path_in_message:
-      test_absolute_path_makes_project_root_a_no_op:
     TestRemoveFileProjectRootAnchor:
       test_project_root_anchors_removal_independent_of_cwd:
   test_uncoded.py:
