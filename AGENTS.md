@@ -15,7 +15,7 @@ The agent loads the index at the start of a task, sees the full vocabulary
 of the code, and navigates deterministically to what it needs — no guessing,
 no grep.
 
-Two-level index:
+Index artefacts — generated from the configured roots:
 
 1. **Namespace map** (`.uncoded/namespace.yaml`) — a hierarchical YAML file
    listing all symbols: directories, files, classes (with attributes
@@ -25,6 +25,12 @@ Two-level index:
 2. **Stub files** (`.uncoded/stubs/`) — one `.pyi` per source file, with
    imports, full signatures (parameter names, types, return types),
    module constants, and class attributes.
+
+3. **Doc map** (`.uncoded/docs.yaml`) — a heading outline of every Markdown
+   file in configured `doc-roots`. Each file nests its ATX headings as keys.
+   Agents load this to orient to the documentation, then navigate to a
+   heading with `Read` or `grep`. Generated only when `doc-roots` is set.
+   Outline only — no `uncoded body`, `uncoded refs`, or stubs for Markdown.
 
 Alongside the index, uncoded ships `uncoded body` to read symbol bodies and
 `uncoded refs` to find all references. See "How to read and edit code in
@@ -37,8 +43,8 @@ via `uvx` so they run the published package without needing to install it;
 run project tooling (`pytest`, `pre-commit`) via `uv run`.
 
 ```sh
-# Generate (or update) the namespace map, stub files, and
-# instruction-file section
+# Generate (or update) the namespace map, stub files, docs.yaml,
+# and instruction-file sections
 uvx uncoded sync
 
 # Verify the index without writing; exits non-zero if any file would change
@@ -165,3 +171,10 @@ Edit, and grep stay correct:
 The dispatch rule turns on the search term: a symbol name → the index; a
 regex or free-text phrase → grep.
 <!-- uncoded:end -->
+<!-- uncoded:docs:start -->
+## How to read documentation in this codebase
+
+`.uncoded/docs.yaml` is an orientation outline: it lists every Markdown file
+and its heading hierarchy. Headings are literal text — use `Read` or `grep`
+to navigate to a section.
+<!-- uncoded:docs:end -->

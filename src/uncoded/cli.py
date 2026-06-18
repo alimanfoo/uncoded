@@ -5,129 +5,192 @@ import sys
 from pathlib import Path
 
 from uncoded.body import resolve_body
-from uncoded.config import (
-    find_pyproject_toml,
-    read_instruction_files,
-    read_source_roots,
-)
+from uncoded.config import ConfigError, read_config
+from uncoded.docs_map import build_docs_map, iter_doc_files, render_docs_map
 from uncoded.extract import extract_modules, iter_source_files
-from uncoded.instruction_files import sync_instruction_file
+from uncoded.instruction_files import SECTION_CODE, SECTION_DOCS, sync_instruction_file
 from uncoded.namespace_map import build_map, render_map
 from uncoded.refs import find_refs
 from uncoded.resolver import NamePath, SymbolNotFound, UnsupportedNamePath
 from uncoded.skill import sync_skill
-from uncoded.stubs import build_stubs
-from uncoded.sync import sync_file
-
-
-def _find_project_root(*, start: Path) -> Path | None:
-    """Return the project root for start, or None if no pyproject.toml is found.
-
-    Prints the error message to stderr before returning None so the caller
-    only needs to check the return value and return 1.
-    """
-    pyproject_path = find_pyproject_toml(start)
-    if pyproject_path is None:
-        print(
-            "Error: No pyproject.toml found. "
-            "Create one with a [tool.uncoded] source-roots entry.",
-            file=sys.stderr,
-        )
-        return None
-    return pyproject_path.parent
+from uncoded.stubs import build_stubs, remove_all_stubs
+from uncoded.sync import remove_file, sync_file
 
 
 def _sync(*, start: Path | None = None, check: bool = False) -> int:
-    """Sync (or verify) the namespace map, stub files, and instruction-file sections.
+    """Sync (or verify) the index artefacts for each configured root type.
 
-    The upward walk for ``pyproject.toml`` begins at ``start`` (defaulting
+    The upward walk for the config file begins at ``start`` (defaulting
     to the current working directory at the CLI boundary). The parent of
-    the located ``pyproject.toml`` becomes ``project_root``: the single
-    anchor every writer uses for project-relative paths it reads or
-    writes. Running from a subdirectory of the project produces artefacts
-    in the same locations as running from the project root.
+    the located config file becomes ``project_root``: the single anchor
+    every writer uses for project-relative paths it reads or writes.
+    Running from a subdirectory of the project produces artefacts in the
+    same locations as running from the project root.
+
+    source-roots drive code artefacts (namespace.yaml, stubs); doc-roots
+    drive doc artefacts (docs.yaml). Each root type is independent: when
+    a root type is absent its artefacts are removed. At least one root
+    type must be configured.
 
     When ``check=True``, the on-disk tree is not mutated; the function
-    reports each prospective write, returns 1 if anything would change
-    (so CI can gate on a stale index), and 0 otherwise. Configuration
-    errors return 1 in either mode.
+    reports each prospective write or removal, returns 1 if anything
+    would change, and 0 otherwise. Configuration errors return 1.
     """
     if start is None:
         start = Path.cwd()
 
-    project_root = _find_project_root(start=start)
-    if project_root is None:
-        return 1
-
     try:
-        configured_roots = read_source_roots(project_root / "pyproject.toml")
-    except LookupError as e:
+        config = read_config(start)
+    except ConfigError as e:
         print(f"Error: {e}", file=sys.stderr)
         return 1
+    if config is None:
+        print(
+            "Error: No pyproject.toml or .uncoded.toml found. "
+            "Create one to configure uncoded.",
+            file=sys.stderr,
+        )
+        return 1
 
-    source_roots: list[Path] = []
-    for configured in configured_roots:
-        src_root = (project_root / configured).resolve()
-        if not src_root.is_dir():
-            print(
-                f"Error: source root {configured} is not a directory. "
-                "Check [tool.uncoded] source-roots in pyproject.toml.",
-                file=sys.stderr,
-            )
-            return 1
-        source_roots.append(src_root)
+    if not config.source_roots and not config.doc_roots:
+        print(
+            "Error: nothing to index. "
+            "Add source-roots or doc-roots to [tool.uncoded] in pyproject.toml, "
+            "or as top-level keys in .uncoded.toml.",
+            file=sys.stderr,
+        )
+        return 1
 
+    project_root = config.project_root
+    resolved_project_root = project_root.resolve()
     changes = 0
 
-    roots_with_files = [
-        (src_root, list(iter_source_files(src_root, project_root=project_root)))
-        for src_root in source_roots
-    ]
+    # Code artefacts — build when source_roots configured, else remove.
+    if config.source_roots:
+        source_roots: list[Path] = []
+        for configured in config.source_roots:
+            src_root = (project_root / configured).resolve()
+            if not src_root.is_relative_to(resolved_project_root):
+                print(
+                    f"Error: source root {configured} is outside the project root. "
+                    "Check source-roots in your uncoded config file.",
+                    file=sys.stderr,
+                )
+                return 1
+            if not src_root.is_dir():
+                print(
+                    f"Error: source root {configured} is not a directory. "
+                    "Check source-roots in your uncoded config file.",
+                    file=sys.stderr,
+                )
+                return 1
+            source_roots.append(src_root)
 
-    modules = [
-        m for _src_root, files in roots_with_files for m in extract_modules(files)
-    ]
-    map_content = render_map(build_map(modules))
-    if sync_file(
-        Path(".uncoded/namespace.yaml"),
-        map_content,
-        project_root=project_root,
-        check=check,
-    ):
-        changes += 1
-
-    for src_root, files in roots_with_files:
-        changes += build_stubs(
-            files=files,
-            source_root=src_root,
-            output_dir=Path(".uncoded/stubs"),
+        roots_with_files = [
+            (src_root, list(iter_source_files(src_root, project_root=project_root)))
+            for src_root in source_roots
+        ]
+        modules = [
+            m for _root, files in roots_with_files for m in extract_modules(files)
+        ]
+        map_content = render_map(build_map(modules))
+        changes += sync_file(
+            Path(".uncoded/namespace.yaml"),
+            map_content,
             project_root=project_root,
             check=check,
         )
+        for src_root, files in roots_with_files:
+            changes += build_stubs(
+                files=files,
+                source_root=src_root,
+                output_dir=Path(".uncoded/stubs"),
+                project_root=project_root,
+                check=check,
+            )
+    else:
+        changes += remove_file(
+            Path(".uncoded/namespace.yaml"), project_root=project_root, check=check
+        )
+        changes += remove_all_stubs(
+            Path(".uncoded/stubs"),
+            project_root=project_root,
+            check=check,
+        )
+
+    # Doc artefacts — build when doc_roots configured, else remove.
+    if config.doc_roots:
+        doc_roots: list[Path] = []
+        for configured in config.doc_roots:
+            doc_root = (project_root / configured).resolve()
+            if not doc_root.is_relative_to(resolved_project_root):
+                print(
+                    f"Error: doc root {configured} is outside the project root. "
+                    "Check doc-roots in your uncoded config file.",
+                    file=sys.stderr,
+                )
+                return 1
+            is_valid = doc_root.is_dir() or (
+                doc_root.is_file() and doc_root.suffix == ".md"
+            )
+            if not is_valid:
+                print(
+                    f"Error: doc root {configured} is not a directory or .md file. "
+                    "Check doc-roots in your uncoded config file.",
+                    file=sys.stderr,
+                )
+                return 1
+            doc_roots.append(doc_root)
+
+        all_doc_files = []
+        for dr in doc_roots:
+            all_doc_files.extend(iter_doc_files(dr, project_root))
+        docs_content = render_docs_map(build_docs_map(all_doc_files))
+        changes += sync_file(
+            Path(".uncoded/docs.yaml"),
+            docs_content,
+            project_root=project_root,
+            check=check,
+        )
+    else:
+        changes += remove_file(
+            Path(".uncoded/docs.yaml"), project_root=project_root, check=check
+        )
+
+    # Instruction sections — each present only when its root type is configured.
+    code_section = SECTION_CODE if config.source_roots else None
+    docs_section = SECTION_DOCS if config.doc_roots else None
 
     # Dedupe configured instruction paths by resolved (canonical) path.
     # Without this, if CLAUDE.md is a symlink to AGENTS.md, pass 1 writes
     # through the symlink and reports the alias name while pass 2 finds
     # the file already in sync and reports nothing — asymmetric output
     # that hides the actual write target. Resolving collapses both aliases
-    # to the same canonical path, which we render relative to
-    # ``project_root`` for the user-facing line, falling back to the
-    # absolute resolved path when the file lives outside ``project_root``.
+    # to the same canonical path, rendered project-relative. An instruction
+    # file that resolves outside the project root is a configuration error.
     seen_resolved: set[Path] = set()
-    for path in read_instruction_files(project_root):
+    for path in config.instruction_files:
         resolved = (project_root / path).resolve()
         if resolved in seen_resolved:
             continue
         seen_resolved.add(resolved)
-        try:
-            canonical = resolved.relative_to(project_root)
-        except ValueError:
-            canonical = resolved
-        if sync_instruction_file(canonical, project_root=project_root, check=check):
-            changes += 1
+        if not resolved.is_relative_to(resolved_project_root):
+            print(
+                f"Error: instruction file {path} is outside the project root. "
+                "Check instruction-files in your uncoded config file.",
+                file=sys.stderr,
+            )
+            return 1
+        canonical = resolved.relative_to(project_root)
+        changes += sync_instruction_file(
+            canonical,
+            code_section=code_section,
+            docs_section=docs_section,
+            project_root=project_root,
+            check=check,
+        )
 
-    if sync_skill(project_root=project_root, check=check):
-        changes += 1
+    changes += sync_skill(project_root=project_root, check=check)
 
     if check:
         if changes:

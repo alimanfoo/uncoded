@@ -2,9 +2,8 @@
 
 from pathlib import Path
 
-import yaml
-
 from uncoded.extract import ModuleInfo
+from uncoded.yaml_tree import render_yaml_tree
 
 HEADER = """\
 # Symbol index of this codebase, for agent navigation.
@@ -16,21 +15,6 @@ HEADER = """\
 # For signatures and types, see stubs:
 #   src/foo/bar.py  →  .uncoded/stubs/src/foo/bar.pyi
 """
-
-
-class _CleanDumper(yaml.SafeDumper):
-    """YAML dumper that indents list items and suppresses 'null' values."""
-
-    def increase_indent(self, flow=False, indentless=False):
-        """Force list items to be indented relative to their parent key."""
-        return super().increase_indent(flow, False)
-
-
-# Render None as empty rather than "null" so leaf symbols appear as just "name:"
-_CleanDumper.add_representer(
-    type(None),
-    lambda dumper, _: dumper.represent_scalar("tag:yaml.org,2002:null", ""),
-)
 
 
 def build_map(modules: list[ModuleInfo]) -> dict:
@@ -74,10 +58,4 @@ def build_map(modules: list[ModuleInfo]) -> dict:
 
 def render_map(namespace: dict) -> str:
     """Render a namespace map dict as a YAML string with an explanatory header."""
-    body = yaml.dump(
-        namespace,
-        Dumper=_CleanDumper,
-        default_flow_style=False,
-        sort_keys=False,
-    )
-    return HEADER + "\n" + body
+    return render_yaml_tree(HEADER, namespace)

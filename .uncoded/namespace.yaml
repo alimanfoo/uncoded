@@ -18,15 +18,29 @@ src/:
       resolve_body:
       _extract_body:
     cli.py:
-      _find_project_root:
       _sync:
       _body:
       _refs:
       main:
     config.py:
+      ConfigError:
+      Config:
+        project_root:
+        source_roots:
+        doc_roots:
+        instruction_files:
       find_pyproject_toml:
-      read_source_roots:
-      read_instruction_files:
+      _has_uncoded_section:
+      _find_config_file:
+      read_config:
+    docs_map.py:
+      DOCS_HEADER:
+      extract_headings:
+      _unique_key:
+      _collapse_empty:
+      iter_doc_files:
+      build_docs_map:
+      render_docs_map:
     extract.py:
       ClassInfo:
         name:
@@ -43,15 +57,17 @@ src/:
     instruction_files.py:
       MARKER_START:
       MARKER_END:
+      MARKER_DOCS_START:
+      MARKER_DOCS_END:
       DEFAULT_INSTRUCTION_FILES:
-      _SECTION_BODY:
-      SECTION:
-      _replace_or_append:
+      _CODE_SECTION_BODY:
+      SECTION_CODE:
+      _DOCS_SECTION_BODY:
+      SECTION_DOCS:
+      _apply_section:
       sync_instruction_file:
     namespace_map.py:
       HEADER:
-      _CleanDumper:
-        increase_indent:
       build_map:
       render_map:
     refs.py:
@@ -131,10 +147,15 @@ src/:
       render_stub:
       _generate_stubs:
       _write_stubs:
+      remove_all_stubs:
       build_stubs:
     sync.py:
       sync_file:
       remove_file:
+    yaml_tree.py:
+      _CleanDumper:
+        increase_indent:
+      render_yaml_tree:
 tests/:
   test_body.py:
     TestResolveBodyTopLevel:
@@ -192,10 +213,12 @@ tests/:
       test_writes_namespace_map_stubs_and_instruction_file:
       test_idempotent_second_run:
       test_dedupes_when_claude_md_is_symlink_to_agents_md:
-      test_instruction_file_outside_project_uses_absolute_path:
-      test_error_when_no_pyproject_toml:
+      test_error_when_instruction_file_outside_project_root:
+      test_error_when_no_config_file:
+      test_error_when_source_root_outside_project_root:
       test_error_when_source_root_missing:
       test_error_when_uncoded_section_missing:
+      test_error_when_both_config_files_configure_uncoded:
       test_skip_warning_emitted_once_per_broken_file:
       test_anchors_reads_and_writes_at_project_root_when_cwd_is_subdir:
       test_artefacts_match_when_run_from_subdir_vs_project_root:
@@ -237,20 +260,99 @@ tests/:
       test_zero_references_exits_zero_with_empty_stdout:
       test_multiple_references_prints_sorted:
       test_lsp_failure_exits_one:
+    TestSyncDocRoots:
+      test_doc_only_writes_docs_yaml:
+      test_doc_only_does_not_write_namespace_yaml:
+      test_doc_only_does_not_write_stubs:
+      test_doc_only_instruction_file_has_docs_section_only:
+      test_doc_root_single_md_file:
+      test_error_when_doc_root_missing:
+      test_error_when_doc_root_is_non_md_file:
+      test_error_when_doc_root_outside_project_root:
+      test_both_roots_writes_both_artefacts:
+      test_both_roots_instruction_file_has_both_sections:
+      test_source_root_removal_cleans_code_artefacts:
+      test_doc_root_removal_cleans_docs_yaml:
+      test_check_returns_one_when_docs_yaml_stale:
+      test_check_returns_one_when_stubs_should_be_removed:
+      test_check_returns_one_when_docs_yaml_should_be_removed:
+      test_idempotent_doc_only:
     _init_repo:
+    _init_doc_repo:
   test_config.py:
     TestFindPyprojectToml:
       test_finds_at_start:
       test_finds_in_parent_of_start:
       test_returns_none_if_not_found:
-    TestReadSourceRoots:
-      test_reads_source_roots:
-      test_raises_if_no_uncoded_section:
-    TestReadInstructionFiles:
-      test_returns_default_when_no_pyproject_toml:
-      test_returns_default_when_key_absent:
-      test_reads_configured_list:
-      test_empty_list_is_respected:
+    TestReadConfig:
+      test_returns_none_when_no_config_file:
+      test_source_roots_read_from_pyproject:
+      test_doc_roots_read_from_pyproject:
+      test_both_roots_empty_when_section_absent:
+      test_project_root_is_config_file_parent:
+      test_finds_pyproject_in_parent_directory:
+      test_instruction_files_default_when_key_absent:
+      test_instruction_files_configured:
+      test_instruction_files_empty_list_respected:
+      test_returns_frozen_dataclass:
+      test_finds_uncoded_toml_when_no_pyproject:
+      test_uncoded_toml_top_level_keys:
+      test_error_when_both_configure_uncoded_in_same_directory:
+      test_uncoded_toml_wins_over_bare_pyproject:
+      test_uncoded_toml_wins_when_nearer_than_pyproject:
+      test_pyproject_wins_when_nearer_than_uncoded_toml:
+      test_uncoded_pyproject_and_uncoded_toml_in_different_dirs_no_error:
+      test_skips_uncoded_directory_as_config_home:
+  test_docs_map.py:
+    TestExtractHeadings:
+      test_empty_text:
+      test_h1_through_h6:
+      test_trailing_hashes_stripped:
+      test_trailing_hashes_with_surrounding_spaces_stripped:
+      test_trailing_hashes_multiple_stripped:
+      test_hash_attached_to_word_preserved:
+      test_multiple_hashes_attached_to_words_preserved:
+      test_hash_attached_to_word_with_closing_sequence:
+      test_seven_hashes_not_a_heading:
+      test_no_space_after_hash_not_a_heading:
+      test_hash_only_not_a_heading:
+      test_empty_title_not_a_heading:
+      test_setext_underline_equals_not_a_heading:
+      test_setext_underline_dashes_not_a_heading:
+      test_backtick_fence_suppresses_headings:
+      test_tilde_fence_suppresses_headings:
+      test_fence_with_info_string:
+      test_unclosed_fence_suppresses_rest_of_file:
+      test_tilde_does_not_close_backtick_fence:
+      test_backtick_does_not_close_tilde_fence:
+      test_preserves_order:
+      test_title_with_special_chars:
+      test_leading_spaces_not_a_heading:
+    TestIterDocFiles:
+      test_single_file_root:
+      test_directory_walk_yields_md_files:
+      test_directory_walk_sorted:
+      test_directory_excludes_non_md:
+      test_directory_nested_subdir:
+      test_empty_directory_yields_nothing:
+      test_rel_path_is_relative_to_project_root:
+    TestBuildDocsMap:
+      test_empty_files:
+      test_headingless_file_maps_to_null:
+      test_single_heading:
+      test_nesting_parent_child:
+      test_level_skip_attaches_to_nearest_shallower:
+      test_heading_returns_to_same_level:
+      test_heading_not_starting_at_h1:
+      test_duplicate_sibling_disambiguation:
+      test_duplicate_increments_past_existing_suffix:
+      test_directory_structure_dir_key_has_trailing_slash:
+      test_two_files_in_same_directory:
+      test_multiple_files_flat:
+    TestRenderDocsMap:
+      test_header_present:
+      test_yaml_parseable:
+      test_null_renders_clean:
   test_extract.py:
     TestExtractModuleFromSource:
       test_classes_and_functions:
@@ -280,18 +382,32 @@ tests/:
       test_module_with_only_constants_is_kept:
       test_skips_files_with_no_symbols:
   test_instruction_files.py:
-    TestSection:
+    TestCodeSection:
       test_contains_markers:
       test_markers_in_order:
       test_ends_with_newline:
+    TestDocsSection:
+      test_contains_markers:
+      test_markers_in_order:
+      test_ends_with_newline:
+      test_mentions_docs_yaml:
     TestSyncInstructionFile:
-      test_creates_file_if_missing:
-      test_appends_to_existing_file:
-      test_replaces_existing_section:
-      test_preserves_content_after_section:
+      test_creates_file_with_code_section:
+      test_appends_code_section_to_existing_file:
+      test_replaces_existing_code_section:
+      test_preserves_content_after_code_section:
+      test_removes_code_section_on_none:
+      test_appends_docs_section:
+      test_removes_docs_section_on_none:
+      test_both_sections_appended_in_order:
+      test_both_sections_replaced_independently:
+      test_code_only_does_not_write_docs_markers:
+      test_docs_only_does_not_write_code_markers:
       test_idempotent:
       test_returns_true_on_first_write:
       test_returns_false_when_clean:
+      test_returns_false_when_both_none_and_file_absent:
+      test_remove_section_absent_is_noop:
     TestSyncInstructionFileCheckMode:
       test_does_not_create_file:
       test_does_not_update_existing_file:
@@ -432,6 +548,15 @@ tests/:
       test_project_root_anchors_writes_independent_of_cwd:
       test_project_root_anchors_orphan_pruning_independent_of_cwd:
       test_source_root_outside_project_root_skips_cleanup:
+    TestRemoveAllStubs:
+      _make_stubs:
+      test_noop_when_output_dir_absent:
+      test_removes_pyi_file_and_directory:
+      test_removes_nested_structure:
+      test_empty_directory_removed:
+      test_check_mode_reports_without_removing:
+      test_check_mode_noop_when_absent:
+      test_returns_count_of_pyi_files:
     _setup:
     _build:
   test_sync.py:
@@ -452,7 +577,6 @@ tests/:
     TestSyncFileProjectRootAnchor:
       test_project_root_anchors_write_independent_of_cwd:
       test_project_root_preserves_relative_path_in_message:
-      test_absolute_path_makes_project_root_a_no_op:
     TestRemoveFileProjectRootAnchor:
       test_project_root_anchors_removal_independent_of_cwd:
   test_uncoded.py:

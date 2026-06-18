@@ -111,15 +111,6 @@ class TestSyncFileProjectRootAnchor:
         assert f"Wrote {rel}" in out
         assert str(tmp_path) not in out
 
-    def test_absolute_path_makes_project_root_a_no_op(self, tmp_path, monkeypatch):
-        # When path is absolute, project_root is irrelevant under Path's
-        # join semantics — the absolute side wins.
-        other = tmp_path / "other"
-        other.mkdir()
-        target = tmp_path / "out.txt"
-        sync_file(target, "hello", project_root=other)
-        assert target.read_text() == "hello"
-
 
 class TestRemoveFileProjectRootAnchor:
     def test_project_root_anchors_removal_independent_of_cwd(

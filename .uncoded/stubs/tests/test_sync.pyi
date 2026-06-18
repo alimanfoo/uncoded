@@ -48,9 +48,6 @@ class TestSyncFileProjectRootAnchor:
     def test_project_root_preserves_relative_path_in_message(self, tmp_path, monkeypatch, capsys):
         ...
 
-    def test_absolute_path_makes_project_root_a_no_op(self, tmp_path, monkeypatch):
-        ...
-
 class TestRemoveFileProjectRootAnchor:
     def test_project_root_anchors_removal_independent_of_cwd(self, tmp_path, monkeypatch):
         ...

@@ -26,13 +26,21 @@ and immediately know the full vocabulary of the codebase.
 signatures (parameter names, types, return types), module constants, and
 class attributes.
 
+**`.uncoded/docs.yaml`** — a heading outline of configured Markdown files.
+Each file nests its ATX headings as keys; leaf headings map to null. Agents
+load this to orient to the documentation, then navigate to a heading with
+`Read` or `grep`. Generated only when `doc-roots` is configured. Outline
+only — `uncoded body`, `uncoded refs`, and stubs do not apply to Markdown.
+
 **`.claude/skills/coherence-review/SKILL.md`** and
 **`.agents/skills/coherence-review/SKILL.md`** — a coherence review skill,
 written to both Claude Code and Codex skill directories (see
 [Coherence review](#coherence-review) below).
 
-`uncoded` also injects a navigation protocol into `CLAUDE.md`/`AGENTS.md`,
-so agents working in the repo pick up the instructions automatically.
+`uncoded` also injects navigation sections into `CLAUDE.md`/`AGENTS.md`.
+The code-navigation section appears when `source-roots` is configured; the
+docs-navigation section appears when `doc-roots` is configured. Each section
+is present only when its root type is set.
 
 ## Install uv
 
@@ -47,7 +55,27 @@ Add a `[tool.uncoded]` section to your `pyproject.toml`:
 ```toml
 [tool.uncoded]
 source-roots = ["src", "tests"]
+doc-roots = ["docs", "README.md"]  # dirs walked for *.md, or individual .md files
 ```
+
+`source-roots` and `doc-roots` are each optional; at least one must be set.
+`source-roots` drives the code index (namespace.yaml + stubs). `doc-roots`
+drives the doc index (docs.yaml). Entries in `doc-roots` can be directories
+(all `*.md` files walked recursively) or individual `.md` files.
+
+**Non-Python repos** can use `.uncoded.toml` in the project root instead,
+with the same keys at the top level — no `[tool.uncoded]` wrapper needed:
+
+```toml
+doc-roots = ["docs"]
+```
+
+`pyproject.toml` takes precedence over a sibling `.uncoded.toml` only when it
+carries a `[tool.uncoded]` section; a bare `pyproject.toml` does not shadow a
+sibling `.uncoded.toml`. If both files configure uncoded in the same directory,
+`uncoded` reports a configuration error — configure in one file only. Across
+directories, the nearer file wins. Neither file is ever read from inside the
+`.uncoded/` directory.
 
 ## Use
 
@@ -55,8 +83,9 @@ source-roots = ["src", "tests"]
 uvx uncoded sync
 ```
 
-Run it from the repo root. It reads `pyproject.toml` to find your source
-roots, builds the index, and updates `CLAUDE.md`/`AGENTS.md`.
+Run it from the repo root. It reads `pyproject.toml` (or `.uncoded.toml`)
+to find your configured roots, builds the index, and updates
+`CLAUDE.md`/`AGENTS.md`.
 
 Commit the generated `.uncoded/` directory so agents working
 in the repo always have a current index.
@@ -145,7 +174,10 @@ When `uncoded` is set up, a navigation section is automatically maintained in
 the configured instruction files (by default, `CLAUDE.md` and `AGENTS.md`).
 Agents following that protocol:
 
-1. Read `.uncoded/namespace.yaml` to orient — every symbol, at a glance.
+1. Load the orientation artefacts. Read `.uncoded/namespace.yaml` — every
+   symbol, at a glance. When `doc-roots` is configured, also read
+   `.uncoded/docs.yaml` — the heading outline of all docs. Headings are
+   literal text; use `Read` or `grep` to navigate to a section.
 2. Read the relevant `.pyi` stubs to understand imports, signatures,
    constants, and class members.
 3. Run `uvx uncoded body <name_path> --in <relative_path>` when they
@@ -159,9 +191,10 @@ Agents following that protocol:
 7. Safely delete by running `uncoded refs` first — the output must be
    empty — then `Edit` to remove.
 
-The split is deliberate: `uncoded` provides a stable map and signature index;
-`uncoded body` resolves a symbol's source body; `uncoded refs` maps every
-reference. No grep, no stale line-number coordinates, no offset arithmetic.
+The split is deliberate: `uncoded` provides a stable map and signature index
+(code through namespace.yaml, docs through docs.yaml); `uncoded body` resolves
+a symbol's source body; `uncoded refs` maps every reference. No grep, no stale
+line-number coordinates, no offset arithmetic.
 
 ## Coherence review
 

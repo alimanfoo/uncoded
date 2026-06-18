@@ -1,0 +1,10 @@
+# src/uncoded/yaml_tree.py
+
+import yaml
+
+def render_yaml_tree(header: str, mapping: dict) -> str:
+    ...
+
+class _CleanDumper(yaml.SafeDumper):
+    def increase_indent(self, flow, indentless):
+        ...

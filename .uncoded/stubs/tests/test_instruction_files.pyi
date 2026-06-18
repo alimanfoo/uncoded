@@ -1,9 +1,9 @@
 # tests/test_instruction_files.py
 
 from pathlib import Path
-from uncoded.instruction_files import MARKER_END, MARKER_START, SECTION, sync_instruction_file
+from uncoded.instruction_files import MARKER_DOCS_END, MARKER_DOCS_START, MARKER_END, MARKER_START, SECTION_CODE, SECTION_DOCS, sync_instruction_file
 
-class TestSection:
+class TestCodeSection:
     def test_contains_markers(self):
         ...
 
@@ -13,17 +13,51 @@ class TestSection:
     def test_ends_with_newline(self):
         ...
 
+class TestDocsSection:
+    def test_contains_markers(self):
+        ...
+
+    def test_markers_in_order(self):
+        ...
+
+    def test_ends_with_newline(self):
+        ...
+
+    def test_mentions_docs_yaml(self):
+        ...
+
 class TestSyncInstructionFile:
-    def test_creates_file_if_missing(self, tmp_path):
+    def test_creates_file_with_code_section(self, tmp_path):
         ...
 
-    def test_appends_to_existing_file(self, tmp_path):
+    def test_appends_code_section_to_existing_file(self, tmp_path):
         ...
 
-    def test_replaces_existing_section(self, tmp_path):
+    def test_replaces_existing_code_section(self, tmp_path):
         ...
 
-    def test_preserves_content_after_section(self, tmp_path):
+    def test_preserves_content_after_code_section(self, tmp_path):
+        ...
+
+    def test_removes_code_section_on_none(self, tmp_path):
+        ...
+
+    def test_appends_docs_section(self, tmp_path):
+        ...
+
+    def test_removes_docs_section_on_none(self, tmp_path):
+        ...
+
+    def test_both_sections_appended_in_order(self, tmp_path):
+        ...
+
+    def test_both_sections_replaced_independently(self, tmp_path):
+        ...
+
+    def test_code_only_does_not_write_docs_markers(self, tmp_path):
+        ...
+
+    def test_docs_only_does_not_write_code_markers(self, tmp_path):
         ...
 
     def test_idempotent(self, tmp_path):
@@ -33,6 +67,12 @@ class TestSyncInstructionFile:
         ...
 
     def test_returns_false_when_clean(self, tmp_path):
+        ...
+
+    def test_returns_false_when_both_none_and_file_absent(self, tmp_path):
+        ...
+
+    def test_remove_section_absent_is_noop(self, tmp_path):
         ...
 
 class TestSyncInstructionFileCheckMode:
