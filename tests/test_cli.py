@@ -649,3 +649,253 @@ class TestRefsCommand:
             assert cli._refs(name_path="foo", in_path="m.py") == 1
 
         assert "ty error" in capsys.readouterr().err
+
+
+def _init_doc_repo(tmp_path, monkeypatch, doc_roots=("docs",)):
+    """Set up a minimal doc-only repo: pyproject.toml + doc dir + chdir."""
+    roots_list = ", ".join(f'"{r}"' for r in doc_roots)
+    (tmp_path / "pyproject.toml").write_text(
+        textwrap.dedent(
+            f"""\
+            [project]
+            name = "demo"
+
+            [tool.uncoded]
+            doc-roots = [{roots_list}]
+            """
+        )
+    )
+    for root in doc_roots:
+        doc_dir = tmp_path / root
+        doc_dir.mkdir(parents=True, exist_ok=True)
+        (doc_dir / "guide.md").write_text("# Guide\n## Setup\n")
+    monkeypatch.chdir(tmp_path)
+
+
+class TestSyncDocRoots:
+    def test_doc_only_writes_docs_yaml(self, tmp_path, monkeypatch):
+        _init_doc_repo(tmp_path, monkeypatch)
+        assert cli._sync() == 0
+        assert (tmp_path / ".uncoded" / "docs.yaml").exists()
+
+    def test_doc_only_does_not_write_namespace_yaml(self, tmp_path, monkeypatch):
+        _init_doc_repo(tmp_path, monkeypatch)
+        assert cli._sync() == 0
+        assert not (tmp_path / ".uncoded" / "namespace.yaml").exists()
+
+    def test_doc_only_does_not_write_stubs(self, tmp_path, monkeypatch):
+        _init_doc_repo(tmp_path, monkeypatch)
+        assert cli._sync() == 0
+        assert not (tmp_path / ".uncoded" / "stubs").exists()
+
+    def test_doc_only_instruction_file_has_docs_section_only(
+        self, tmp_path, monkeypatch
+    ):
+        from uncoded.instruction_files import MARKER_DOCS_START, MARKER_START
+
+        _init_doc_repo(tmp_path, monkeypatch)
+        assert cli._sync() == 0
+        content = (tmp_path / "CLAUDE.md").read_text()
+        assert MARKER_DOCS_START in content
+        assert MARKER_START not in content
+
+    def test_doc_root_single_md_file(self, tmp_path, monkeypatch):
+        readme = tmp_path / "README.md"
+        readme.write_text("# Overview\n## Usage\n")
+        (tmp_path / "pyproject.toml").write_text(
+            '[project]\nname = "demo"\n\n[tool.uncoded]\ndoc-roots = ["README.md"]\n'
+        )
+        monkeypatch.chdir(tmp_path)
+        assert cli._sync() == 0
+        docs_yaml = (tmp_path / ".uncoded" / "docs.yaml").read_text()
+        assert "README.md" in docs_yaml
+
+    def test_error_when_doc_root_missing(self, tmp_path, monkeypatch, capsys):
+        (tmp_path / "pyproject.toml").write_text(
+            '[project]\nname = "demo"\n\n[tool.uncoded]\ndoc-roots = ["nope"]\n'
+        )
+        monkeypatch.chdir(tmp_path)
+        assert cli._sync() == 1
+        err = capsys.readouterr().err
+        assert "Error: doc root nope" in err
+        assert "doc-roots" in err
+
+    def test_error_when_doc_root_is_non_md_file(self, tmp_path, monkeypatch, capsys):
+        rst_file = tmp_path / "readme.rst"
+        rst_file.write_text("= Title\n")
+        (tmp_path / "pyproject.toml").write_text(
+            '[project]\nname = "demo"\n\n[tool.uncoded]\ndoc-roots = ["readme.rst"]\n'
+        )
+        monkeypatch.chdir(tmp_path)
+        assert cli._sync() == 1
+        err = capsys.readouterr().err
+        assert "Error: doc root readme.rst" in err
+
+    def test_both_roots_writes_both_artefacts(self, tmp_path, monkeypatch):
+        (tmp_path / "pyproject.toml").write_text(
+            textwrap.dedent(
+                """\
+                [project]
+                name = "demo"
+
+                [tool.uncoded]
+                source-roots = ["src"]
+                doc-roots = ["docs"]
+                """
+            )
+        )
+        (tmp_path / "src").mkdir()
+        (tmp_path / "src" / "foo.py").write_text("def hello(): pass\n")
+        docs = tmp_path / "docs"
+        docs.mkdir()
+        (docs / "guide.md").write_text("# Guide\n")
+        monkeypatch.chdir(tmp_path)
+
+        assert cli._sync() == 0
+        assert (tmp_path / ".uncoded" / "namespace.yaml").exists()
+        assert (tmp_path / ".uncoded" / "docs.yaml").exists()
+
+    def test_both_roots_instruction_file_has_both_sections(self, tmp_path, monkeypatch):
+        from uncoded.instruction_files import MARKER_DOCS_START, MARKER_START
+
+        (tmp_path / "pyproject.toml").write_text(
+            textwrap.dedent(
+                """\
+                [project]
+                name = "demo"
+
+                [tool.uncoded]
+                source-roots = ["src"]
+                doc-roots = ["docs"]
+                """
+            )
+        )
+        (tmp_path / "src").mkdir()
+        docs = tmp_path / "docs"
+        docs.mkdir()
+        (docs / "guide.md").write_text("# Guide\n")
+        monkeypatch.chdir(tmp_path)
+
+        assert cli._sync() == 0
+        content = (tmp_path / "CLAUDE.md").read_text()
+        assert MARKER_START in content
+        assert MARKER_DOCS_START in content
+
+    def test_source_root_removal_cleans_code_artefacts(self, tmp_path, monkeypatch):
+        # First sync with source-roots; then reconfigure to doc-only.
+        # namespace.yaml and stubs must be removed.
+        (tmp_path / "pyproject.toml").write_text(
+            textwrap.dedent(
+                """\
+                [project]
+                name = "demo"
+
+                [tool.uncoded]
+                source-roots = ["src"]
+                doc-roots = ["docs"]
+                """
+            )
+        )
+        (tmp_path / "src").mkdir()
+        (tmp_path / "src" / "foo.py").write_text("def hello(): pass\n")
+        docs = tmp_path / "docs"
+        docs.mkdir()
+        (docs / "guide.md").write_text("# Guide\n")
+        monkeypatch.chdir(tmp_path)
+        cli._sync()
+
+        assert (tmp_path / ".uncoded" / "namespace.yaml").exists()
+        assert (tmp_path / ".uncoded" / "stubs").exists()
+
+        # Drop source-roots.
+        (tmp_path / "pyproject.toml").write_text(
+            textwrap.dedent(
+                """\
+                [project]
+                name = "demo"
+
+                [tool.uncoded]
+                doc-roots = ["docs"]
+                """
+            )
+        )
+        assert cli._sync() == 0
+        assert not (tmp_path / ".uncoded" / "namespace.yaml").exists()
+        # _write_stubs prunes .pyi files; the stubs dir root itself may remain empty.
+        stubs_dir = tmp_path / ".uncoded" / "stubs"
+        assert not list(stubs_dir.rglob("*.pyi")) if stubs_dir.exists() else True
+
+    def test_doc_root_removal_cleans_docs_yaml(self, tmp_path, monkeypatch):
+        # First sync with doc-roots; then drop them.
+        # docs.yaml must be removed.
+        (tmp_path / "pyproject.toml").write_text(
+            textwrap.dedent(
+                """\
+                [project]
+                name = "demo"
+
+                [tool.uncoded]
+                source-roots = ["src"]
+                doc-roots = ["docs"]
+                """
+            )
+        )
+        (tmp_path / "src").mkdir()
+        docs = tmp_path / "docs"
+        docs.mkdir()
+        (docs / "guide.md").write_text("# Guide\n")
+        monkeypatch.chdir(tmp_path)
+        cli._sync()
+
+        assert (tmp_path / ".uncoded" / "docs.yaml").exists()
+
+        # Drop doc-roots.
+        (tmp_path / "pyproject.toml").write_text(
+            textwrap.dedent(
+                """\
+                [project]
+                name = "demo"
+
+                [tool.uncoded]
+                source-roots = ["src"]
+                """
+            )
+        )
+        assert cli._sync() == 0
+        assert not (tmp_path / ".uncoded" / "docs.yaml").exists()
+
+    def test_check_returns_one_when_docs_yaml_stale(self, tmp_path, monkeypatch):
+        _init_doc_repo(tmp_path, monkeypatch)
+        cli._sync()
+        # Modify the doc source.
+        (tmp_path / "docs" / "guide.md").write_text("# Guide\n## New Section\n")
+        assert cli._sync(check=True) == 1
+
+    def test_check_returns_one_when_docs_yaml_should_be_removed(
+        self, tmp_path, monkeypatch
+    ):
+        # docs.yaml exists but doc_roots is now absent — check must report.
+        _init_doc_repo(tmp_path, monkeypatch)
+        cli._sync()
+        assert (tmp_path / ".uncoded" / "docs.yaml").exists()
+
+        (tmp_path / "pyproject.toml").write_text(
+            textwrap.dedent(
+                """\
+                [project]
+                name = "demo"
+
+                [tool.uncoded]
+                source-roots = ["src"]
+                """
+            )
+        )
+        (tmp_path / "src").mkdir()
+        assert cli._sync(check=True) == 1
+
+    def test_idempotent_doc_only(self, tmp_path, monkeypatch):
+        _init_doc_repo(tmp_path, monkeypatch)
+        cli._sync()
+        docs_mtime = (tmp_path / ".uncoded" / "docs.yaml").stat().st_mtime_ns
+        assert cli._sync() == 0
+        assert (tmp_path / ".uncoded" / "docs.yaml").stat().st_mtime_ns == docs_mtime

@@ -255,7 +255,23 @@ tests/:
       test_zero_references_exits_zero_with_empty_stdout:
       test_multiple_references_prints_sorted:
       test_lsp_failure_exits_one:
+    TestSyncDocRoots:
+      test_doc_only_writes_docs_yaml:
+      test_doc_only_does_not_write_namespace_yaml:
+      test_doc_only_does_not_write_stubs:
+      test_doc_only_instruction_file_has_docs_section_only:
+      test_doc_root_single_md_file:
+      test_error_when_doc_root_missing:
+      test_error_when_doc_root_is_non_md_file:
+      test_both_roots_writes_both_artefacts:
+      test_both_roots_instruction_file_has_both_sections:
+      test_source_root_removal_cleans_code_artefacts:
+      test_doc_root_removal_cleans_docs_yaml:
+      test_check_returns_one_when_docs_yaml_stale:
+      test_check_returns_one_when_docs_yaml_should_be_removed:
+      test_idempotent_doc_only:
     _init_repo:
+    _init_doc_repo:
   test_config.py:
     TestFindPyprojectToml:
       test_finds_at_start:
