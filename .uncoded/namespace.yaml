@@ -50,8 +50,6 @@ src/:
       sync_instruction_file:
     namespace_map.py:
       HEADER:
-      _CleanDumper:
-        increase_indent:
       build_map:
       render_map:
     refs.py:
@@ -135,6 +133,10 @@ src/:
     sync.py:
       sync_file:
       remove_file:
+    yaml_tree.py:
+      _CleanDumper:
+        increase_indent:
+      render_yaml_tree:
 tests/:
   test_body.py:
     TestResolveBodyTopLevel:
