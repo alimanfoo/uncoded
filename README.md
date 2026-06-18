@@ -70,8 +70,12 @@ with the same keys at the top level — no `[tool.uncoded]` wrapper needed:
 doc-roots = ["docs"]
 ```
 
-When both files exist in the same directory, `pyproject.toml` wins. Neither
-file is ever read from inside the `.uncoded/` directory.
+`pyproject.toml` takes precedence over a sibling `.uncoded.toml` only when it
+carries a `[tool.uncoded]` section; a bare `pyproject.toml` does not shadow a
+sibling `.uncoded.toml`. If both files configure uncoded in the same directory,
+`uncoded` reports a configuration error — configure in one file only. Across
+directories, the nearer file wins. Neither file is ever read from inside the
+`.uncoded/` directory.
 
 ## Use
 
