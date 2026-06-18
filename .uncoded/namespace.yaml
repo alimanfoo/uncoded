@@ -300,6 +300,10 @@ tests/:
       test_h1_through_h6:
       test_trailing_hashes_stripped:
       test_trailing_hashes_with_surrounding_spaces_stripped:
+      test_trailing_hashes_multiple_stripped:
+      test_hash_attached_to_word_preserved:
+      test_multiple_hashes_attached_to_words_preserved:
+      test_hash_attached_to_word_with_closing_sequence:
       test_seven_hashes_not_a_heading:
       test_no_space_after_hash_not_a_heading:
       test_hash_only_not_a_heading:

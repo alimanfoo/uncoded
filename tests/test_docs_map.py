@@ -32,6 +32,21 @@ class TestExtractHeadings:
     def test_trailing_hashes_with_surrounding_spaces_stripped(self):
         assert extract_headings("## Title ## \n") == [(2, "Title")]
 
+    def test_trailing_hashes_multiple_stripped(self):
+        assert extract_headings("## Done ###\n") == [(2, "Done")]
+
+    def test_hash_attached_to_word_preserved(self):
+        # C# — the # is not preceded by whitespace, so it is not a closing
+        # sequence and must be kept in the title.
+        assert extract_headings("## Using C#\n") == [(2, "Using C#")]
+
+    def test_multiple_hashes_attached_to_words_preserved(self):
+        assert extract_headings("## C# vs F#\n") == [(2, "C# vs F#")]
+
+    def test_hash_attached_to_word_with_closing_sequence(self):
+        # Closing sequence (space + ##) is stripped; C# in the middle is kept.
+        assert extract_headings("## C# intro ##\n") == [(2, "C# intro")]
+
     def test_seven_hashes_not_a_heading(self):
         assert extract_headings("####### Too many\n") == []
 

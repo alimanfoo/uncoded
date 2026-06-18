@@ -18,10 +18,13 @@ def extract_headings(text: str) -> list[tuple[int, str]]:
     """Return the ATX headings in ``text`` as ordered (level, title) pairs.
 
     Recognises ATX headings only: 1–6 ``#`` followed by a space and a
-    non-empty title. Trailing runs of ``#`` are stripped. Lines inside
-    fenced code blocks (opened by a line starting with ```` ``` ```` or
-    ``~~~``, closed by the matching marker) are not headings. Setext
-    underlines are never recognised.
+    non-empty title. A trailing ``#`` run is stripped only when it forms
+    a CommonMark closing sequence — preceded by whitespace, or the title
+    consists entirely of ``#`` characters. A ``#`` attached to the final
+    word (e.g. ``C#``) is preserved. Lines inside fenced code blocks
+    (opened by a line starting with ```` ``` ```` or ``~~~``, closed by
+    the matching marker) are not headings. Setext underlines are never
+    recognised.
 
     Corners not in the criterion:
     - Indented headings: the ``#`` must be at column 0; leading spaces
@@ -58,7 +61,13 @@ def extract_headings(text: str) -> list[tuple[int, str]]:
         if level > 6 or level >= len(line) or line[level] != " ":
             continue
 
-        title = line[level + 1 :].rstrip().rstrip("#").rstrip()
+        title = line[level + 1 :].strip()
+        # Strip a trailing # run only when it is a CommonMark closing
+        # sequence: preceded by whitespace, or the title is entirely #s.
+        if title.endswith("#"):
+            stripped = title.rstrip("#")
+            if not stripped or stripped[-1] in " \t":
+                title = stripped.rstrip()
         if title:
             headings.append((level, title))
 
