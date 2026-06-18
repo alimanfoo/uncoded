@@ -62,6 +62,7 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
         return 1
 
     project_root = config.project_root
+    resolved_project_root = project_root.resolve()
     changes = 0
 
     # Code artefacts — build when source_roots configured, else remove.
@@ -69,6 +70,13 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
         source_roots: list[Path] = []
         for configured in config.source_roots:
             src_root = (project_root / configured).resolve()
+            if not src_root.is_relative_to(resolved_project_root):
+                print(
+                    f"Error: source root {configured} is outside the project root. "
+                    "Check source-roots in your uncoded config file.",
+                    file=sys.stderr,
+                )
+                return 1
             if not src_root.is_dir():
                 print(
                     f"Error: source root {configured} is not a directory. "
@@ -115,7 +123,6 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
     # Doc artefacts — build when doc_roots configured, else remove.
     if config.doc_roots:
         doc_roots: list[Path] = []
-        resolved_project_root = project_root.resolve()
         for configured in config.doc_roots:
             doc_root = (project_root / configured).resolve()
             if not doc_root.is_relative_to(resolved_project_root):

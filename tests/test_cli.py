@@ -143,6 +143,30 @@ class TestSyncApplyMode:
         assert ".uncoded.toml" in err
         assert str(tmp_path) not in err
 
+    def test_error_when_source_root_outside_project_root(
+        self, tmp_path, monkeypatch, capsys
+    ):
+        project = tmp_path / "project"
+        project.mkdir()
+        outside = tmp_path / "outside"
+        outside.mkdir()
+        (project / "pyproject.toml").write_text(
+            textwrap.dedent(
+                """\
+                [project]
+                name = "demo"
+
+                [tool.uncoded]
+                source-roots = ["../outside"]
+                """
+            )
+        )
+        monkeypatch.chdir(project)
+        assert cli._sync() == 1
+        err = capsys.readouterr().err
+        assert "Error: source root ../outside" in err
+        assert "outside the project root" in err
+
     def test_error_when_source_root_missing(self, tmp_path, monkeypatch, capsys):
         # The message must (a) report the source-root path as the user
         # typed it in source-roots, not the resolved absolute path (which

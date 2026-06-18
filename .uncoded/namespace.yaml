@@ -215,6 +215,7 @@ tests/:
       test_dedupes_when_claude_md_is_symlink_to_agents_md:
       test_instruction_file_outside_project_uses_absolute_path:
       test_error_when_no_config_file:
+      test_error_when_source_root_outside_project_root:
       test_error_when_source_root_missing:
       test_error_when_uncoded_section_missing:
       test_error_when_both_config_files_configure_uncoded:
