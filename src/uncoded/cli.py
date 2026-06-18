@@ -117,6 +117,11 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
             project_root=project_root,
             check=check,
         )
+    changes += sync_skill(
+        project_root=project_root,
+        check=check,
+        build=bool(config.source_roots),
+    )
 
     # Doc artefacts — build when doc_roots configured, else remove.
     if config.doc_roots:
@@ -189,8 +194,6 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
             project_root=project_root,
             check=check,
         )
-
-    changes += sync_skill(project_root=project_root, check=check)
 
     if check:
         if changes:

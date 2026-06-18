@@ -998,6 +998,34 @@ class TestSyncDocRoots:
         (tmp_path / "src").mkdir()
         assert cli._sync(check=True) == 1
 
+    def test_doc_only_does_not_write_skill(self, tmp_path, monkeypatch):
+        _init_doc_repo(tmp_path, monkeypatch)
+        assert cli._sync() == 0
+        for path in SKILL_OUTPUTS:
+            assert not (tmp_path / path).exists()
+
+    def test_doc_only_removes_preexisting_skill(self, tmp_path, monkeypatch):
+        _init_doc_repo(tmp_path, monkeypatch)
+        for path in SKILL_OUTPUTS:
+            skill_path = tmp_path / path
+            skill_path.parent.mkdir(parents=True, exist_ok=True)
+            skill_path.write_text("old skill\n")
+        assert cli._sync() == 0
+        for path in SKILL_OUTPUTS:
+            assert not (tmp_path / path).exists()
+
+    def test_check_returns_one_when_skill_should_be_removed(
+        self, tmp_path, monkeypatch
+    ):
+        _init_doc_repo(tmp_path, monkeypatch)
+        for path in SKILL_OUTPUTS:
+            skill_path = tmp_path / path
+            skill_path.parent.mkdir(parents=True, exist_ok=True)
+            skill_path.write_text("old skill\n")
+        assert cli._sync(check=True) == 1
+        for path in SKILL_OUTPUTS:
+            assert (tmp_path / path).exists()
+
     def test_idempotent_doc_only(self, tmp_path, monkeypatch):
         _init_doc_repo(tmp_path, monkeypatch)
         cli._sync()

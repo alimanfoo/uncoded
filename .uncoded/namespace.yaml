@@ -276,6 +276,9 @@ tests/:
       test_check_returns_one_when_docs_yaml_stale:
       test_check_returns_one_when_stubs_should_be_removed:
       test_check_returns_one_when_docs_yaml_should_be_removed:
+      test_doc_only_does_not_write_skill:
+      test_doc_only_removes_preexisting_skill:
+      test_check_returns_one_when_skill_should_be_removed:
       test_idempotent_doc_only:
     _init_repo:
     _init_doc_repo:
