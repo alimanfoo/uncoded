@@ -21,5 +21,5 @@ def iter_doc_files(doc_root: Path, project_root: Path) -> Iterator[tuple[str, Pa
 def build_docs_map(files: Iterable[tuple[str, Path]]) -> dict:
     ...
 
-def render_docs_map(m: dict) -> str:
+def render_docs_map(mapping: dict) -> str:
     ...

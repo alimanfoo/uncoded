@@ -146,6 +146,6 @@ def build_docs_map(files: Iterable[tuple[str, Path]]) -> dict:
     return root
 
 
-def render_docs_map(m: dict) -> str:
+def render_docs_map(mapping: dict) -> str:
     """Render a docs map dict as a YAML string with an explanatory header."""
-    return render_yaml_tree(DOCS_HEADER, m)
+    return render_yaml_tree(DOCS_HEADER, mapping)
