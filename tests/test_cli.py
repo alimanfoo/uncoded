@@ -104,8 +104,8 @@ class TestSyncApplyMode:
         ]
         assert instruction_lines == ["Updated AGENTS.md"]
 
-    def test_instruction_file_outside_project_uses_absolute_path(
-        self, tmp_path, monkeypatch
+    def test_error_when_instruction_file_outside_project_root(
+        self, tmp_path, monkeypatch, capsys
     ):
         project = tmp_path / "project"
         project.mkdir()
@@ -124,11 +124,12 @@ class TestSyncApplyMode:
         )
         monkeypatch.chdir(project)
 
-        assert cli._sync() == 0
+        assert cli._sync() == 1
 
-        outside_file = tmp_path / "outside.md"
-        assert outside_file.exists()
-        assert "<!-- uncoded:start -->" in outside_file.read_text()
+        err = capsys.readouterr().err
+        assert "Error:" in err
+        assert "../outside.md" in err
+        assert "outside the project root" in err
 
     def test_error_when_no_config_file(self, tmp_path, monkeypatch, capsys):
         # Pins the problem statement (names both supported config files)

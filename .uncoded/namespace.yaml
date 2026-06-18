@@ -213,7 +213,7 @@ tests/:
       test_writes_namespace_map_stubs_and_instruction_file:
       test_idempotent_second_run:
       test_dedupes_when_claude_md_is_symlink_to_agents_md:
-      test_instruction_file_outside_project_uses_absolute_path:
+      test_error_when_instruction_file_outside_project_root:
       test_error_when_no_config_file:
       test_error_when_source_root_outside_project_root:
       test_error_when_source_root_missing:

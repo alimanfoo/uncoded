@@ -166,19 +166,22 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
     # through the symlink and reports the alias name while pass 2 finds
     # the file already in sync and reports nothing — asymmetric output
     # that hides the actual write target. Resolving collapses both aliases
-    # to the same canonical path, which we render relative to
-    # ``project_root`` for the user-facing line, falling back to the
-    # absolute resolved path when the file lives outside ``project_root``.
+    # to the same canonical path, rendered project-relative. An instruction
+    # file that resolves outside the project root is a configuration error.
     seen_resolved: set[Path] = set()
     for path in config.instruction_files:
         resolved = (project_root / path).resolve()
         if resolved in seen_resolved:
             continue
         seen_resolved.add(resolved)
-        try:
-            canonical = resolved.relative_to(project_root)
-        except ValueError:
-            canonical = resolved
+        if not resolved.is_relative_to(resolved_project_root):
+            print(
+                f"Error: instruction file {path} is outside the project root. "
+                "Check instruction-files in your uncoded config file.",
+                file=sys.stderr,
+            )
+            return 1
+        canonical = resolved.relative_to(project_root)
         changes += sync_instruction_file(
             canonical,
             code_section=code_section,
