@@ -731,6 +731,33 @@ class TestSyncDocRoots:
         err = capsys.readouterr().err
         assert "Error: doc root readme.rst" in err
 
+    def test_error_when_doc_root_outside_project_root(
+        self, tmp_path, monkeypatch, capsys
+    ):
+        # A doc-root that resolves outside the project root must produce a
+        # clear error, not an unhandled ValueError from relative_to.
+        project = tmp_path / "project"
+        project.mkdir()
+        shared = tmp_path / "shared-docs"
+        shared.mkdir()
+        (shared / "guide.md").write_text("# Guide\n")
+        (project / "pyproject.toml").write_text(
+            textwrap.dedent(
+                """\
+                [project]
+                name = "demo"
+
+                [tool.uncoded]
+                doc-roots = ["../shared-docs"]
+                """
+            )
+        )
+        monkeypatch.chdir(project)
+        assert cli._sync() == 1
+        err = capsys.readouterr().err
+        assert "Error: doc root ../shared-docs" in err
+        assert "outside the project root" in err
+
     def test_both_roots_writes_both_artefacts(self, tmp_path, monkeypatch):
         (tmp_path / "pyproject.toml").write_text(
             textwrap.dedent(

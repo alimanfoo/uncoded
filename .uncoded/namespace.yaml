@@ -263,6 +263,7 @@ tests/:
       test_doc_root_single_md_file:
       test_error_when_doc_root_missing:
       test_error_when_doc_root_is_non_md_file:
+      test_error_when_doc_root_outside_project_root:
       test_both_roots_writes_both_artefacts:
       test_both_roots_instruction_file_has_both_sections:
       test_source_root_removal_cleans_code_artefacts:

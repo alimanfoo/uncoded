@@ -173,6 +173,9 @@ class TestSyncDocRoots:
     def test_error_when_doc_root_is_non_md_file(self, tmp_path, monkeypatch, capsys):
         ...
 
+    def test_error_when_doc_root_outside_project_root(self, tmp_path, monkeypatch, capsys):
+        ...
+
     def test_both_roots_writes_both_artefacts(self, tmp_path, monkeypatch):
         ...
 

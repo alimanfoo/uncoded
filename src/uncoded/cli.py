@@ -116,8 +116,16 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
     # Doc artefacts — build when doc_roots configured, else remove.
     if config.doc_roots:
         doc_roots: list[Path] = []
+        resolved_project_root = project_root.resolve()
         for configured in config.doc_roots:
             doc_root = (project_root / configured).resolve()
+            if not doc_root.is_relative_to(resolved_project_root):
+                print(
+                    f"Error: doc root {configured} is outside the project root. "
+                    "Check doc-roots in your uncoded config file.",
+                    file=sys.stderr,
+                )
+                return 1
             is_valid = doc_root.is_dir() or (
                 doc_root.is_file() and doc_root.suffix == ".md"
             )
