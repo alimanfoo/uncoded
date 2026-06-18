@@ -6,6 +6,7 @@ from pathlib import Path
 from unittest import mock
 import pytest
 from uncoded import cli
+from uncoded.instruction_files import MARKER_START
 from uncoded.skill import SKILL_OUTPUTS
 
 def _init_repo(tmp_path, monkeypatch, source_roots):

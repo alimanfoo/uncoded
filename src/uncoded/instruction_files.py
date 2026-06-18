@@ -9,25 +9,38 @@ each), or symlink one to the other (sync dedupes by inode and writes once).
 This module owns delimited sections in any such file and keeps them in sync.
 """
 
+import hashlib
 from importlib.resources import files
 from pathlib import Path
 
 from uncoded.sync import sync_file
 
-MARKER_START = "<!-- uncoded:start -->"
 MARKER_END = "<!-- uncoded:end -->"
-MARKER_DOCS_START = "<!-- uncoded:docs:start -->"
 MARKER_DOCS_END = "<!-- uncoded:docs:end -->"
 
 DEFAULT_INSTRUCTION_FILES = [Path("CLAUDE.md"), Path("AGENTS.md")]
 
+# The opening markers carry a short sha256 fingerprint of the section body,
+# computed once at module load. sync uses the fingerprint to decide whether
+# an existing section needs refreshing: a matching fingerprint means the body
+# may have been reformatted by a tool like prettier, and that reflow is left
+# alone; a differing fingerprint means uncoded's wording changed (e.g. on
+# upgrade) and the section is replaced with the current canonical form.
 _CODE_SECTION_BODY = (
     (files("uncoded") / "dispatch_rule.md").read_text(encoding="utf-8").rstrip("\n")
+)
+MARKER_START = (
+    f"<!-- uncoded:start sha256="
+    f"{hashlib.sha256(_CODE_SECTION_BODY.encode()).hexdigest()[:8]} -->"
 )
 SECTION_CODE = f"{MARKER_START}\n{_CODE_SECTION_BODY}\n{MARKER_END}\n"
 
 _DOCS_SECTION_BODY = (
     (files("uncoded") / "docs_rule.md").read_text(encoding="utf-8").rstrip("\n")
+)
+MARKER_DOCS_START = (
+    f"<!-- uncoded:docs:start sha256="
+    f"{hashlib.sha256(_DOCS_SECTION_BODY.encode()).hexdigest()[:8]} -->"
 )
 SECTION_DOCS = f"{MARKER_DOCS_START}\n{_DOCS_SECTION_BODY}\n{MARKER_DOCS_END}\n"
 
@@ -35,11 +48,21 @@ SECTION_DOCS = f"{MARKER_DOCS_START}\n{_DOCS_SECTION_BODY}\n{MARKER_DOCS_END}\n"
 def _apply_section(text: str, start: str, end: str, body: str | None) -> str:
     """Apply, replace, or remove the delimited section in text.
 
-    When body is a string: replaces the section if already present,
-    appends it otherwise. When body is None: removes the section if
-    present, leaves text unchanged otherwise.
+    Locates an existing section by the stable opening prefix (e.g.
+    ``<!-- uncoded:start``), so sections left by an older uncoded version
+    are still found and updated.
+
+    When body is a string:
+    - absent → append the canonical section;
+    - found and opening-marker line matches start → return text unchanged
+      (a formatter's reflow of the body is tolerated);
+    - found and opening-marker line differs → replace the whole section.
+    When body is None: remove the section if present.
     """
-    s = text.find(start)
+    # "<!-- uncoded:start" from "<!-- uncoded:start sha256=HASH -->".
+    # Matches both old plain markers and current fingerprinted ones.
+    marker_prefix = "<!-- " + start.split(" ")[1]
+    s = text.find(marker_prefix)
     e = text.find(end)
     section_found = s != -1 and e != -1 and s < e
 
@@ -51,13 +74,19 @@ def _apply_section(text: str, start: str, end: str, body: str | None) -> str:
         return before + after
     else:
         if section_found:
+            line_end = text.find("\n", s)
+            existing_opening = text[s:line_end] if line_end != -1 else text[s:]
+            if existing_opening == start:
+                # Fingerprint matches — leave the text untouched so a
+                # formatter's reflow of the body is preserved.
+                return text
             before = text[:s]
             after = text[e + len(end) :].lstrip("\n")
             return before + body + after
         else:
             stripped = text.rstrip("\n")
-            prefix = stripped + "\n\n" if stripped else ""
-            return prefix + body
+            lead = stripped + "\n\n" if stripped else ""
+            return lead + body
 
 
 def sync_instruction_file(

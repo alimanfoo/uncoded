@@ -14,6 +14,7 @@ from unittest import mock
 import pytest
 
 from uncoded import cli
+from uncoded.instruction_files import MARKER_START
 from uncoded.skill import SKILL_OUTPUTS
 
 
@@ -93,7 +94,7 @@ class TestSyncApplyMode:
         assert cli._sync() == 0
 
         # The section is written through the symlink to AGENTS.md.
-        assert "<!-- uncoded:start -->" in agents.read_text()
+        assert MARKER_START in agents.read_text()
 
         # Exactly one user-facing line for the instruction file, naming
         # the canonical AGENTS.md.

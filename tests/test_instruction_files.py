@@ -60,8 +60,9 @@ class TestSyncInstructionFile:
         assert SECTION_CODE in content
 
     def test_replaces_existing_code_section(self, tmp_path):
+        # An old plain marker (no fingerprint) is replaced with the current section.
         path = tmp_path / "CLAUDE.md"
-        old_section = f"{MARKER_START}\nold content\n{MARKER_END}\n"
+        old_section = f"<!-- uncoded:start -->\nold content\n{MARKER_END}\n"
         path.write_text(f"# My Project\n\n{old_section}")
         sync_instruction_file(
             path, code_section=SECTION_CODE, docs_section=None, project_root=tmp_path
@@ -72,8 +73,9 @@ class TestSyncInstructionFile:
         assert "# My Project" in content
 
     def test_preserves_content_after_code_section(self, tmp_path):
+        # Content after the old section is preserved when replacing.
         path = tmp_path / "CLAUDE.md"
-        old_section = f"{MARKER_START}\nold\n{MARKER_END}\n"
+        old_section = f"<!-- uncoded:start -->\nold\n{MARKER_END}\n"
         path.write_text(f"{old_section}\n## Other section\n")
         sync_instruction_file(
             path, code_section=SECTION_CODE, docs_section=None, project_root=tmp_path
@@ -124,11 +126,12 @@ class TestSyncInstructionFile:
         assert content.index(MARKER_START) < content.index(MARKER_DOCS_START)
 
     def test_both_sections_replaced_independently(self, tmp_path):
-        # Each section is updated without disturbing the other.
+        # Old plain markers for both sections are each replaced without
+        # disturbing the other.
         path = tmp_path / "CLAUDE.md"
         path.write_text(
-            f"# Title\n\n{MARKER_START}\nold code\n{MARKER_END}\n\n"
-            f"{MARKER_DOCS_START}\nold docs\n{MARKER_DOCS_END}\n"
+            f"# Title\n\n<!-- uncoded:start -->\nold code\n{MARKER_END}\n\n"
+            f"<!-- uncoded:docs:start -->\nold docs\n{MARKER_DOCS_END}\n"
         )
         sync_instruction_file(
             path,
@@ -295,3 +298,65 @@ class TestSyncInstructionFileProjectRootAnchor:
         content = (tmp_path / rel).read_text()
         assert "# My Project" in content
         assert SECTION_CODE in content
+
+
+class TestSyncInstructionFileFingerprint:
+    def test_reflowed_body_survives_sync(self, tmp_path):
+        # Within a version, a formatter's reflow of the section body does
+        # not trigger a rewrite — the opening marker fingerprint still matches.
+        path = tmp_path / "CLAUDE.md"
+        sync_instruction_file(
+            path, code_section=SECTION_CODE, docs_section=None, project_root=tmp_path
+        )
+        # Simulate a markdown formatter reflowing the body between the markers.
+        path.write_text(f"{MARKER_START}\nReflowed body.\n{MARKER_END}\n")
+        result = sync_instruction_file(
+            path, code_section=SECTION_CODE, docs_section=None, project_root=tmp_path
+        )
+        assert result is False
+        assert "Reflowed body." in path.read_text()
+
+    def test_reflowed_body_passes_check(self, tmp_path):
+        # check mode also reports no change when the opening marker matches.
+        path = tmp_path / "CLAUDE.md"
+        sync_instruction_file(
+            path, code_section=SECTION_CODE, docs_section=None, project_root=tmp_path
+        )
+        path.write_text(f"{MARKER_START}\nReflowed body.\n{MARKER_END}\n")
+        result = sync_instruction_file(
+            path,
+            code_section=SECTION_CODE,
+            docs_section=None,
+            project_root=tmp_path,
+            check=True,
+        )
+        assert result is False
+
+    def test_different_fingerprint_refreshes_section(self, tmp_path):
+        # A section from an older uncoded version (different fingerprint)
+        # is replaced with the current canonical section.
+        path = tmp_path / "CLAUDE.md"
+        old_marker = "<!-- uncoded:start sha256=deadbeef -->"
+        path.write_text(f"{old_marker}\nOld wording.\n{MARKER_END}\n")
+        result = sync_instruction_file(
+            path, code_section=SECTION_CODE, docs_section=None, project_root=tmp_path
+        )
+        assert result is True
+        content = path.read_text()
+        assert SECTION_CODE in content
+        assert "Old wording." not in content
+
+    def test_plain_marker_refreshes_once_then_stable(self, tmp_path):
+        # An old plain marker (no fingerprint) is refreshed on the first
+        # sync after upgrading uncoded, then stays stable.
+        path = tmp_path / "CLAUDE.md"
+        path.write_text(f"<!-- uncoded:start -->\nold body\n{MARKER_END}\n")
+        result = sync_instruction_file(
+            path, code_section=SECTION_CODE, docs_section=None, project_root=tmp_path
+        )
+        assert result is True
+        assert SECTION_CODE in path.read_text()
+        result = sync_instruction_file(
+            path, code_section=SECTION_CODE, docs_section=None, project_root=tmp_path
+        )
+        assert result is False
