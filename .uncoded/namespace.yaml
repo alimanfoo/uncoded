@@ -23,12 +23,14 @@ src/:
       _refs:
       main:
     config.py:
+      ConfigError:
       Config:
         project_root:
         source_roots:
         doc_roots:
         instruction_files:
       find_pyproject_toml:
+      _has_uncoded_section:
       _find_config_file:
       read_config:
     docs_map.py:
@@ -215,6 +217,7 @@ tests/:
       test_error_when_no_config_file:
       test_error_when_source_root_missing:
       test_error_when_uncoded_section_missing:
+      test_error_when_both_config_files_configure_uncoded:
       test_skip_warning_emitted_once_per_broken_file:
       test_anchors_reads_and_writes_at_project_root_when_cwd_is_subdir:
       test_artefacts_match_when_run_from_subdir_vs_project_root:
@@ -293,9 +296,11 @@ tests/:
       test_returns_frozen_dataclass:
       test_finds_uncoded_toml_when_no_pyproject:
       test_uncoded_toml_top_level_keys:
-      test_pyproject_wins_when_both_in_same_directory:
+      test_error_when_both_configure_uncoded_in_same_directory:
+      test_uncoded_toml_wins_over_bare_pyproject:
       test_uncoded_toml_wins_when_nearer_than_pyproject:
       test_pyproject_wins_when_nearer_than_uncoded_toml:
+      test_uncoded_pyproject_and_uncoded_toml_in_different_dirs_no_error:
       test_skips_uncoded_directory_as_config_home:
   test_docs_map.py:
     TestExtractHeadings:

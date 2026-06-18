@@ -36,6 +36,9 @@ class TestSyncApplyMode:
     def test_error_when_uncoded_section_missing(self, tmp_path, monkeypatch, capsys):
         ...
 
+    def test_error_when_both_config_files_configure_uncoded(self, tmp_path, monkeypatch, capsys):
+        ...
+
     def test_skip_warning_emitted_once_per_broken_file(self, tmp_path, monkeypatch, capsys):
         ...
 

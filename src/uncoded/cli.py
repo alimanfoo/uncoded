@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 
 from uncoded.body import resolve_body
-from uncoded.config import read_config
+from uncoded.config import ConfigError, read_config
 from uncoded.docs_map import build_docs_map, iter_doc_files, render_docs_map
 from uncoded.extract import extract_modules, iter_source_files
 from uncoded.instruction_files import SECTION_CODE, SECTION_DOCS, sync_instruction_file
@@ -39,7 +39,11 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
     if start is None:
         start = Path.cwd()
 
-    config = read_config(start)
+    try:
+        config = read_config(start)
+    except ConfigError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
     if config is None:
         print(
             "Error: No pyproject.toml or .uncoded.toml found. "

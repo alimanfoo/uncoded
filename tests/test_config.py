@@ -1,6 +1,8 @@
 from pathlib import Path
 
-from uncoded.config import Config, find_pyproject_toml, read_config
+import pytest
+
+from uncoded.config import Config, ConfigError, find_pyproject_toml, read_config
 from uncoded.instruction_files import DEFAULT_INSTRUCTION_FILES
 
 
@@ -42,6 +44,8 @@ class TestReadConfig:
         assert config.doc_roots == [Path("docs")]
 
     def test_both_roots_empty_when_section_absent(self, tmp_path):
+        # Bare pyproject (no [tool.uncoded]) with no sibling .uncoded.toml is
+        # still a config home; roots default to empty → "nothing to index".
         (tmp_path / "pyproject.toml").write_text("[tool.ruff]\n")
         config = read_config(start=tmp_path)
         assert config is not None
@@ -122,15 +126,26 @@ class TestReadConfig:
         assert config.doc_roots == [Path("docs")]
         assert config.instruction_files == [Path("CLAUDE.md")]
 
-    def test_pyproject_wins_when_both_in_same_directory(self, tmp_path):
+    def test_error_when_both_configure_uncoded_in_same_directory(self, tmp_path):
+        # pyproject.toml with [tool.uncoded] AND .uncoded.toml → ConfigError.
         (tmp_path / "pyproject.toml").write_text(
-            '[tool.uncoded]\nsource-roots = ["from-pyproject"]\n'
+            '[tool.uncoded]\nsource-roots = ["src"]\n'
         )
-        toml = 'source-roots = ["from-uncoded-toml"]\n'
-        (tmp_path / ".uncoded.toml").write_text(toml)
+        (tmp_path / ".uncoded.toml").write_text('doc-roots = ["docs"]\n')
+        with pytest.raises(ConfigError) as exc_info:
+            read_config(start=tmp_path)
+        assert "pyproject.toml" in str(exc_info.value)
+        assert ".uncoded.toml" in str(exc_info.value)
+
+    def test_uncoded_toml_wins_over_bare_pyproject(self, tmp_path):
+        # Bare pyproject (no [tool.uncoded]) + sibling .uncoded.toml →
+        # the .uncoded.toml is used, not the bare pyproject.
+        (tmp_path / "pyproject.toml").write_text("[tool.ruff]\n")
+        (tmp_path / ".uncoded.toml").write_text('doc-roots = ["docs"]\n')
         config = read_config(start=tmp_path)
         assert config is not None
-        assert config.source_roots == [Path("from-pyproject")]
+        assert config.project_root == tmp_path
+        assert config.doc_roots == [Path("docs")]
 
     def test_uncoded_toml_wins_when_nearer_than_pyproject(self, tmp_path):
         # .uncoded.toml in child, pyproject.toml in parent → child wins.
@@ -157,6 +172,21 @@ class TestReadConfig:
         assert config is not None
         assert config.project_root == child
         assert config.source_roots == [Path("from-child")]
+
+    def test_uncoded_pyproject_and_uncoded_toml_in_different_dirs_no_error(
+        self, tmp_path
+    ):
+        # [tool.uncoded] pyproject in parent, .uncoded.toml in child:
+        # the nearer .uncoded.toml wins — no error.
+        (tmp_path / "pyproject.toml").write_text(
+            '[tool.uncoded]\nsource-roots = ["from-parent"]\n'
+        )
+        child = tmp_path / "child"
+        child.mkdir()
+        (child / ".uncoded.toml").write_text('doc-roots = ["from-child"]\n')
+        config = read_config(start=child)
+        assert config is not None
+        assert config.doc_roots == [Path("from-child")]
 
     def test_skips_uncoded_directory_as_config_home(self, tmp_path):
         # A .uncoded.toml sitting inside a .uncoded/ directory is not a

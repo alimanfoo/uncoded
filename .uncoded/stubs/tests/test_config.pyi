@@ -1,7 +1,8 @@
 # tests/test_config.py
 
 from pathlib import Path
-from uncoded.config import Config, find_pyproject_toml, read_config
+import pytest
+from uncoded.config import Config, ConfigError, find_pyproject_toml, read_config
 from uncoded.instruction_files import DEFAULT_INSTRUCTION_FILES
 
 class TestFindPyprojectToml:
@@ -51,13 +52,19 @@ class TestReadConfig:
     def test_uncoded_toml_top_level_keys(self, tmp_path):
         ...
 
-    def test_pyproject_wins_when_both_in_same_directory(self, tmp_path):
+    def test_error_when_both_configure_uncoded_in_same_directory(self, tmp_path):
+        ...
+
+    def test_uncoded_toml_wins_over_bare_pyproject(self, tmp_path):
         ...
 
     def test_uncoded_toml_wins_when_nearer_than_pyproject(self, tmp_path):
         ...
 
     def test_pyproject_wins_when_nearer_than_uncoded_toml(self, tmp_path):
+        ...
+
+    def test_uncoded_pyproject_and_uncoded_toml_in_different_dirs_no_error(self, tmp_path):
         ...
 
     def test_skips_uncoded_directory_as_config_home(self, tmp_path):

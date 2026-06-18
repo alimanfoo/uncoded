@@ -184,6 +184,25 @@ class TestSyncApplyMode:
         assert "doc-roots" in err
         assert ".uncoded.toml" in err
 
+    def test_error_when_both_config_files_configure_uncoded(
+        self, tmp_path, monkeypatch, capsys
+    ):
+        # pyproject.toml with [tool.uncoded] + sibling .uncoded.toml:
+        # ambiguous config — must produce a clear error naming both files.
+        (tmp_path / "pyproject.toml").write_text(
+            '[project]\nname = "demo"\n\n[tool.uncoded]\nsource-roots = ["src"]\n'
+        )
+        (tmp_path / ".uncoded.toml").write_text('doc-roots = ["docs"]\n')
+        (tmp_path / "src").mkdir()
+        monkeypatch.chdir(tmp_path)
+
+        assert cli._sync() == 1
+
+        err = capsys.readouterr().err
+        assert "Ambiguous" in err
+        assert "pyproject.toml" in err
+        assert ".uncoded.toml" in err
+
     def test_skip_warning_emitted_once_per_broken_file(
         self, tmp_path, monkeypatch, capsys
     ):
