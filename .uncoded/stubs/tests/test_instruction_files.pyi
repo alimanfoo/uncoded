@@ -104,3 +104,6 @@ class TestSyncInstructionFileFingerprint:
 
     def test_plain_marker_refreshes_once_then_stable(self, tmp_path):
         ...
+
+    def test_prose_mention_of_prefix_before_section_is_ignored(self, tmp_path):
+        ...

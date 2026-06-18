@@ -360,3 +360,21 @@ class TestSyncInstructionFileFingerprint:
             path, code_section=SECTION_CODE, docs_section=None, project_root=tmp_path
         )
         assert result is False
+
+    def test_prose_mention_of_prefix_before_section_is_ignored(self, tmp_path):
+        # A line that contains the marker prefix inside prose (not at column 0)
+        # must not be mistaken for the section opener. Only a line that starts
+        # at column 0 is a valid opener.
+        path = tmp_path / "CLAUDE.md"
+        prose = "Use `<!-- uncoded:start` markers to delimit sections.\n\n"
+        old_section = f"<!-- uncoded:start -->\nold body\n{MARKER_END}\n"
+        path.write_text(f"{prose}{old_section}")
+        result = sync_instruction_file(
+            path, code_section=SECTION_CODE, docs_section=None, project_root=tmp_path
+        )
+        # The real section (old plain marker) is replaced; the prose is preserved.
+        assert result is True
+        content = path.read_text()
+        assert "<!-- uncoded:start` markers" in content
+        assert "old body" not in content
+        assert SECTION_CODE in content

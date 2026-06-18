@@ -10,6 +10,7 @@ This module owns delimited sections in any such file and keeps them in sync.
 """
 
 import hashlib
+import re
 from importlib.resources import files
 from pathlib import Path
 
@@ -17,20 +18,22 @@ from uncoded.sync import sync_file
 
 MARKER_END = "<!-- uncoded:end -->"
 MARKER_DOCS_END = "<!-- uncoded:docs:end -->"
+MARKER_START_PREFIX = "<!-- uncoded:start"
+MARKER_DOCS_START_PREFIX = "<!-- uncoded:docs:start"
 
 DEFAULT_INSTRUCTION_FILES = [Path("CLAUDE.md"), Path("AGENTS.md")]
 
-# The opening markers carry a short sha256 fingerprint of the section body,
-# computed once at module load. sync uses the fingerprint to decide whether
-# an existing section needs refreshing: a matching fingerprint means the body
-# may have been reformatted by a tool like prettier, and that reflow is left
-# alone; a differing fingerprint means uncoded's wording changed (e.g. on
-# upgrade) and the section is replaced with the current canonical form.
+# The opening markers carry a short sha256 stamp of uncoded's canonical
+# section body, computed once at module load. On sync, the on-disk
+# opening-marker line is compared to the canonical marker: a matching stamp
+# means this version's wording is already planted, so the body is left alone
+# and a formatter's reflow survives; a differing stamp means the wording
+# changed (e.g. on upgrade) and the whole section is replaced.
 _CODE_SECTION_BODY = (
     (files("uncoded") / "dispatch_rule.md").read_text(encoding="utf-8").rstrip("\n")
 )
 MARKER_START = (
-    f"<!-- uncoded:start sha256="
+    f"{MARKER_START_PREFIX} sha256="
     f"{hashlib.sha256(_CODE_SECTION_BODY.encode()).hexdigest()[:8]} -->"
 )
 SECTION_CODE = f"{MARKER_START}\n{_CODE_SECTION_BODY}\n{MARKER_END}\n"
@@ -39,18 +42,20 @@ _DOCS_SECTION_BODY = (
     (files("uncoded") / "docs_rule.md").read_text(encoding="utf-8").rstrip("\n")
 )
 MARKER_DOCS_START = (
-    f"<!-- uncoded:docs:start sha256="
+    f"{MARKER_DOCS_START_PREFIX} sha256="
     f"{hashlib.sha256(_DOCS_SECTION_BODY.encode()).hexdigest()[:8]} -->"
 )
 SECTION_DOCS = f"{MARKER_DOCS_START}\n{_DOCS_SECTION_BODY}\n{MARKER_DOCS_END}\n"
 
 
-def _apply_section(text: str, start: str, end: str, body: str | None) -> str:
+def _apply_section(
+    text: str, start: str, end: str, body: str | None, *, prefix: str
+) -> str:
     """Apply, replace, or remove the delimited section in text.
 
-    Locates an existing section by the stable opening prefix (e.g.
-    ``<!-- uncoded:start``), so sections left by an older uncoded version
-    are still found and updated.
+    Locates an existing section by prefix, anchored to the start of a line,
+    so marker-like text in prose is not mistaken for a section opener. This
+    matches both old plain markers and current fingerprinted ones.
 
     When body is a string:
     - absent → append the canonical section;
@@ -59,10 +64,8 @@ def _apply_section(text: str, start: str, end: str, body: str | None) -> str:
     - found and opening-marker line differs → replace the whole section.
     When body is None: remove the section if present.
     """
-    # "<!-- uncoded:start" from "<!-- uncoded:start sha256=HASH -->".
-    # Matches both old plain markers and current fingerprinted ones.
-    marker_prefix = "<!-- " + start.split(" ")[1]
-    s = text.find(marker_prefix)
+    m = re.search(r"^" + re.escape(prefix), text, re.MULTILINE)
+    s = m.start() if m else -1
     e = text.find(end)
     section_found = s != -1 and e != -1 and s < e
 
@@ -77,8 +80,8 @@ def _apply_section(text: str, start: str, end: str, body: str | None) -> str:
             line_end = text.find("\n", s)
             existing_opening = text[s:line_end] if line_end != -1 else text[s:]
             if existing_opening == start:
-                # Fingerprint matches — leave the text untouched so a
-                # formatter's reflow of the body is preserved.
+                # Opening-marker stamp matches — leave the text untouched so
+                # a formatter's reflow of the body is preserved.
                 return text
             before = text[:s]
             after = text[e + len(end) :].lstrip("\n")
@@ -115,6 +118,18 @@ def sync_instruction_file(
     if not target.exists() and code_section is None and docs_section is None:
         return False
     existing = target.read_text() if target.exists() else ""
-    updated = _apply_section(existing, MARKER_START, MARKER_END, code_section)
-    updated = _apply_section(updated, MARKER_DOCS_START, MARKER_DOCS_END, docs_section)
+    updated = _apply_section(
+        existing,
+        MARKER_START,
+        MARKER_END,
+        code_section,
+        prefix=MARKER_START_PREFIX,
+    )
+    updated = _apply_section(
+        updated,
+        MARKER_DOCS_START,
+        MARKER_DOCS_END,
+        docs_section,
+        prefix=MARKER_DOCS_START_PREFIX,
+    )
     return sync_file(path, updated, project_root=project_root, check=check)

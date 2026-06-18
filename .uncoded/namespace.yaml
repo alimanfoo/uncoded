@@ -57,6 +57,8 @@ src/:
     instruction_files.py:
       MARKER_END:
       MARKER_DOCS_END:
+      MARKER_START_PREFIX:
+      MARKER_DOCS_START_PREFIX:
       DEFAULT_INSTRUCTION_FILES:
       _CODE_SECTION_BODY:
       MARKER_START:
@@ -423,6 +425,7 @@ tests/:
       test_reflowed_body_passes_check:
       test_different_fingerprint_refreshes_section:
       test_plain_marker_refreshes_once_then_stable:
+      test_prose_mention_of_prefix_before_section_is_ignored:
   test_namespace_map.py:
     TestBuildMap:
       test_single_file:
