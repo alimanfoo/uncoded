@@ -877,6 +877,8 @@ class TestSyncDocRoots:
 
         assert (tmp_path / ".uncoded" / "namespace.yaml").exists()
         assert (tmp_path / ".uncoded" / "stubs").exists()
+        for path in SKILL_OUTPUTS:
+            assert (tmp_path / path).exists()
 
         # Drop source-roots.
         (tmp_path / "pyproject.toml").write_text(
@@ -893,6 +895,8 @@ class TestSyncDocRoots:
         assert cli._sync() == 0
         assert not (tmp_path / ".uncoded" / "namespace.yaml").exists()
         assert not (tmp_path / ".uncoded" / "stubs").exists()
+        for path in SKILL_OUTPUTS:
+            assert not (tmp_path / path).exists()
 
     def test_doc_root_removal_cleans_docs_yaml(self, tmp_path, monkeypatch):
         # First sync with doc-roots; then drop them.
