@@ -31,6 +31,8 @@ src/:
       find_pyproject_toml:
       _find_config_file:
       read_config:
+    docs_map.py:
+      extract_headings:
     extract.py:
       ClassInfo:
         name:
@@ -266,6 +268,27 @@ tests/:
       test_uncoded_toml_wins_when_nearer_than_pyproject:
       test_pyproject_wins_when_nearer_than_uncoded_toml:
       test_skips_uncoded_directory_as_config_home:
+  test_docs_map.py:
+    TestExtractHeadings:
+      test_empty_text:
+      test_h1_through_h6:
+      test_trailing_hashes_stripped:
+      test_trailing_hashes_with_surrounding_spaces_stripped:
+      test_seven_hashes_not_a_heading:
+      test_no_space_after_hash_not_a_heading:
+      test_hash_only_not_a_heading:
+      test_empty_title_not_a_heading:
+      test_setext_underline_equals_not_a_heading:
+      test_setext_underline_dashes_not_a_heading:
+      test_backtick_fence_suppresses_headings:
+      test_tilde_fence_suppresses_headings:
+      test_fence_with_info_string:
+      test_unclosed_fence_suppresses_rest_of_file:
+      test_tilde_does_not_close_backtick_fence:
+      test_backtick_does_not_close_tilde_fence:
+      test_preserves_order:
+      test_title_with_special_chars:
+      test_leading_spaces_not_a_heading:
   test_extract.py:
     TestExtractModuleFromSource:
       test_classes_and_functions:
