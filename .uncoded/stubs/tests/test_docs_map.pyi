@@ -1,6 +1,8 @@
 # tests/test_docs_map.py
 
-from uncoded.docs_map import extract_headings
+from pathlib import Path
+import yaml
+from uncoded.docs_map import DOCS_HEADER, build_docs_map, extract_headings, iter_doc_files, render_docs_map
 
 class TestExtractHeadings:
     def test_empty_text(self):
@@ -58,4 +60,73 @@ class TestExtractHeadings:
         ...
 
     def test_leading_spaces_not_a_heading(self):
+        ...
+
+class TestIterDocFiles:
+    def test_single_file_root(self, tmp_path):
+        ...
+
+    def test_directory_walk_yields_md_files(self, tmp_path):
+        ...
+
+    def test_directory_walk_sorted(self, tmp_path):
+        ...
+
+    def test_directory_excludes_non_md(self, tmp_path):
+        ...
+
+    def test_directory_nested_subdir(self, tmp_path):
+        ...
+
+    def test_empty_directory_yields_nothing(self, tmp_path):
+        ...
+
+    def test_rel_path_is_relative_to_project_root(self, tmp_path):
+        ...
+
+class TestBuildDocsMap:
+    def test_empty_files(self):
+        ...
+
+    def test_headingless_file_maps_to_null(self, tmp_path):
+        ...
+
+    def test_single_heading(self):
+        ...
+
+    def test_nesting_parent_child(self):
+        ...
+
+    def test_level_skip_attaches_to_nearest_shallower(self):
+        ...
+
+    def test_heading_returns_to_same_level(self):
+        ...
+
+    def test_heading_not_starting_at_h1(self):
+        ...
+
+    def test_duplicate_sibling_disambiguation(self):
+        ...
+
+    def test_duplicate_increments_past_existing_suffix(self):
+        ...
+
+    def test_directory_structure_dir_key_has_trailing_slash(self):
+        ...
+
+    def test_two_files_in_same_directory(self):
+        ...
+
+    def test_multiple_files_flat(self):
+        ...
+
+class TestRenderDocsMap:
+    def test_header_present(self):
+        ...
+
+    def test_yaml_parseable(self):
+        ...
+
+    def test_null_renders_clean(self):
         ...

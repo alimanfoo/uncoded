@@ -32,7 +32,13 @@ src/:
       _find_config_file:
       read_config:
     docs_map.py:
+      DOCS_HEADER:
       extract_headings:
+      _unique_key:
+      _collapse_empty:
+      iter_doc_files:
+      build_docs_map:
+      render_docs_map:
     extract.py:
       ClassInfo:
         name:
@@ -289,6 +295,31 @@ tests/:
       test_preserves_order:
       test_title_with_special_chars:
       test_leading_spaces_not_a_heading:
+    TestIterDocFiles:
+      test_single_file_root:
+      test_directory_walk_yields_md_files:
+      test_directory_walk_sorted:
+      test_directory_excludes_non_md:
+      test_directory_nested_subdir:
+      test_empty_directory_yields_nothing:
+      test_rel_path_is_relative_to_project_root:
+    TestBuildDocsMap:
+      test_empty_files:
+      test_headingless_file_maps_to_null:
+      test_single_heading:
+      test_nesting_parent_child:
+      test_level_skip_attaches_to_nearest_shallower:
+      test_heading_returns_to_same_level:
+      test_heading_not_starting_at_h1:
+      test_duplicate_sibling_disambiguation:
+      test_duplicate_increments_past_existing_suffix:
+      test_directory_structure_dir_key_has_trailing_slash:
+      test_two_files_in_same_directory:
+      test_multiple_files_flat:
+    TestRenderDocsMap:
+      test_header_present:
+      test_yaml_parseable:
+      test_null_renders_clean:
   test_extract.py:
     TestExtractModuleFromSource:
       test_classes_and_functions:
