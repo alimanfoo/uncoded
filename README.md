@@ -258,6 +258,11 @@ Run the same checks CI's lint job runs:
 uv run pre-commit run --all-files
 ```
 
+When testing local changes to uncoded, use `uv run uncoded ...` rather than
+`uvx uncoded ...`. `uvx` always pulls the published package from PyPI; `uv run`
+runs the local editable install. For example, after editing source files run
+`uv run uncoded sync` to regenerate the index from the working tree.
+
 ### Note for Windows contributors
 
 `CLAUDE.md` is a symlink to `AGENTS.md` (single source). macOS and Linux

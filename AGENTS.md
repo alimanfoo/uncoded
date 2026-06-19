@@ -40,7 +40,9 @@ this codebase" below for the dispatch rule.
 
 This project uses [uv](https://docs.astral.sh/uv/). Run `uncoded` commands
 via `uvx` so they run the published package without needing to install it;
-run project tooling (`pytest`, `pre-commit`) via `uv run`.
+run project tooling (`pytest`, `pre-commit`) via `uv run`. If you are
+contributing to uncoded itself and need to exercise local changes, use
+`uv run uncoded ...` instead — `uvx` always runs the published release.
 
 ```sh
 # Generate (or update) the namespace map, stub files, docs.yaml,
