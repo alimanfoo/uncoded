@@ -529,6 +529,83 @@ class TestApplySectionConvergence:
         )
 
 
+class TestSyncInstructionFileFingerprintDocs:
+    def test_reflowed_body_survives_sync(self, tmp_path):
+        # A formatter's reflow of the docs-section body does not trigger a
+        # rewrite — the opening marker fingerprint still matches.
+        path = tmp_path / "CLAUDE.md"
+        sync_instruction_file(
+            path, code_section=None, docs_section=SECTION_DOCS, project_root=tmp_path
+        )
+        path.write_text(f"{MARKER_DOCS_START}\nReflowed body.\n{MARKER_DOCS_END}\n")
+        result = sync_instruction_file(
+            path, code_section=None, docs_section=SECTION_DOCS, project_root=tmp_path
+        )
+        assert result is False
+        assert "Reflowed body." in path.read_text()
+
+    def test_reflowed_body_passes_check(self, tmp_path):
+        # check mode also reports no change when the docs opening marker matches.
+        path = tmp_path / "CLAUDE.md"
+        sync_instruction_file(
+            path, code_section=None, docs_section=SECTION_DOCS, project_root=tmp_path
+        )
+        path.write_text(f"{MARKER_DOCS_START}\nReflowed body.\n{MARKER_DOCS_END}\n")
+        result = sync_instruction_file(
+            path,
+            code_section=None,
+            docs_section=SECTION_DOCS,
+            project_root=tmp_path,
+            check=True,
+        )
+        assert result is False
+
+    def test_different_fingerprint_refreshes_section(self, tmp_path):
+        # A docs section from an older uncoded version (different fingerprint)
+        # is replaced with the current canonical section.
+        path = tmp_path / "CLAUDE.md"
+        old_marker = "<!-- uncoded:docs:start sha256=deadbeef -->"
+        path.write_text(f"{old_marker}\nOld wording.\n{MARKER_DOCS_END}\n")
+        result = sync_instruction_file(
+            path, code_section=None, docs_section=SECTION_DOCS, project_root=tmp_path
+        )
+        assert result is True
+        content = path.read_text()
+        assert SECTION_DOCS in content
+        assert "Old wording." not in content
+
+    def test_plain_marker_refreshes_once_then_stable(self, tmp_path):
+        # An old plain docs marker (no fingerprint) is refreshed on the first
+        # sync after upgrading uncoded, then stays stable.
+        path = tmp_path / "CLAUDE.md"
+        path.write_text(f"<!-- uncoded:docs:start -->\nold body\n{MARKER_DOCS_END}\n")
+        result = sync_instruction_file(
+            path, code_section=None, docs_section=SECTION_DOCS, project_root=tmp_path
+        )
+        assert result is True
+        assert SECTION_DOCS in path.read_text()
+        result = sync_instruction_file(
+            path, code_section=None, docs_section=SECTION_DOCS, project_root=tmp_path
+        )
+        assert result is False
+
+    def test_prose_mention_of_prefix_before_section_is_ignored(self, tmp_path):
+        # A line that contains the docs marker prefix inside prose (not at
+        # column 0) must not be mistaken for the section opener.
+        path = tmp_path / "CLAUDE.md"
+        prose = "Use `<!-- uncoded:docs:start` markers to delimit sections.\n\n"
+        old_section = f"<!-- uncoded:docs:start -->\nold body\n{MARKER_DOCS_END}\n"
+        path.write_text(f"{prose}{old_section}")
+        result = sync_instruction_file(
+            path, code_section=None, docs_section=SECTION_DOCS, project_root=tmp_path
+        )
+        assert result is True
+        content = path.read_text()
+        assert "<!-- uncoded:docs:start` markers" in content
+        assert "old body" not in content
+        assert SECTION_DOCS in content
+
+
 class TestMarkerStamp:
     def test_marker_start_stamp_derives_from_code_section_body(self) -> None:
         expected = hashlib.sha256(_CODE_SECTION_BODY.encode()).hexdigest()[:8]

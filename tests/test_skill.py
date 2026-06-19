@@ -78,6 +78,27 @@ class TestSyncSkill:
         for path in LEGACY_SKILL_OUTPUTS:
             assert (tmp_path / path).exists()
 
+    def test_build_false_removes_existing_skill_files(self, tmp_path):
+        # Write skill files first, then remove them with build=False.
+        sync_skill(project_root=tmp_path, check=False, build=True)
+        for path in SKILL_OUTPUTS:
+            assert (tmp_path / path).exists()
+        assert sync_skill(project_root=tmp_path, check=False, build=False) is True
+        for path in SKILL_OUTPUTS:
+            assert not (tmp_path / path).exists()
+
+    def test_build_false_returns_false_when_already_absent(self, tmp_path):
+        # No files to remove: returns False (no change).
+        assert sync_skill(project_root=tmp_path, check=False, build=False) is False
+
+    def test_build_false_check_mode_reports_without_removing(self, tmp_path):
+        # check=True with build=False reports the prospective removal but
+        # leaves the files on disk.
+        sync_skill(project_root=tmp_path, check=False, build=True)
+        assert sync_skill(project_root=tmp_path, check=True, build=False) is True
+        for path in SKILL_OUTPUTS:
+            assert (tmp_path / path).exists()
+
 
 class TestSyncSkillProjectRootAnchor:
     def test_project_root_anchors_writes_independent_of_cwd(
