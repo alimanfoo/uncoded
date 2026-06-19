@@ -64,7 +64,7 @@ uv run pytest
 uv run pytest tests/test_stubs.py --no-cov
 ```
 
-<!-- uncoded:start sha256=5d50217d -->
+<!-- uncoded:start sha256=d50048f1 -->
 ## How to read and edit code in this codebase
 
 This repo uses [uncoded](https://github.com/alimanfoo/uncoded) to maintain
@@ -81,11 +81,11 @@ pattern, regex, or free-text phrase, use grep.**
 
 This applies to every tool call where you are trying to find code, not
 just the first one in the session. The pretrained reflex for "find X" is
-grep, and that reflex is wrong here. `grep -rn 'def resolve_body'` to read a
-function's body is the rule firing — that is `uncoded body`. `grep -rn
-'function_name'` to check whether something has callers before a refactor is
-the rule firing — that is `uncoded refs`. `grep` then `Edit` to delete
-dead code is the rule firing — that is `uncoded refs` to confirm dead,
+grep, and that reflex is wrong here. `grep -rn 'def parse_config'` to read a
+function's body applies the rule — that is `uncoded body`. `grep -rn
+'validate_input'` to check whether something has callers before a refactor is
+another case — that is `uncoded refs`. `grep` then `Edit` to delete
+dead code fits the same pattern — that is `uncoded refs` to confirm dead,
 then `Edit`. The grep version of any of these is noisier and less reliable:
 grep matches comments, strings, and unrelated attributes; grep misses
 re-exports (so caller and delete checks come back incomplete); grep forces
