@@ -12,7 +12,7 @@ from uncoded.instruction_files import SECTION_CODE, SECTION_DOCS, sync_instructi
 from uncoded.namespace_map import build_map, render_map
 from uncoded.refs import find_refs
 from uncoded.resolver import NamePath, SymbolNotFound, UnsupportedNamePath
-from uncoded.skill import sync_skill
+from uncoded.skill import sync_skills
 from uncoded.stubs import build_stubs, remove_all_stubs
 from uncoded.sync import remove_file, sync_file
 
@@ -133,7 +133,6 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
     changes = 0
 
     # Code artefacts — build when source_roots configured, else remove.
-    # The skill depends on namespace.yaml and stubs, so it follows the same rule.
     build = bool(config.source_roots)
     code_result = _sync_code_artefacts(
         build=build,
@@ -145,7 +144,12 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
     if code_result is None:
         return 1
     changes += code_result
-    changes += sync_skill(build=build, project_root=project_root, check=check)
+    changes += sync_skills(
+        source=bool(config.source_roots),
+        docs=bool(config.doc_roots),
+        project_root=project_root,
+        check=check,
+    )
 
     # Doc artefacts — build when doc_roots configured, else remove.
     if config.doc_roots:

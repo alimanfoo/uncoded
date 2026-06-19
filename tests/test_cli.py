@@ -15,7 +15,12 @@ import pytest
 
 from uncoded import cli
 from uncoded.instruction_files import MARKER_START
-from uncoded.skill import SKILL_OUTPUTS
+from uncoded.skill import SKILL_ROOTS, SKILLS
+
+# Paths for all registered skills at all skill roots.
+_SKILL_PATHS = [
+    root / skill.name / "SKILL.md" for skill in SKILLS for root in SKILL_ROOTS
+]
 
 
 def _init_repo(tmp_path, monkeypatch, source_roots=("src",)):
@@ -53,7 +58,7 @@ class TestSyncApplyMode:
         assert (tmp_path / ".uncoded" / "namespace.yaml").exists()
         assert (tmp_path / ".uncoded" / "stubs" / "src" / "foo.pyi").exists()
         assert (tmp_path / "CLAUDE.md").exists()
-        for skill_path in SKILL_OUTPUTS:
+        for skill_path in _SKILL_PATHS:
             assert (tmp_path / skill_path).exists()
 
     def test_idempotent_second_run(self, tmp_path, monkeypatch):
@@ -65,7 +70,7 @@ class TestSyncApplyMode:
             (tmp_path / ".uncoded" / "stubs" / "src" / "foo.pyi").stat().st_mtime_ns
         )
         claude_mtime = (tmp_path / "CLAUDE.md").stat().st_mtime_ns
-        skill_mtimes = [(tmp_path / p).stat().st_mtime_ns for p in SKILL_OUTPUTS]
+        skill_mtimes = [(tmp_path / p).stat().st_mtime_ns for p in _SKILL_PATHS]
 
         # A second run with no source changes must not rewrite any artifact.
         assert cli._sync() == 0
@@ -74,9 +79,7 @@ class TestSyncApplyMode:
             tmp_path / ".uncoded" / "stubs" / "src" / "foo.pyi"
         ).stat().st_mtime_ns == stub_mtime
         assert (tmp_path / "CLAUDE.md").stat().st_mtime_ns == claude_mtime
-        assert [
-            (tmp_path / p).stat().st_mtime_ns for p in SKILL_OUTPUTS
-        ] == skill_mtimes
+        assert [(tmp_path / p).stat().st_mtime_ns for p in _SKILL_PATHS] == skill_mtimes
 
     def test_dedupes_when_claude_md_is_symlink_to_agents_md(
         self, tmp_path, monkeypatch, capsys
@@ -284,11 +287,11 @@ class TestSyncApplyMode:
         # under the subdirectory cwd.
         assert (tmp_path / ".uncoded" / "stubs" / "src" / "foo.pyi").exists()
         assert (tmp_path / "CLAUDE.md").exists()
-        for skill_path in SKILL_OUTPUTS:
+        for skill_path in _SKILL_PATHS:
             assert (tmp_path / skill_path).exists()
         assert not (tmp_path / "src" / ".uncoded").exists()
         assert not (tmp_path / "src" / "CLAUDE.md").exists()
-        for skill_path in SKILL_OUTPUTS:
+        for skill_path in _SKILL_PATHS:
             assert not (tmp_path / "src" / skill_path).exists()
 
     def test_artefacts_match_when_run_from_subdir_vs_project_root(
@@ -329,7 +332,7 @@ class TestSyncApplyMode:
             Path(".uncoded/namespace.yaml"),
             Path(".uncoded/stubs/src/foo.pyi"),
             Path("CLAUDE.md"),
-            *SKILL_OUTPUTS,
+            *_SKILL_PATHS,
         ]
         for rel in relpaths:
             assert (from_root / rel).read_text() == (from_subdir / rel).read_text(), (
@@ -878,7 +881,7 @@ class TestSyncDocRoots:
 
         assert (tmp_path / ".uncoded" / "namespace.yaml").exists()
         assert (tmp_path / ".uncoded" / "stubs").exists()
-        for path in SKILL_OUTPUTS:
+        for path in _SKILL_PATHS:
             assert (tmp_path / path).exists()
 
         # Drop source-roots.
@@ -896,7 +899,7 @@ class TestSyncDocRoots:
         assert cli._sync() == 0
         assert not (tmp_path / ".uncoded" / "namespace.yaml").exists()
         assert not (tmp_path / ".uncoded" / "stubs").exists()
-        for path in SKILL_OUTPUTS:
+        for path in _SKILL_PATHS:
             assert not (tmp_path / path).exists()
 
     def test_doc_root_removal_cleans_docs_yaml(self, tmp_path, monkeypatch):
@@ -1006,29 +1009,29 @@ class TestSyncDocRoots:
     def test_doc_only_does_not_write_skill(self, tmp_path, monkeypatch):
         _init_doc_repo(tmp_path, monkeypatch)
         assert cli._sync() == 0
-        for path in SKILL_OUTPUTS:
+        for path in _SKILL_PATHS:
             assert not (tmp_path / path).exists()
 
     def test_doc_only_removes_preexisting_skill(self, tmp_path, monkeypatch):
         _init_doc_repo(tmp_path, monkeypatch)
-        for path in SKILL_OUTPUTS:
+        for path in _SKILL_PATHS:
             skill_path = tmp_path / path
             skill_path.parent.mkdir(parents=True, exist_ok=True)
             skill_path.write_text("old skill\n")
         assert cli._sync() == 0
-        for path in SKILL_OUTPUTS:
+        for path in _SKILL_PATHS:
             assert not (tmp_path / path).exists()
 
     def test_check_returns_one_when_skill_should_be_removed(
         self, tmp_path, monkeypatch
     ):
         _init_doc_repo(tmp_path, monkeypatch)
-        for path in SKILL_OUTPUTS:
+        for path in _SKILL_PATHS:
             skill_path = tmp_path / path
             skill_path.parent.mkdir(parents=True, exist_ok=True)
             skill_path.write_text("old skill\n")
         assert cli._sync(check=True) == 1
-        for path in SKILL_OUTPUTS:
+        for path in _SKILL_PATHS:
             assert (tmp_path / path).exists()
 
     def test_idempotent_doc_only(self, tmp_path, monkeypatch):

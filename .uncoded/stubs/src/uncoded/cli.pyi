@@ -11,7 +11,7 @@ from uncoded.instruction_files import SECTION_CODE, SECTION_DOCS, sync_instructi
 from uncoded.namespace_map import build_map, render_map
 from uncoded.refs import find_refs
 from uncoded.resolver import NamePath, SymbolNotFound, UnsupportedNamePath
-from uncoded.skill import sync_skill
+from uncoded.skill import sync_skills
 from uncoded.stubs import build_stubs, remove_all_stubs
 from uncoded.sync import remove_file, sync_file
 

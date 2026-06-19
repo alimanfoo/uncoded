@@ -1,10 +1,12 @@
 # tests/test_skill.py
 
+from importlib.resources import files
 from pathlib import Path
-from uncoded.skill import _SKILL_CONTENT, LEGACY_SKILL_OUTPUTS, SKILL_OUTPUTS, sync_skill
+import uncoded.skill as skill_module
+from uncoded.skill import SKILL_ROOTS, SKILLS, Skill, sync_skills
 
-class TestSyncSkill:
-    def test_skill_name_and_output_paths(self):
+class TestSyncSkills:
+    def test_skill_registry(self):
         ...
 
     def test_writes_skill_files(self, tmp_path):
@@ -13,10 +15,13 @@ class TestSyncSkill:
     def test_creates_parent_directories(self, tmp_path):
         ...
 
-    def test_returns_true_on_first_write(self, tmp_path):
+    def test_content_has_frontmatter_and_body(self, tmp_path):
         ...
 
-    def test_returns_false_when_already_in_sync(self, tmp_path):
+    def test_returns_change_count_on_first_write(self, tmp_path):
+        ...
+
+    def test_returns_zero_when_already_in_sync(self, tmp_path):
         ...
 
     def test_idempotent(self, tmp_path):
@@ -34,19 +39,28 @@ class TestSyncSkill:
     def test_removes_legacy_skill_files(self, tmp_path):
         ...
 
-    def test_check_mode_reports_legacy_skill_files_without_removing(self, tmp_path):
+    def test_check_mode_reports_legacy_files_without_removing(self, tmp_path):
         ...
 
-    def test_build_false_removes_existing_skill_files(self, tmp_path):
+    def test_source_false_removes_existing_skill_files(self, tmp_path):
         ...
 
-    def test_build_false_returns_false_when_already_absent(self, tmp_path):
+    def test_source_false_returns_zero_when_already_absent(self, tmp_path):
         ...
 
-    def test_build_false_check_mode_reports_without_removing(self, tmp_path):
+    def test_source_false_check_mode_reports_without_removing(self, tmp_path):
         ...
 
-class TestSyncSkillProjectRootAnchor:
+    def test_docs_gate_builds_when_docs_true(self, tmp_path, monkeypatch):
+        ...
+
+    def test_docs_gate_skips_when_docs_false(self, tmp_path, monkeypatch):
+        ...
+
+    def test_no_legacy_names_skips_legacy_removal(self, tmp_path, monkeypatch):
+        ...
+
+class TestSyncSkillsProjectRootAnchor:
     def test_project_root_anchors_writes_independent_of_cwd(self, tmp_path, monkeypatch):
         ...
 

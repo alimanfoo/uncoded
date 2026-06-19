@@ -7,7 +7,9 @@ from unittest import mock
 import pytest
 from uncoded import cli
 from uncoded.instruction_files import MARKER_START
-from uncoded.skill import SKILL_OUTPUTS
+from uncoded.skill import SKILL_ROOTS, SKILLS
+
+_SKILL_PATHS = [root / skill.name / 'SKILL.md' for skill in SKILLS for root in SKILL_ROOTS]
 
 def _init_repo(tmp_path, monkeypatch, source_roots):
     ...

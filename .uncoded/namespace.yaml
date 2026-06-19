@@ -108,10 +108,16 @@ src/:
       resolve_ast_node_from_source:
       _resolve_class_member:
     skill.py:
-      SKILL_OUTPUTS:
-      LEGACY_SKILL_OUTPUTS:
-      _SKILL_CONTENT:
-      sync_skill:
+      SKILL_ROOTS:
+      SKILLS:
+      Skill:
+        name:
+        description:
+        body_file:
+        gate:
+        legacy_names:
+      _render_content:
+      sync_skills:
     stubs.py:
       VALUE_WIDTH_CAP:
       StubParam:
@@ -214,6 +220,7 @@ tests/:
     TestResolveBodyByteIdentical:
       test_exact_source_returned:
   test_cli.py:
+    _SKILL_PATHS:
     TestSyncApplyMode:
       test_writes_namespace_map_stubs_and_instruction_file:
       test_idempotent_second_run:
@@ -497,22 +504,26 @@ tests/:
     _init_response:
     _shutdown_response:
   test_skill.py:
-    TestSyncSkill:
-      test_skill_name_and_output_paths:
+    TestSyncSkills:
+      test_skill_registry:
       test_writes_skill_files:
       test_creates_parent_directories:
-      test_returns_true_on_first_write:
-      test_returns_false_when_already_in_sync:
+      test_content_has_frontmatter_and_body:
+      test_returns_change_count_on_first_write:
+      test_returns_zero_when_already_in_sync:
       test_idempotent:
       test_check_mode_does_not_write:
       test_check_mode_reports_change_when_missing:
       test_check_mode_reports_no_change_when_in_sync:
       test_removes_legacy_skill_files:
-      test_check_mode_reports_legacy_skill_files_without_removing:
-      test_build_false_removes_existing_skill_files:
-      test_build_false_returns_false_when_already_absent:
-      test_build_false_check_mode_reports_without_removing:
-    TestSyncSkillProjectRootAnchor:
+      test_check_mode_reports_legacy_files_without_removing:
+      test_source_false_removes_existing_skill_files:
+      test_source_false_returns_zero_when_already_absent:
+      test_source_false_check_mode_reports_without_removing:
+      test_docs_gate_builds_when_docs_true:
+      test_docs_gate_skips_when_docs_false:
+      test_no_legacy_names_skips_legacy_removal:
+    TestSyncSkillsProjectRootAnchor:
       test_project_root_anchors_writes_independent_of_cwd:
       test_project_root_anchors_legacy_removal_independent_of_cwd:
   test_stubs.py:
