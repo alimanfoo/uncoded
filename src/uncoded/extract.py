@@ -82,11 +82,12 @@ def iter_source_files(
     Each yielded ``rel_path`` is the file's path relative to
     ``project_root``.
 
-    Files that fail to read (unreadable or non-UTF-8) or fail to parse
-    are each skipped with a single ``warning: skipping ...`` line on
-    stderr — centralising these decisions here lets ``extract_modules``
-    and ``_generate_stubs`` trust they only receive readable, parseable
-    source.
+    Source files are read as UTF-8; a file with a non-UTF-8 encoding (such
+    as one declared with ``# -*- coding: latin-1 -*-``) is treated as
+    unreadable and skipped. Files that fail to read (unreadable or non-UTF-8)
+    or fail to parse are each skipped with a single ``warning: skipping ...``
+    line on stderr — centralising these decisions here lets ``extract_modules``
+    and ``_generate_stubs`` trust they only receive readable, parseable source.
     """
     source_root = source_root.resolve()
     project_root = project_root.resolve()

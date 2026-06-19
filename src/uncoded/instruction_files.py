@@ -52,6 +52,9 @@ def _apply_section(
 ) -> str:
     """Apply, replace, or remove the delimited section in text.
 
+    Applying this function twice produces the same result as applying it once,
+    and no text outside the uncoded markers is ever deleted.
+
     Scans lines to anchor both the opening and closing markers to line starts.
     The first line whose content (trailing \\r\\n stripped) starts with prefix
     is the opening; the first line after it whose stripped content equals end
@@ -66,8 +69,7 @@ def _apply_section(
     Duplicate policy: the first well-formed section (a start-prefix line through
     its matching end line) is managed; any additional well-formed uncoded section
     is collapsed to leave at most one. A lone orphan marker (a start with no
-    later end, or an end with no earlier start) is left untouched so prose is
-    never deleted.
+    later end, or an end with no earlier start) is left untouched.
 
     Stamp tolerance: when the located opening line's content matches start, the
     body is left byte-for-byte (a formatter's reflow survives); when it differs,
