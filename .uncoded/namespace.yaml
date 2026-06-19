@@ -72,6 +72,8 @@ src/:
       HEADER:
       build_map:
       render_map:
+    read_helpers.py:
+      _read_file_text:
     refs.py:
       TY_VERSION:
       Reference:
@@ -341,6 +343,8 @@ tests/:
       test_directory_nested_subdir:
       test_empty_directory_yields_nothing:
       test_rel_path_is_relative_to_project_root:
+      test_skips_non_utf8_file_with_warning:
+      test_single_file_root_unreadable_yields_nothing:
     TestBuildDocsMap:
       test_empty_files:
       test_headingless_file_maps_to_null:
@@ -381,6 +385,7 @@ tests/:
       test_includes_init_with_symbols:
       test_skips_empty_init:
       test_skips_syntax_errors:
+      test_skips_non_utf8_file_with_warning:
     TestExtractModulesFromFiles:
       test_returns_module_info_per_parseable_file:
       test_preserves_source_order:

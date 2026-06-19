@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from uncoded.ast_helpers import assign_target_name, property_kind
+from uncoded.read_helpers import _read_file_text
 
 
 @dataclass
@@ -76,22 +77,25 @@ def extract_module(source: str, rel_path: str) -> ModuleInfo:
 def iter_source_files(
     source_root: Path, project_root: Path
 ) -> Iterator[tuple[str, str]]:
-    """Yield (source_text, rel_path) for every parseable Python file in *source_root*.
+    """Yield (source_text, rel_path) for every readable, parseable Python file.
 
     Each yielded ``rel_path`` is the file's path relative to
     ``project_root``.
 
-    Files that fail to parse are skipped with a single ``warning:
-    skipping ...`` line on stderr — centralising the syntax-error
-    decision here lets ``extract_modules`` and ``_generate_stubs``
-    trust they only receive parseable source.
+    Files that fail to read (unreadable or non-UTF-8) or fail to parse
+    are each skipped with a single ``warning: skipping ...`` line on
+    stderr — centralising these decisions here lets ``extract_modules``
+    and ``_generate_stubs`` trust they only receive readable, parseable
+    source.
     """
     source_root = source_root.resolve()
     project_root = project_root.resolve()
 
     for py_file in sorted(source_root.rglob("*.py")):
         rel_path = str(py_file.relative_to(project_root))
-        source = py_file.read_text()
+        source = _read_file_text(py_file)
+        if source is None:
+            continue
         try:
             ast.parse(source, rel_path)
         except SyntaxError as e:

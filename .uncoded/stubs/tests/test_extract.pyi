@@ -65,6 +65,9 @@ class TestIterAndExtract:
     def test_skips_syntax_errors(self, tmp_path, capsys):
         ...
 
+    def test_skips_non_utf8_file_with_warning(self, tmp_path, capsys):
+        ...
+
 class TestExtractModulesFromFiles:
     def test_returns_module_info_per_parseable_file(self):
         ...
