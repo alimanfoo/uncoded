@@ -26,7 +26,7 @@ class Skill:
 
 SKILLS: list[Skill] = [
     Skill(
-        name="coherence-review",
+        name="uncoded-coherence-review",
         description=(
             "Perform a coherence review of a Python codebase: a diagnostic sweep for"
             " semantic drift, naming inconsistency, promissory mismatch, and structural"
@@ -36,7 +36,7 @@ SKILLS: list[Skill] = [
         ),
         body_file="coherence_review.md",
         gate="code",
-        legacy_names=("uncoded-review",),
+        legacy_names=("coherence-review", "uncoded-review"),
     ),
     Skill(
         name="uncoded-code-navigation",
