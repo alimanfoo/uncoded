@@ -327,8 +327,7 @@ class TestIterAndExtract:
         assert any("good.py" in p for p in rel_paths)
         assert not any("binary.py" in p for p in rel_paths)
         err = capsys.readouterr().err
-        assert "warning: skipping" in err
-        assert "binary.py" in err
+        assert "warning: skipping src/mypkg/binary.py" in err
 
 
 class TestExtractModulesFromFiles:

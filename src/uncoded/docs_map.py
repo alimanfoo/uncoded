@@ -108,15 +108,17 @@ def iter_doc_files(doc_root: Path, project_root: Path) -> Iterator[tuple[str, Pa
     doc_root = doc_root.resolve()
     project_root = project_root.resolve()
     if doc_root.is_file():
-        text = _read_file_text(doc_root)
+        rel = doc_root.relative_to(project_root)
+        text = _read_file_text(doc_root, display=rel)
         if text is not None:
-            yield text, doc_root.relative_to(project_root)
+            yield text, rel
     else:
         for md_file in sorted(doc_root.rglob("*.md")):
-            text = _read_file_text(md_file)
+            rel = md_file.relative_to(project_root)
+            text = _read_file_text(md_file, display=rel)
             if text is None:
                 continue
-            yield text, md_file.relative_to(project_root)
+            yield text, rel
 
 
 def build_docs_map(files: Iterable[tuple[str, Path]]) -> dict:

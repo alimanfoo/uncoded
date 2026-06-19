@@ -161,19 +161,17 @@ class TestIterDocFiles:
         assert len(results) == 1
         assert results[0][1].name == "good.md"
         err = capsys.readouterr().err
-        assert "warning: skipping" in err
-        assert "bad.md" in err
+        assert "warning: skipping bad.md" in err
 
     def test_single_file_root_unreadable_yields_nothing(self, tmp_path, capsys):
         # When the single-file root itself is unreadable, the iterator yields
-        # nothing and emits a warning.
+        # nothing and emits a warning with the project-relative path.
         bad = tmp_path / "bad.md"
         bad.write_bytes(b"\xff\xfe not utf-8")
         results = list(iter_doc_files(bad, tmp_path))
         assert results == []
         err = capsys.readouterr().err
-        assert "warning: skipping" in err
-        assert "bad.md" in err
+        assert "warning: skipping bad.md" in err
 
 
 class TestBuildDocsMap:
