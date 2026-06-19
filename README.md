@@ -32,15 +32,26 @@ load this to orient to the documentation, then navigate to a heading with
 `Read` or `grep`. Generated only when `doc-roots` is configured. Outline
 only — `uncoded body`, `uncoded refs`, and stubs do not apply to Markdown.
 
-**`.claude/skills/coherence-review/SKILL.md`** and
-**`.agents/skills/coherence-review/SKILL.md`** — a coherence review skill,
-written to both Claude Code and Codex skill directories (see
-[Coherence review](#coherence-review) below).
+**Skills** — written to both `.claude/skills/` and `.agents/skills/`:
 
-`uncoded` also injects navigation sections into `CLAUDE.md`/`AGENTS.md`.
-The code-navigation section appears when `source-roots` is configured; the
-docs-navigation section appears when `doc-roots` is configured. Each section
-is present only when its root type is set.
+- **`uncoded-code-navigation`** — the code dispatch rule: load `namespace.yaml`
+  first, read `.pyi` stubs before source, use `uncoded body` and `uncoded refs`
+  for symbol operations. Generated when `source-roots` is configured.
+- **`uncoded-doc-navigation`** — the docs navigation rule: load `docs.yaml` at
+  session start, then use `Read` or `grep` to reach a heading. Generated when
+  `doc-roots` is configured.
+- **`uncoded-coherence-review`** — a structured diagnostic sweep for naming drift
+  and incoherence (see [Coherence review](#coherence-review)). Generated when
+  `source-roots` is configured.
+
+Skills are on-demand by default. To have the navigation skills loaded every
+session, add one line to your `AGENTS.md` or `CLAUDE.md`:
+
+```text
+Always load the `uncoded-code-navigation` and `uncoded-doc-navigation` skills.
+```
+
+This is optional — agents can also load them on demand.
 
 ## Install uv
 
@@ -84,8 +95,7 @@ uvx uncoded sync
 ```
 
 Run it from the repo root. It reads `pyproject.toml` (or `.uncoded.toml`)
-to find your configured roots, builds the index, and updates
-`CLAUDE.md`/`AGENTS.md`.
+to find your configured roots and builds the index and skill files.
 
 Commit the generated `.uncoded/` directory so agents working
 in the repo always have a current index.
@@ -170,9 +180,7 @@ uvx uncoded refs resolve_body --in src/uncoded/body.py
 
 ## How agents use it
 
-When `uncoded` is set up, a navigation section is automatically maintained in
-the configured instruction files (by default, `CLAUDE.md` and `AGENTS.md`).
-Agents following that protocol:
+When `uncoded` is set up, agents load the navigation skills and follow this protocol:
 
 1. Load the orientation artefacts. Read `.uncoded/namespace.yaml` — every
    symbol, at a glance. When `doc-roots` is configured, also read
@@ -201,13 +209,13 @@ line-number coordinates, no offset arithmetic.
 AI coding agents tend to leave codebases in an incoherent state: names that
 no longer match behaviour, docstrings that describe stale signatures, dead
 symbols, pattern changes applied in some places but not others. `uncoded sync`
-installs a `/coherence-review` skill that runs a structured diagnostic sweep to
+installs an `/uncoded-coherence-review` skill that runs a structured diagnostic sweep to
 find these problems.
 
 Invoke it in Claude Code:
 
 ```text
-/coherence-review
+/uncoded-coherence-review
 ```
 
 The review works in four sweeps:
@@ -266,16 +274,41 @@ runs the local editable install. For example, after editing source files run
 This repo dogfoods uncoded: `.pre-commit-config.yaml` runs `uv run uncoded sync`
 as a pre-commit hook. On each commit the hook regenerates
 `.uncoded/namespace.yaml`, the stub files under `.uncoded/stubs/`,
-`.uncoded/docs.yaml`, and the injected navigation sections in `AGENTS.md` and
-`CLAUDE.md`. If the hook modifies any of those files the commit fails — re-stage
+`.uncoded/docs.yaml`, and the skill files under `.claude/skills/` and `.agents/skills/`.
+If the hook modifies any of those files the commit fails — re-stage
 the changes and commit again.
 
-### Note for Windows contributors
+## Upgrading from v1
 
-`CLAUDE.md` is a symlink to `AGENTS.md` (single source). macOS and Linux
-handle this transparently; on Windows, git's `core.symlinks` setting must
-be enabled, or the checkout writes `CLAUDE.md` as a plain file containing
-the literal string `AGENTS.md` and the navigation section drifts.
+Version 2.0.0 replaces injection with skills. Three manual steps after upgrading:
+
+1. **Remove old marker blocks** from your `AGENTS.md` and `CLAUDE.md`. Look
+   for and delete these blocks:
+
+   ```text
+   <!-- uncoded:start ... -->
+   ...
+   <!-- uncoded:end -->
+   ```
+
+   and
+
+   ```text
+   <!-- uncoded:docs:start ... -->
+   ...
+   <!-- uncoded:docs:end -->
+   ```
+
+   uncoded no longer manages these sections. Leaving them in place is harmless
+   but they are now dead markup.
+
+2. **Update any skill pointer** that references `coherence-review` to
+   `uncoded-coherence-review`. The coherence review skill was renamed with the
+   `uncoded-` prefix to match the navigation skills.
+
+3. **Remove the `instruction-files` config key** if your `pyproject.toml` or
+   `.uncoded.toml` has it. uncoded no longer reads this key; leaving it in
+   place causes no error.
 
 ## Releasing
 
