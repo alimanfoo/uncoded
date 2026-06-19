@@ -209,7 +209,7 @@ class TestSyncApplyMode:
         # Running from a subdirectory of the project must produce
         # artefacts at the project root, not under the subdirectory.
         # Reads (source files, pyproject) anchor at project_root; writes
-        # (namespace, stubs, instruction file, skill files) do too.
+        # (namespace, stubs, skill files) do too.
         (tmp_path / "pyproject.toml").write_text(
             textwrap.dedent(
                 """\
