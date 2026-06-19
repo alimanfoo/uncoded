@@ -75,8 +75,8 @@ def _apply_section(
 
     When body is a string:
     - absent → append the canonical section;
-    - found and opening-marker line matches start → return text unchanged
-      (extras collapsed if any);
+    - found and opening-marker line matches start → managed section preserved
+      byte-for-byte; any extra copies collapsed;
     - found and opening-marker line differs → replace with the canonical section.
     When body is None: remove the section and any extra copies if present.
     """
