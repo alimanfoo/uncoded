@@ -3,7 +3,6 @@
 from pathlib import Path
 import pytest
 from uncoded.config import Config, ConfigError, find_pyproject_toml, read_config
-from uncoded.instruction_files import DEFAULT_INSTRUCTION_FILES
 
 class TestFindPyprojectToml:
     def test_finds_at_start(self, tmp_path):
@@ -32,15 +31,6 @@ class TestReadConfig:
         ...
 
     def test_finds_pyproject_in_parent_directory(self, tmp_path):
-        ...
-
-    def test_instruction_files_default_when_key_absent(self, tmp_path):
-        ...
-
-    def test_instruction_files_configured(self, tmp_path):
-        ...
-
-    def test_instruction_files_empty_list_respected(self, tmp_path):
         ...
 
     def test_returns_frozen_dataclass(self, tmp_path):

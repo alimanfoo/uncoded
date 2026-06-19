@@ -3,7 +3,6 @@ from pathlib import Path
 import pytest
 
 from uncoded.config import Config, ConfigError, find_pyproject_toml, read_config
-from uncoded.instruction_files import DEFAULT_INSTRUCTION_FILES
 
 
 class TestFindPyprojectToml:
@@ -68,35 +67,6 @@ class TestReadConfig:
         assert config is not None
         assert config.project_root == tmp_path
 
-    def test_instruction_files_default_when_key_absent(self, tmp_path):
-        toml = '[tool.uncoded]\nsource-roots = ["src"]\n'
-        (tmp_path / "pyproject.toml").write_text(toml)
-        config = read_config(start=tmp_path)
-        assert config is not None
-        assert config.instruction_files == list(DEFAULT_INSTRUCTION_FILES)
-
-    def test_instruction_files_configured(self, tmp_path):
-        (tmp_path / "pyproject.toml").write_text(
-            "[tool.uncoded]\n"
-            'source-roots = ["src"]\n'
-            'instruction-files = ["CLAUDE.md", "AGENTS.md", "CONVENTIONS.md"]\n'
-        )
-        config = read_config(start=tmp_path)
-        assert config is not None
-        assert config.instruction_files == [
-            Path("CLAUDE.md"),
-            Path("AGENTS.md"),
-            Path("CONVENTIONS.md"),
-        ]
-
-    def test_instruction_files_empty_list_respected(self, tmp_path):
-        (tmp_path / "pyproject.toml").write_text(
-            '[tool.uncoded]\nsource-roots = ["src"]\ninstruction-files = []\n'
-        )
-        config = read_config(start=tmp_path)
-        assert config is not None
-        assert config.instruction_files == []
-
     def test_returns_frozen_dataclass(self, tmp_path):
         toml = '[tool.uncoded]\nsource-roots = ["src"]\n'
         (tmp_path / "pyproject.toml").write_text(toml)
@@ -114,17 +84,14 @@ class TestReadConfig:
         assert config.source_roots == []
 
     def test_uncoded_toml_top_level_keys(self, tmp_path):
-        # All three keys at the top level with no [tool.uncoded] wrapper.
+        # source-roots and doc-roots at the top level with no [tool.uncoded] wrapper.
         (tmp_path / ".uncoded.toml").write_text(
-            'source-roots = ["src"]\n'
-            'doc-roots = ["docs"]\n'
-            'instruction-files = ["CLAUDE.md"]\n'
+            'source-roots = ["src"]\ndoc-roots = ["docs"]\n'
         )
         config = read_config(start=tmp_path)
         assert config is not None
         assert config.source_roots == [Path("src")]
         assert config.doc_roots == [Path("docs")]
-        assert config.instruction_files == [Path("CLAUDE.md")]
 
     def test_error_when_both_configure_uncoded_in_same_directory(self, tmp_path):
         # pyproject.toml with [tool.uncoded] AND .uncoded.toml → ConfigError.

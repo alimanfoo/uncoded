@@ -7,7 +7,6 @@ from uncoded.body import resolve_body
 from uncoded.config import ConfigError, read_config
 from uncoded.docs_map import build_docs_map, iter_doc_files, render_docs_map
 from uncoded.extract import extract_modules, iter_source_files
-from uncoded.instruction_files import SECTION_CODE, SECTION_DOCS, sync_instruction_file
 from uncoded.namespace_map import build_map, render_map
 from uncoded.refs import find_refs
 from uncoded.resolver import NamePath, SymbolNotFound, UnsupportedNamePath

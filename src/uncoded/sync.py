@@ -1,7 +1,7 @@
 """Content-aware file writes with an optional check-only mode.
 
-Every place that writes an artifact (namespace map, stubs, instruction-file
-sections) routes through :func:`sync_file` / :func:`remove_file` so that two
+Every place that writes an artifact (namespace map, stubs, skill files)
+routes through :func:`sync_file` / :func:`remove_file` so that two
 concerns live in one place: only write when content actually changes, and
 when ``check=True`` report the prospective action without touching disk.
 

@@ -8,7 +8,6 @@ from uncoded.body import resolve_body
 from uncoded.config import ConfigError, read_config
 from uncoded.docs_map import build_docs_map, iter_doc_files, render_docs_map
 from uncoded.extract import extract_modules, iter_source_files
-from uncoded.instruction_files import SECTION_CODE, SECTION_DOCS, sync_instruction_file
 from uncoded.namespace_map import build_map, render_map
 from uncoded.refs import find_refs
 from uncoded.resolver import NamePath, SymbolNotFound, UnsupportedNamePath
@@ -190,39 +189,6 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
             Path(".uncoded/docs.yaml"), project_root=project_root, check=check
         )
 
-    # Instruction sections — each present only when its root type is configured.
-    code_section = SECTION_CODE if config.source_roots else None
-    docs_section = SECTION_DOCS if config.doc_roots else None
-
-    # Dedupe configured instruction paths by resolved (canonical) path.
-    # Without this, if CLAUDE.md is a symlink to AGENTS.md, pass 1 writes
-    # through the symlink and reports the alias name while pass 2 finds
-    # the file already in sync and reports nothing — asymmetric output
-    # that hides the actual write target. Resolving collapses both aliases
-    # to the same canonical path, rendered project-relative. An instruction
-    # file that resolves outside the project root is a configuration error.
-    seen_resolved: set[Path] = set()
-    for path in config.instruction_files:
-        resolved = (project_root / path).resolve()
-        if resolved in seen_resolved:
-            continue
-        seen_resolved.add(resolved)
-        if not resolved.is_relative_to(resolved_project_root):
-            print(
-                f"Error: instruction file {path} is outside the project root. "
-                "Check instruction-files in your uncoded config file.",
-                file=sys.stderr,
-            )
-            return 1
-        canonical = resolved.relative_to(project_root)
-        changes += sync_instruction_file(
-            canonical,
-            code_section=code_section,
-            docs_section=docs_section,
-            project_root=project_root,
-            check=check,
-        )
-
     if check:
         if changes:
             print(f"Index out of date: {changes} file(s) would change.")
@@ -313,10 +279,7 @@ def main() -> int:
 
     sync_parser = subparsers.add_parser(
         "sync",
-        help=(
-            "Build or refresh the namespace map, stub files, and "
-            "instruction-file sections."
-        ),
+        help=("Build or refresh the namespace map, stub files, and skill files."),
     )
     sync_parser.set_defaults(action=lambda: _sync(check=False))
 
