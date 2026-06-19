@@ -278,9 +278,19 @@ as a pre-commit hook. On each commit the hook regenerates
 If the hook modifies any of those files the commit fails — re-stage
 the changes and commit again.
 
+### Note for Windows contributors
+
+`CLAUDE.md` is a symlink to `AGENTS.md`. On macOS and Linux this is
+transparent; on Windows, git's `core.symlinks` setting must be enabled.
+Without it, git checks `CLAUDE.md` out as a plain file containing the
+literal string `AGENTS.md` rather than following the symlink.
+
 ## Upgrading from v1
 
-Version 2.0.0 replaces injection with skills. Three manual steps after upgrading:
+Version 2.0.0 replaces injection with skills. In v1, navigation guidance was
+always-on, injected into `AGENTS.md`/`CLAUDE.md` on every sync; in v2 it
+ships as on-demand skills — agents load them when relevant. Four manual steps
+after upgrading:
 
 1. **Remove old marker blocks** from your `AGENTS.md` and `CLAUDE.md`. Look
    for and delete these blocks:
@@ -309,6 +319,13 @@ Version 2.0.0 replaces injection with skills. Three manual steps after upgrading
 3. **Remove the `instruction-files` config key** if your `pyproject.toml` or
    `.uncoded.toml` has it. uncoded no longer reads this key; leaving it in
    place causes no error.
+
+4. **Restore always-on navigation** if you want v1 behaviour back. Add one
+   line to your `AGENTS.md` and `CLAUDE.md`:
+
+   ```text
+   Always load the `uncoded-code-navigation` and `uncoded-doc-navigation` skills.
+   ```
 
 ## Releasing
 
