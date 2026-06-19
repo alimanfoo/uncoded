@@ -64,7 +64,7 @@ uv run pytest
 uv run pytest tests/test_stubs.py --no-cov
 ```
 
-<!-- uncoded:start -->
+<!-- uncoded:start sha256=5d50217d -->
 ## How to read and edit code in this codebase
 
 This repo uses [uncoded](https://github.com/alimanfoo/uncoded) to maintain
@@ -171,7 +171,7 @@ Edit, and grep stay correct:
 The dispatch rule turns on the search term: a symbol name → the index; a
 regex or free-text phrase → grep.
 <!-- uncoded:end -->
-<!-- uncoded:docs:start -->
+<!-- uncoded:docs:start sha256=6a530a01 -->
 ## How to read documentation in this codebase
 
 `.uncoded/docs.yaml` is an orientation outline: it lists every Markdown file

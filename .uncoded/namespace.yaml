@@ -55,14 +55,16 @@ src/:
       iter_source_files:
       extract_modules:
     instruction_files.py:
-      MARKER_START:
       MARKER_END:
-      MARKER_DOCS_START:
       MARKER_DOCS_END:
+      MARKER_START_PREFIX:
+      MARKER_DOCS_START_PREFIX:
       DEFAULT_INSTRUCTION_FILES:
       _CODE_SECTION_BODY:
+      MARKER_START:
       SECTION_CODE:
       _DOCS_SECTION_BODY:
+      MARKER_DOCS_START:
       SECTION_DOCS:
       _apply_section:
       sync_instruction_file:
@@ -276,6 +278,9 @@ tests/:
       test_check_returns_one_when_docs_yaml_stale:
       test_check_returns_one_when_stubs_should_be_removed:
       test_check_returns_one_when_docs_yaml_should_be_removed:
+      test_doc_only_does_not_write_skill:
+      test_doc_only_removes_preexisting_skill:
+      test_check_returns_one_when_skill_should_be_removed:
       test_idempotent_doc_only:
     _init_repo:
     _init_doc_repo:
@@ -415,6 +420,12 @@ tests/:
     TestSyncInstructionFileProjectRootAnchor:
       test_project_root_anchors_create_independent_of_cwd:
       test_project_root_anchors_update_of_existing_file:
+    TestSyncInstructionFileFingerprint:
+      test_reflowed_body_survives_sync:
+      test_reflowed_body_passes_check:
+      test_different_fingerprint_refreshes_section:
+      test_plain_marker_refreshes_once_then_stable:
+      test_prose_mention_of_prefix_before_section_is_ignored:
   test_namespace_map.py:
     TestBuildMap:
       test_single_file:

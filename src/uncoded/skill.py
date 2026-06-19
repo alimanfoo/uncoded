@@ -18,17 +18,24 @@ LEGACY_SKILL_OUTPUTS = [
 _SKILL_CONTENT = (files("uncoded") / "coherence_review.md").read_text(encoding="utf-8")
 
 
-def sync_skill(*, project_root: Path, check: bool) -> bool:
-    """Write the coherence-review skill file to all supported agent locations.
+def sync_skill(*, project_root: Path, check: bool, build: bool) -> bool:
+    """Sync the coherence-review skill file to all supported agent locations.
 
-    The skill files are written under ``project_root``. Log lines still
-    name each configured path as given, so messages stay
-    project-relative regardless of where the caller is running from.
+    When build is True, write the skill files under project_root.
+    When build is False, remove any existing skill files. In both cases,
+    remove legacy skill files left by older versions of uncoded.
     """
-    results = [
-        sync_file(path, _SKILL_CONTENT, project_root=project_root, check=check)
-        for path in SKILL_OUTPUTS
-    ]
+    results: list[bool] = []
+    if build:
+        results.extend(
+            sync_file(path, _SKILL_CONTENT, project_root=project_root, check=check)
+            for path in SKILL_OUTPUTS
+        )
+    else:
+        results.extend(
+            remove_file(path, project_root=project_root, check=check)
+            for path in SKILL_OUTPUTS
+        )
     results.extend(
         remove_file(path, project_root=project_root, check=check)
         for path in LEGACY_SKILL_OUTPUTS

@@ -14,6 +14,7 @@ from unittest import mock
 import pytest
 
 from uncoded import cli
+from uncoded.instruction_files import MARKER_START
 from uncoded.skill import SKILL_OUTPUTS
 
 
@@ -93,7 +94,7 @@ class TestSyncApplyMode:
         assert cli._sync() == 0
 
         # The section is written through the symlink to AGENTS.md.
-        assert "<!-- uncoded:start -->" in agents.read_text()
+        assert MARKER_START in agents.read_text()
 
         # Exactly one user-facing line for the instruction file, naming
         # the canonical AGENTS.md.
@@ -877,6 +878,8 @@ class TestSyncDocRoots:
 
         assert (tmp_path / ".uncoded" / "namespace.yaml").exists()
         assert (tmp_path / ".uncoded" / "stubs").exists()
+        for path in SKILL_OUTPUTS:
+            assert (tmp_path / path).exists()
 
         # Drop source-roots.
         (tmp_path / "pyproject.toml").write_text(
@@ -893,6 +896,8 @@ class TestSyncDocRoots:
         assert cli._sync() == 0
         assert not (tmp_path / ".uncoded" / "namespace.yaml").exists()
         assert not (tmp_path / ".uncoded" / "stubs").exists()
+        for path in SKILL_OUTPUTS:
+            assert not (tmp_path / path).exists()
 
     def test_doc_root_removal_cleans_docs_yaml(self, tmp_path, monkeypatch):
         # First sync with doc-roots; then drop them.
@@ -997,6 +1002,34 @@ class TestSyncDocRoots:
         )
         (tmp_path / "src").mkdir()
         assert cli._sync(check=True) == 1
+
+    def test_doc_only_does_not_write_skill(self, tmp_path, monkeypatch):
+        _init_doc_repo(tmp_path, monkeypatch)
+        assert cli._sync() == 0
+        for path in SKILL_OUTPUTS:
+            assert not (tmp_path / path).exists()
+
+    def test_doc_only_removes_preexisting_skill(self, tmp_path, monkeypatch):
+        _init_doc_repo(tmp_path, monkeypatch)
+        for path in SKILL_OUTPUTS:
+            skill_path = tmp_path / path
+            skill_path.parent.mkdir(parents=True, exist_ok=True)
+            skill_path.write_text("old skill\n")
+        assert cli._sync() == 0
+        for path in SKILL_OUTPUTS:
+            assert not (tmp_path / path).exists()
+
+    def test_check_returns_one_when_skill_should_be_removed(
+        self, tmp_path, monkeypatch
+    ):
+        _init_doc_repo(tmp_path, monkeypatch)
+        for path in SKILL_OUTPUTS:
+            skill_path = tmp_path / path
+            skill_path.parent.mkdir(parents=True, exist_ok=True)
+            skill_path.write_text("old skill\n")
+        assert cli._sync(check=True) == 1
+        for path in SKILL_OUTPUTS:
+            assert (tmp_path / path).exists()
 
     def test_idempotent_doc_only(self, tmp_path, monkeypatch):
         _init_doc_repo(tmp_path, monkeypatch)

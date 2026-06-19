@@ -91,3 +91,19 @@ class TestSyncInstructionFileProjectRootAnchor:
 
     def test_project_root_anchors_update_of_existing_file(self, tmp_path, monkeypatch):
         ...
+
+class TestSyncInstructionFileFingerprint:
+    def test_reflowed_body_survives_sync(self, tmp_path):
+        ...
+
+    def test_reflowed_body_passes_check(self, tmp_path):
+        ...
+
+    def test_different_fingerprint_refreshes_section(self, tmp_path):
+        ...
+
+    def test_plain_marker_refreshes_once_then_stable(self, tmp_path):
+        ...
+
+    def test_prose_mention_of_prefix_before_section_is_ignored(self, tmp_path):
+        ...

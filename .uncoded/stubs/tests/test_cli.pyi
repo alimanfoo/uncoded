@@ -6,6 +6,7 @@ from pathlib import Path
 from unittest import mock
 import pytest
 from uncoded import cli
+from uncoded.instruction_files import MARKER_START
 from uncoded.skill import SKILL_OUTPUTS
 
 def _init_repo(tmp_path, monkeypatch, source_roots):
@@ -201,6 +202,15 @@ class TestSyncDocRoots:
         ...
 
     def test_check_returns_one_when_docs_yaml_should_be_removed(self, tmp_path, monkeypatch):
+        ...
+
+    def test_doc_only_does_not_write_skill(self, tmp_path, monkeypatch):
+        ...
+
+    def test_doc_only_removes_preexisting_skill(self, tmp_path, monkeypatch):
+        ...
+
+    def test_check_returns_one_when_skill_should_be_removed(self, tmp_path, monkeypatch):
         ...
 
     def test_idempotent_doc_only(self, tmp_path, monkeypatch):
