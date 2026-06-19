@@ -2,7 +2,7 @@
 
 from collections.abc import Iterable, Iterator
 from pathlib import Path
-from uncoded.read_helpers import _read_file_text
+from uncoded.read_helpers import _read_file_text_as_utf8
 from uncoded.yaml_tree import render_yaml_tree
 
 DOCS_HEADER = ...

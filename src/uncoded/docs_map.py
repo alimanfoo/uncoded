@@ -3,7 +3,7 @@
 from collections.abc import Iterable, Iterator
 from pathlib import Path
 
-from uncoded.read_helpers import _read_file_text
+from uncoded.read_helpers import _read_file_text_as_utf8
 from uncoded.yaml_tree import render_yaml_tree
 
 DOCS_HEADER = """\
@@ -109,13 +109,13 @@ def iter_doc_files(doc_root: Path, project_root: Path) -> Iterator[tuple[str, Pa
     project_root = project_root.resolve()
     if doc_root.is_file():
         rel = doc_root.relative_to(project_root)
-        text = _read_file_text(doc_root, display=rel)
+        text = _read_file_text_as_utf8(doc_root, display=rel)
         if text is not None:
             yield text, rel
     else:
         for md_file in sorted(doc_root.rglob("*.md")):
             rel = md_file.relative_to(project_root)
-            text = _read_file_text(md_file, display=rel)
+            text = _read_file_text_as_utf8(md_file, display=rel)
             if text is None:
                 continue
             yield text, rel

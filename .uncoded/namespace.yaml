@@ -74,7 +74,7 @@ src/:
       build_map:
       render_map:
     read_helpers.py:
-      _read_file_text:
+      _read_file_text_as_utf8:
     refs.py:
       TY_VERSION:
       Reference:

@@ -6,7 +6,7 @@ from collections.abc import Iterable, Iterator
 from dataclasses import dataclass, field
 from pathlib import Path
 from uncoded.ast_helpers import assign_target_name, property_kind
-from uncoded.read_helpers import _read_file_text
+from uncoded.read_helpers import _read_file_text_as_utf8
 
 def extract_module(source: str, rel_path: str) -> ModuleInfo:
     ...

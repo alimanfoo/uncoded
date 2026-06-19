@@ -4,7 +4,9 @@ import sys
 from pathlib import Path
 
 
-def _read_file_text(path: Path, *, display: Path | str | None = None) -> str | None:
+def _read_file_text_as_utf8(
+    path: Path, *, display: Path | str | None = None
+) -> str | None:
     """Read *path* as UTF-8 text.
 
     Returns None and prints a one-line warning to stderr when the file is

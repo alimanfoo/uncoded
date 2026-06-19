@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from uncoded.ast_helpers import assign_target_name, property_kind
-from uncoded.read_helpers import _read_file_text
+from uncoded.read_helpers import _read_file_text_as_utf8
 
 
 @dataclass
@@ -94,7 +94,7 @@ def iter_source_files(
 
     for py_file in sorted(source_root.rglob("*.py")):
         rel_path = str(py_file.relative_to(project_root))
-        source = _read_file_text(py_file, display=rel_path)
+        source = _read_file_text_as_utf8(py_file, display=rel_path)
         if source is None:
             continue
         try:
