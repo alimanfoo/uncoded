@@ -18,6 +18,7 @@ src/:
       resolve_body:
       _extract_body:
     cli.py:
+      _sync_code_artefacts:
       _sync:
       _body:
       _refs:

@@ -17,6 +17,73 @@ from uncoded.stubs import build_stubs, remove_all_stubs
 from uncoded.sync import remove_file, sync_file
 
 
+def _sync_code_artefacts(
+    *,
+    build: bool,
+    configured_source_roots: list[Path],
+    project_root: Path,
+    resolved_project_root: Path,
+    check: bool,
+) -> int | None:
+    """Build or remove the code artefacts (namespace map and stubs).
+
+    When build is False, removes namespace.yaml and all stubs and returns the
+    change count. When build is True, validates, collects source files, and
+    writes the namespace map and stub files. Returns the change count, or None
+    on a configuration error (the error message is printed to stderr by this
+    function; the caller should return 1).
+    """
+    if not build:
+        n = remove_file(
+            Path(".uncoded/namespace.yaml"), project_root=project_root, check=check
+        )
+        n += remove_all_stubs(
+            Path(".uncoded/stubs"), project_root=project_root, check=check
+        )
+        return n
+
+    source_roots: list[Path] = []
+    for configured in configured_source_roots:
+        src_root = (project_root / configured).resolve()
+        if not src_root.is_relative_to(resolved_project_root):
+            print(
+                f"Error: source root {configured} is outside the project root. "
+                "Check source-roots in your uncoded config file.",
+                file=sys.stderr,
+            )
+            return None
+        if not src_root.is_dir():
+            print(
+                f"Error: source root {configured} is not a directory. "
+                "Check source-roots in your uncoded config file.",
+                file=sys.stderr,
+            )
+            return None
+        source_roots.append(src_root)
+
+    roots_with_files = [
+        (src_root, list(iter_source_files(src_root, project_root=project_root)))
+        for src_root in source_roots
+    ]
+    modules = [m for _root, files in roots_with_files for m in extract_modules(files)]
+    map_content = render_map(build_map(modules))
+    n = sync_file(
+        Path(".uncoded/namespace.yaml"),
+        map_content,
+        project_root=project_root,
+        check=check,
+    )
+    for src_root, files in roots_with_files:
+        n += build_stubs(
+            files=files,
+            source_root=src_root,
+            output_dir=Path(".uncoded/stubs"),
+            project_root=project_root,
+            check=check,
+        )
+    return n
+
+
 def _sync(*, start: Path | None = None, check: bool = False) -> int:
     """Sync (or verify) the index artefacts for each configured root type.
 
@@ -66,64 +133,19 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
     changes = 0
 
     # Code artefacts — build when source_roots configured, else remove.
-    if config.source_roots:
-        source_roots: list[Path] = []
-        for configured in config.source_roots:
-            src_root = (project_root / configured).resolve()
-            if not src_root.is_relative_to(resolved_project_root):
-                print(
-                    f"Error: source root {configured} is outside the project root. "
-                    "Check source-roots in your uncoded config file.",
-                    file=sys.stderr,
-                )
-                return 1
-            if not src_root.is_dir():
-                print(
-                    f"Error: source root {configured} is not a directory. "
-                    "Check source-roots in your uncoded config file.",
-                    file=sys.stderr,
-                )
-                return 1
-            source_roots.append(src_root)
-
-        roots_with_files = [
-            (src_root, list(iter_source_files(src_root, project_root=project_root)))
-            for src_root in source_roots
-        ]
-        modules = [
-            m for _root, files in roots_with_files for m in extract_modules(files)
-        ]
-        map_content = render_map(build_map(modules))
-        changes += sync_file(
-            Path(".uncoded/namespace.yaml"),
-            map_content,
-            project_root=project_root,
-            check=check,
-        )
-        for src_root, files in roots_with_files:
-            changes += build_stubs(
-                files=files,
-                source_root=src_root,
-                output_dir=Path(".uncoded/stubs"),
-                project_root=project_root,
-                check=check,
-            )
-    else:
-        changes += remove_file(
-            Path(".uncoded/namespace.yaml"), project_root=project_root, check=check
-        )
-        changes += remove_all_stubs(
-            Path(".uncoded/stubs"),
-            project_root=project_root,
-            check=check,
-        )
-    # The skill needs namespace.yaml and stubs to run, so it builds and
-    # removes with the other code artefacts.
-    changes += sync_skill(
+    # The skill depends on namespace.yaml and stubs, so it follows the same rule.
+    build = bool(config.source_roots)
+    code_result = _sync_code_artefacts(
+        build=build,
+        configured_source_roots=config.source_roots,
         project_root=project_root,
+        resolved_project_root=resolved_project_root,
         check=check,
-        build=bool(config.source_roots),
     )
+    if code_result is None:
+        return 1
+    changes += code_result
+    changes += sync_skill(build=build, project_root=project_root, check=check)
 
     # Doc artefacts — build when doc_roots configured, else remove.
     if config.doc_roots:
