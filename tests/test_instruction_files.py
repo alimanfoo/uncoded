@@ -1,12 +1,19 @@
+import hashlib
 from pathlib import Path
 
+from hypothesis import given
+from hypothesis.strategies import text as st_text
+
 from uncoded.instruction_files import (
+    _CODE_SECTION_BODY,
     MARKER_DOCS_END,
     MARKER_DOCS_START,
     MARKER_END,
     MARKER_START,
+    MARKER_START_PREFIX,
     SECTION_CODE,
     SECTION_DOCS,
+    _apply_section,
     sync_instruction_file,
 )
 
@@ -378,3 +385,151 @@ class TestSyncInstructionFileFingerprint:
         assert "<!-- uncoded:start` markers" in content
         assert "old body" not in content
         assert SECTION_CODE in content
+
+
+class TestApplySectionConvergence:
+    """Property tests and regression cases for _apply_section convergence."""
+
+    @given(st_text())
+    def test_idempotent(self, t: str) -> None:
+        first = _apply_section(
+            t, MARKER_START, MARKER_END, SECTION_CODE, prefix=MARKER_START_PREFIX
+        )
+        second = _apply_section(
+            first, MARKER_START, MARKER_END, SECTION_CODE, prefix=MARKER_START_PREFIX
+        )
+        assert first == second
+
+    @given(st_text())
+    def test_lines_outside_section_survive(self, t: str) -> None:
+        input_lines = t.splitlines(keepends=True)
+        # Find the managed section range using the same locator as _apply_section.
+        section_start = None
+        section_end = None
+        for i, line in enumerate(input_lines):
+            stripped = line.rstrip("\r\n")
+            if section_start is None:
+                if stripped.startswith(MARKER_START_PREFIX):
+                    section_start = i
+            else:
+                if stripped == MARKER_END:
+                    section_end = i
+                    break
+        result = _apply_section(
+            t, MARKER_START, MARKER_END, SECTION_CODE, prefix=MARKER_START_PREFIX
+        )
+        result_line_contents = {
+            ln.rstrip("\r\n") for ln in result.splitlines(keepends=True)
+        }
+        for i, line in enumerate(input_lines):
+            stripped = line.rstrip("\r\n")
+            if stripped.startswith(MARKER_START_PREFIX) or stripped == MARKER_END:
+                continue  # marker lines may be rewritten
+            if (
+                section_start is not None
+                and section_end is not None
+                and section_start <= i <= section_end
+            ):
+                continue  # body inside managed section is replaced
+            if not stripped:
+                continue  # blank lines may be absorbed by lstrip
+            assert stripped in result_line_contents
+
+    def test_prose_end_marker_at_line_start_survives(self) -> None:
+        # An end marker at the start of a line that appears before any start
+        # marker is an orphan and must not be deleted.
+        orphan_text = f"```\n{MARKER_END}\n```\n"
+        result = _apply_section(
+            orphan_text,
+            MARKER_START,
+            MARKER_END,
+            SECTION_CODE,
+            prefix=MARKER_START_PREFIX,
+        )
+        assert MARKER_END in result
+        # Second pass must not change anything.
+        assert (
+            _apply_section(
+                result,
+                MARKER_START,
+                MARKER_END,
+                SECTION_CODE,
+                prefix=MARKER_START_PREFIX,
+            )
+            == result
+        )
+
+    def test_crlf_converges_in_one_pass(self) -> None:
+        # A CRLF file is matched on the first sync and does not trigger a second
+        # rewrite.
+        crlf_section = f"{MARKER_START}\r\nbody line\r\n{MARKER_END}\r\n"
+        first = _apply_section(
+            crlf_section,
+            MARKER_START,
+            MARKER_END,
+            SECTION_CODE,
+            prefix=MARKER_START_PREFIX,
+        )
+        second = _apply_section(
+            first, MARKER_START, MARKER_END, SECTION_CODE, prefix=MARKER_START_PREFIX
+        )
+        assert first == second
+
+    def test_duplicate_sections_collapsed_to_one(self) -> None:
+        two_sections = f"{SECTION_CODE}{SECTION_CODE}"
+        result = _apply_section(
+            two_sections,
+            MARKER_START,
+            MARKER_END,
+            SECTION_CODE,
+            prefix=MARKER_START_PREFIX,
+        )
+        assert result.count(MARKER_START) == 1
+        assert result.count(MARKER_END) == 1
+
+    def test_end_before_start_does_not_loop(self) -> None:
+        # An end marker appearing before any start marker must not cause the
+        # section to be appended on every sync.
+        text = f"{MARKER_END}\nsome prose\n{SECTION_CODE}"
+        first = _apply_section(
+            text, MARKER_START, MARKER_END, SECTION_CODE, prefix=MARKER_START_PREFIX
+        )
+        second = _apply_section(
+            first, MARKER_START, MARKER_END, SECTION_CODE, prefix=MARKER_START_PREFIX
+        )
+        assert first == second
+
+    def test_lone_start_orphan_section_inserted_before_and_prose_preserved(
+        self,
+    ) -> None:
+        # A start marker with no matching end marker is a lone orphan. The
+        # canonical section is inserted before it so the next sync sees the
+        # section first; the orphan line is preserved (prose not deleted).
+        orphan_start = "<!-- uncoded:start -->\nsome prose after\n"
+        result = _apply_section(
+            orphan_start,
+            MARKER_START,
+            MARKER_END,
+            SECTION_CODE,
+            prefix=MARKER_START_PREFIX,
+        )
+        assert SECTION_CODE in result
+        assert "<!-- uncoded:start -->" in result
+        assert "some prose after" in result
+        # Result must be stable on a second pass.
+        assert (
+            _apply_section(
+                result,
+                MARKER_START,
+                MARKER_END,
+                SECTION_CODE,
+                prefix=MARKER_START_PREFIX,
+            )
+            == result
+        )
+
+
+class TestMarkerStamp:
+    def test_marker_start_stamp_derives_from_code_section_body(self) -> None:
+        expected = hashlib.sha256(_CODE_SECTION_BODY.encode()).hexdigest()[:8]
+        assert MARKER_START.endswith(expected + " -->")

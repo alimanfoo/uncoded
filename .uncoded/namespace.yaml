@@ -426,6 +426,16 @@ tests/:
       test_different_fingerprint_refreshes_section:
       test_plain_marker_refreshes_once_then_stable:
       test_prose_mention_of_prefix_before_section_is_ignored:
+    TestApplySectionConvergence:
+      test_idempotent:
+      test_lines_outside_section_survive:
+      test_prose_end_marker_at_line_start_survives:
+      test_crlf_converges_in_one_pass:
+      test_duplicate_sections_collapsed_to_one:
+      test_end_before_start_does_not_loop:
+      test_lone_start_orphan_section_inserted_before_and_prose_preserved:
+    TestMarkerStamp:
+      test_marker_start_stamp_derives_from_code_section_body:
   test_namespace_map.py:
     TestBuildMap:
       test_single_file:

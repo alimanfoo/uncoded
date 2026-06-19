@@ -1,7 +1,10 @@
 # tests/test_instruction_files.py
 
+import hashlib
 from pathlib import Path
-from uncoded.instruction_files import MARKER_DOCS_END, MARKER_DOCS_START, MARKER_END, MARKER_START, SECTION_CODE, SECTION_DOCS, sync_instruction_file
+from hypothesis import given
+from hypothesis.strategies import text as st_text
+from uncoded.instruction_files import _CODE_SECTION_BODY, MARKER_DOCS_END, MARKER_DOCS_START, MARKER_END, MARKER_START, MARKER_START_PREFIX, SECTION_CODE, SECTION_DOCS, _apply_section, sync_instruction_file
 
 class TestCodeSection:
     def test_contains_markers(self):
@@ -106,4 +109,30 @@ class TestSyncInstructionFileFingerprint:
         ...
 
     def test_prose_mention_of_prefix_before_section_is_ignored(self, tmp_path):
+        ...
+
+class TestApplySectionConvergence:
+    def test_idempotent(self, t: str) -> None:
+        ...
+
+    def test_lines_outside_section_survive(self, t: str) -> None:
+        ...
+
+    def test_prose_end_marker_at_line_start_survives(self) -> None:
+        ...
+
+    def test_crlf_converges_in_one_pass(self) -> None:
+        ...
+
+    def test_duplicate_sections_collapsed_to_one(self) -> None:
+        ...
+
+    def test_end_before_start_does_not_loop(self) -> None:
+        ...
+
+    def test_lone_start_orphan_section_inserted_before_and_prose_preserved(self) -> None:
+        ...
+
+class TestMarkerStamp:
+    def test_marker_start_stamp_derives_from_code_section_body(self) -> None:
         ...
