@@ -177,6 +177,36 @@ class TestSyncSkills:
         for root in SKILL_ROOTS:
             assert (tmp_path / root / "uncoded-coherence-review" / "SKILL.md").exists()
 
+    def test_gate_unmet_removal_prunes_empty_directory(self, tmp_path):
+        # After gate-not-met removal, the skill directory itself must be gone.
+        sync_skills(source=True, docs=False, project_root=tmp_path, check=False)
+        sync_skills(source=False, docs=False, project_root=tmp_path, check=False)
+        for root in SKILL_ROOTS:
+            assert not (tmp_path / root / "uncoded-coherence-review").exists()
+
+    def test_legacy_removal_prunes_empty_directory(self, tmp_path):
+        # After legacy cleanup, the legacy skill directory itself must be gone.
+        for root in SKILL_ROOTS:
+            legacy_dir = tmp_path / root / "coherence-review"
+            legacy_dir.mkdir(parents=True, exist_ok=True)
+            (legacy_dir / "SKILL.md").write_text("old skill\n")
+        sync_skills(source=True, docs=False, project_root=tmp_path, check=False)
+        for root in SKILL_ROOTS:
+            assert not (tmp_path / root / "coherence-review").exists()
+
+    def test_pruning_skipped_when_directory_has_other_files(self, tmp_path):
+        # If extra files remain after SKILL.md removal, leave the directory.
+        sync_skills(source=True, docs=False, project_root=tmp_path, check=False)
+        for root in SKILL_ROOTS:
+            extra = tmp_path / root / "uncoded-coherence-review" / "extra.md"
+            extra.write_text("extra\n")
+        sync_skills(source=False, docs=False, project_root=tmp_path, check=False)
+        for root in SKILL_ROOTS:
+            assert (tmp_path / root / "uncoded-coherence-review").is_dir()
+            assert not (
+                tmp_path / root / "uncoded-coherence-review" / "SKILL.md"
+            ).exists()
+
     def test_docs_gate_builds_when_docs_true(self, tmp_path, monkeypatch):
         docs_skill = Skill(
             name="test-docs",

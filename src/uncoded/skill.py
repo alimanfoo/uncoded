@@ -75,6 +75,21 @@ def _render_content(*, skill: Skill) -> str:
     return f"---\n{front}---\n\n{body}"
 
 
+def _remove_skill_file(*, path: Path, project_root: Path, check: bool) -> bool:
+    """Remove a skill's SKILL.md and prune its parent directory if now empty.
+
+    Returns True if the file was (or would be) removed. In apply mode, removes
+    the parent directory when it becomes empty after the removal; that cleanup
+    is not counted as a separate change.
+    """
+    removed = remove_file(path, project_root=project_root, check=check)
+    if removed and not check:
+        parent = project_root / path.parent
+        if parent.is_dir() and not any(parent.iterdir()):
+            parent.rmdir()
+    return removed
+
+
 def sync_skills(
     *,
     source: bool,
@@ -104,15 +119,15 @@ def sync_skills(
                 )
         else:
             for root in SKILL_ROOTS:
-                changes += remove_file(
-                    root / skill.name / "SKILL.md",
+                changes += _remove_skill_file(
+                    path=root / skill.name / "SKILL.md",
                     project_root=project_root,
                     check=check,
                 )
         for legacy_name in skill.legacy_names:
             for root in SKILL_ROOTS:
-                changes += remove_file(
-                    root / legacy_name / "SKILL.md",
+                changes += _remove_skill_file(
+                    path=root / legacy_name / "SKILL.md",
                     project_root=project_root,
                     check=check,
                 )

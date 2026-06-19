@@ -117,6 +117,7 @@ src/:
         gate:
         legacy_names:
       _render_content:
+      _remove_skill_file:
       sync_skills:
     stubs.py:
       VALUE_WIDTH_CAP:
@@ -523,6 +524,9 @@ tests/:
       test_source_false_removes_existing_skill_files:
       test_source_false_returns_zero_when_already_absent:
       test_source_false_check_mode_reports_without_removing:
+      test_gate_unmet_removal_prunes_empty_directory:
+      test_legacy_removal_prunes_empty_directory:
+      test_pruning_skipped_when_directory_has_other_files:
       test_docs_gate_builds_when_docs_true:
       test_docs_gate_skips_when_docs_false:
       test_no_legacy_names_skips_legacy_removal:
