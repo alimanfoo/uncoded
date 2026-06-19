@@ -15,6 +15,9 @@ from uncoded.skill import sync_skill
 from uncoded.stubs import build_stubs, remove_all_stubs
 from uncoded.sync import remove_file, sync_file
 
+def _sync_code_artefacts(*, build: bool, configured_source_roots: list[Path], project_root: Path, resolved_project_root: Path, check: bool) -> int | None:
+    ...
+
 def _sync(*, start: Path | None, check: bool) -> int:
     ...
 

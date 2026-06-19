@@ -314,6 +314,21 @@ class TestIterAndExtract:
         assert "warning: skipping src/mypackage/bad.py" in err
         assert "SyntaxError" in err
 
+    def test_skips_non_utf8_file_with_warning(self, tmp_path, capsys):
+        # A file with invalid UTF-8 bytes must be skipped with a warning;
+        # other files in the same package must still yield.
+        src = tmp_path / "src"
+        pkg = src / "mypkg"
+        pkg.mkdir(parents=True)
+        (pkg / "good.py").write_text("def works(): pass\n", encoding="utf-8")
+        (pkg / "binary.py").write_bytes(b"\xff\xfe not utf-8")
+        results = list(iter_source_files(src, project_root=tmp_path))
+        rel_paths = [rel for _, rel in results]
+        assert any("good.py" in p for p in rel_paths)
+        assert not any("binary.py" in p for p in rel_paths)
+        err = capsys.readouterr().err
+        assert "warning: skipping src/mypkg/binary.py" in err
+
 
 class TestExtractModulesFromFiles:
     def test_returns_module_info_per_parseable_file(self):

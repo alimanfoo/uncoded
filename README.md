@@ -258,6 +258,18 @@ Run the same checks CI's lint job runs:
 uv run pre-commit run --all-files
 ```
 
+When testing local changes to uncoded, use `uv run uncoded ...` rather than
+`uvx uncoded ...`. `uvx` always pulls the published package from PyPI; `uv run`
+runs the local editable install. For example, after editing source files run
+`uv run uncoded sync` to regenerate the index from the working tree.
+
+This repo dogfoods uncoded: `.pre-commit-config.yaml` runs `uv run uncoded sync`
+as a pre-commit hook. On each commit the hook regenerates
+`.uncoded/namespace.yaml`, the stub files under `.uncoded/stubs/`,
+`.uncoded/docs.yaml`, and the injected navigation sections in `AGENTS.md` and
+`CLAUDE.md`. If the hook modifies any of those files the commit fails — re-stage
+the changes and commit again.
+
 ### Note for Windows contributors
 
 `CLAUDE.md` is a symlink to `AGENTS.md` (single source). macOS and Linux

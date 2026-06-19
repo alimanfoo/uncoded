@@ -3,6 +3,7 @@
 from collections.abc import Iterable, Iterator
 from pathlib import Path
 
+from uncoded.read_helpers import _read_file_text_as_utf8
 from uncoded.yaml_tree import render_yaml_tree
 
 DOCS_HEADER = """\
@@ -100,14 +101,24 @@ def iter_doc_files(doc_root: Path, project_root: Path) -> Iterator[tuple[str, Pa
     If ``doc_root`` is a directory, yields all ``*.md`` files found by
     rglob in sorted order. If it is a single ``.md`` file, yields just
     that file. ``rel_path`` is relative to ``project_root``.
+
+    Files that fail to read (unreadable or non-UTF-8) are skipped with a
+    one-line warning to stderr and do not abort the iteration.
     """
     doc_root = doc_root.resolve()
     project_root = project_root.resolve()
     if doc_root.is_file():
-        yield doc_root.read_text(encoding="utf-8"), doc_root.relative_to(project_root)
+        rel = doc_root.relative_to(project_root)
+        text = _read_file_text_as_utf8(doc_root, display=rel)
+        if text is not None:
+            yield text, rel
     else:
         for md_file in sorted(doc_root.rglob("*.md")):
-            yield md_file.read_text(encoding="utf-8"), md_file.relative_to(project_root)
+            rel = md_file.relative_to(project_root)
+            text = _read_file_text_as_utf8(md_file, display=rel)
+            if text is None:
+                continue
+            yield text, rel
 
 
 def build_docs_map(files: Iterable[tuple[str, Path]]) -> dict:

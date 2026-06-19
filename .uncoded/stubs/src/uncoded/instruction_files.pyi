@@ -1,7 +1,6 @@
 # src/uncoded/instruction_files.py
 
 import hashlib
-import re
 from importlib.resources import files
 from pathlib import Path
 from uncoded.sync import sync_file

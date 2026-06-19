@@ -18,6 +18,7 @@ src/:
       resolve_body:
       _extract_body:
     cli.py:
+      _sync_code_artefacts:
       _sync:
       _body:
       _refs:
@@ -72,6 +73,8 @@ src/:
       HEADER:
       build_map:
       render_map:
+    read_helpers.py:
+      _read_file_text_as_utf8:
     refs.py:
       TY_VERSION:
       Reference:
@@ -341,6 +344,8 @@ tests/:
       test_directory_nested_subdir:
       test_empty_directory_yields_nothing:
       test_rel_path_is_relative_to_project_root:
+      test_skips_non_utf8_file_with_warning:
+      test_single_file_root_unreadable_yields_nothing:
     TestBuildDocsMap:
       test_empty_files:
       test_headingless_file_maps_to_null:
@@ -381,6 +386,7 @@ tests/:
       test_includes_init_with_symbols:
       test_skips_empty_init:
       test_skips_syntax_errors:
+      test_skips_non_utf8_file_with_warning:
     TestExtractModulesFromFiles:
       test_returns_module_info_per_parseable_file:
       test_preserves_source_order:
@@ -426,6 +432,22 @@ tests/:
       test_different_fingerprint_refreshes_section:
       test_plain_marker_refreshes_once_then_stable:
       test_prose_mention_of_prefix_before_section_is_ignored:
+    TestApplySectionConvergence:
+      test_idempotent:
+      test_lines_outside_section_survive:
+      test_prose_end_marker_at_line_start_survives:
+      test_crlf_converges_in_one_pass:
+      test_duplicate_sections_collapsed_to_one:
+      test_end_before_start_does_not_loop:
+      test_lone_start_orphan_section_inserted_before_and_prose_preserved:
+    TestSyncInstructionFileFingerprintDocs:
+      test_reflowed_body_survives_sync:
+      test_reflowed_body_passes_check:
+      test_different_fingerprint_refreshes_section:
+      test_plain_marker_refreshes_once_then_stable:
+      test_prose_mention_of_prefix_before_section_is_ignored:
+    TestMarkerStamp:
+      test_marker_start_stamp_derives_from_code_section_body:
   test_namespace_map.py:
     TestBuildMap:
       test_single_file:
@@ -487,6 +509,9 @@ tests/:
       test_check_mode_reports_no_change_when_in_sync:
       test_removes_legacy_skill_files:
       test_check_mode_reports_legacy_skill_files_without_removing:
+      test_build_false_removes_existing_skill_files:
+      test_build_false_returns_false_when_already_absent:
+      test_build_false_check_mode_reports_without_removing:
     TestSyncSkillProjectRootAnchor:
       test_project_root_anchors_writes_independent_of_cwd:
       test_project_root_anchors_legacy_removal_independent_of_cwd:

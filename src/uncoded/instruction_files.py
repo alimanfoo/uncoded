@@ -10,7 +10,6 @@ This module owns delimited sections in any such file and keeps them in sync.
 """
 
 import hashlib
-import re
 from importlib.resources import files
 from pathlib import Path
 
@@ -53,43 +52,102 @@ def _apply_section(
 ) -> str:
     """Apply, replace, or remove the delimited section in text.
 
-    Locates an existing section by prefix, anchored to the start of a line,
-    so marker-like text in prose is not mistaken for a section opener. This
-    matches both old plain markers and current fingerprinted ones.
+    Applying this function twice produces the same result as applying it once,
+    and no text outside the uncoded markers is ever deleted.
+
+    Scans lines to anchor both the opening and closing markers to line starts.
+    The first line whose content (trailing \\r\\n stripped) starts with prefix
+    is the opening; the first line after it whose stripped content equals end
+    is the closing. This prevents marker-like prose from being mistaken for a
+    boundary, and prevents an end marker before any start from acting as the
+    closing.
+
+    CRLF: marker lines are compared with trailing \\r stripped; the canonical
+    section is written with \\n; surrounding content is preserved byte-for-byte.
+    A CRLF file converges in one pass.
+
+    Duplicate policy: the first well-formed section (a start-prefix line through
+    its matching end line) is managed; any additional well-formed uncoded section
+    is collapsed to leave at most one. A lone orphan marker (a start with no
+    later end, or an end with no earlier start) is left untouched.
+
+    Stamp tolerance: when the located opening line's content matches start, the
+    body is left byte-for-byte (a formatter's reflow survives); when it differs,
+    the whole section is replaced.
 
     When body is a string:
     - absent → append the canonical section;
-    - found and opening-marker line matches start → return text unchanged
-      (a formatter's reflow of the body is tolerated);
-    - found and opening-marker line differs → replace the whole section.
-    When body is None: remove the section if present.
+    - found and opening-marker line matches start → managed section preserved
+      byte-for-byte; any extra copies collapsed;
+    - found and opening-marker line differs → replace with the canonical section.
+    When body is None: remove the section and any extra copies if present.
     """
-    m = re.search(r"^" + re.escape(prefix), text, re.MULTILINE)
-    s = m.start() if m else -1
-    e = text.find(end)
-    section_found = s != -1 and e != -1 and s < e
+    lines = text.splitlines(keepends=True)
+
+    # Single pass: find the first complete section (managed) and any extras.
+    # States: "before", "in_first", "after", "in_extra".
+    managed: tuple[int, int] | None = None  # inclusive line indices
+    extras: list[tuple[int, int]] = []
+    state = "before"
+    current_start = 0
+
+    for i, line in enumerate(lines):
+        stripped = line.rstrip("\r\n")
+        if state == "before":
+            if stripped.startswith(prefix):
+                current_start = i
+                state = "in_first"
+        elif state == "in_first":
+            if stripped == end:
+                managed = (current_start, i)
+                state = "after"
+        elif state == "after":
+            if stripped.startswith(prefix):
+                current_start = i
+                state = "in_extra"
+        else:  # "in_extra"
+            if stripped == end:
+                extras.append((current_start, i))
+                state = "after"
+
+    if managed is None:
+        if body is None:
+            return text
+        if state == "in_first":
+            # Lone start orphan with no matching end: insert the section before
+            # the orphan so the section is found first on the next pass and the
+            # orphan is preserved byte-for-byte (no prose deleted).
+            text_before_orphan = "".join(lines[:current_start])
+            orphan_and_after = "".join(lines[current_start:])
+            stripped_before = text_before_orphan.rstrip("\n")
+            lead = stripped_before + "\n\n" if stripped_before else ""
+            return lead + body + orphan_and_after
+        stripped_text = text.rstrip("\n")
+        lead = stripped_text + "\n\n" if stripped_text else ""
+        return lead + body
+
+    extra_drop: set[int] = set()
+    for lo, hi in extras:
+        extra_drop.update(range(lo, hi + 1))
+
+    before = "".join(lines[: managed[0]])
+    after = "".join(
+        ln
+        for i, ln in enumerate(lines[managed[1] + 1 :], start=managed[1] + 1)
+        if i not in extra_drop
+    ).lstrip("\n")
 
     if body is None:
-        if not section_found:
-            return text
-        before = text[:s]
-        after = text[e + len(end) :].lstrip("\n")
         return before + after
-    else:
-        if section_found:
-            line_end = text.find("\n", s)
-            existing_opening = text[s:line_end] if line_end != -1 else text[s:]
-            if existing_opening == start:
-                # Opening-marker stamp matches — leave the text untouched so
-                # a formatter's reflow of the body is preserved.
-                return text
-            before = text[:s]
-            after = text[e + len(end) :].lstrip("\n")
-            return before + body + after
-        else:
-            stripped = text.rstrip("\n")
-            lead = stripped + "\n\n" if stripped else ""
-            return lead + body
+
+    opening_line = lines[managed[0]].rstrip("\r\n")
+    if opening_line == start:
+        if not extras:
+            return text
+        original_section = "".join(lines[managed[0] : managed[1] + 1])
+        return before + original_section + after
+
+    return before + body + after
 
 
 def sync_instruction_file(

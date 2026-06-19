@@ -152,6 +152,27 @@ class TestIterDocFiles:
         results = list(iter_doc_files(docs, tmp_path))
         assert results[0][1] == Path("docs/a.md")
 
+    def test_skips_non_utf8_file_with_warning(self, tmp_path, capsys):
+        # A file with invalid UTF-8 bytes must be skipped with a warning;
+        # other files in the same directory must still yield.
+        (tmp_path / "good.md").write_text("# Good\n", encoding="utf-8")
+        (tmp_path / "bad.md").write_bytes(b"\xff\xfe not utf-8")
+        results = list(iter_doc_files(tmp_path, tmp_path))
+        assert len(results) == 1
+        assert results[0][1].name == "good.md"
+        err = capsys.readouterr().err
+        assert "warning: skipping bad.md" in err
+
+    def test_single_file_root_unreadable_yields_nothing(self, tmp_path, capsys):
+        # When the single-file root itself is unreadable, the iterator yields
+        # nothing and emits a warning with the project-relative path.
+        bad = tmp_path / "bad.md"
+        bad.write_bytes(b"\xff\xfe not utf-8")
+        results = list(iter_doc_files(bad, tmp_path))
+        assert results == []
+        err = capsys.readouterr().err
+        assert "warning: skipping bad.md" in err
+
 
 class TestBuildDocsMap:
     def test_empty_files(self):
