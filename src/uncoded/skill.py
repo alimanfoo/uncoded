@@ -38,6 +38,27 @@ SKILLS: list[Skill] = [
         gate="code",
         legacy_names=("uncoded-review",),
     ),
+    Skill(
+        name="uncoded-code-navigation",
+        description=(
+            "Navigate Python source code in a codebase indexed by uncoded."
+            " Load .uncoded/namespace.yaml first, read .pyi stubs before source"
+            " files, and apply the dispatch rule: symbol name to uncoded body/refs,"
+            " pattern or phrase to grep."
+        ),
+        body_file="code_navigation.md",
+        gate="code",
+    ),
+    Skill(
+        name="uncoded-doc-navigation",
+        description=(
+            "Navigate a codebase's Markdown documentation indexed by uncoded."
+            " Load .uncoded/docs.yaml at session start to see every file and its"
+            " heading hierarchy, then use Read or grep to reach a specific section."
+        ),
+        body_file="doc_navigation.md",
+        gate="docs",
+    ),
 ]
 
 

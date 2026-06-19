@@ -7,11 +7,19 @@ from uncoded.skill import SKILL_ROOTS, SKILLS, Skill, sync_skills
 
 class TestSyncSkills:
     def test_skill_registry(self):
-        assert len(SKILLS) == 1
-        skill = SKILLS[0]
-        assert skill.name == "coherence-review"
-        assert skill.gate == "code"
-        assert "uncoded-review" in skill.legacy_names
+        names = [s.name for s in SKILLS]
+        assert "coherence-review" in names
+        assert "uncoded-code-navigation" in names
+        assert "uncoded-doc-navigation" in names
+        coherence = next(s for s in SKILLS if s.name == "coherence-review")
+        assert coherence.gate == "code"
+        assert "uncoded-review" in coherence.legacy_names
+        code_nav = next(s for s in SKILLS if s.name == "uncoded-code-navigation")
+        assert code_nav.gate == "code"
+        assert code_nav.legacy_names == ()
+        doc_nav = next(s for s in SKILLS if s.name == "uncoded-doc-navigation")
+        assert doc_nav.gate == "docs"
+        assert doc_nav.legacy_names == ()
         assert [
             Path(".claude/skills"),
             Path(".agents/skills"),
@@ -61,11 +69,11 @@ class TestSyncSkills:
         assert content.endswith("---\n\n# Body\n")
 
     def test_returns_change_count_on_first_write(self, tmp_path):
-        # One skill, two roots → 2 writes on first run.
+        # Two code-gated skills × two roots = 4 writes; doc-nav skipped (docs=False).
         result = sync_skills(
             source=True, docs=False, project_root=tmp_path, check=False
         )
-        assert result == 2
+        assert result == 4
 
     def test_returns_zero_when_already_in_sync(self, tmp_path):
         sync_skills(source=True, docs=False, project_root=tmp_path, check=False)
@@ -192,6 +200,39 @@ class TestSyncSkills:
             source=True, docs=False, project_root=tmp_path, check=False
         )
         assert result == 2
+
+    def test_code_navigation_written_when_source_set(self, tmp_path):
+        sync_skills(source=True, docs=False, project_root=tmp_path, check=False)
+        for root in SKILL_ROOTS:
+            assert (tmp_path / root / "uncoded-code-navigation" / "SKILL.md").exists()
+
+    def test_code_navigation_not_written_when_source_absent(self, tmp_path):
+        sync_skills(source=False, docs=False, project_root=tmp_path, check=False)
+        for root in SKILL_ROOTS:
+            assert not (
+                tmp_path / root / "uncoded-code-navigation" / "SKILL.md"
+            ).exists()
+
+    def test_doc_navigation_written_when_docs_set(self, tmp_path):
+        sync_skills(source=False, docs=True, project_root=tmp_path, check=False)
+        for root in SKILL_ROOTS:
+            assert (tmp_path / root / "uncoded-doc-navigation" / "SKILL.md").exists()
+
+    def test_doc_navigation_not_written_when_docs_absent(self, tmp_path):
+        sync_skills(source=True, docs=False, project_root=tmp_path, check=False)
+        for root in SKILL_ROOTS:
+            assert not (
+                tmp_path / root / "uncoded-doc-navigation" / "SKILL.md"
+            ).exists()
+
+    def test_doc_navigation_content_includes_orient_step(self, tmp_path):
+        sync_skills(source=False, docs=True, project_root=tmp_path, check=False)
+        content = (
+            tmp_path / SKILL_ROOTS[0] / "uncoded-doc-navigation" / "SKILL.md"
+        ).read_text()
+        assert ".uncoded/docs.yaml" in content
+        # Orient step must tell the agent to read the map before anything else.
+        assert "session start" in content
 
 
 class TestSyncSkillsProjectRootAnchor:

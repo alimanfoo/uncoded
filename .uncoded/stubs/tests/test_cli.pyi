@@ -9,7 +9,9 @@ from uncoded import cli
 from uncoded.instruction_files import MARKER_START
 from uncoded.skill import SKILL_ROOTS, SKILLS
 
-_SKILL_PATHS = [root / skill.name / 'SKILL.md' for skill in SKILLS for root in SKILL_ROOTS]
+_CODE_SKILL_PATHS = ...
+_DOC_SKILL_PATHS = ...
+_SKILL_PATHS = _CODE_SKILL_PATHS + _DOC_SKILL_PATHS
 
 def _init_repo(tmp_path, monkeypatch, source_roots):
     ...

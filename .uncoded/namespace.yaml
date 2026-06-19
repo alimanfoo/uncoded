@@ -220,6 +220,8 @@ tests/:
     TestResolveBodyByteIdentical:
       test_exact_source_returned:
   test_cli.py:
+    _CODE_SKILL_PATHS:
+    _DOC_SKILL_PATHS:
     _SKILL_PATHS:
     TestSyncApplyMode:
       test_writes_namespace_map_stubs_and_instruction_file:
@@ -524,6 +526,11 @@ tests/:
       test_docs_gate_builds_when_docs_true:
       test_docs_gate_skips_when_docs_false:
       test_no_legacy_names_skips_legacy_removal:
+      test_code_navigation_written_when_source_set:
+      test_code_navigation_not_written_when_source_absent:
+      test_doc_navigation_written_when_docs_set:
+      test_doc_navigation_not_written_when_docs_absent:
+      test_doc_navigation_content_includes_orient_step:
     TestSyncSkillsProjectRootAnchor:
       test_project_root_anchors_writes_independent_of_cwd:
       test_project_root_anchors_legacy_removal_independent_of_cwd:
