@@ -46,8 +46,6 @@ class TestSyncSkills:
     ):
         # The renderer must insert exactly one blank line even when the body
         # file has no leading newline.
-        import uncoded.skill as skill_module
-
         class _FakeResource:
             def __truediv__(self, name: str) -> "_FakeResource":
                 return self

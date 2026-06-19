@@ -1,4 +1,3 @@
-
 # Coherence Review
 
 A diagnostic sweep of a Python codebase for specific, observable symptoms of
