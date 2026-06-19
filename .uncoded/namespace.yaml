@@ -101,6 +101,7 @@ src/:
         body_file:
         gate:
         legacy_names:
+      _skill_path:
       _render_content:
       _remove_skill_file:
       sync_skills:

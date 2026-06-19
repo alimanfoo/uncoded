@@ -62,6 +62,11 @@ SKILLS: list[Skill] = [
 ]
 
 
+def _skill_path(root: Path, name: str) -> Path:
+    """Return the SKILL.md path for a skill name under a given root."""
+    return root / name / "SKILL.md"
+
+
 def _render_content(*, skill: Skill) -> str:
     """Render the full SKILL.md content: YAML frontmatter followed by the skill body."""
     front = yaml.dump(
@@ -112,7 +117,7 @@ def sync_skills(
             content = _render_content(skill=skill)
             for root in SKILL_ROOTS:
                 changes += sync_file(
-                    root / skill.name / "SKILL.md",
+                    _skill_path(root, skill.name),
                     content,
                     project_root=project_root,
                     check=check,
@@ -120,14 +125,14 @@ def sync_skills(
         else:
             for root in SKILL_ROOTS:
                 changes += _remove_skill_file(
-                    path=root / skill.name / "SKILL.md",
+                    path=_skill_path(root, skill.name),
                     project_root=project_root,
                     check=check,
                 )
         for legacy_name in skill.legacy_names:
             for root in SKILL_ROOTS:
                 changes += _remove_skill_file(
-                    path=root / legacy_name / "SKILL.md",
+                    path=_skill_path(root, legacy_name),
                     project_root=project_root,
                     check=check,
                 )

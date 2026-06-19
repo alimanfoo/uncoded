@@ -6,7 +6,7 @@ from pathlib import Path
 from unittest import mock
 import pytest
 from uncoded import cli
-from uncoded.skill import SKILL_ROOTS, SKILLS
+from uncoded.skill import SKILL_ROOTS, SKILLS, _skill_path
 
 _CODE_SKILL_PATHS = ...
 _DOC_SKILL_PATHS = ...

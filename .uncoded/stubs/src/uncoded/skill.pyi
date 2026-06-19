@@ -10,6 +10,9 @@ from uncoded.sync import remove_file, sync_file
 SKILL_ROOTS = [Path('.claude/skills'), Path('.agents/skills')]
 SKILLS: list[Skill] = ...
 
+def _skill_path(root: Path, name: str) -> Path:
+    ...
+
 def _render_content(*, skill: Skill) -> str:
     ...
 

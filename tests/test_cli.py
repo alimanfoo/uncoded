@@ -14,17 +14,17 @@ from unittest import mock
 import pytest
 
 from uncoded import cli
-from uncoded.skill import SKILL_ROOTS, SKILLS
+from uncoded.skill import SKILL_ROOTS, SKILLS, _skill_path
 
 # Paths split by gate so tests can assert the right subset.
 _CODE_SKILL_PATHS = [
-    root / skill.name / "SKILL.md"
+    _skill_path(root, skill.name)
     for skill in SKILLS
     if skill.gate == "code"
     for root in SKILL_ROOTS
 ]
 _DOC_SKILL_PATHS = [
-    root / skill.name / "SKILL.md"
+    _skill_path(root, skill.name)
     for skill in SKILLS
     if skill.gate == "docs"
     for root in SKILL_ROOTS
