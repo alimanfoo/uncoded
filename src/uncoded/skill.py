@@ -50,8 +50,8 @@ def _render_content(*, skill: Skill) -> str:
         sort_keys=False,
         width=10000,
     )
-    body = (files("uncoded") / skill.body_file).read_text(encoding="utf-8")
-    return f"---\n{front}---\n{body}"
+    body = (files("uncoded") / skill.body_file).read_text(encoding="utf-8").lstrip("\n")
+    return f"---\n{front}---\n\n{body}"
 
 
 def sync_skills(

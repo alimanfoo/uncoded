@@ -18,6 +18,9 @@ class TestSyncSkills:
     def test_content_has_frontmatter_and_body(self, tmp_path):
         ...
 
+    def test_renderer_supplies_separator_for_body_without_leading_newline(self, monkeypatch):
+        ...
+
     def test_returns_change_count_on_first_write(self, tmp_path):
         ...
 

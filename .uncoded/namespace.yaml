@@ -509,6 +509,7 @@ tests/:
       test_writes_skill_files:
       test_creates_parent_directories:
       test_content_has_frontmatter_and_body:
+      test_renderer_supplies_separator_for_body_without_leading_newline:
       test_returns_change_count_on_first_write:
       test_returns_zero_when_already_in_sync:
       test_idempotent:

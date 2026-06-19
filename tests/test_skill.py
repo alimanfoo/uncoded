@@ -33,8 +33,34 @@ class TestSyncSkills:
         content = (tmp_path / SKILL_ROOTS[0] / skill.name / "SKILL.md").read_text()
         assert content.startswith("---\nname: coherence-review\n")
         assert skill.description in content
-        body = (files("uncoded") / skill.body_file).read_text(encoding="utf-8")
-        assert content.endswith(body)
+        # Renderer owns the blank-line separator; body follows directly after it.
+        body = (
+            (files("uncoded") / skill.body_file)
+            .read_text(encoding="utf-8")
+            .lstrip("\n")
+        )
+        assert content.endswith("\n\n" + body)
+
+    def test_renderer_supplies_separator_for_body_without_leading_newline(
+        self, monkeypatch
+    ):
+        # The renderer must insert exactly one blank line even when the body
+        # file has no leading newline.
+        import uncoded.skill as skill_module
+
+        class _FakeResource:
+            def __truediv__(self, name: str) -> "_FakeResource":
+                return self
+
+            def read_text(self, encoding: str) -> str:
+                return "# Body\n"
+
+        monkeypatch.setattr(skill_module, "files", lambda pkg: _FakeResource())
+        test_skill = Skill(
+            name="test", description="A test.", body_file="test.md", gate="code"
+        )
+        content = skill_module._render_content(skill=test_skill)
+        assert content.endswith("---\n\n# Body\n")
 
     def test_returns_change_count_on_first_write(self, tmp_path):
         # One skill, two roots → 2 writes on first run.
