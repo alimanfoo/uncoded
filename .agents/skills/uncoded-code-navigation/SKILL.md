@@ -1,6 +1,6 @@
 ---
 name: uncoded-code-navigation
-description: 'Navigate Python source code in a codebase indexed by uncoded. Load .uncoded/namespace.yaml first, read .pyi stubs before source files, and apply the dispatch rule: symbol name to uncoded body/refs, pattern or phrase to grep.'
+description: Use when finding, reading, or editing Python source in a codebase indexed by uncoded — locating a symbol, reading a definition, or checking references before a refactor, rename, or delete.
 ---
 
 # Code Navigation

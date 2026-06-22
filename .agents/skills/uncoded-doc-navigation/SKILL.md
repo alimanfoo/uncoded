@@ -1,6 +1,6 @@
 ---
 name: uncoded-doc-navigation
-description: Navigate a codebase's Markdown documentation indexed by uncoded. Load .uncoded/docs.yaml at session start to see every file and its heading hierarchy, then use Read or grep to reach a specific section.
+description: Use when finding or reading a codebase's Markdown documentation indexed by uncoded — locating which file and section cover a topic, or orienting to what documentation exists.
 ---
 
 # Documentation Navigation
