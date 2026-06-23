@@ -276,7 +276,7 @@ class TestSyncSkills:
         ).read_text()
         assert ".uncoded/docs.yaml" in content
         # Orient step must tell the agent to read the map before anything else.
-        assert "session start" in content
+        assert "before any other tool call" in content
 
 
 class TestSyncSkillsProjectRootAnchor:

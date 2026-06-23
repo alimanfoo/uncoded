@@ -41,7 +41,7 @@ SKILLS: list[Skill] = [
     Skill(
         name="uncoded-code-navigation",
         description=(
-            "Use when finding, reading, or editing Python source in a codebase"
+            "Use before searching, reading, or editing Python source in a codebase"
             " indexed by uncoded — locating a symbol, reading a definition, or"
             " checking references before a refactor, rename, or delete."
         ),
@@ -51,7 +51,7 @@ SKILLS: list[Skill] = [
     Skill(
         name="uncoded-doc-navigation",
         description=(
-            "Use when finding or reading a codebase's Markdown documentation"
+            "Use before searching or reading a codebase's Markdown documentation"
             " indexed by uncoded — locating which file and section cover a topic,"
             " or orienting to what documentation exists."
         ),

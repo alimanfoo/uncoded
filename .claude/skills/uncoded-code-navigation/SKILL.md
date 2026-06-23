@@ -1,15 +1,14 @@
 ---
 name: uncoded-code-navigation
-description: Use when finding, reading, or editing Python source in a codebase indexed by uncoded — locating a symbol, reading a definition, or checking references before a refactor, rename, or delete.
+description: Use before searching, reading, or editing Python source in a codebase indexed by uncoded — locating a symbol, reading a definition, or checking references before a refactor, rename, or delete.
 ---
 
 # Code Navigation
 
 This codebase uses [uncoded](https://github.com/alimanfoo/uncoded) to maintain
-a symbol index over its source code, with two associated tools:
+a symbol index over its source code, with two associated CLI tools:
 `uncoded body` for reading a symbol's body and `uncoded refs` for finding
 references.
-The point of this scaffolding is one rule.
 
 ## The dispatch rule
 
