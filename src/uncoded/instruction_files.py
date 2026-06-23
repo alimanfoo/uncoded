@@ -50,20 +50,20 @@ SECTION_DOCS = f"{MARKER_DOCS_START}\n{_DOCS_SECTION_BODY}\n{MARKER_DOCS_END}\n"
 def _apply_section(
     text: str, start: str, end: str, body: str | None, *, prefix: str
 ) -> str:
-    """Apply, replace, or remove the delimited section in text.
+    r"""Apply, replace, or remove the delimited section in text.
 
     Applying this function twice produces the same result as applying it once,
     and no text outside the uncoded markers is ever deleted.
 
     Scans lines to anchor both the opening and closing markers to line starts.
-    The first line whose content (trailing \\r\\n stripped) starts with prefix
+    The first line whose content (trailing \r\n stripped) starts with prefix
     is the opening; the first line after it whose stripped content equals end
     is the closing. This prevents marker-like prose from being mistaken for a
     boundary, and prevents an end marker before any start from acting as the
     closing.
 
-    CRLF: marker lines are compared with trailing \\r stripped; the canonical
-    section is written with \\n; surrounding content is preserved byte-for-byte.
+    CRLF: marker lines are compared with trailing \r stripped; the canonical
+    section is written with \n; surrounding content is preserved byte-for-byte.
     A CRLF file converges in one pass.
 
     Duplicate policy: the first well-formed section (a start-prefix line through

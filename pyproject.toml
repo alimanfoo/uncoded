@@ -63,6 +63,7 @@ extend-exclude = [".uncoded"]
 
 [tool.ruff.lint]
 select = [
+    "D",   # pydocstyle (pep257)
     "E",   # pycodestyle errors
     "F",   # pyflakes
     "I",   # isort
@@ -70,3 +71,9 @@ select = [
     "B",   # flake8-bugbear
     "SIM", # flake8-simplify
 ]
+
+[tool.ruff.lint.pydocstyle]
+convention = "pep257"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["D"]
