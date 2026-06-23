@@ -29,6 +29,7 @@ class NamePath(NamedTuple):
         return cls(head=head, tail=tail)
 
     def __str__(self) -> str:
+        """Return the string form: 'head/tail' when tail is set, 'head' otherwise."""
         return f"{self.head}/{self.tail}" if self.tail is not None else self.head
 
 

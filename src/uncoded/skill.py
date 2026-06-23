@@ -17,6 +17,8 @@ SKILL_ROOTS = [
 
 @dataclass(frozen=True)
 class Skill:
+    """Frozen record of one skill: name, content file, gate, and any legacy names."""
+
     name: str
     description: str
     body_file: str
