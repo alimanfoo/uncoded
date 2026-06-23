@@ -21,14 +21,11 @@ README.md:
     Coherence review:
     Dev setup:
       Note for Windows contributors:
+    Upgrading from v1:
     Releasing:
 AGENTS.md:
   uncoded:
     Problem:
     Approach:
     Commands:
-    How to read and edit code in this codebase:
-      The dispatch rule:
-      How to execute the rule:
-      Where Read, Edit, and grep are still the right tools:
-    How to read documentation in this codebase:
+    Skills:

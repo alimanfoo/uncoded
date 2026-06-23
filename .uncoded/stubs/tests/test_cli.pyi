@@ -6,8 +6,11 @@ from pathlib import Path
 from unittest import mock
 import pytest
 from uncoded import cli
-from uncoded.instruction_files import MARKER_START
-from uncoded.skill import SKILL_OUTPUTS
+from uncoded.skill import SKILL_ROOTS, SKILLS, _skill_path
+
+_CODE_SKILL_PATHS = ...
+_DOC_SKILL_PATHS = ...
+_SKILL_PATHS = _CODE_SKILL_PATHS + _DOC_SKILL_PATHS
 
 def _init_repo(tmp_path, monkeypatch, source_roots):
     ...
@@ -16,16 +19,10 @@ def _init_doc_repo(tmp_path, monkeypatch, doc_roots):
     ...
 
 class TestSyncApplyMode:
-    def test_writes_namespace_map_stubs_and_instruction_file(self, tmp_path, monkeypatch):
+    def test_writes_namespace_map_stubs_and_skills(self, tmp_path, monkeypatch):
         ...
 
     def test_idempotent_second_run(self, tmp_path, monkeypatch):
-        ...
-
-    def test_dedupes_when_claude_md_is_symlink_to_agents_md(self, tmp_path, monkeypatch, capsys):
-        ...
-
-    def test_error_when_instruction_file_outside_project_root(self, tmp_path, monkeypatch, capsys):
         ...
 
     def test_error_when_no_config_file(self, tmp_path, monkeypatch, capsys):
@@ -63,12 +60,6 @@ class TestSyncCheckMode:
         ...
 
     def test_returns_one_when_source_file_deleted(self, tmp_path, monkeypatch):
-        ...
-
-    def test_returns_one_when_instruction_file_drifts(self, tmp_path, monkeypatch):
-        ...
-
-    def test_dedupes_when_claude_md_is_symlink_to_agents_md(self, tmp_path, monkeypatch, capsys):
         ...
 
     def test_error_still_returns_one(self, tmp_path, monkeypatch, capsys):
@@ -168,9 +159,6 @@ class TestSyncDocRoots:
     def test_doc_only_does_not_write_stubs(self, tmp_path, monkeypatch):
         ...
 
-    def test_doc_only_instruction_file_has_docs_section_only(self, tmp_path, monkeypatch):
-        ...
-
     def test_doc_root_single_md_file(self, tmp_path, monkeypatch):
         ...
 
@@ -184,9 +172,6 @@ class TestSyncDocRoots:
         ...
 
     def test_both_roots_writes_both_artefacts(self, tmp_path, monkeypatch):
-        ...
-
-    def test_both_roots_instruction_file_has_both_sections(self, tmp_path, monkeypatch):
         ...
 
     def test_source_root_removal_cleans_code_artefacts(self, tmp_path, monkeypatch):
