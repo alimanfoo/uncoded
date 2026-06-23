@@ -14,8 +14,22 @@ from unittest import mock
 import pytest
 
 from uncoded import cli
-from uncoded.instruction_files import MARKER_START
-from uncoded.skill import SKILL_OUTPUTS
+from uncoded.skill import SKILL_ROOTS, SKILLS, _skill_path
+
+# Paths split by gate so tests can assert the right subset.
+_CODE_SKILL_PATHS = [
+    _skill_path(root, skill.name)
+    for skill in SKILLS
+    if skill.gate == "code"
+    for root in SKILL_ROOTS
+]
+_DOC_SKILL_PATHS = [
+    _skill_path(root, skill.name)
+    for skill in SKILLS
+    if skill.gate == "docs"
+    for root in SKILL_ROOTS
+]
+_SKILL_PATHS = _CODE_SKILL_PATHS + _DOC_SKILL_PATHS
 
 
 def _init_repo(tmp_path, monkeypatch, source_roots=("src",)):
@@ -43,17 +57,14 @@ def _init_repo(tmp_path, monkeypatch, source_roots=("src",)):
 
 
 class TestSyncApplyMode:
-    def test_writes_namespace_map_stubs_and_instruction_file(
-        self, tmp_path, monkeypatch
-    ):
+    def test_writes_namespace_map_stubs_and_skills(self, tmp_path, monkeypatch):
         _init_repo(tmp_path, monkeypatch)
         (tmp_path / "src" / "foo.py").write_text("def hello(): pass\n")
 
         assert cli._sync() == 0
         assert (tmp_path / ".uncoded" / "namespace.yaml").exists()
         assert (tmp_path / ".uncoded" / "stubs" / "src" / "foo.pyi").exists()
-        assert (tmp_path / "CLAUDE.md").exists()
-        for skill_path in SKILL_OUTPUTS:
+        for skill_path in _CODE_SKILL_PATHS:
             assert (tmp_path / skill_path).exists()
 
     def test_idempotent_second_run(self, tmp_path, monkeypatch):
@@ -64,8 +75,7 @@ class TestSyncApplyMode:
         stub_mtime = (
             (tmp_path / ".uncoded" / "stubs" / "src" / "foo.pyi").stat().st_mtime_ns
         )
-        claude_mtime = (tmp_path / "CLAUDE.md").stat().st_mtime_ns
-        skill_mtimes = [(tmp_path / p).stat().st_mtime_ns for p in SKILL_OUTPUTS]
+        skill_mtimes = [(tmp_path / p).stat().st_mtime_ns for p in _CODE_SKILL_PATHS]
 
         # A second run with no source changes must not rewrite any artifact.
         assert cli._sync() == 0
@@ -73,64 +83,9 @@ class TestSyncApplyMode:
         assert (
             tmp_path / ".uncoded" / "stubs" / "src" / "foo.pyi"
         ).stat().st_mtime_ns == stub_mtime
-        assert (tmp_path / "CLAUDE.md").stat().st_mtime_ns == claude_mtime
         assert [
-            (tmp_path / p).stat().st_mtime_ns for p in SKILL_OUTPUTS
+            (tmp_path / p).stat().st_mtime_ns for p in _CODE_SKILL_PATHS
         ] == skill_mtimes
-
-    def test_dedupes_when_claude_md_is_symlink_to_agents_md(
-        self, tmp_path, monkeypatch, capsys
-    ):
-        # When CLAUDE.md is a symlink to AGENTS.md, both configured
-        # instruction paths point to the same inode. Sync should process
-        # the file once and report it under its canonical (resolved)
-        # name, not iterate twice with asymmetric output.
-        _init_repo(tmp_path, monkeypatch)
-        (tmp_path / "src" / "foo.py").write_text("def hello(): pass\n")
-        agents = tmp_path / "AGENTS.md"
-        agents.write_text("")
-        (tmp_path / "CLAUDE.md").symlink_to(agents)
-
-        assert cli._sync() == 0
-
-        # The section is written through the symlink to AGENTS.md.
-        assert MARKER_START in agents.read_text()
-
-        # Exactly one user-facing line for the instruction file, naming
-        # the canonical AGENTS.md.
-        instruction_lines = [
-            line
-            for line in capsys.readouterr().out.splitlines()
-            if line.endswith("AGENTS.md") or line.endswith("CLAUDE.md")
-        ]
-        assert instruction_lines == ["Updated AGENTS.md"]
-
-    def test_error_when_instruction_file_outside_project_root(
-        self, tmp_path, monkeypatch, capsys
-    ):
-        project = tmp_path / "project"
-        project.mkdir()
-        (project / "src").mkdir()
-        (project / "pyproject.toml").write_text(
-            textwrap.dedent(
-                """\
-                [project]
-                name = "demo"
-
-                [tool.uncoded]
-                source-roots = ["src"]
-                instruction-files = ["../outside.md"]
-                """
-            )
-        )
-        monkeypatch.chdir(project)
-
-        assert cli._sync() == 1
-
-        err = capsys.readouterr().err
-        assert "Error:" in err
-        assert "../outside.md" in err
-        assert "outside the project root" in err
 
     def test_error_when_no_config_file(self, tmp_path, monkeypatch, capsys):
         # Pins the problem statement (names both supported config files)
@@ -254,7 +209,7 @@ class TestSyncApplyMode:
         # Running from a subdirectory of the project must produce
         # artefacts at the project root, not under the subdirectory.
         # Reads (source files, pyproject) anchor at project_root; writes
-        # (namespace, stubs, instruction file, skill files) do too.
+        # (namespace, stubs, skill files) do too.
         (tmp_path / "pyproject.toml").write_text(
             textwrap.dedent(
                 """\
@@ -283,12 +238,10 @@ class TestSyncApplyMode:
         # Writes anchored: every artefact lands at project_root, never
         # under the subdirectory cwd.
         assert (tmp_path / ".uncoded" / "stubs" / "src" / "foo.pyi").exists()
-        assert (tmp_path / "CLAUDE.md").exists()
-        for skill_path in SKILL_OUTPUTS:
+        for skill_path in _CODE_SKILL_PATHS:
             assert (tmp_path / skill_path).exists()
         assert not (tmp_path / "src" / ".uncoded").exists()
-        assert not (tmp_path / "src" / "CLAUDE.md").exists()
-        for skill_path in SKILL_OUTPUTS:
+        for skill_path in _CODE_SKILL_PATHS:
             assert not (tmp_path / "src" / skill_path).exists()
 
     def test_artefacts_match_when_run_from_subdir_vs_project_root(
@@ -328,8 +281,7 @@ class TestSyncApplyMode:
         relpaths = [
             Path(".uncoded/namespace.yaml"),
             Path(".uncoded/stubs/src/foo.pyi"),
-            Path("CLAUDE.md"),
-            *SKILL_OUTPUTS,
+            *_CODE_SKILL_PATHS,
         ]
         for rel in relpaths:
             assert (from_root / rel).read_text() == (from_subdir / rel).read_text(), (
@@ -345,7 +297,6 @@ class TestSyncCheckMode:
         assert cli._sync(check=True) == 1
         # No artifacts written.
         assert not (tmp_path / ".uncoded").exists()
-        assert not (tmp_path / "CLAUDE.md").exists()
 
     def test_returns_zero_when_index_is_up_to_date(self, tmp_path, monkeypatch):
         _init_repo(tmp_path, monkeypatch)
@@ -376,47 +327,6 @@ class TestSyncCheckMode:
         assert cli._sync(check=True) == 1
         # Orphan stub must still be present after check.
         assert (tmp_path / ".uncoded" / "stubs" / "src" / "bar.pyi").exists()
-
-    def test_returns_one_when_instruction_file_drifts(self, tmp_path, monkeypatch):
-        _init_repo(tmp_path, monkeypatch)
-        (tmp_path / "src" / "foo.py").write_text("def hello(): pass\n")
-        cli._sync()
-
-        # User edits CLAUDE.md navigation section by hand.
-        claude = tmp_path / "CLAUDE.md"
-        claude.write_text(claude.read_text().replace("uncoded", "scrambled"))
-        claude_before = claude.read_text()
-
-        assert cli._sync(check=True) == 1
-        assert claude.read_text() == claude_before
-
-    def test_dedupes_when_claude_md_is_symlink_to_agents_md(
-        self, tmp_path, monkeypatch, capsys
-    ):
-        # Same symlink-dedup contract as apply mode, but in the freshness
-        # gate. With CLAUDE.md a symlink to AGENTS.md, check mode must
-        # report the instruction file once under its canonical AGENTS.md
-        # name — asymmetric reporting here would let CI miss what apply
-        # mode would do.
-        _init_repo(tmp_path, monkeypatch)
-        (tmp_path / "src" / "foo.py").write_text("def hello(): pass\n")
-        agents = tmp_path / "AGENTS.md"
-        agents.write_text("")
-        (tmp_path / "CLAUDE.md").symlink_to(agents)
-
-        assert cli._sync(check=True) == 1
-
-        # Check mode must not mutate — the symlinked file is still empty.
-        assert agents.read_text() == ""
-
-        # Exactly one user-facing line for the instruction file, naming
-        # the canonical AGENTS.md.
-        instruction_lines = [
-            line
-            for line in capsys.readouterr().out.splitlines()
-            if line.endswith("AGENTS.md") or line.endswith("CLAUDE.md")
-        ]
-        assert instruction_lines == ["Would update AGENTS.md"]
 
     def test_error_still_returns_one(self, tmp_path, monkeypatch, capsys):
         # Config error: check mode should report non-zero the same as apply mode.
@@ -733,17 +643,6 @@ class TestSyncDocRoots:
         assert cli._sync() == 0
         assert not (tmp_path / ".uncoded" / "stubs").exists()
 
-    def test_doc_only_instruction_file_has_docs_section_only(
-        self, tmp_path, monkeypatch
-    ):
-        from uncoded.instruction_files import MARKER_DOCS_START, MARKER_START
-
-        _init_doc_repo(tmp_path, monkeypatch)
-        assert cli._sync() == 0
-        content = (tmp_path / "CLAUDE.md").read_text()
-        assert MARKER_DOCS_START in content
-        assert MARKER_START not in content
-
     def test_doc_root_single_md_file(self, tmp_path, monkeypatch):
         readme = tmp_path / "README.md"
         readme.write_text("# Overview\n## Usage\n")
@@ -827,32 +726,6 @@ class TestSyncDocRoots:
         assert (tmp_path / ".uncoded" / "namespace.yaml").exists()
         assert (tmp_path / ".uncoded" / "docs.yaml").exists()
 
-    def test_both_roots_instruction_file_has_both_sections(self, tmp_path, monkeypatch):
-        from uncoded.instruction_files import MARKER_DOCS_START, MARKER_START
-
-        (tmp_path / "pyproject.toml").write_text(
-            textwrap.dedent(
-                """\
-                [project]
-                name = "demo"
-
-                [tool.uncoded]
-                source-roots = ["src"]
-                doc-roots = ["docs"]
-                """
-            )
-        )
-        (tmp_path / "src").mkdir()
-        docs = tmp_path / "docs"
-        docs.mkdir()
-        (docs / "guide.md").write_text("# Guide\n")
-        monkeypatch.chdir(tmp_path)
-
-        assert cli._sync() == 0
-        content = (tmp_path / "CLAUDE.md").read_text()
-        assert MARKER_START in content
-        assert MARKER_DOCS_START in content
-
     def test_source_root_removal_cleans_code_artefacts(self, tmp_path, monkeypatch):
         # First sync with source-roots; then reconfigure to doc-only.
         # namespace.yaml and stubs must be removed.
@@ -878,7 +751,7 @@ class TestSyncDocRoots:
 
         assert (tmp_path / ".uncoded" / "namespace.yaml").exists()
         assert (tmp_path / ".uncoded" / "stubs").exists()
-        for path in SKILL_OUTPUTS:
+        for path in _CODE_SKILL_PATHS:
             assert (tmp_path / path).exists()
 
         # Drop source-roots.
@@ -896,7 +769,7 @@ class TestSyncDocRoots:
         assert cli._sync() == 0
         assert not (tmp_path / ".uncoded" / "namespace.yaml").exists()
         assert not (tmp_path / ".uncoded" / "stubs").exists()
-        for path in SKILL_OUTPUTS:
+        for path in _CODE_SKILL_PATHS:
             assert not (tmp_path / path).exists()
 
     def test_doc_root_removal_cleans_docs_yaml(self, tmp_path, monkeypatch):
@@ -1006,29 +879,29 @@ class TestSyncDocRoots:
     def test_doc_only_does_not_write_skill(self, tmp_path, monkeypatch):
         _init_doc_repo(tmp_path, monkeypatch)
         assert cli._sync() == 0
-        for path in SKILL_OUTPUTS:
+        for path in _CODE_SKILL_PATHS:
             assert not (tmp_path / path).exists()
 
     def test_doc_only_removes_preexisting_skill(self, tmp_path, monkeypatch):
         _init_doc_repo(tmp_path, monkeypatch)
-        for path in SKILL_OUTPUTS:
+        for path in _CODE_SKILL_PATHS:
             skill_path = tmp_path / path
             skill_path.parent.mkdir(parents=True, exist_ok=True)
             skill_path.write_text("old skill\n")
         assert cli._sync() == 0
-        for path in SKILL_OUTPUTS:
+        for path in _CODE_SKILL_PATHS:
             assert not (tmp_path / path).exists()
 
     def test_check_returns_one_when_skill_should_be_removed(
         self, tmp_path, monkeypatch
     ):
         _init_doc_repo(tmp_path, monkeypatch)
-        for path in SKILL_OUTPUTS:
+        for path in _SKILL_PATHS:
             skill_path = tmp_path / path
             skill_path.parent.mkdir(parents=True, exist_ok=True)
             skill_path.write_text("old skill\n")
         assert cli._sync(check=True) == 1
-        for path in SKILL_OUTPUTS:
+        for path in _SKILL_PATHS:
             assert (tmp_path / path).exists()
 
     def test_idempotent_doc_only(self, tmp_path, monkeypatch):

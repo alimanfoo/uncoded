@@ -4,8 +4,6 @@ import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 
-from uncoded.instruction_files import DEFAULT_INSTRUCTION_FILES
-
 
 class ConfigError(Exception):
     """Raised by read_config when the configuration cannot be determined."""
@@ -18,7 +16,6 @@ class Config:
     project_root: Path
     source_roots: list[Path]
     doc_roots: list[Path]
-    instruction_files: list[Path]
 
 
 def find_pyproject_toml(start: Path) -> Path | None:
@@ -119,15 +116,8 @@ def read_config(start: Path) -> Config | None:
     source_roots = [Path(r) for r in section.get("source-roots", [])]
     doc_roots = [Path(r) for r in section.get("doc-roots", [])]
 
-    raw_instruction_files = section.get("instruction-files")
-    if raw_instruction_files is None:
-        instruction_files = list(DEFAULT_INSTRUCTION_FILES)
-    else:
-        instruction_files = [Path(f) for f in raw_instruction_files]
-
     return Config(
         project_root=config_file.parent,
         source_roots=source_roots,
         doc_roots=doc_roots,
-        instruction_files=instruction_files,
     )

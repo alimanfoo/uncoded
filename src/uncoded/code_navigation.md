@@ -1,12 +1,11 @@
-## How to read and edit code in this codebase
+# Code Navigation
 
-This repo uses [uncoded](https://github.com/alimanfoo/uncoded) to maintain
-a symbol index over its source code, with two associated tools:
+This codebase uses [uncoded](https://github.com/alimanfoo/uncoded) to maintain
+a symbol index over its source code, with two associated CLI tools:
 `uncoded body` for reading a symbol's body and `uncoded refs` for finding
 references.
-The point of this scaffolding is one rule.
 
-### The dispatch rule
+## The dispatch rule
 
 **If your search term is the name of a Python symbol — a class, function,
 method, attribute, or module-level constant — use the index. If it's a
@@ -24,7 +23,7 @@ grep matches comments, strings, and unrelated attributes; grep misses
 re-exports (so caller and delete checks come back incomplete); grep forces
 offset arithmetic to slice a body. The indexed tools don't.
 
-### How to execute the rule
+## How to execute the rule
 
 The index has two parts (a namespace map and per-file stubs) and three
 steps (orient, understand, act).
@@ -87,7 +86,7 @@ With the map and stub loaded, you have the exact `relative_path` and
 - **Safely delete.** `uvx uncoded refs <name_path> --in <relative_path>` must
   return empty; then `Edit` to remove.
 
-### Where Read, Edit, and grep are still the right tools
+## Where Read, Edit, and grep are still the right tools
 
 The rule is about source navigation by symbol name. Outside that, Read,
 Edit, and grep stay correct:
