@@ -44,6 +44,9 @@ class TestResolveBodyTopLevel:
     def test_syntax_error_propagates(self, tmp_path):
         ...
 
+    def test_reads_latin1_declared_file(self, tmp_path):
+        ...
+
 class TestResolveBodyClassMember:
     def test_method(self, tmp_path):
         ...

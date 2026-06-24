@@ -65,8 +65,8 @@ def resolve_name_position(name_path: NamePath, in_path: Path) -> tuple[int, int]
     Follows LSP convention: both line and character are 0-indexed.
     For def/async def/class, character points past the keyword to the identifier.
     For assignments and type aliases, character points at the start of the target name.
-    Raises SymbolNotFound, FileNotFoundError, and SyntaxError under the same
-    conditions as resolve_ast_node.
+    Raises SymbolNotFound, OSError, UnicodeDecodeError, LookupError, and
+    SyntaxError under the same conditions as resolve_ast_node.
     """
     node = resolve_ast_node(name_path, in_path)
     if isinstance(node, ast.FunctionDef):

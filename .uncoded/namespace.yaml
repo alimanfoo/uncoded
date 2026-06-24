@@ -171,6 +171,7 @@ tests/:
       test_not_found_raises_body_not_found:
       test_file_not_found_propagates:
       test_syntax_error_propagates:
+      test_reads_latin1_declared_file:
     TestResolveBodyClassMember:
       test_method:
       test_property_returns_getter_body:
