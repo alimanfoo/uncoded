@@ -14,7 +14,7 @@ def _has_uncoded_section(*, pyproject_path: Path) -> bool:
 def _find_config_file(*, start: Path) -> Path | None:
     ...
 
-def read_config(start: Path) -> Config | None:
+def read_config(start: Path) -> Config:
     ...
 
 class ConfigError(Exception):

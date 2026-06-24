@@ -135,31 +135,17 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
 
     try:
         config = read_config(start)
-    except ConfigError as e:
-        print(f"Error: {e}", file=sys.stderr)
-        return 1
-    if config is None:
-        print(
-            "Error: No pyproject.toml or .uncoded.toml found. "
-            "Create one to configure uncoded.",
-            file=sys.stderr,
-        )
-        return 1
+        if not config.source_roots and not config.doc_roots:
+            raise ConfigError(
+                "nothing to index. "
+                "Add source-roots or doc-roots to [tool.uncoded] in pyproject.toml, "
+                "or as top-level keys in .uncoded.toml."
+            )
 
-    if not config.source_roots and not config.doc_roots:
-        print(
-            "Error: nothing to index. "
-            "Add source-roots or doc-roots to [tool.uncoded] in pyproject.toml, "
-            "or as top-level keys in .uncoded.toml.",
-            file=sys.stderr,
-        )
-        return 1
+        project_root = config.project_root
+        resolved_project_root = project_root.resolve()
+        changes = 0
 
-    project_root = config.project_root
-    resolved_project_root = project_root.resolve()
-    changes = 0
-
-    try:
         # Code artefacts — build when source_roots configured, else remove.
         build = bool(config.source_roots)
         code_result = _sync_code_artefacts(

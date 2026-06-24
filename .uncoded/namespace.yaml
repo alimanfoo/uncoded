@@ -294,7 +294,7 @@ tests/:
       test_finds_in_parent_of_start:
       test_returns_none_if_not_found:
     TestReadConfig:
-      test_returns_none_when_no_config_file:
+      test_raises_when_no_config_file:
       test_source_roots_read_from_pyproject:
       test_doc_roots_read_from_pyproject:
       test_both_roots_empty_when_section_absent:

@@ -16,7 +16,7 @@ class TestFindPyprojectToml:
         ...
 
 class TestReadConfig:
-    def test_returns_none_when_no_config_file(self, tmp_path):
+    def test_raises_when_no_config_file(self, tmp_path):
         ...
 
     def test_source_roots_read_from_pyproject(self, tmp_path):
