@@ -21,6 +21,9 @@ def _sync_code_artefacts(*, build: bool, configured_source_roots: list[Path], pr
 def _sync(*, start: Path | None, check: bool) -> int:
     ...
 
+def _report_lookup_error(exc: Exception, *, name_path: str, in_path: str) -> int:
+    ...
+
 def _body(*, name_path: str, in_path: str) -> int:
     ...
 

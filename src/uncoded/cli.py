@@ -191,6 +191,24 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
     return 0
 
 
+def _report_lookup_error(exc: Exception, *, name_path: str, in_path: str) -> int:
+    """Print the CLI error message for a lookup failure and return 1.
+
+    Covers the four shared error arms for _body and _refs: unsupported name
+    path, symbol not found, file not found, and read/parse error.
+    FileNotFoundError is checked before OSError because it subclasses it.
+    """
+    if isinstance(exc, UnsupportedNamePath):
+        print(f"Error: {exc}", file=sys.stderr)
+    elif isinstance(exc, SymbolNotFound):
+        print(f"Error: {name_path!r} not found in {in_path}", file=sys.stderr)
+    elif isinstance(exc, FileNotFoundError):
+        print(f"Error: {in_path}: file not found.", file=sys.stderr)
+    else:
+        print(f"Error: {in_path}: {exc}", file=sys.stderr)
+    return 1
+
+
 def _body(*, name_path: str, in_path: str) -> int:
     """Print the source body of name_path in in_path to stdout.
 
@@ -201,18 +219,15 @@ def _body(*, name_path: str, in_path: str) -> int:
     target = Path(in_path)
     try:
         body = resolve_body(NamePath.parse(name_path), target)
-    except UnsupportedNamePath as e:
-        print(f"Error: {e}", file=sys.stderr)
-        return 1
-    except SymbolNotFound:
-        print(f"Error: {name_path!r} not found in {in_path}", file=sys.stderr)
-        return 1
-    except FileNotFoundError:
-        print(f"Error: {in_path}: file not found.", file=sys.stderr)
-        return 1
-    except (OSError, UnicodeDecodeError, SyntaxError) as e:
-        print(f"Error: {in_path}: {e}", file=sys.stderr)
-        return 1
+    except (
+        UnsupportedNamePath,
+        SymbolNotFound,
+        FileNotFoundError,
+        OSError,
+        UnicodeDecodeError,
+        SyntaxError,
+    ) as e:
+        return _report_lookup_error(e, name_path=name_path, in_path=in_path)
 
     sys.stdout.write(body)
     return 0
@@ -229,21 +244,18 @@ def _refs(*, name_path: str, in_path: str) -> int:
     """
     try:
         refs = find_refs(NamePath.parse(name_path), Path(in_path))
-    except UnsupportedNamePath as e:
-        print(f"Error: {e}", file=sys.stderr)
-        return 1
-    except SymbolNotFound:
-        print(f"Error: {name_path!r} not found in {in_path}", file=sys.stderr)
-        return 1
-    except FileNotFoundError:
-        print(f"Error: {in_path}: file not found.", file=sys.stderr)
-        return 1
-    except (OSError, UnicodeDecodeError, SyntaxError) as e:
-        print(f"Error: {in_path}: {e}", file=sys.stderr)
-        return 1
     except RuntimeError as e:
         print(f"Error: {e}", file=sys.stderr)
         return 1
+    except (
+        UnsupportedNamePath,
+        SymbolNotFound,
+        FileNotFoundError,
+        OSError,
+        UnicodeDecodeError,
+        SyntaxError,
+    ) as e:
+        return _report_lookup_error(e, name_path=name_path, in_path=in_path)
 
     for ref in refs:
         print(f"{ref.rel_path}:{ref.line}:{ref.col}")
