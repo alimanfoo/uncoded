@@ -2,6 +2,7 @@ from importlib.resources import files
 from pathlib import Path
 
 import uncoded.skill as skill_module
+from uncoded.markers import GENERATED_MARKER
 from uncoded.skill import SKILL_ROOTS, SKILLS, Skill, sync_skills
 
 
@@ -67,7 +68,20 @@ class TestSyncSkills:
             name="test", description="A test.", body_file="test.md", gate="code"
         )
         content = skill_module._render_content(skill=test_skill)
-        assert content.endswith("---\n\n# Body\n")
+        assert f"<!-- {GENERATED_MARKER} -->" in content
+        assert content.endswith("\n\n# Body\n")
+
+    def test_content_has_provenance_marker(self, tmp_path):
+        sync_skills(source=True, docs=False, project_root=tmp_path, check=False)
+        skill = SKILLS[0]
+        content = (tmp_path / SKILL_ROOTS[0] / skill.name / "SKILL.md").read_text(
+            encoding="utf-8"
+        )
+        # Marker is present in the rendered file.
+        assert f"<!-- {GENERATED_MARKER} -->" in content
+        # Marker follows the closing frontmatter ---, not inside it.
+        frontmatter_close = content.index("\n---\n", 4) + 5
+        assert f"<!-- {GENERATED_MARKER} -->" in content[frontmatter_close:]
 
     def test_returns_change_count_on_first_write(self, tmp_path):
         # Two code-gated skills × two roots = 4 writes; doc-nav skipped (docs=False).

@@ -5,6 +5,7 @@ from importlib.resources import files
 from pathlib import Path
 from typing import Literal
 import yaml
+from uncoded.markers import GENERATED_MARKER
 from uncoded.sync import remove_file, sync_file
 
 SKILL_ROOTS = [Path('.claude/skills'), Path('.agents/skills')]

@@ -54,6 +54,8 @@ src/:
       extract_module:
       iter_source_files:
       extract_modules:
+    markers.py:
+      GENERATED_MARKER:
     namespace_map.py:
       HEADER:
       build_map:
@@ -442,6 +444,7 @@ tests/:
       test_creates_parent_directories:
       test_content_has_frontmatter_and_body:
       test_renderer_supplies_separator_for_body_without_leading_newline:
+      test_content_has_provenance_marker:
       test_returns_change_count_on_first_write:
       test_returns_zero_when_already_in_sync:
       test_idempotent:

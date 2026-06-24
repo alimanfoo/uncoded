@@ -2,6 +2,7 @@
 
 from pathlib import Path
 from uncoded.extract import ModuleInfo
+from uncoded.markers import GENERATED_MARKER
 from uncoded.yaml_tree import render_yaml_tree
 
 HEADER = ...

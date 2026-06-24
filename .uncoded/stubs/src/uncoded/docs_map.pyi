@@ -2,6 +2,7 @@
 
 from collections.abc import Iterable, Iterator
 from pathlib import Path
+from uncoded.markers import GENERATED_MARKER
 from uncoded.read_helpers import read_doc_text_or_warn
 from uncoded.yaml_tree import render_yaml_tree
 
