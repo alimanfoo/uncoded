@@ -210,7 +210,7 @@ def _body(*, name_path: str, in_path: str) -> int:
     except FileNotFoundError:
         print(f"Error: {in_path}: file not found.", file=sys.stderr)
         return 1
-    except (OSError, UnicodeDecodeError, LookupError, SyntaxError) as e:
+    except (OSError, UnicodeDecodeError, SyntaxError) as e:
         print(f"Error: {in_path}: {e}", file=sys.stderr)
         return 1
 
@@ -238,7 +238,7 @@ def _refs(*, name_path: str, in_path: str) -> int:
     except FileNotFoundError:
         print(f"Error: {in_path}: file not found.", file=sys.stderr)
         return 1
-    except (OSError, UnicodeDecodeError, LookupError, SyntaxError) as e:
+    except (OSError, UnicodeDecodeError, SyntaxError) as e:
         print(f"Error: {in_path}: {e}", file=sys.stderr)
         return 1
     except RuntimeError as e:

@@ -11,8 +11,7 @@ def resolve_body(name_path: NamePath, in_path: Path) -> str:
     """Return the source text for the symbol named by name_path in in_path.
 
     Raises SymbolNotFound if the symbol is not present. Lets OSError,
-    UnicodeDecodeError, and LookupError propagate from the file read, and
-    SyntaxError propagate from a bad coding cookie or unparseable source.
+    UnicodeDecodeError, and SyntaxError propagate from the file read.
     """
     source = read_source_text(in_path)
     node = resolve_ast_node_from_source(

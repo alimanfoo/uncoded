@@ -11,9 +11,9 @@ def read_source_text(path: Path) -> str:
     Uses tokenize.open, which detects the encoding from a PEP 263 cookie or
     BOM and defaults to UTF-8. Raises OSError if the file cannot be opened,
     UnicodeDecodeError if the bytes don't match the declared or default
-    encoding, LookupError if the declared codec name is unknown, and
-    SyntaxError if the coding cookie is malformed (for example, a BOM and
-    cookie that disagree).
+    encoding, and SyntaxError if the coding cookie is malformed or names an
+    unknown codec (tokenize.open re-raises codec lookup failures as
+    SyntaxError).
     """
     with tokenize.open(path) as f:
         return f.read()
@@ -24,8 +24,8 @@ def read_source_text_or_warn(
 ) -> str | None:
     """Read a Python source file, returning None and warning to stderr on failure.
 
-    Wraps read_source_text and catches OSError, UnicodeDecodeError,
-    LookupError, and SyntaxError. Prints a "warning: skipping ..." line to
+    Wraps read_source_text and catches OSError, UnicodeDecodeError, and
+    SyntaxError. Prints a "warning: skipping ..." line to
     stderr and returns None so callers can skip-and-continue without aborting
     the whole sync.
 
@@ -35,7 +35,7 @@ def read_source_text_or_warn(
     """
     try:
         return read_source_text(path)
-    except (OSError, UnicodeDecodeError, LookupError, SyntaxError) as e:
+    except (OSError, UnicodeDecodeError, SyntaxError) as e:
         label = warning_path if warning_path is not None else path
         print(f"warning: skipping {label}: {e}", file=sys.stderr)
         return None

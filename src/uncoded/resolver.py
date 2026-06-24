@@ -50,8 +50,7 @@ def resolve_ast_node(name_path: NamePath, in_path: Path) -> ast.stmt:
     """Return the ast.stmt for the symbol named by name_path in in_path.
 
     Raises SymbolNotFound if the symbol is not present. Lets OSError,
-    UnicodeDecodeError, and LookupError propagate from the file read, and
-    SyntaxError propagate from a bad coding cookie or unparseable source.
+    UnicodeDecodeError, and SyntaxError propagate from the file read.
     """
     source = read_source_text(in_path)
     return resolve_ast_node_from_source(
@@ -65,8 +64,8 @@ def resolve_name_position(name_path: NamePath, in_path: Path) -> tuple[int, int]
     Follows LSP convention: both line and character are 0-indexed.
     For def/async def/class, character points past the keyword to the identifier.
     For assignments and type aliases, character points at the start of the target name.
-    Raises SymbolNotFound, OSError, UnicodeDecodeError, LookupError, and
-    SyntaxError under the same conditions as resolve_ast_node.
+    Raises SymbolNotFound, OSError, UnicodeDecodeError, and SyntaxError under
+    the same conditions as resolve_ast_node.
     """
     node = resolve_ast_node(name_path, in_path)
     if isinstance(node, ast.FunctionDef):
