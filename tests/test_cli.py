@@ -284,9 +284,9 @@ class TestSyncApplyMode:
             *_CODE_SKILL_PATHS,
         ]
         for rel in relpaths:
-            assert (from_root / rel).read_text() == (from_subdir / rel).read_text(), (
-                f"artefact differs at {rel}"
-            )
+            assert (from_root / rel).read_text(encoding="utf-8") == (
+                from_subdir / rel
+            ).read_text(encoding="utf-8"), f"artefact differs at {rel}"
 
 
 class TestSyncCheckMode:

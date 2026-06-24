@@ -40,7 +40,9 @@ class TestSyncSkills:
     def test_content_has_frontmatter_and_body(self, tmp_path):
         sync_skills(source=True, docs=False, project_root=tmp_path, check=False)
         skill = SKILLS[0]
-        content = (tmp_path / SKILL_ROOTS[0] / skill.name / "SKILL.md").read_text()
+        content = (tmp_path / SKILL_ROOTS[0] / skill.name / "SKILL.md").read_text(
+            encoding="utf-8"
+        )
         assert content.startswith("---\nname: uncoded-coherence-review\n")
         assert skill.description in content
         # Renderer owns the blank-line separator; body follows directly after it.
@@ -287,7 +289,7 @@ class TestSyncSkills:
         sync_skills(source=False, docs=True, project_root=tmp_path, check=False)
         content = (
             tmp_path / SKILL_ROOTS[0] / "uncoded-doc-navigation" / "SKILL.md"
-        ).read_text()
+        ).read_text(encoding="utf-8")
         assert ".uncoded/docs.yaml" in content
         # Orient step must tell the agent to read the map before anything else.
         assert "before any other tool call" in content
