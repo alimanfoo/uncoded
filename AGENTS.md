@@ -1,5 +1,7 @@
 # uncoded
 
+> CLAUDE.md is a symlink to this file. Edit AGENTS.md.
+
 ## Problem
 
 AI coding agents navigate codebases poorly. They grep for guessed keywords, skim
