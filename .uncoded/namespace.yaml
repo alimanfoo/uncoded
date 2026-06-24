@@ -61,7 +61,7 @@ src/:
     read_helpers.py:
       read_source_text:
       read_source_text_or_warn:
-      _read_file_text_as_utf8:
+      read_doc_text_or_warn:
     refs.py:
       TY_VERSION:
       Reference:
