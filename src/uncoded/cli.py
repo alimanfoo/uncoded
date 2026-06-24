@@ -229,7 +229,10 @@ def _refs(*, name_path: str, in_path: str) -> int:
     """Find all references to name_path in in_path and print them to stdout.
 
     Returns 0 on success. Each reference is printed as rel_path:line:col.
-    Returns 1 on any error.
+    Returns 1 if name_path is unsupported, if name_path is not present in
+    the file, if the file cannot be read (missing, unreadable, or
+    undecodable), if the source has a syntax error, or if the reference
+    lookup fails.
     """
     try:
         refs = find_refs(NamePath.parse(name_path), Path(in_path))
