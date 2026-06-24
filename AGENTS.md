@@ -72,6 +72,9 @@ uv run pytest tests/test_stubs.py --no-cov
 Public symbols need a pep257 plain-prose docstring. Magic methods are included.
 Private symbols (underscore-prefixed) and test code are exempt.
 
-## Skills
+## Before you start
 
-Always load the `uncoded-code-navigation` and `uncoded-doc-navigation` skills.
+- Load the `uncoded-code-navigation` skill before searching, reading or editing
+  any code.
+- Load the `uncoded-doc-navigation` skill before searching, reading or editing
+  any docs.
