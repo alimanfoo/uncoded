@@ -75,7 +75,7 @@ select = [
 ]
 
 [tool.ruff.lint.pydocstyle]
-convention = "pep257"
+convention = "pep257"  # policy stated in "Docstrings" section of AGENTS.md
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["D"]

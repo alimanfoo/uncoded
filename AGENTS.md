@@ -45,6 +45,9 @@ contributing to uncoded itself and need to exercise local changes, use
 `uv run uncoded ...` instead — `uvx` always runs the published release.
 
 ```sh
+# Install dev dependencies (required for pytest and pre-commit)
+uv sync --extra dev
+
 # Generate (or update) the namespace map, stub files, docs.yaml, and skill files
 uvx uncoded sync
 
@@ -64,6 +67,11 @@ uv run pytest
 # Run a subset of tests without the coverage gate
 uv run pytest tests/test_stubs.py --no-cov
 ```
+
+## Docstrings
+
+Public symbols need a pep257 plain-prose docstring. Magic methods are included.
+Private symbols (underscore-prefixed) and test code are exempt.
 
 ## Skills
 
