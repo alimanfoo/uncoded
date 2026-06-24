@@ -45,8 +45,10 @@ class TestFindRefs:
     def test_returns_empty_for_dead_symbol(self, tmp_path):
         pkg = tmp_path / "pkg"
         pkg.mkdir()
-        (tmp_path / "pyproject.toml").write_text('[project]\nname = "t"\n')
-        (pkg / "a.py").write_text("def uncalled():\n    pass\n")
+        (tmp_path / "pyproject.toml").write_text(
+            '[project]\nname = "t"\n', encoding="utf-8"
+        )
+        (pkg / "a.py").write_text("def uncalled():\n    pass\n", encoding="utf-8")
 
         refs = find_refs(NamePath("uncalled"), pkg / "a.py")
 
@@ -55,10 +57,12 @@ class TestFindRefs:
     def test_finds_multiple_references_across_files(self, tmp_path):
         pkg = tmp_path / "pkg"
         pkg.mkdir()
-        (tmp_path / "pyproject.toml").write_text('[project]\nname = "t"\n')
-        (pkg / "a.py").write_text("def foo():\n    return 42\n")
+        (tmp_path / "pyproject.toml").write_text(
+            '[project]\nname = "t"\n', encoding="utf-8"
+        )
+        (pkg / "a.py").write_text("def foo():\n    return 42\n", encoding="utf-8")
         (pkg / "b.py").write_text(
-            "from pkg.a import foo\nresult = foo()\nother = foo()\n"
+            "from pkg.a import foo\nresult = foo()\nother = foo()\n", encoding="utf-8"
         )
 
         refs = find_refs(NamePath("foo"), pkg / "a.py")
@@ -72,16 +76,19 @@ class TestFindRefs:
     def test_class_method_shape(self, tmp_path):
         pkg = tmp_path / "pkg"
         pkg.mkdir()
-        (tmp_path / "pyproject.toml").write_text('[project]\nname = "t"\n')
+        (tmp_path / "pyproject.toml").write_text(
+            '[project]\nname = "t"\n', encoding="utf-8"
+        )
         (pkg / "a.py").write_text(
             textwrap.dedent("""\
             class Dog:
                 def bark(self):
                     pass
-        """)
+        """),
+            encoding="utf-8",
         )
         (pkg / "b.py").write_text(
-            "from pkg.a import Dog\nd = Dog()\nd.bark()\nd.bark()\n"
+            "from pkg.a import Dog\nd = Dog()\nd.bark()\nd.bark()\n", encoding="utf-8"
         )
 
         refs = find_refs(NamePath("Dog", "bark"), pkg / "a.py")
@@ -92,10 +99,12 @@ class TestFindRefs:
     def test_results_are_sorted(self, tmp_path):
         pkg = tmp_path / "pkg"
         pkg.mkdir()
-        (tmp_path / "pyproject.toml").write_text('[project]\nname = "t"\n')
-        (pkg / "a.py").write_text("def foo():\n    return 42\n")
+        (tmp_path / "pyproject.toml").write_text(
+            '[project]\nname = "t"\n', encoding="utf-8"
+        )
+        (pkg / "a.py").write_text("def foo():\n    return 42\n", encoding="utf-8")
         (pkg / "b.py").write_text(
-            "from pkg.a import foo\nresult = foo()\nother = foo()\n"
+            "from pkg.a import foo\nresult = foo()\nother = foo()\n", encoding="utf-8"
         )
 
         refs = find_refs(NamePath("foo"), pkg / "a.py")
@@ -105,9 +114,11 @@ class TestFindRefs:
     def test_line_and_col_are_one_indexed(self, tmp_path):
         pkg = tmp_path / "pkg"
         pkg.mkdir()
-        (tmp_path / "pyproject.toml").write_text('[project]\nname = "t"\n')
-        (pkg / "a.py").write_text("def foo():\n    return 42\n")
-        (pkg / "b.py").write_text("from pkg.a import foo\nfoo()\n")
+        (tmp_path / "pyproject.toml").write_text(
+            '[project]\nname = "t"\n', encoding="utf-8"
+        )
+        (pkg / "a.py").write_text("def foo():\n    return 42\n", encoding="utf-8")
+        (pkg / "b.py").write_text("from pkg.a import foo\nfoo()\n", encoding="utf-8")
 
         refs = find_refs(NamePath("foo"), pkg / "a.py")
 
@@ -118,9 +129,11 @@ class TestFindRefs:
     def test_path_with_spaces_is_not_percent_encoded(self, tmp_path):
         root = tmp_path / "my project"
         root.mkdir()
-        (root / "pyproject.toml").write_text('[project]\nname = "t"\n')
-        (root / "a.py").write_text("def foo():\n    pass\n")
-        (root / "b.py").write_text("from a import foo\nfoo()\n")
+        (root / "pyproject.toml").write_text(
+            '[project]\nname = "t"\n', encoding="utf-8"
+        )
+        (root / "a.py").write_text("def foo():\n    pass\n", encoding="utf-8")
+        (root / "b.py").write_text("from a import foo\nfoo()\n", encoding="utf-8")
 
         refs = find_refs(NamePath("foo"), root / "a.py")
 
@@ -154,10 +167,12 @@ class TestQueryReferences:
     def test_finds_call_sites(self, tmp_path):
         pkg = tmp_path / "pkg"
         pkg.mkdir()
-        (tmp_path / "pyproject.toml").write_text('[project]\nname = "t"\n')
-        (pkg / "a.py").write_text("def foo():\n    return 42\n")
+        (tmp_path / "pyproject.toml").write_text(
+            '[project]\nname = "t"\n', encoding="utf-8"
+        )
+        (pkg / "a.py").write_text("def foo():\n    return 42\n", encoding="utf-8")
         (pkg / "b.py").write_text(
-            "from pkg.a import foo\nresult = foo()\nother = foo()\n"
+            "from pkg.a import foo\nresult = foo()\nother = foo()\n", encoding="utf-8"
         )
 
         refs = _query_references(in_path=pkg / "a.py", position=(0, 4))
@@ -169,7 +184,7 @@ class TestQueryReferences:
 
     def test_uvx_not_found_raises_runtime_error(self, tmp_path):
         in_path = tmp_path / "m.py"
-        in_path.write_text("def foo(): pass\n")
+        in_path.write_text("def foo(): pass\n", encoding="utf-8")
 
         with (
             mock.patch("uncoded.refs.subprocess.Popen", side_effect=FileNotFoundError),
@@ -179,9 +194,11 @@ class TestQueryReferences:
 
     @pytest.mark.integration
     def test_returns_empty_list_when_no_references(self, tmp_path):
-        (tmp_path / "pyproject.toml").write_text('[project]\nname = "t"\n')
+        (tmp_path / "pyproject.toml").write_text(
+            '[project]\nname = "t"\n', encoding="utf-8"
+        )
         m = tmp_path / "m.py"
-        m.write_text("# just a comment\ndef foo(): pass\n")
+        m.write_text("# just a comment\ndef foo(): pass\n", encoding="utf-8")
 
         refs = _query_references(in_path=m, position=(0, 2))
 
@@ -189,7 +206,7 @@ class TestQueryReferences:
 
     def test_returns_lsp_locations_when_popen_succeeds(self, tmp_path):
         in_path = tmp_path / "m.py"
-        in_path.write_text("def foo(): pass\n")
+        in_path.write_text("def foo(): pass\n", encoding="utf-8")
         ref_path = tmp_path / "other.py"
         references_response = {
             "jsonrpc": "2.0",
@@ -225,7 +242,7 @@ class TestQueryReferences:
 class TestRunExchange:
     def test_lsp_error_raises(self, tmp_path):
         in_path = tmp_path / "m.py"
-        in_path.write_text("def foo(): pass\n")
+        in_path.write_text("def foo(): pass\n", encoding="utf-8")
 
         stdout = _lsp_stream(
             _init_response(),
@@ -248,7 +265,7 @@ class TestRunExchange:
 
     def test_empty_result_list_returns_empty(self, tmp_path):
         in_path = tmp_path / "m.py"
-        in_path.write_text("def foo(): pass\n")
+        in_path.write_text("def foo(): pass\n", encoding="utf-8")
 
         stdout = _lsp_stream(
             _init_response(),
@@ -271,7 +288,7 @@ class TestFindRoot:
     def test_returns_pyproject_parent_when_found(self, tmp_path):
         sub = tmp_path / "pkg"
         sub.mkdir()
-        (tmp_path / "pyproject.toml").write_text("")
+        (tmp_path / "pyproject.toml").write_text("", encoding="utf-8")
 
         assert _find_root(sub / "m.py") == tmp_path
 
