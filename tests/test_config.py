@@ -32,7 +32,6 @@ class TestReadConfig:
             '[tool.uncoded]\nsource-roots = ["src", "tests"]\n', encoding="utf-8"
         )
         config = read_config(start=tmp_path)
-        assert config is not None
         assert config.source_roots == [Path("src"), Path("tests")]
 
     def test_doc_roots_read_from_pyproject(self, tmp_path):
@@ -40,7 +39,6 @@ class TestReadConfig:
             '[tool.uncoded]\ndoc-roots = ["docs"]\n', encoding="utf-8"
         )
         config = read_config(start=tmp_path)
-        assert config is not None
         assert config.doc_roots == [Path("docs")]
 
     def test_both_roots_empty_when_section_absent(self, tmp_path):
@@ -48,7 +46,6 @@ class TestReadConfig:
         # still a config home; roots default to empty → "nothing to index".
         (tmp_path / "pyproject.toml").write_text("[tool.ruff]\n", encoding="utf-8")
         config = read_config(start=tmp_path)
-        assert config is not None
         assert config.source_roots == []
         assert config.doc_roots == []
 
@@ -56,7 +53,6 @@ class TestReadConfig:
         toml = '[tool.uncoded]\nsource-roots = ["src"]\n'
         (tmp_path / "pyproject.toml").write_text(toml, encoding="utf-8")
         config = read_config(start=tmp_path)
-        assert config is not None
         assert config.project_root == tmp_path
 
     def test_finds_pyproject_in_parent_directory(self, tmp_path):
@@ -65,7 +61,6 @@ class TestReadConfig:
         subdir = tmp_path / "sub"
         subdir.mkdir()
         config = read_config(start=subdir)
-        assert config is not None
         assert config.project_root == tmp_path
 
     def test_returns_frozen_dataclass(self, tmp_path):
@@ -81,7 +76,6 @@ class TestReadConfig:
             'doc-roots = ["docs"]\n', encoding="utf-8"
         )
         config = read_config(start=tmp_path)
-        assert config is not None
         assert config.project_root == tmp_path
         assert config.doc_roots == [Path("docs")]
         assert config.source_roots == []
@@ -92,7 +86,6 @@ class TestReadConfig:
             'source-roots = ["src"]\ndoc-roots = ["docs"]\n', encoding="utf-8"
         )
         config = read_config(start=tmp_path)
-        assert config is not None
         assert config.source_roots == [Path("src")]
         assert config.doc_roots == [Path("docs")]
 
@@ -117,7 +110,6 @@ class TestReadConfig:
             'doc-roots = ["docs"]\n', encoding="utf-8"
         )
         config = read_config(start=tmp_path)
-        assert config is not None
         assert config.project_root == tmp_path
         assert config.doc_roots == [Path("docs")]
 
@@ -132,7 +124,6 @@ class TestReadConfig:
             'doc-roots = ["from-child"]\n', encoding="utf-8"
         )
         config = read_config(start=child)
-        assert config is not None
         assert config.project_root == child
         assert config.doc_roots == [Path("from-child")]
 
@@ -147,7 +138,6 @@ class TestReadConfig:
             '[tool.uncoded]\nsource-roots = ["from-child"]\n', encoding="utf-8"
         )
         config = read_config(start=child)
-        assert config is not None
         assert config.project_root == child
         assert config.source_roots == [Path("from-child")]
 
@@ -165,7 +155,6 @@ class TestReadConfig:
             'doc-roots = ["from-child"]\n', encoding="utf-8"
         )
         config = read_config(start=child)
-        assert config is not None
         assert config.doc_roots == [Path("from-child")]
 
     def test_skips_uncoded_directory_as_config_home(self, tmp_path):
@@ -181,6 +170,5 @@ class TestReadConfig:
             '[tool.uncoded]\nsource-roots = ["src"]\n', encoding="utf-8"
         )
         config = read_config(start=uncoded_dir)
-        assert config is not None
         assert config.project_root == tmp_path
         assert config.source_roots == [Path("src")]
