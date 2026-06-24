@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 
 from uncoded.extract import iter_source_files
+from uncoded.markers import GENERATED_MARKER
 from uncoded.stubs import (
     StubAssignment,
     StubClass,
@@ -386,7 +387,9 @@ class TestExtractStub:
 class TestRenderStub:
     def test_header_contains_path(self):
         module = StubModule(rel_path="src/pkg/mod.py")
-        assert render_stub(module).startswith("# src/pkg/mod.py")
+        lines = render_stub(module).splitlines()
+        assert lines[0] == f"# {GENERATED_MARKER}"
+        assert lines[1] == "# src/pkg/mod.py"
 
     def test_imports_rendered(self):
         module = StubModule(
