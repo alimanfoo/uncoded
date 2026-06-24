@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import NamedTuple
 
 from uncoded.ast_helpers import assign_target_name, property_kind
+from uncoded.read_helpers import read_source_text
 
 
 class NamePath(NamedTuple):
@@ -48,11 +49,11 @@ class UnsupportedNamePath(Exception):
 def resolve_ast_node(name_path: NamePath, in_path: Path) -> ast.stmt:
     """Return the ast.stmt for the symbol named by name_path in in_path.
 
-    Raises SymbolNotFound if the symbol is not present. Lets
-    FileNotFoundError propagate if in_path does not exist, and SyntaxError if
-    in_path cannot be parsed.
+    Raises SymbolNotFound if the symbol is not present. Lets OSError,
+    UnicodeDecodeError, and LookupError propagate from the file read, and
+    SyntaxError propagate from a bad coding cookie or unparseable source.
     """
-    source = in_path.read_text()
+    source = read_source_text(in_path)
     return resolve_ast_node_from_source(
         name_path=name_path, source=source, in_path=in_path
     )

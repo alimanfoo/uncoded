@@ -65,7 +65,10 @@ class TestIterAndExtract:
     def test_skips_syntax_errors(self, tmp_path, capsys):
         ...
 
-    def test_skips_non_utf8_file_with_warning(self, tmp_path, capsys):
+    def test_skips_undecodable_file_with_warning(self, tmp_path, capsys):
+        ...
+
+    def test_reads_latin1_declared_file(self, tmp_path, capsys):
         ...
 
 class TestExtractModulesFromFiles:

@@ -3,17 +3,18 @@
 import ast
 from pathlib import Path
 
+from uncoded.read_helpers import read_source_text
 from uncoded.resolver import NamePath, resolve_ast_node_from_source
 
 
 def resolve_body(name_path: NamePath, in_path: Path) -> str:
     """Return the source text for the symbol named by name_path in in_path.
 
-    Raises SymbolNotFound if the symbol is not present. Lets
-    FileNotFoundError propagate if in_path does not exist, and SyntaxError if
-    in_path cannot be parsed.
+    Raises SymbolNotFound if the symbol is not present. Lets OSError,
+    UnicodeDecodeError, and LookupError propagate from the file read, and
+    SyntaxError propagate from a bad coding cookie or unparseable source.
     """
-    source = in_path.read_text()
+    source = read_source_text(in_path)
     node = resolve_ast_node_from_source(
         name_path=name_path, source=source, in_path=in_path
     )

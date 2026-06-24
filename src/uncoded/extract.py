@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from uncoded.ast_helpers import assign_target_name, property_kind
-from uncoded.read_helpers import _read_file_text_as_utf8
+from uncoded.read_helpers import read_source_text_or_warn
 
 
 @dataclass
@@ -82,19 +82,19 @@ def iter_source_files(
     Each yielded ``rel_path`` is the file's path relative to
     ``project_root``.
 
-    Source files are read as UTF-8; a file with a non-UTF-8 encoding (such
-    as one declared with ``# -*- coding: latin-1 -*-``) is treated as
-    unreadable and skipped. Files that fail to read (unreadable or non-UTF-8)
-    or fail to parse are each skipped with a single ``warning: skipping ...``
-    line on stderr — centralising these decisions here lets ``extract_modules``
-    and ``_generate_stubs`` trust they only receive readable, parseable source.
+    Source files are read under their declared PEP 263 encoding, UTF-8
+    default. Files that fail to read (OSError, undecodable bytes, or unknown
+    encoding declaration) or fail to parse are each skipped with a single
+    ``warning: skipping ...`` line on stderr — centralising these decisions
+    here lets ``extract_modules`` and ``_generate_stubs`` trust they only
+    receive readable, parseable source.
     """
     source_root = source_root.resolve()
     project_root = project_root.resolve()
 
     for py_file in sorted(source_root.rglob("*.py")):
         rel_path = str(py_file.relative_to(project_root))
-        source = _read_file_text_as_utf8(py_file, display=rel_path)
+        source = read_source_text_or_warn(py_file, warning_path=rel_path)
         if source is None:
             continue
         try:

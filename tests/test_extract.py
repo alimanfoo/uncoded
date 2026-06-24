@@ -314,9 +314,9 @@ class TestIterAndExtract:
         assert "warning: skipping src/mypackage/bad.py" in err
         assert "SyntaxError" in err
 
-    def test_skips_non_utf8_file_with_warning(self, tmp_path, capsys):
-        # A file with invalid UTF-8 bytes must be skipped with a warning;
-        # other files in the same package must still yield.
+    def test_skips_undecodable_file_with_warning(self, tmp_path, capsys):
+        # A file that cannot be decoded under its declared encoding (UTF-8
+        # default) must be skipped with a warning; other files must still yield.
         src = tmp_path / "src"
         pkg = src / "mypkg"
         pkg.mkdir(parents=True)
@@ -328,6 +328,20 @@ class TestIterAndExtract:
         assert not any("binary.py" in p for p in rel_paths)
         err = capsys.readouterr().err
         assert "warning: skipping src/mypkg/binary.py" in err
+
+    def test_reads_latin1_declared_file(self, tmp_path, capsys):
+        # A file that declares latin-1 encoding must be read and indexed,
+        # not skipped; the declared encoding is honoured.
+        src = tmp_path / "src"
+        pkg = src / "mypkg"
+        pkg.mkdir(parents=True)
+        (pkg / "latin1.py").write_bytes(
+            b"# -*- coding: latin-1 -*-\ndef caf\xe9(): pass\n"
+        )
+        results = list(iter_source_files(src, project_root=tmp_path))
+        rel_paths = [rel for _, rel in results]
+        assert any("latin1.py" in p for p in rel_paths)
+        assert "warning" not in capsys.readouterr().err
 
 
 class TestExtractModulesFromFiles:

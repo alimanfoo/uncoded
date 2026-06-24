@@ -11,6 +11,7 @@ from typing import IO, cast
 from urllib.parse import unquote, urlparse
 
 from uncoded.config import find_pyproject_toml
+from uncoded.read_helpers import read_source_text
 from uncoded.resolver import NamePath, resolve_name_position
 
 # Strict pin: ty is pre-1.0 with known textDocument/references edge
@@ -157,7 +158,7 @@ def _run_exchange(
                     "uri": file_uri,
                     "languageId": "python",
                     "version": 1,
-                    "text": in_path.read_text(),
+                    "text": read_source_text(in_path),
                 }
             },
         },

@@ -59,6 +59,8 @@ src/:
       build_map:
       render_map:
     read_helpers.py:
+      read_source_text:
+      read_source_text_or_warn:
       _read_file_text_as_utf8:
     refs.py:
       TY_VERSION:
@@ -373,7 +375,8 @@ tests/:
       test_includes_init_with_symbols:
       test_skips_empty_init:
       test_skips_syntax_errors:
-      test_skips_non_utf8_file_with_warning:
+      test_skips_undecodable_file_with_warning:
+      test_reads_latin1_declared_file:
     TestExtractModulesFromFiles:
       test_returns_module_info_per_parseable_file:
       test_preserves_source_order:

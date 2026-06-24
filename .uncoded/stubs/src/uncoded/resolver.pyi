@@ -4,6 +4,7 @@ import ast
 from pathlib import Path
 from typing import NamedTuple
 from uncoded.ast_helpers import assign_target_name, property_kind
+from uncoded.read_helpers import read_source_text
 
 def resolve_ast_node(name_path: NamePath, in_path: Path) -> ast.stmt:
     ...
