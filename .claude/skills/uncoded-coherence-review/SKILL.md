@@ -14,8 +14,8 @@ human to investigate. Not a bug hunt, not a lint pass, not a refactor.
 
 A codebase accumulates corruption differently from how it accumulates bugs. Bugs
 announce themselves. Tests fail, users complain, exceptions raise. Corruption
-passes every integrity check. It is a slow divergence between things that
-should match:
+passes every integrity check. It is a slow divergence between things that should
+match:
 
 - what the code claims to mean and what it actually does
 - how one part of the codebase names a concept and how another names the same
@@ -35,8 +35,8 @@ available here. Just pairwise disagreement between things that ought to agree:
 - a declared architecture and the actual import graph
 
 Every symptom in the sweeps below is a form of inconsistency. The review's job
-is to find these disagreements. It does not diagnose root cause and does not
-fix them.
+is to find these disagreements. It does not diagnose root cause and does not fix
+them.
 
 ## What this skill is not
 
@@ -64,9 +64,9 @@ The review proceeds in four sweeps, each building on the previous:
 
 1. **Orient**: load the navigation index and form a mental map.
 2. **Lexical sweep**: read the namespace, look for naming-level inconsistency.
-3. **Promissory sweep**: check each symbol's name / signature / docstring
-   for internal disagreement. Names and signatures come from the stub.
-   Docstrings come via `uncoded body`.
+3. **Promissory sweep**: check each symbol's name / signature / docstring for
+   internal disagreement. Names and signatures come from the stub. Docstrings
+   come via `uncoded body`.
 4. **Structural sweep**: combine namespace and imports to find boundary and
    shape symptoms.
 
@@ -76,8 +76,8 @@ until the end.
 ## Step 1: Orient
 
 Read `.uncoded/namespace.yaml` in full. This is the map: directories, files,
-classes, methods, functions. Do not skim. Every public symbol in the codebase
-is listed here, and the shape of the namespace itself is evidence.
+classes, methods, functions. Do not skim. Every public symbol in the codebase is
+listed here, and the shape of the namespace itself is evidence.
 
 While reading, note:
 
@@ -101,18 +101,18 @@ symptom.
 different names in different parts of the codebase. Examples: `fetch_user`,
 `get_user`, `load_user`, `retrieve_user` all appearing as separate functions
 doing substantively the same thing. `compute_*`, `calculate_*`, `derive_*` used
-interchangeably. Two classes called `UserRecord` and `AccountProfile` that
-model the same entity.
+interchangeably. Two classes called `UserRecord` and `AccountProfile` that model
+the same entity.
 
 Detection: scan the namespace for symbol clusters with verb or noun overlap.
-Where suspicion arises, check the stub signatures and the source docstrings
-(via `uncoded body`) to confirm the candidates overlap in meaning.
+Where suspicion arises, check the stub signatures and the source docstrings (via
+`uncoded body`) to confirm the candidates overlap in meaning.
 
-**Qualifier accretion.** Names carrying modifiers that are fossils of
-iteration: `_new`, `_v2`, `_updated`, `_legacy`, `_real`, `_proper`, `_final`,
-`_fixed`. Also prefix forms: `new_`, `old_`, `real_`. These are almost always
-worth flagging. Someone needed to distinguish a new thing from an old thing,
-and the distinction was never resolved.
+**Qualifier accretion.** Names carrying modifiers that are fossils of iteration:
+`_new`, `_v2`, `_updated`, `_legacy`, `_real`, `_proper`, `_final`, `_fixed`.
+Also prefix forms: `new_`, `old_`, `real_`. These are almost always worth
+flagging. Someone needed to distinguish a new thing from an old thing, and the
+distinction was never resolved.
 
 Detection: scan the namespace for these qualifier patterns.
 
@@ -124,8 +124,8 @@ without looking outward.
 Detection: look for directories whose namespace entries share few word-roots
 with the rest of the codebase.
 
-**Collision with drift.** The same name appearing in multiple places with
-subtly different meanings, visible as different signatures, different docstring
+**Collision with drift.** The same name appearing in multiple places with subtly
+different meanings, visible as different signatures, different docstring
 content, or different domain associations.
 
 Detection: identify name collisions in the namespace. Then compare signatures
@@ -138,9 +138,8 @@ Examine each public symbol's name / signature / docstring triple for internal
 disagreement. Load each source file's stub once for the names and signatures
 across that file's symbols. Then, for each non-trivial public symbol, run
 `uvx uncoded body <name_path> --in <relative_path>` to read the symbol's source.
-Skip trivial one-liners and `__init__` with no meaningful body.
-The docstring is at the top. The rest of the body is available for any
-finding that needs it.
+Skip trivial one-liners and `__init__` with no meaningful body. The docstring is
+at the top. The rest of the body is available for any finding that needs it.
 
 **Name–signature mismatch.** Does the name's verb fit the signature's return? A
 function called `validate_*` that returns the validated object rather than
@@ -157,26 +156,25 @@ more specific, more general, or simply different from what the name advertises?
 "Normalises and validates the record" on a function called `check_record`.
 
 **Defensive docstrings.** Docstrings that warn about the function rather than
-describe it. "Note: this does not actually X despite the name." "Do not use
-this for Y; use Z instead." These are confessions. Someone noticed drift and
+describe it. "Note: this does not actually X despite the name." "Do not use this
+for Y; use Z instead." These are confessions. Someone noticed drift and
 documented it rather than fixing it.
 
-Quote evidence verbatim. The stub excerpt is the evidence for name and
-signature findings. The docstring read via `uncoded body` is the evidence
-for any docstring-related finding.
+Quote evidence verbatim. The stub excerpt is the evidence for name and signature
+findings. The docstring read via `uncoded body` is the evidence for any
+docstring-related finding.
 
-**When confidence needs the body.** Consult the implementation in the body
-when a finding's confidence needs it. Two cases call for this. The first is a
+**When confidence needs the body.** Consult the implementation in the body when
+a finding's confidence needs it. Two cases call for this. The first is a
 name-behaviour mismatch the docstring alone does not settle. The second is a
 defensive docstring you want to verify against the body. It targets the symbol
-directly,
-with no offset arithmetic and no risk of over-reading. Never read a whole
-source file during this sweep.
+directly, with no offset arithmetic and no risk of over-reading. Never read a
+whole source file during this sweep.
 
 ## Step 4: Structural sweep
 
-Combine the namespace with the import graph and `uncoded refs` for
-cross-file reference resolution.
+Combine the namespace with the import graph and `uncoded refs` for cross-file
+reference resolution.
 
 **Overgrown public surfaces / god modules.** A module or class whose public
 namespace is much larger than its siblings, or spans obviously different
@@ -191,11 +189,12 @@ stubs' import sections. Each instance is a finding.
 **Cross-vocabulary imports.** Imports that cross domain boundaries in suspicious
 directions. For example, a `core/` or `utils/` module importing from a specific
 business domain. Another is a module in domain A importing from domain B when
-those domains appear meant to be independent. Flag candidates and note the direction.
-Let the human decide.
+those domains appear meant to be independent. Flag candidates and note the
+direction. Let the human decide.
 
-**Zero-reference public symbols.** A public symbol (no leading underscore) with no
-references anywhere in the codebase. Either dead code or an unused API surface.
+**Zero-reference public symbols.** A public symbol (no leading underscore) with
+no references anywhere in the codebase. Either dead code or an unused API
+surface.
 
 Check systematically, not by spot-check:
 
@@ -203,35 +202,34 @@ Check systematically, not by spot-check:
 2. Cross-reference with stub import sections. Any symbol imported by another
    source module is live. Remove it from the candidate list. This culls the
    obvious cases cheaply.
-3. For remaining candidates, use `uvx uncoded refs <name_path> --in <relative_path>`
-   to verify. Empty output confirms no references.
+3. For remaining candidates, use
+   `uvx uncoded refs <name_path> --in <relative_path>` to verify. Empty output
+   confirms no references.
 4. Distinguish two sub-cases when reporting:
-   - *No references anywhere.* Dead code. Highest priority.
-   - *References only in tests.* The symbol is tested but not used in source.
-     It may be an exposed internal that should be private.
+   - _No references anywhere._ Dead code. Highest priority.
+   - _References only in tests._ The symbol is tested but not used in source. It
+     may be an exposed internal that should be private.
 
 **Redundant public surface.** A public constant and a public parameterless
-function in the same module where the function's sole body is `return
-<constant>`. Both symbols being public exposes an implementation detail
+function in the same module where the function's sole body is
+`return <constant>`. Both symbols being public exposes an implementation detail
 unnecessarily. Only one needs to be public. Detection: use the stubs to find
-public parameterless functions near public constants. Verify each
-candidate body with `uvx uncoded body` before reporting.
+public parameterless functions near public constants. Verify each candidate body
+with `uvx uncoded body` before reporting.
 
 ## Report format
 
 Save the report as `.uncoded/reviews/YYYY-MM-DD-HHMMSS.md`, using today's date
-and current time. The timestamp preserves multiple runs on the same day.
-Create the directory if it does not exist.
+and current time. The timestamp preserves multiple runs on the same day. Create
+the directory if it does not exist.
 
 Use this structure:
 
 ```markdown
 # Coherence Review — <repo name>
 
-**Date:** YYYY-MM-DD
-**Symbols indexed:** N
-**Sweeps run:** lexical, promissory, structural
-**Findings:** N total (N lexical · N promissory · N structural)
+**Date:** YYYY-MM-DD **Symbols indexed:** N **Sweeps run:** lexical, promissory,
+structural **Findings:** N total (N lexical · N promissory · N structural)
 
 ## Priority regions
 
@@ -240,22 +238,21 @@ Regions with two or more findings — examine these first:
 - `path/to/file.py` — N findings
 - ...
 
-*(Omit this section if no region has more than one finding.)*
+_(Omit this section if no region has more than one finding.)_
 
 ## Findings
 
 ### 1 · <symptom summary>
 
-**Category:** lexical | promissory | structural
-**Symptom:** concept-duplication | qualifier-accretion | vocabulary-island |
-  collision-with-drift | name-signature-mismatch |
-  docstring-signature-mismatch | docstring-name-mismatch |
-  defensive-docstring | god-module |
-  boundary-violation | cross-vocabulary-import | zero-reference
-**Location:** `path/to/file.py` · `ClassName/method_name`
-**Confidence:** high | medium | low
+**Category:** lexical | promissory | structural **Symptom:** concept-duplication
+| qualifier-accretion | vocabulary-island | collision-with-drift |
+name-signature-mismatch | docstring-signature-mismatch | docstring-name-mismatch
+| defensive-docstring | god-module | boundary-violation |
+cross-vocabulary-import | zero-reference **Location:** `path/to/file.py` ·
+`ClassName/method_name` **Confidence:** high | medium | low
 
 **Evidence:**
+
 > Verbatim quote from namespace.yaml, stub, source docstring (via
 > `uncoded body`), or import statement.
 
@@ -274,8 +271,8 @@ clear evidence is useful. The human can filter. A dropped finding is not.
 
 **Confidence is part of the finding, not a gate.**
 
-- `high`: the inconsistency is explicit. Evidence is directly in the
-  namespace, the stub, or the source docstring
+- `high`: the inconsistency is explicit. Evidence is directly in the namespace,
+  the stub, or the source docstring
 - `medium`: strongly implied but depends on judgement about intent
 - `low`: pattern-based suspicion that needs human interpretation
 
@@ -284,12 +281,12 @@ source docstring, or import statement exactly. A finding the human cannot
 quickly verify is worse than no finding.
 
 **One finding per inconsistency.** If a single symbol has a name–signature
-mismatch and a docstring–name mismatch, that is two findings on the same
-symbol, not one combined finding. Let the report show the density.
+mismatch and a docstring–name mismatch, that is two findings on the same symbol,
+not one combined finding. Let the report show the density.
 
 **Do not propose fixes.** No renaming suggestions, no refactoring proposals, no
-"this should be moved to". The finding describes what is inconsistent. The
-human owns remediation.
+"this should be moved to". The finding describes what is inconsistent. The human
+owns remediation.
 
 **Do not flag style.** Docstring format, type annotation style, import ordering,
 and naming conventions are out of scope. Coherence is about semantic
@@ -304,9 +301,9 @@ do not include it.
 If the codebase has more than ~1000 public symbols:
 
 1. Complete the lexical sweep in full (the namespace is compact enough).
-2. For the promissory sweep, prioritise core domain modules (identified from
-   the namespace structure) and any module that appeared in a lexical finding.
-   Also cover a representative sample of the rest, around 30% of remaining stubs.
+2. For the promissory sweep, prioritise core domain modules (identified from the
+   namespace structure) and any module that appeared in a lexical finding. Also
+   cover a representative sample of the rest, around 30% of remaining stubs.
 3. For the structural sweep, focus on the module and package level first,
    descending to individual symbols only where the higher-level scan raised
    flags.

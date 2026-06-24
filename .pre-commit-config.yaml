@@ -27,6 +27,17 @@ repos:
         entry: uvx ty check src tests
         language: system
         pass_filenames: false
+      # Runs before uncoded so the generated skill files are built from
+      # already-formatted sources. The generated skill dirs are excluded
+      # because uncoded sync owns those files.
+      - id: prettier
+        name: format markdown with prettier
+        entry: prettier
+        language: node
+        additional_dependencies: ["prettier@3.8.1"]
+        args: ["--write"]
+        files: \.md$
+        exclude: ^(CLAUDE\.md|(\.claude|\.agents)/skills/.*)$
       - id: uncoded
         name: uncoded
         entry: uv run uncoded sync
