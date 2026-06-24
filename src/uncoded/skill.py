@@ -30,11 +30,13 @@ SKILLS: list[Skill] = [
     Skill(
         name="uncoded-coherence-review",
         description=(
-            "Perform a coherence review of a Python codebase: a diagnostic sweep for"
-            " semantic drift, naming inconsistency, promissory mismatch, and structural"
-            " incoherence. Produces a Markdown report of findings with verbatim"
-            " evidence and confidence levels, for human investigation. Assumes uncoded"
-            " is installed (.uncoded/namespace.yaml and .uncoded/stubs/ present)."
+            "Review a Python codebase for coherence. It sweeps for semantic"
+            " drift, naming inconsistency, mismatch between a symbol's name and"
+            " docstring, and structural incoherence. It produces a Markdown report of"
+            " findings, with verbatim"
+            " evidence and confidence levels, for human investigation. It assumes"
+            " uncoded is installed (.uncoded/namespace.yaml and .uncoded/stubs/"
+            " present)."
         ),
         body_file="coherence_review.md",
         gate="code",
@@ -44,8 +46,8 @@ SKILLS: list[Skill] = [
         name="uncoded-code-navigation",
         description=(
             "Use before searching, reading, or editing Python source in a codebase"
-            " indexed by uncoded — locating a symbol, reading a definition, or"
-            " checking references before a refactor, rename, or delete."
+            " indexed by uncoded. This covers locating a symbol, reading a definition,"
+            " or checking references before you refactor, rename, or delete."
         ),
         body_file="code_navigation.md",
         gate="code",
@@ -54,8 +56,8 @@ SKILLS: list[Skill] = [
         name="uncoded-doc-navigation",
         description=(
             "Use before searching or reading a codebase's Markdown documentation"
-            " indexed by uncoded — locating which file and section cover a topic,"
-            " or orienting to what documentation exists."
+            " indexed by uncoded. This covers locating which file and section cover a"
+            " topic, or orienting to what documentation exists."
         ),
         body_file="doc_navigation.md",
         gate="docs",
