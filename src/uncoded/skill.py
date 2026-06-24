@@ -31,8 +31,9 @@ SKILLS: list[Skill] = [
         name="uncoded-coherence-review",
         description=(
             "Review a Python codebase for coherence. It sweeps for semantic"
-            " drift, naming inconsistency, mismatch between a symbol's name and"
-            " docstring, and structural incoherence. It produces a Markdown report of"
+            " drift, naming inconsistency, mismatch between a symbol's name,"
+            " signature, and docstring, and structural incoherence. It produces a"
+            " Markdown report of"
             " findings, with verbatim"
             " evidence and confidence levels, for human investigation. It assumes"
             " uncoded is installed (.uncoded/namespace.yaml and .uncoded/stubs/"
