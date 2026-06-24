@@ -15,6 +15,9 @@ from uncoded.skill import sync_skills
 from uncoded.stubs import build_stubs, remove_all_stubs
 from uncoded.sync import remove_file, sync_file
 
+def _validate_root(configured: Path, *, kind: str, project_root: Path, resolved_project_root: Path, accepts_md_file: bool) -> Path:
+    ...
+
 def _sync_code_artefacts(*, build: bool, configured_source_roots: list[Path], project_root: Path, resolved_project_root: Path, check: bool) -> int:
     ...
 

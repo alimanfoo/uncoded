@@ -16,6 +16,36 @@ from uncoded.stubs import build_stubs, remove_all_stubs
 from uncoded.sync import remove_file, sync_file
 
 
+def _validate_root(
+    configured: Path,
+    *,
+    kind: str,
+    project_root: Path,
+    resolved_project_root: Path,
+    accepts_md_file: bool,
+) -> Path:
+    resolved = (project_root / configured).resolve()
+    if not resolved.is_relative_to(resolved_project_root):
+        raise ConfigError(
+            f"{kind} root {configured} is outside the project root. "
+            f"Check {kind}-roots in your uncoded config file."
+        )
+    is_valid = resolved.is_dir() or (
+        accepts_md_file and resolved.is_file() and resolved.suffix == ".md"
+    )
+    if not is_valid:
+        if accepts_md_file:
+            raise ConfigError(
+                f"{kind} root {configured} is not a directory or .md file. "
+                f"Check {kind}-roots in your uncoded config file."
+            )
+        raise ConfigError(
+            f"{kind} root {configured} is not a directory. "
+            f"Check {kind}-roots in your uncoded config file."
+        )
+    return resolved
+
+
 def _sync_code_artefacts(
     *,
     build: bool,
@@ -42,18 +72,15 @@ def _sync_code_artefacts(
 
     source_roots: list[Path] = []
     for configured in configured_source_roots:
-        src_root = (project_root / configured).resolve()
-        if not src_root.is_relative_to(resolved_project_root):
-            raise ConfigError(
-                f"source root {configured} is outside the project root. "
-                "Check source-roots in your uncoded config file."
+        source_roots.append(
+            _validate_root(
+                configured,
+                kind="source",
+                project_root=project_root,
+                resolved_project_root=resolved_project_root,
+                accepts_md_file=False,
             )
-        if not src_root.is_dir():
-            raise ConfigError(
-                f"source root {configured} is not a directory. "
-                "Check source-roots in your uncoded config file."
-            )
-        source_roots.append(src_root)
+        )
 
     roots_with_files = [
         (src_root, list(iter_source_files(src_root, project_root=project_root)))
@@ -148,21 +175,15 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
         if config.doc_roots:
             doc_roots: list[Path] = []
             for configured in config.doc_roots:
-                doc_root = (project_root / configured).resolve()
-                if not doc_root.is_relative_to(resolved_project_root):
-                    raise ConfigError(
-                        f"doc root {configured} is outside the project root. "
-                        "Check doc-roots in your uncoded config file."
+                doc_roots.append(
+                    _validate_root(
+                        configured,
+                        kind="doc",
+                        project_root=project_root,
+                        resolved_project_root=resolved_project_root,
+                        accepts_md_file=True,
                     )
-                is_valid = doc_root.is_dir() or (
-                    doc_root.is_file() and doc_root.suffix == ".md"
                 )
-                if not is_valid:
-                    raise ConfigError(
-                        f"doc root {configured} is not a directory or .md file. "
-                        "Check doc-roots in your uncoded config file."
-                    )
-                doc_roots.append(doc_root)
 
             all_doc_files = []
             for dr in doc_roots:

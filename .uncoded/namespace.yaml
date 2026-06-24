@@ -18,6 +18,7 @@ src/:
       resolve_body:
       _extract_body:
     cli.py:
+      _validate_root:
       _sync_code_artefacts:
       _sync:
       _report_lookup_error:
