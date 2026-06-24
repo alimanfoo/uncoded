@@ -1,5 +1,5 @@
 config:
-  MD013:
-    line_length: 88
+  # Line length (MD013) is disabled; prettier owns prose wrapping.
+  MD013: false
   MD033: false
   MD041: false
