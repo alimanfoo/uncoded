@@ -242,6 +242,8 @@ tests/:
       test_symbol_not_found_exits_one:
       test_file_not_found_exits_one:
       test_syntax_error_exits_one:
+      test_undecodable_file_exits_one:
+      test_unknown_encoding_exits_one:
       test_works_without_project_root:
       test_in_path_resolves_relative_to_cwd:
       test_stdout_is_exact_body:
@@ -253,6 +255,8 @@ tests/:
       test_symbol_not_found_exits_one:
       test_file_not_found_exits_one:
       test_syntax_error_exits_one:
+      test_undecodable_file_exits_one:
+      test_unknown_encoding_exits_one:
       test_works_without_project_root:
       test_in_path_resolves_relative_to_cwd:
       test_unsupported_name_path_exits_one:

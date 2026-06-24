@@ -202,8 +202,8 @@ def _body(*, name_path: str, in_path: str) -> int:
     """Print the source body of name_path in in_path to stdout.
 
     Returns 0 on success. Returns 1 if name_path is unsupported, if
-    name_path is not present in the file, if the file does not exist,
-    or if the file has a syntax error.
+    name_path is not present in the file, if the file cannot be read
+    (missing, unreadable, or undecodable), or if the source has a syntax error.
     """
     target = Path(in_path)
     try:
@@ -217,7 +217,7 @@ def _body(*, name_path: str, in_path: str) -> int:
     except FileNotFoundError:
         print(f"Error: {in_path}: file not found.", file=sys.stderr)
         return 1
-    except SyntaxError as e:
+    except (OSError, UnicodeDecodeError, LookupError, SyntaxError) as e:
         print(f"Error: {in_path}: {e}", file=sys.stderr)
         return 1
 
@@ -242,7 +242,7 @@ def _refs(*, name_path: str, in_path: str) -> int:
     except FileNotFoundError:
         print(f"Error: {in_path}: file not found.", file=sys.stderr)
         return 1
-    except SyntaxError as e:
+    except (OSError, UnicodeDecodeError, LookupError, SyntaxError) as e:
         print(f"Error: {in_path}: {e}", file=sys.stderr)
         return 1
     except RuntimeError as e:

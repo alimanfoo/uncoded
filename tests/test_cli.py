@@ -419,6 +419,26 @@ class TestBodyCommand:
         assert cli._body(name_path="broken", in_path="src/foo.py") == 1
         assert "foo.py" in capsys.readouterr().err
 
+    def test_undecodable_file_exits_one(self, tmp_path, monkeypatch, capsys):
+        _init_repo(tmp_path, monkeypatch)
+        (tmp_path / "src" / "m.py").write_bytes(b"\xff\xfe not utf-8")
+
+        assert cli._body(name_path="fn", in_path="src/m.py") == 1
+        err = capsys.readouterr().err
+        assert "Error:" in err
+        assert "m.py" in err
+
+    def test_unknown_encoding_exits_one(self, tmp_path, monkeypatch, capsys):
+        _init_repo(tmp_path, monkeypatch)
+        (tmp_path / "src" / "m.py").write_bytes(
+            b"# -*- coding: fake-encoding -*-\ndef fn(): pass\n"
+        )
+
+        assert cli._body(name_path="fn", in_path="src/m.py") == 1
+        err = capsys.readouterr().err
+        assert "Error:" in err
+        assert "m.py" in err
+
     def test_works_without_project_root(self, tmp_path, monkeypatch, capsys):
         monkeypatch.chdir(tmp_path)
         (tmp_path / "m.py").write_text("def fn():\n    pass\n")
@@ -527,6 +547,26 @@ class TestRefsCommand:
 
         assert cli._refs(name_path="broken", in_path="m.py") == 1
         assert "m.py" in capsys.readouterr().err
+
+    def test_undecodable_file_exits_one(self, tmp_path, monkeypatch, capsys):
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / "m.py").write_bytes(b"\xff\xfe not utf-8")
+
+        assert cli._refs(name_path="fn", in_path="m.py") == 1
+        err = capsys.readouterr().err
+        assert "Error:" in err
+        assert "m.py" in err
+
+    def test_unknown_encoding_exits_one(self, tmp_path, monkeypatch, capsys):
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / "m.py").write_bytes(
+            b"# -*- coding: fake-encoding -*-\ndef fn(): pass\n"
+        )
+
+        assert cli._refs(name_path="fn", in_path="m.py") == 1
+        err = capsys.readouterr().err
+        assert "Error:" in err
+        assert "m.py" in err
 
     def test_works_without_project_root(self, tmp_path, monkeypatch, capsys):
         monkeypatch.chdir(tmp_path)
