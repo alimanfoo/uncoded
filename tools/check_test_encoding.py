@@ -1,8 +1,8 @@
 """Enforce encoding= on every text read/write in tests/.
 
-Checks tests/*.py for calls to .read_text(), .write_text(), and text-mode
-open() that lack an encoding= keyword argument. Exits non-zero on any
-violation so pre-commit can block the commit.
+Checks all .py files under tests/ (recursively) for calls to .read_text(),
+.write_text(), builtin open(), and Path.open() that lack an encoding= keyword
+argument. Exits non-zero on any violation so pre-commit can block the commit.
 
 Covers fixture-derived receivers such as (tmp_path / "f.py").write_text(...)
 that PLW1514 misses because ruff cannot infer the Path type through pytest
@@ -14,13 +14,15 @@ import sys
 from pathlib import Path
 
 
-def _open_mode(call: ast.Call) -> str | None:
+def _open_mode(call: ast.Call, *, mode_position: int = 1) -> str | None:
     """Return the literal mode string from an open() call, or None.
 
+    mode_position is the index of the mode positional argument: 1 for builtin
+    open(file, mode, ...) and 0 for Path.open(mode, ...).
     Returns None when the mode argument is absent or not a string literal.
     """
-    if len(call.args) >= 2:
-        arg = call.args[1]
+    if len(call.args) > mode_position:
+        arg = call.args[mode_position]
         if isinstance(arg, ast.Constant) and isinstance(arg.value, str):
             return arg.value
         return None
@@ -56,6 +58,14 @@ def check_file(path: Path) -> list[str]:
             if not has_encoding:
                 errors.append(f"{path}:{node.lineno}: .{func.attr}() missing encoding=")
 
+        elif isinstance(func, ast.Attribute) and func.attr == "open":
+            # Path.open(mode, ...) — mode is the first positional arg.
+            mode = _open_mode(node, mode_position=0)
+            if mode is not None and "b" in mode:
+                continue
+            if not has_encoding:
+                errors.append(f"{path}:{node.lineno}: .open() missing encoding=")
+
         elif isinstance(func, ast.Name) and func.id == "open":
             mode = _open_mode(node)
             # Skip binary-mode open(); "b" anywhere in the mode string means binary.
@@ -68,14 +78,14 @@ def check_file(path: Path) -> list[str]:
 
 
 def main() -> int:
-    """Run the check over tests/ and return an exit code."""
+    """Run the check over tests/ recursively and return an exit code."""
     tests_dir = Path("tests")
     if not tests_dir.is_dir():
         print(f"error: tests/ not found in {Path.cwd()}", file=sys.stderr)
         return 1
 
     all_errors: list[str] = []
-    for py_file in sorted(tests_dir.glob("*.py")):
+    for py_file in sorted(tests_dir.rglob("*.py")):
         all_errors.extend(check_file(py_file))
 
     for err in all_errors:
