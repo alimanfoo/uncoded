@@ -83,8 +83,8 @@ def iter_source_files(
     ``project_root``.
 
     Source files are read under their declared PEP 263 encoding, UTF-8
-    default. Files that fail to read (OSError, undecodable bytes, or unknown
-    encoding declaration) or fail to parse are each skipped with a single
+    default. Files that fail to read (OSError or UnicodeDecodeError) or fail
+    to parse (SyntaxError) are each skipped with a single
     ``warning: skipping ...`` line on stderr — centralising these decisions
     here lets ``extract_modules`` and ``_generate_stubs`` trust they only
     receive readable, parseable source.
