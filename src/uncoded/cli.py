@@ -23,14 +23,13 @@ def _sync_code_artefacts(
     project_root: Path,
     resolved_project_root: Path,
     check: bool,
-) -> int | None:
+) -> int:
     """Build or remove the code artefacts (namespace map and stubs).
 
     When build is False, removes namespace.yaml and all stubs and returns the
     change count. When build is True, validates, collects source files, and
-    writes the namespace map and stub files. Returns the change count, or None
-    on a configuration error (the error message is printed to stderr by this
-    function; the caller should return 1).
+    writes the namespace map and stub files. Returns the change count. Raises
+    ConfigError on a validation failure.
     """
     if not build:
         n = remove_file(
@@ -45,19 +44,15 @@ def _sync_code_artefacts(
     for configured in configured_source_roots:
         src_root = (project_root / configured).resolve()
         if not src_root.is_relative_to(resolved_project_root):
-            print(
-                f"Error: source root {configured} is outside the project root. "
-                "Check source-roots in your uncoded config file.",
-                file=sys.stderr,
+            raise ConfigError(
+                f"source root {configured} is outside the project root. "
+                "Check source-roots in your uncoded config file."
             )
-            return None
         if not src_root.is_dir():
-            print(
-                f"Error: source root {configured} is not a directory. "
-                "Check source-roots in your uncoded config file.",
-                file=sys.stderr,
+            raise ConfigError(
+                f"source root {configured} is not a directory. "
+                "Check source-roots in your uncoded config file."
             )
-            return None
         source_roots.append(src_root)
 
     roots_with_files = [
@@ -131,63 +126,61 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
     resolved_project_root = project_root.resolve()
     changes = 0
 
-    # Code artefacts — build when source_roots configured, else remove.
-    build = bool(config.source_roots)
-    code_result = _sync_code_artefacts(
-        build=build,
-        configured_source_roots=config.source_roots,
-        project_root=project_root,
-        resolved_project_root=resolved_project_root,
-        check=check,
-    )
-    if code_result is None:
-        return 1
-    changes += code_result
-    changes += sync_skills(
-        source=bool(config.source_roots),
-        docs=bool(config.doc_roots),
-        project_root=project_root,
-        check=check,
-    )
-
-    # Doc artefacts — build when doc_roots configured, else remove.
-    if config.doc_roots:
-        doc_roots: list[Path] = []
-        for configured in config.doc_roots:
-            doc_root = (project_root / configured).resolve()
-            if not doc_root.is_relative_to(resolved_project_root):
-                print(
-                    f"Error: doc root {configured} is outside the project root. "
-                    "Check doc-roots in your uncoded config file.",
-                    file=sys.stderr,
-                )
-                return 1
-            is_valid = doc_root.is_dir() or (
-                doc_root.is_file() and doc_root.suffix == ".md"
-            )
-            if not is_valid:
-                print(
-                    f"Error: doc root {configured} is not a directory or .md file. "
-                    "Check doc-roots in your uncoded config file.",
-                    file=sys.stderr,
-                )
-                return 1
-            doc_roots.append(doc_root)
-
-        all_doc_files = []
-        for dr in doc_roots:
-            all_doc_files.extend(iter_doc_files(dr, project_root))
-        docs_content = render_docs_map(build_docs_map(all_doc_files))
-        changes += sync_file(
-            Path(".uncoded/docs.yaml"),
-            docs_content,
+    try:
+        # Code artefacts — build when source_roots configured, else remove.
+        build = bool(config.source_roots)
+        code_result = _sync_code_artefacts(
+            build=build,
+            configured_source_roots=config.source_roots,
+            project_root=project_root,
+            resolved_project_root=resolved_project_root,
+            check=check,
+        )
+        changes += code_result
+        changes += sync_skills(
+            source=bool(config.source_roots),
+            docs=bool(config.doc_roots),
             project_root=project_root,
             check=check,
         )
-    else:
-        changes += remove_file(
-            Path(".uncoded/docs.yaml"), project_root=project_root, check=check
-        )
+
+        # Doc artefacts — build when doc_roots configured, else remove.
+        if config.doc_roots:
+            doc_roots: list[Path] = []
+            for configured in config.doc_roots:
+                doc_root = (project_root / configured).resolve()
+                if not doc_root.is_relative_to(resolved_project_root):
+                    raise ConfigError(
+                        f"doc root {configured} is outside the project root. "
+                        "Check doc-roots in your uncoded config file."
+                    )
+                is_valid = doc_root.is_dir() or (
+                    doc_root.is_file() and doc_root.suffix == ".md"
+                )
+                if not is_valid:
+                    raise ConfigError(
+                        f"doc root {configured} is not a directory or .md file. "
+                        "Check doc-roots in your uncoded config file."
+                    )
+                doc_roots.append(doc_root)
+
+            all_doc_files = []
+            for dr in doc_roots:
+                all_doc_files.extend(iter_doc_files(dr, project_root))
+            docs_content = render_docs_map(build_docs_map(all_doc_files))
+            changes += sync_file(
+                Path(".uncoded/docs.yaml"),
+                docs_content,
+                project_root=project_root,
+                check=check,
+            )
+        else:
+            changes += remove_file(
+                Path(".uncoded/docs.yaml"), project_root=project_root, check=check
+            )
+    except ConfigError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
 
     if check:
         if changes:
@@ -202,8 +195,8 @@ def _body(*, name_path: str, in_path: str) -> int:
     """Print the source body of name_path in in_path to stdout.
 
     Returns 0 on success. Returns 1 if name_path is unsupported, if
-    name_path is not present in the file, if the file does not exist,
-    or if the file has a syntax error.
+    name_path is not present in the file, if the file cannot be read
+    (missing, unreadable, or undecodable), or if the source has a syntax error.
     """
     target = Path(in_path)
     try:
@@ -217,7 +210,7 @@ def _body(*, name_path: str, in_path: str) -> int:
     except FileNotFoundError:
         print(f"Error: {in_path}: file not found.", file=sys.stderr)
         return 1
-    except SyntaxError as e:
+    except (OSError, UnicodeDecodeError, SyntaxError) as e:
         print(f"Error: {in_path}: {e}", file=sys.stderr)
         return 1
 
@@ -229,7 +222,10 @@ def _refs(*, name_path: str, in_path: str) -> int:
     """Find all references to name_path in in_path and print them to stdout.
 
     Returns 0 on success. Each reference is printed as rel_path:line:col.
-    Returns 1 on any error.
+    Returns 1 if name_path is unsupported, if name_path is not present in
+    the file, if the file cannot be read (missing, unreadable, or
+    undecodable), if the source has a syntax error, or if the reference
+    lookup fails.
     """
     try:
         refs = find_refs(NamePath.parse(name_path), Path(in_path))
@@ -242,7 +238,7 @@ def _refs(*, name_path: str, in_path: str) -> int:
     except FileNotFoundError:
         print(f"Error: {in_path}: file not found.", file=sys.stderr)
         return 1
-    except SyntaxError as e:
+    except (OSError, UnicodeDecodeError, SyntaxError) as e:
         print(f"Error: {in_path}: {e}", file=sys.stderr)
         return 1
     except RuntimeError as e:

@@ -3,6 +3,7 @@
 from importlib.resources import files
 from pathlib import Path
 import uncoded.skill as skill_module
+from uncoded.markers import GENERATED_MARKER
 from uncoded.skill import SKILL_ROOTS, SKILLS, Skill, sync_skills
 
 class TestSyncSkills:
@@ -19,6 +20,9 @@ class TestSyncSkills:
         ...
 
     def test_renderer_supplies_separator_for_body_without_leading_newline(self, monkeypatch):
+        ...
+
+    def test_content_has_provenance_marker(self, tmp_path):
         ...
 
     def test_returns_change_count_on_first_write(self, tmp_path):

@@ -54,12 +54,16 @@ src/:
       extract_module:
       iter_source_files:
       extract_modules:
+    markers.py:
+      GENERATED_MARKER:
     namespace_map.py:
       HEADER:
       build_map:
       render_map:
     read_helpers.py:
-      _read_file_text_as_utf8:
+      read_source_text:
+      read_source_text_or_warn:
+      read_doc_text_or_warn:
     refs.py:
       TY_VERSION:
       Reference:
@@ -169,6 +173,7 @@ tests/:
       test_not_found_raises_body_not_found:
       test_file_not_found_propagates:
       test_syntax_error_propagates:
+      test_reads_latin1_declared_file:
     TestResolveBodyClassMember:
       test_method:
       test_property_returns_getter_body:
@@ -239,6 +244,8 @@ tests/:
       test_symbol_not_found_exits_one:
       test_file_not_found_exits_one:
       test_syntax_error_exits_one:
+      test_undecodable_file_exits_one:
+      test_unknown_encoding_exits_one:
       test_works_without_project_root:
       test_in_path_resolves_relative_to_cwd:
       test_stdout_is_exact_body:
@@ -250,6 +257,8 @@ tests/:
       test_symbol_not_found_exits_one:
       test_file_not_found_exits_one:
       test_syntax_error_exits_one:
+      test_undecodable_file_exits_one:
+      test_unknown_encoding_exits_one:
       test_works_without_project_root:
       test_in_path_resolves_relative_to_cwd:
       test_unsupported_name_path_exits_one:
@@ -373,7 +382,8 @@ tests/:
       test_includes_init_with_symbols:
       test_skips_empty_init:
       test_skips_syntax_errors:
-      test_skips_non_utf8_file_with_warning:
+      test_skips_undecodable_file_with_warning:
+      test_reads_latin1_declared_file:
     TestExtractModulesFromFiles:
       test_returns_module_info_per_parseable_file:
       test_preserves_source_order:
@@ -434,6 +444,7 @@ tests/:
       test_creates_parent_directories:
       test_content_has_frontmatter_and_body:
       test_renderer_supplies_separator_for_body_without_leading_newline:
+      test_content_has_provenance_marker:
       test_returns_change_count_on_first_write:
       test_returns_zero_when_already_in_sync:
       test_idempotent:

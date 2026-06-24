@@ -156,6 +156,16 @@ class TestResolveBodyTopLevel:
         with pytest.raises(SyntaxError):
             resolve_body(NamePath("broken"), path)
 
+    def test_reads_latin1_declared_file(self, tmp_path):
+        # A file that declares latin-1 encoding must be read under that
+        # encoding and return correctly decoded source.
+        path = tmp_path / "m.py"
+        path.write_bytes(b"# -*- coding: latin-1 -*-\ndef caf\xe9(): pass\n")
+
+        result = resolve_body(NamePath("café"), path)
+
+        assert result == "def café(): pass\n"
+
 
 class TestResolveBodyClassMember:
     def test_method(self, tmp_path):

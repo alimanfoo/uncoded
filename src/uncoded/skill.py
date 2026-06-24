@@ -7,6 +7,7 @@ from typing import Literal
 
 import yaml
 
+from uncoded.markers import GENERATED_MARKER
 from uncoded.sync import remove_file, sync_file
 
 SKILL_ROOTS = [
@@ -81,7 +82,7 @@ def _render_content(*, skill: Skill) -> str:
         width=10000,
     )
     body = (files("uncoded") / skill.body_file).read_text(encoding="utf-8").lstrip("\n")
-    return f"---\n{front}---\n\n{body}"
+    return f"---\n{front}---\n\n<!-- {GENERATED_MARKER} -->\n\n{body}"
 
 
 def _remove_skill_file(*, path: Path, project_root: Path, check: bool) -> bool:

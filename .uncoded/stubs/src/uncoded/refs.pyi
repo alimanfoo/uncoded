@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import IO, cast
 from urllib.parse import unquote, urlparse
 from uncoded.config import find_pyproject_toml
+from uncoded.read_helpers import read_source_text
 from uncoded.resolver import NamePath, resolve_name_position
 
 TY_VERSION = '0.0.37'

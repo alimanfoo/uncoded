@@ -11,6 +11,7 @@ from typing import IO, cast
 from urllib.parse import unquote, urlparse
 
 from uncoded.config import find_pyproject_toml
+from uncoded.read_helpers import read_source_text
 from uncoded.resolver import NamePath, resolve_name_position
 
 # Strict pin: ty is pre-1.0 with known textDocument/references edge
@@ -34,8 +35,8 @@ def find_refs(name_path: NamePath, in_path: Path) -> list[Reference]:
     references, and returns results with 1-indexed line/col sorted by
     (rel_path, line, col). rel_path is relative to the current working
     directory when possible; otherwise absolute.
-    Propagates SymbolNotFound, FileNotFoundError, and SyntaxError from
-    resolve_name_position.
+    Propagates SymbolNotFound, OSError, UnicodeDecodeError, and SyntaxError
+    from resolve_name_position.
     """
     position = resolve_name_position(name_path, in_path)
     raw_refs = _query_references(in_path=in_path, position=position)
@@ -157,7 +158,7 @@ def _run_exchange(
                     "uri": file_uri,
                     "languageId": "python",
                     "version": 1,
-                    "text": in_path.read_text(),
+                    "text": read_source_text(in_path),
                 }
             },
         },
