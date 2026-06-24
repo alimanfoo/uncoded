@@ -24,6 +24,12 @@ def _validate_root(
     resolved_project_root: Path,
     accepts_md_file: bool,
 ) -> Path:
+    """Resolve configured against project_root and validate the result.
+
+    Raises ConfigError if the resolved path falls outside the project root or
+    is not a valid target. When accepts_md_file is True, a lone .md file is
+    also valid. kind selects the noun used in the error messages.
+    """
     resolved = (project_root / configured).resolve()
     if not resolved.is_relative_to(resolved_project_root):
         raise ConfigError(
