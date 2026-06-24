@@ -44,7 +44,7 @@ def read_source_text_or_warn(
 def read_doc_text_or_warn(
     path: Path, *, warning_path: Path | str | None = None
 ) -> str | None:
-    """Read *path* as UTF-8 text.
+    """Read a Markdown document as UTF-8, returning None and warning on failure.
 
     Returns None and prints a one-line warning to stderr when the file is
     unreadable or contains non-UTF-8 bytes, so callers can skip-and-continue
