@@ -45,11 +45,15 @@ Markdown.
   and incoherence (see [Coherence review](#coherence-review)). Generated when
   `source-roots` is configured.
 
-Skills are on-demand by default. To have the navigation skills loaded every
-session, add one line to your `AGENTS.md` or `CLAUDE.md`:
+Add these lines to your `AGENTS.md` or `CLAUDE.md` to load the navigation skills
+every session. Skills are on-demand by default. Tying the load to an action
+agents are about to take prompts them to act on it:
 
 ```text
-Always load the `uncoded-code-navigation` and `uncoded-doc-navigation` skills.
+## Before you start
+
+- Load the `uncoded-code-navigation` skill before searching, reading or editing any code.
+- Load the `uncoded-doc-navigation` skill before searching, reading or editing any docs.
 ```
 
 ## Install uv
@@ -325,11 +329,14 @@ upgrading:
    `.uncoded.toml` has it. uncoded no longer reads this key. Leaving it in place
    causes no error.
 
-4. **Restore always-on navigation** if you want v1 behaviour back. Add one line
-   to your `AGENTS.md` and `CLAUDE.md`:
+4. **Restore always-on navigation** if you want v1 behaviour back. Add these
+   lines to your `AGENTS.md` and `CLAUDE.md`:
 
    ```text
-   Always load the `uncoded-code-navigation` and `uncoded-doc-navigation` skills.
+   ## Before you start
+
+   - Load the `uncoded-code-navigation` skill before searching, reading or editing any code.
+   - Load the `uncoded-doc-navigation` skill before searching, reading or editing any docs.
    ```
 
 ## Releasing
