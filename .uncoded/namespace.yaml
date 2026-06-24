@@ -342,6 +342,7 @@ tests/:
       test_rel_path_is_relative_to_project_root:
       test_skips_non_utf8_file_with_warning:
       test_single_file_root_unreadable_yields_nothing:
+      test_bom_prefixed_file_heading_appears:
     TestBuildDocsMap:
       test_empty_files:
       test_headingless_file_maps_to_null:

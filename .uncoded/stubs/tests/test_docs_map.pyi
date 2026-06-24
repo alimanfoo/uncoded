@@ -102,6 +102,9 @@ class TestIterDocFiles:
     def test_single_file_root_unreadable_yields_nothing(self, tmp_path, capsys):
         ...
 
+    def test_bom_prefixed_file_heading_appears(self, tmp_path):
+        ...
+
 class TestBuildDocsMap:
     def test_empty_files(self):
         ...
