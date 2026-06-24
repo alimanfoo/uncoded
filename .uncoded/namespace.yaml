@@ -390,6 +390,12 @@ tests/:
       test_preserves_source_order:
       test_module_with_only_constants_is_kept:
       test_skips_files_with_no_symbols:
+  test_markers.py:
+    TestMarkerCompleteness:
+      test_namespace_map_carries_marker:
+      test_docs_map_carries_marker:
+      test_stub_carries_marker:
+      test_skill_carries_marker:
   test_namespace_map.py:
     TestBuildMap:
       test_single_file:
