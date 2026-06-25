@@ -109,8 +109,8 @@ reviewed the change.
 A C901 violation means a function is too complex to pass the check. Refactor or
 flatten it rather than raising the `max-complexity` threshold.
 
-The ty pre-commit hook runs the type checker, pinned via the `dev` optional
-dependency, the same way ruff is.
+The ty pre-commit hook runs the type checker. It is pinned via the `dev`
+optional dependency, the same way ruff is.
 
 ## Docstrings
 
@@ -127,7 +127,7 @@ Use `# pragma: no branch` only when a branch's false arm is structurally
 unreachable in practice. Two cases qualify:
 
 - The branch follows an `rglob` that just yielded the item. `remove_file` on a
-  file `rglob` just found will always succeed; the false arm requires the file
+  file `rglob` just found will always succeed. The false arm requires the file
   to vanish between the two calls.
 - The condition is guaranteed true by operations immediately above it in the
   same function. The false arm would contradict the state those operations
@@ -147,7 +147,7 @@ output kinds carry it.
 
 **Explicit encoding.** Every text read/write in `src/`, `tests/`, and `tools/`
 must pass `encoding=`. `tools/check_encoding.py` enforces this as a pre-commit
-hook; it covers receiver types that ruff PLW1514 misses.
+hook. It covers receiver types that ruff PLW1514 misses.
 
 **Complexity ceiling.** The value is in `[tool.ruff.lint.mccabe]` in
 `pyproject.toml`. See "Linting and formatting" above for the response to a C901
@@ -163,9 +163,8 @@ lookup. The `uncoded-code-navigation` skill has the full dispatch rule.
 
 `tools/` holds custom check scripts that complement ruff. The current script is
 `check_encoding.py` (encoding invariant). Ruff lints the whole tree, so `tools/`
-is in scope for all ruff rules. `tools/` sits outside the coverage gate
-(`source = ["src"]` in `[tool.coverage.run]`), so its scripts have no coverage
-net.
+is in scope for all ruff rules. It sits outside the coverage gate
+(`source = ["src"]` in `[tool.coverage.run]`). Its scripts have no coverage net.
 
 ## Releasing
 
