@@ -29,6 +29,25 @@ class ModuleInfo:
     functions: list[str] = field(default_factory=list)
 
 
+def _extract_class_members(*, node: ast.ClassDef) -> ClassInfo:
+    attributes: list[str] = []
+    methods: list[str] = []
+    for n in ast.iter_child_nodes(node):
+        if isinstance(n, (ast.AnnAssign, ast.Assign)):
+            name = assign_target_name(n)
+            if name:
+                attributes.append(name)
+        elif isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            kind = property_kind(n)
+            if kind == "setter" or kind == "deleter":
+                continue
+            if kind == "property":
+                attributes.append(n.name)
+            else:
+                methods.append(n.name)
+    return ClassInfo(name=node.name, attributes=attributes, methods=methods)
+
+
 def extract_module(source: str, rel_path: str) -> ModuleInfo:
     """Parse Python source and extract classes, functions, and constants."""
     tree = ast.parse(source)
@@ -39,24 +58,7 @@ def extract_module(source: str, rel_path: str) -> ModuleInfo:
 
     for node in ast.iter_child_nodes(tree):
         if isinstance(node, ast.ClassDef):
-            attributes: list[str] = []
-            methods: list[str] = []
-            for n in ast.iter_child_nodes(node):
-                if isinstance(n, (ast.AnnAssign, ast.Assign)):
-                    name = assign_target_name(n)
-                    if name:
-                        attributes.append(name)
-                elif isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                    kind = property_kind(n)
-                    if kind == "setter" or kind == "deleter":
-                        continue
-                    if kind == "property":
-                        attributes.append(n.name)
-                    else:
-                        methods.append(n.name)
-            classes.append(
-                ClassInfo(name=node.name, attributes=attributes, methods=methods)
-            )
+            classes.append(_extract_class_members(node=node))
         elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             functions.append(node.name)
         elif isinstance(node, (ast.Assign, ast.AnnAssign)):

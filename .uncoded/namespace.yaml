@@ -53,6 +53,7 @@ src/:
         constants:
         classes:
         functions:
+      _extract_class_members:
       extract_module:
       iter_source_files:
       extract_modules:
