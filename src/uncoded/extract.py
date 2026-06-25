@@ -29,7 +29,7 @@ class ModuleInfo:
     functions: list[str] = field(default_factory=list)
 
 
-def _extract_class_members(*, node: ast.ClassDef) -> ClassInfo:
+def _extract_class_members(node: ast.ClassDef) -> ClassInfo:
     attributes: list[str] = []
     methods: list[str] = []
     for n in ast.iter_child_nodes(node):
@@ -58,7 +58,7 @@ def extract_module(source: str, rel_path: str) -> ModuleInfo:
 
     for node in ast.iter_child_nodes(tree):
         if isinstance(node, ast.ClassDef):
-            classes.append(_extract_class_members(node=node))
+            classes.append(_extract_class_members(node))
         elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             functions.append(node.name)
         elif isinstance(node, (ast.Assign, ast.AnnAssign)):
