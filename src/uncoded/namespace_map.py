@@ -47,7 +47,7 @@ def build_map(modules: list[ModuleInfo]) -> dict:
 
         for cls in module.classes:
             members = cls.attributes + cls.methods
-            file_entry[cls.name] = {m: None for m in members} if members else None
+            file_entry[cls.name] = dict.fromkeys(members) if members else None
 
         for func in module.functions:
             file_entry[func] = None

@@ -26,7 +26,7 @@ def _parse_atx_heading(line: str) -> tuple[int, str] | None:
     level = 0
     while level < len(line) and line[level] == "#":
         level += 1
-    # Valid ATX: 1–6 # followed by exactly one space.
+    # Valid ATX: 1-6 # followed by exactly one space.
     if level > 6 or level >= len(line) or line[level] != " ":
         return None
     title = line[level + 1 :].strip()
@@ -42,7 +42,7 @@ def _parse_atx_heading(line: str) -> tuple[int, str] | None:
 def extract_headings(text: str) -> list[tuple[int, str]]:
     """Return the ATX headings in ``text`` as ordered (level, title) pairs.
 
-    Recognises ATX headings only: 1–6 ``#`` followed by a space and a
+    Recognises ATX headings only: 1-6 ``#`` followed by a space and a
     non-empty title. A trailing ``#`` run is stripped only when it forms
     a CommonMark closing sequence — preceded by whitespace, or the title
     consists entirely of ``#`` characters. A ``#`` attached to the final
@@ -69,7 +69,7 @@ def extract_headings(text: str) -> list[tuple[int, str]]:
                 fence_marker = ""
             continue
 
-        if line.startswith("```") or line.startswith("~~~"):
+        if line.startswith(("```", "~~~")):
             in_fence = True
             fence_marker = line[:3]
             continue

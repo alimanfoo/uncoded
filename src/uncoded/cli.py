@@ -77,17 +77,16 @@ def _sync_code_artefacts(
         )
         return n
 
-    source_roots: list[Path] = []
-    for configured in configured_source_roots:
-        source_roots.append(
-            _validate_root(
-                configured,
-                kind="source",
-                project_root=project_root,
-                resolved_project_root=resolved_project_root,
-                accepts_md_file=False,
-            )
+    source_roots = [
+        _validate_root(
+            configured,
+            kind="source",
+            project_root=project_root,
+            resolved_project_root=resolved_project_root,
+            accepts_md_file=False,
         )
+        for configured in configured_source_roots
+    ]
 
     roots_with_files = [
         (src_root, list(iter_source_files(src_root, project_root=project_root)))
@@ -130,20 +129,17 @@ def _sync_doc_artefacts(
         return remove_file(
             Path(".uncoded/docs.yaml"), project_root=project_root, check=check
         )
-    doc_roots: list[Path] = []
-    for configured in configured_doc_roots:
-        doc_roots.append(
-            _validate_root(
-                configured,
-                kind="doc",
-                project_root=project_root,
-                resolved_project_root=resolved_project_root,
-                accepts_md_file=True,
-            )
+    doc_roots = [
+        _validate_root(
+            configured,
+            kind="doc",
+            project_root=project_root,
+            resolved_project_root=resolved_project_root,
+            accepts_md_file=True,
         )
-    all_doc_files = []
-    for dr in doc_roots:
-        all_doc_files.extend(iter_doc_files(dr, project_root))
+        for configured in configured_doc_roots
+    ]
+    all_doc_files = [f for dr in doc_roots for f in iter_doc_files(dr, project_root)]
     docs_content = render_docs_map(build_docs_map(all_doc_files))
     return sync_file(
         Path(".uncoded/docs.yaml"),

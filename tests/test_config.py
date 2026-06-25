@@ -24,7 +24,7 @@ class TestReadConfig:
     # --- pyproject.toml ---
 
     def test_raises_when_no_config_file(self, tmp_path):
-        with pytest.raises(ConfigError, match="No pyproject.toml"):
+        with pytest.raises(ConfigError, match=r"No pyproject\.toml"):
             read_config(start=tmp_path)
 
     def test_source_roots_read_from_pyproject(self, tmp_path):

@@ -950,7 +950,7 @@ class TestRemoveAllStubs:
         assert not stubs_dir.exists()
 
     def test_removes_nested_structure(self, tmp_path):
-        stubs_dir, pyi = self._make_stubs(tmp_path, "src/pkg/bar.pyi")
+        stubs_dir, _pyi = self._make_stubs(tmp_path, "src/pkg/bar.pyi")
         changes = remove_all_stubs(
             Path(".uncoded/stubs"), project_root=tmp_path, check=False
         )
