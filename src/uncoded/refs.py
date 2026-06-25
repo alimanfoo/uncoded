@@ -15,8 +15,7 @@ from uncoded.read_helpers import read_source_text
 from uncoded.resolver import NamePath, resolve_name_position
 
 # Strict pin: ty is pre-1.0 with known textDocument/references edge cases.
-# This constant governs both the ty LSP server (refs.py) and the ty check
-# hook (tools/check_ty.py). See #111 before bumping.
+# See #111 before bumping.
 TY_VERSION = "0.0.53"
 
 

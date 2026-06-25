@@ -29,7 +29,7 @@ repos:
         pass_filenames: false
       - id: ty
         name: ty
-        entry: uv run python tools/check_ty.py
+        entry: uv run ty check src tests
         language: system
         pass_filenames: false
       - id: check-encoding

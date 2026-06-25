@@ -111,8 +111,8 @@ reviewed the change.
 A C901 violation means a function is too complex to pass the check. Refactor or
 flatten it rather than raising the `max-complexity` threshold.
 
-The ty pre-commit hook runs the type checker, pinned at 0.0.53 via `TY_VERSION`
-in `src/uncoded/refs.py`.
+The ty pre-commit hook runs the type checker, pinned via the `dev` optional
+dependency, the same way ruff is.
 
 ## Docstrings
 
@@ -166,11 +166,11 @@ lookup. The `uncoded-code-navigation` skill has the full dispatch rule.
 
 ### Tools
 
-`tools/` holds custom check scripts that complement ruff: `check_encoding.py`
-(encoding invariant) and `check_ty.py` (ty version wrapper). Ruff lints the
-whole tree, so `tools/` is in scope for all ruff rules. `tools/` sits outside
-the coverage gate (`source = ["src"]` in `[tool.coverage.run]`), so its scripts
-have no coverage net.
+`tools/` holds custom check scripts that complement ruff. The current script is
+`check_encoding.py` (encoding invariant). Ruff lints the whole tree, so `tools/`
+is in scope for all ruff rules. `tools/` sits outside the coverage gate
+(`source = ["src"]` in `[tool.coverage.run]`), so its scripts have no coverage
+net.
 
 ## Releasing
 
