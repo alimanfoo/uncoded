@@ -27,9 +27,9 @@ repos:
         entry: uvx ty check src tests
         language: system
         pass_filenames: false
-      - id: check-test-encoding
-        name: check test encoding
-        entry: uv run python tools/check_test_encoding.py
+      - id: check-encoding
+        name: check encoding
+        entry: uv run python tools/check_encoding.py
         language: system
         pass_filenames: false
       # Runs before uncoded so the generated skill files are built from

@@ -1,17 +1,21 @@
-"""Enforce encoding= on every text read/write in tests/.
+"""Enforce encoding= on every text read/write in src/, tests/, and tools/.
 
-Checks all .py files under tests/ (recursively) for calls to .read_text(),
-.write_text(), builtin open(), and Path.open() that lack an encoding= keyword
-argument. Exits non-zero on any violation so pre-commit can block the commit.
+Scans all .py files under those directories (recursively) for calls to
+.read_text(), .write_text(), builtin open(), and Path.open() that lack an
+encoding= keyword argument. Exits non-zero on any violation so pre-commit
+can block the commit.
 
-Covers fixture-derived receivers such as (tmp_path / "f.py").write_text(...)
-that PLW1514 misses because ruff cannot infer the Path type through pytest
-fixture injection.
+Replaces ruff PLW1514 with a name-based check that covers every text IO call
+regardless of receiver type, including fixture-derived receivers such as
+(tmp_path / "f.py").write_text(...) that PLW1514 misses because ruff cannot
+infer the Path type through pytest fixture injection.
 """
 
 import ast
 import sys
 from pathlib import Path
+
+_SCAN_ROOTS = ["src", "tests", "tools"]
 
 
 def _open_mode(call: ast.Call, *, mode_position: int = 1) -> str | None:
@@ -59,6 +63,9 @@ def check_file(path: Path) -> list[str]:
                 errors.append(f"{path}:{node.lineno}: .{func.attr}() missing encoding=")
 
         elif isinstance(func, ast.Attribute) and func.attr == "open":
+            # Skip tokenize.open — it auto-detects encoding from the file content.
+            if isinstance(func.value, ast.Name) and func.value.id == "tokenize":
+                continue
             # Path.open(mode, ...) — mode is the first positional arg.
             mode = _open_mode(node, mode_position=0)
             if mode is not None and "b" in mode:
@@ -78,15 +85,14 @@ def check_file(path: Path) -> list[str]:
 
 
 def main() -> int:
-    """Run the check over tests/ recursively and return an exit code."""
-    tests_dir = Path("tests")
-    if not tests_dir.is_dir():
-        print(f"error: tests/ not found in {Path.cwd()}", file=sys.stderr)
-        return 1
-
+    """Scan src/, tests/, and tools/ for unencoded text IO and return an exit code."""
     all_errors: list[str] = []
-    for py_file in sorted(tests_dir.rglob("*.py")):
-        all_errors.extend(check_file(py_file))
+    for root_name in _SCAN_ROOTS:
+        root = Path(root_name)
+        if not root.is_dir():
+            continue
+        for py_file in sorted(root.rglob("*.py")):
+            all_errors.extend(check_file(py_file))
 
     for err in all_errors:
         print(err, file=sys.stderr)
