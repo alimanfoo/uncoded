@@ -56,8 +56,8 @@ uv run uncoded body <name_path> --in <relative_path>
 uv run uncoded refs <name_path> --in <relative_path>
 
 # Run tests. pytest enforces branch coverage. See [tool.coverage.report]
-# in pyproject.toml.
-uv run pytest
+# in pyproject.toml. Set PYTHONWARNDEFAULTENCODING=1 or the sentinel test fails.
+PYTHONWARNDEFAULTENCODING=1 uv run pytest
 
 # Run a subset of tests without the coverage gate
 uv run pytest tests/test_stubs.py --no-cov
@@ -136,8 +136,25 @@ in `src/uncoded/markers.py`. `tests/test_markers.py` verifies that all four
 output kinds carry it.
 
 **Explicit encoding.** Every text read/write in `src/`, `tests/`, and `tools/`
-must pass `encoding=`. `tools/check_encoding.py` enforces this as a pre-commit
-hook. It covers receiver types that ruff PLW1514 misses.
+must pass `encoding=`. Two mechanisms enforce this, configured in
+`pyproject.toml` and `.github/workflows/ci.yml`.
+
+The static check is ruff rule PLW1514 (unspecified-encoding), enabled in the
+`select` list under `[tool.ruff.lint]`. It runs at pre-commit and in the CI lint
+job, covering the whole tree. PLW1514 requires `preview = true`. Disabling
+preview silently drops the rule.
+
+PLW1514 does not resolve fixture-derived Path receivers, such as
+`(tmp_path / "f.py").write_text(...)`. The runtime gate covers those calls when
+they execute. A write on a never-executed line is the accepted residual.
+
+The runtime gate turns EncodingWarning into a test failure.
+`filterwarnings = ["error::EncodingWarning"]` in `[tool.pytest.ini_options]`
+promotes the warning to an error. The CI test job sets
+`PYTHONWARNDEFAULTENCODING=1`. Without it the interpreter never emits
+EncodingWarning and the filter is inert. Run tests locally as
+`PYTHONWARNDEFAULTENCODING=1 uv run pytest`. The sentinel in
+`tests/test_encoding_gate.py` fails loudly when the env var is absent.
 
 **Complexity ceiling.** The value is in `[tool.ruff.lint.mccabe]` in
 `pyproject.toml`. See [Linting and formatting](#linting-and-formatting) for the
@@ -145,13 +162,6 @@ response to a C901 violation.
 
 **Index committed.** Commit `.uncoded/` and keep it current with the pre-commit
 hook. See [Commands](#commands) and [Dev setup](#dev-setup).
-
-### Tools
-
-`tools/` holds custom check scripts that complement ruff. Ruff lints the whole
-tree, so `tools/` is in scope for all ruff rules. It sits outside the coverage
-gate (`source = ["src"]` in `[tool.coverage.run]`). Its scripts have no coverage
-net.
 
 ## Releasing
 
