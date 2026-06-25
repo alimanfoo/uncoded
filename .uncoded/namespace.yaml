@@ -369,6 +369,8 @@ tests/:
       test_header_present:
       test_yaml_parseable:
       test_null_renders_clean:
+  test_encoding_gate.py:
+    test_encoding_warning_gate:
   test_extract.py:
     TestExtractModuleFromSource:
       test_classes_and_functions:
