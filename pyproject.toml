@@ -62,6 +62,7 @@ line-length = 88
 extend-exclude = [".uncoded"]
 
 [tool.ruff.lint]
+preview = true
 select = [
     "D", # pydocstyle (pep257)
     "E", # pycodestyle errors
@@ -87,6 +88,11 @@ select = [
     "PLR5501", # Pylint: elif after return
     "PLR1711", # Pylint: useless return
     "PLR1714", # Pylint: repeated equality comparison
+    "PLR0911", # Pylint: too many return statements
+    "PLR0912", # Pylint: too many branches
+    "PLR0913", # Pylint: too many arguments
+    "PLR0915", # Pylint: too many statements
+    "PLR1702", # Pylint: too many nested blocks (preview)
 ]
 
 [tool.ruff.lint.mccabe]
