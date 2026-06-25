@@ -40,8 +40,7 @@ Alongside the index, uncoded ships `uncoded body` to read symbol bodies and
 
 This project uses [uv](https://docs.astral.sh/uv/). Run all commands via
 `uv run`. `uvx uncoded` runs the published PyPI release, not the local editable
-install. It strips the provenance marker from generated files and reports every
-stub as "would update".
+install, which may have different behaviour.
 
 ```sh
 # Generate (or update) the namespace map, stub files, docs.yaml, and skill files
@@ -97,10 +96,9 @@ following the symlink.
 ## Linting and formatting
 
 Run `uv run ruff check --fix` and `uv run ruff format` before committing. Both
-use ruff 0.15.19, pinned via the `dev` optional dependency. The pre-commit hooks
-run the same commands automatically. If a hook rewrites files, the commit fails.
-Re-stage the modified files and commit again. The uncoded sync hook follows the
-same pattern.
+are pinned via the `dev` optional dependency. The pre-commit hooks run the same
+commands automatically. If a hook rewrites files, the commit fails. Re-stage the
+modified files and commit again. The uncoded sync hook follows the same pattern.
 
 Never commit with `--no-verify`. CI runs `pre-commit run --all-files` on every
 pull request and will fail a build where a hook was skipped.
@@ -121,7 +119,7 @@ Private symbols (underscore-prefixed) and test code are exempt.
 
 ## Testing
 
-The test suite enforces 100% branch coverage. The gate is `fail_under = 100` in
+The test suite enforces 100% branch coverage. The threshold is set in
 `[tool.coverage.report]` in `pyproject.toml`. Every branch must have both arms
 exercised by a test.
 
@@ -134,10 +132,6 @@ unreachable in practice. Two cases qualify:
 - The condition is guaranteed true by operations immediately above it in the
   same function. The false arm would contradict the state those operations
   produced.
-
-The four uses in `stubs.py` (lines 344, 408, 420, 422) are the only examples in
-the codebase. Lines 344 and 408 are the rglob case. Lines 420 and 422 follow the
-removal of all `.pyi` files, so the directory is guaranteed empty.
 
 Do not use `# pragma: no branch` to avoid writing a test. If the false arm is
 reachable, write the test.
@@ -155,8 +149,9 @@ output kinds carry it.
 must pass `encoding=`. `tools/check_encoding.py` enforces this as a pre-commit
 hook; it covers receiver types that ruff PLW1514 misses.
 
-**Complexity ceiling.** `max-complexity = 8` in `[tool.ruff.lint.mccabe]`. See
-"Linting and formatting" above for the response to a C901 violation.
+**Complexity ceiling.** The value is in `[tool.ruff.lint.mccabe]` in
+`pyproject.toml`. See "Linting and formatting" above for the response to a C901
+violation.
 
 **Index committed.** Commit `.uncoded/` and keep it current with the pre-commit
 hook. See "Commands" and "Dev setup" above.
