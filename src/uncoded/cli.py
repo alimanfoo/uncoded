@@ -112,6 +112,47 @@ def _sync_code_artefacts(
     return n
 
 
+def _sync_doc_artefacts(
+    *,
+    build: bool,
+    configured_doc_roots: list[Path],
+    project_root: Path,
+    resolved_project_root: Path,
+    check: bool,
+) -> int:
+    """Build or remove the doc artefact (docs.yaml).
+
+    When build is False, removes docs.yaml and returns the change count. When
+    build is True, validates, collects doc files, and writes docs.yaml. Returns
+    the change count. Raises ConfigError on a validation failure.
+    """
+    if not build:
+        return remove_file(
+            Path(".uncoded/docs.yaml"), project_root=project_root, check=check
+        )
+    doc_roots: list[Path] = []
+    for configured in configured_doc_roots:
+        doc_roots.append(
+            _validate_root(
+                configured,
+                kind="doc",
+                project_root=project_root,
+                resolved_project_root=resolved_project_root,
+                accepts_md_file=True,
+            )
+        )
+    all_doc_files = []
+    for dr in doc_roots:
+        all_doc_files.extend(iter_doc_files(dr, project_root))
+    docs_content = render_docs_map(build_docs_map(all_doc_files))
+    return sync_file(
+        Path(".uncoded/docs.yaml"),
+        docs_content,
+        project_root=project_root,
+        check=check,
+    )
+
+
 def _sync(*, start: Path | None = None, check: bool = False) -> int:
     """Sync (or verify) the index artefacts for each configured root type.
 
@@ -148,50 +189,27 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
         changes = 0
 
         # Code artefacts — build when source_roots configured, else remove.
-        build = bool(config.source_roots)
-        code_result = _sync_code_artefacts(
-            build=build,
+        changes += _sync_code_artefacts(
+            build=bool(config.source_roots),
             configured_source_roots=config.source_roots,
             project_root=project_root,
             resolved_project_root=resolved_project_root,
             check=check,
         )
-        changes += code_result
         changes += sync_skills(
             source=bool(config.source_roots),
             docs=bool(config.doc_roots),
             project_root=project_root,
             check=check,
         )
-
         # Doc artefacts — build when doc_roots configured, else remove.
-        if config.doc_roots:
-            doc_roots: list[Path] = []
-            for configured in config.doc_roots:
-                doc_roots.append(
-                    _validate_root(
-                        configured,
-                        kind="doc",
-                        project_root=project_root,
-                        resolved_project_root=resolved_project_root,
-                        accepts_md_file=True,
-                    )
-                )
-
-            all_doc_files = []
-            for dr in doc_roots:
-                all_doc_files.extend(iter_doc_files(dr, project_root))
-            docs_content = render_docs_map(build_docs_map(all_doc_files))
-            changes += sync_file(
-                Path(".uncoded/docs.yaml"),
-                docs_content,
-                project_root=project_root,
-                check=check,
-            )
-        else:
-            changes += remove_file(
-                Path(".uncoded/docs.yaml"), project_root=project_root, check=check
-            )
+        changes += _sync_doc_artefacts(
+            build=bool(config.doc_roots),
+            configured_doc_roots=config.doc_roots,
+            project_root=project_root,
+            resolved_project_root=resolved_project_root,
+            check=check,
+        )
     except ConfigError as e:
         print(f"Error: {e}", file=sys.stderr)
         return 1

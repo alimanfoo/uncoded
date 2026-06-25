@@ -20,6 +20,7 @@ src/:
     cli.py:
       _validate_root:
       _sync_code_artefacts:
+      _sync_doc_artefacts:
       _sync:
       _report_lookup_error:
       _body:
