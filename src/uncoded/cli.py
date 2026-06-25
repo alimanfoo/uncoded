@@ -139,9 +139,7 @@ def _sync_doc_artefacts(
         )
         for configured in configured_doc_roots
     ]
-    all_doc_files = []
-    for dr in doc_roots:
-        all_doc_files.extend(iter_doc_files(dr, project_root))
+    all_doc_files = [f for dr in doc_roots for f in iter_doc_files(dr, project_root)]
     docs_content = render_docs_map(build_docs_map(all_doc_files))
     return sync_file(
         Path(".uncoded/docs.yaml"),
