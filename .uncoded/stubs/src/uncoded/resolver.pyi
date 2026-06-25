@@ -29,8 +29,8 @@ class NamePath(NamedTuple):
     def __str__(self) -> str:
         ...
 
-class SymbolNotFound(Exception):
+class SymbolNotFoundError(Exception):
     ...
 
-class UnsupportedNamePath(Exception):
+class UnsupportedNamePathError(Exception):
     ...

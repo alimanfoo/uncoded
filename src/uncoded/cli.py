@@ -11,7 +11,7 @@ from uncoded.docs_map import build_docs_map, iter_doc_files, render_docs_map
 from uncoded.extract import extract_modules, iter_source_files
 from uncoded.namespace_map import build_map, render_map
 from uncoded.refs import find_refs
-from uncoded.resolver import NamePath, SymbolNotFound, UnsupportedNamePath
+from uncoded.resolver import NamePath, SymbolNotFoundError, UnsupportedNamePathError
 from uncoded.skill import sync_skills
 from uncoded.stubs import build_stubs, remove_all_stubs
 from uncoded.sync import remove_file, sync_file
@@ -226,9 +226,9 @@ def _report_lookup_error(exc: Exception, *, name_path: str, in_path: str) -> int
     path, symbol not found, file not found, and read/parse error.
     FileNotFoundError is checked before OSError because it subclasses it.
     """
-    if isinstance(exc, UnsupportedNamePath):
+    if isinstance(exc, UnsupportedNamePathError):
         print(f"Error: {exc}", file=sys.stderr)
-    elif isinstance(exc, SymbolNotFound):
+    elif isinstance(exc, SymbolNotFoundError):
         print(f"Error: {name_path!r} not found in {in_path}", file=sys.stderr)
     elif isinstance(exc, FileNotFoundError):
         print(f"Error: {in_path}: file not found.", file=sys.stderr)
@@ -248,8 +248,8 @@ def _body(*, name_path: str, in_path: str) -> int:
     try:
         body = resolve_body(NamePath.parse(name_path), target)
     except (
-        UnsupportedNamePath,
-        SymbolNotFound,
+        UnsupportedNamePathError,
+        SymbolNotFoundError,
         FileNotFoundError,
         OSError,
         UnicodeDecodeError,
@@ -276,8 +276,8 @@ def _refs(*, name_path: str, in_path: str) -> int:
         print(f"Error: {e}", file=sys.stderr)
         return 1
     except (
-        UnsupportedNamePath,
-        SymbolNotFound,
+        UnsupportedNamePathError,
+        SymbolNotFoundError,
         FileNotFoundError,
         OSError,
         UnicodeDecodeError,

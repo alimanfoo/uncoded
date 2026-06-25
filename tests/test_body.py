@@ -7,8 +7,8 @@ import pytest
 from uncoded.body import resolve_body
 from uncoded.resolver import (
     NamePath,
-    SymbolNotFound,
-    UnsupportedNamePath,
+    SymbolNotFoundError,
+    UnsupportedNamePathError,
     resolve_ast_node,
     resolve_name_position,
 )
@@ -140,7 +140,7 @@ class TestResolveBodyTopLevel:
         path = tmp_path / "m.py"
         path.write_text("def other(): pass\n", encoding="utf-8")
 
-        with pytest.raises(SymbolNotFound, match="missing"):
+        with pytest.raises(SymbolNotFoundError, match="missing"):
             resolve_body(NamePath("missing"), path)
 
     def test_file_not_found_propagates(self, tmp_path):
@@ -282,7 +282,7 @@ class TestResolveBodyClassMember:
         path = tmp_path / "m.py"
         path.write_text(source, encoding="utf-8")
 
-        with pytest.raises(SymbolNotFound, match="first_only"):
+        with pytest.raises(SymbolNotFoundError, match="first_only"):
             resolve_body(NamePath("Foo", "first_only"), path)
 
     def test_not_found_in_class(self, tmp_path):
@@ -294,15 +294,15 @@ class TestResolveBodyClassMember:
         path = tmp_path / "m.py"
         path.write_text(source, encoding="utf-8")
 
-        with pytest.raises(SymbolNotFound, match="missing"):
+        with pytest.raises(SymbolNotFoundError, match="missing"):
             resolve_body(NamePath("Foo", "missing"), path)
 
 
-class TestUnsupportedNamePath:
+class TestUnsupportedNamePathError:
     SUPPORTED_SHAPES = ("'name'", "'Class/member'")
 
     def _assert_raises(self, name_path):
-        with pytest.raises(UnsupportedNamePath) as exc_info:
+        with pytest.raises(UnsupportedNamePathError) as exc_info:
             NamePath.parse(name_path)
         msg = str(exc_info.value)
         for shape in self.SUPPORTED_SHAPES:
@@ -356,11 +356,11 @@ class TestResolveAstNode:
         path = tmp_path / "m.py"
         path.write_text("def other(): pass\n", encoding="utf-8")
 
-        with pytest.raises(SymbolNotFound, match="missing"):
+        with pytest.raises(SymbolNotFoundError, match="missing"):
             resolve_ast_node(NamePath("missing"), path)
 
     def test_raises_unsupported_name_path(self):
-        with pytest.raises(UnsupportedNamePath):
+        with pytest.raises(UnsupportedNamePathError):
             NamePath.parse("A/B/C")
 
     def test_file_not_found_propagates(self, tmp_path):
@@ -463,7 +463,7 @@ class TestResolveNamePosition:
 
         with (
             mock.patch("uncoded.resolver.resolve_ast_node", return_value=ast.Pass()),
-            pytest.raises(UnsupportedNamePath),
+            pytest.raises(UnsupportedNamePathError),
         ):
             resolve_name_position(NamePath("anything"), path)
 

@@ -18,11 +18,11 @@ class NamePath(NamedTuple):
     def parse(cls, s: str) -> "NamePath":
         """Parse a raw name_path string into a validated NamePath.
 
-        Raises UnsupportedNamePath for more than two segments or any empty segment.
+        Raises UnsupportedNamePathError for more than two segments or any empty segment.
         """
         segments = s.split("/")
         if len(segments) > 2 or any(seg == "" for seg in segments):
-            raise UnsupportedNamePath(
+            raise UnsupportedNamePathError(
                 f"Unsupported name_path {s!r}: use 'name' or 'Class/member'"
             )
         head = segments[0]
@@ -34,11 +34,11 @@ class NamePath(NamedTuple):
         return f"{self.head}/{self.tail}" if self.tail is not None else self.head
 
 
-class SymbolNotFound(Exception):
+class SymbolNotFoundError(Exception):
     """Raised when name_path cannot be found in the given file."""
 
 
-class UnsupportedNamePath(Exception):
+class UnsupportedNamePathError(Exception):
     """Raised when name_path does not match a supported shape.
 
     Supported shapes are 'name' (one segment) or 'Class/member' (two segments),
@@ -81,7 +81,7 @@ def resolve_name_position(name_path: NamePath, in_path: Path) -> tuple[int, int]
     if isinstance(node, ast.TypeAlias):
         return (node.name.lineno - 1, node.name.col_offset)
     node_type = type(node).__name__
-    raise UnsupportedNamePath(
+    raise UnsupportedNamePathError(
         f"Cannot extract name position from {node_type} for {str(name_path)!r}"
     )
 
@@ -124,7 +124,7 @@ def resolve_ast_node_from_source(
             top_match = node
 
     if top_match is None:
-        raise SymbolNotFound(f"{str(name_path)!r} not found in {in_path}")
+        raise SymbolNotFoundError(f"{str(name_path)!r} not found in {in_path}")
 
     if tail is not None and isinstance(top_match, ast.ClassDef):
         return _resolve_class_member(
@@ -159,6 +159,6 @@ def _resolve_class_member(
                 match = node
 
     if match is None:
-        raise SymbolNotFound(f"{str(name_path)!r} not found in {in_path}")
+        raise SymbolNotFoundError(f"{str(name_path)!r} not found in {in_path}")
 
     return match

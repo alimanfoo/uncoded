@@ -123,7 +123,7 @@ class TestExtractStub:
         assert module.classes[0].bases == []
 
     @pytest.mark.parametrize(
-        "source,expected",
+        ("source", "expected"),
         [
             pytest.param(
                 "def f(x): pass\n",
@@ -430,7 +430,7 @@ class TestRenderStub:
         assert "async def fetch():\n    ...\n" in render_stub(module)
 
     @pytest.mark.parametrize(
-        "params,expected",
+        ("params", "expected"),
         [
             pytest.param(
                 [StubParam("x")],

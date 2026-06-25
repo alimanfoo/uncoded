@@ -6,7 +6,7 @@ import textwrap
 from unittest import mock
 import pytest
 from uncoded.body import resolve_body
-from uncoded.resolver import NamePath, SymbolNotFound, UnsupportedNamePath, resolve_ast_node, resolve_name_position
+from uncoded.resolver import NamePath, SymbolNotFoundError, UnsupportedNamePathError, resolve_ast_node, resolve_name_position
 
 class TestResolveBodyTopLevel:
     def test_function_without_decorators(self, tmp_path):
@@ -76,7 +76,7 @@ class TestResolveBodyClassMember:
     def test_not_found_in_class(self, tmp_path):
         ...
 
-class TestUnsupportedNamePath:
+class TestUnsupportedNamePathError:
     SUPPORTED_SHAPES = ("'name'", "'Class/member'")
 
     def _assert_raises(self, name_path):
