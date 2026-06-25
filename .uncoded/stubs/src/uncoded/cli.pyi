@@ -4,6 +4,7 @@
 import argparse
 import sys
 from pathlib import Path
+from typing import Literal
 from uncoded.body import resolve_body
 from uncoded.config import ConfigError, read_config
 from uncoded.docs_map import build_docs_map, iter_doc_files, render_docs_map
@@ -15,7 +16,7 @@ from uncoded.skill import sync_skills
 from uncoded.stubs import build_stubs, remove_all_stubs
 from uncoded.sync import remove_file, sync_file
 
-def _validate_root(configured: Path, *, kind: str, project_root: Path, resolved_project_root: Path, accepts_md_file: bool) -> Path:
+def _validate_root(configured: Path, *, kind: Literal['source', 'doc'], project_root: Path, resolved_project_root: Path, accepts_md_file: bool) -> Path:
     ...
 
 def _sync_code_artefacts(*, build: bool, configured_source_roots: list[Path], project_root: Path, resolved_project_root: Path, check: bool) -> int:

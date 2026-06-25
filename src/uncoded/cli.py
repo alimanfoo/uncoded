@@ -3,6 +3,7 @@
 import argparse
 import sys
 from pathlib import Path
+from typing import Literal
 
 from uncoded.body import resolve_body
 from uncoded.config import ConfigError, read_config
@@ -19,7 +20,7 @@ from uncoded.sync import remove_file, sync_file
 def _validate_root(
     configured: Path,
     *,
-    kind: str,
+    kind: Literal["source", "doc"],
     project_root: Path,
     resolved_project_root: Path,
     accepts_md_file: bool,
