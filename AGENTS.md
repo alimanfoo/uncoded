@@ -69,6 +69,22 @@ uv run pytest
 uv run pytest tests/test_stubs.py --no-cov
 ```
 
+## Linting and formatting
+
+Run `ruff check --fix` and `ruff format` before committing. The pre-commit hooks
+run the same fixes automatically. If a hook rewrites files, the commit fails.
+Re-stage the modified files and commit again. The uncoded sync hook follows the
+same pattern.
+
+Never commit with `--no-verify`. CI runs `pre-commit run --all-files` on every
+pull request and will fail a build where a hook was skipped.
+
+Do not pass `--unsafe-fixes` unless a specific violation needs it and you have
+reviewed the change.
+
+A C901 violation means a function is too complex to pass the check. Refactor or
+flatten it rather than raising the `max-complexity` threshold.
+
 ## Docstrings
 
 Public symbols need a pep257 plain-prose docstring. Magic methods are included.
