@@ -39,7 +39,7 @@ def _extract_class_members(node: ast.ClassDef) -> ClassInfo:
                 attributes.append(name)
         elif isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)):
             kind = property_kind(n)
-            if kind == "setter" or kind == "deleter":
+            if kind in {"setter", "deleter"}:
                 continue
             if kind == "property":
                 attributes.append(n.name)

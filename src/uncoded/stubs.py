@@ -182,7 +182,7 @@ def _extract_class(node: ast.ClassDef) -> StubClass:
                 attributes.append(assignment)
         elif isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
             kind = property_kind(child)
-            if kind == "setter" or kind == "deleter":
+            if kind in {"setter", "deleter"}:
                 continue
             if kind == "property":
                 attributes.append(_property_attribute(child))

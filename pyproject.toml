@@ -83,6 +83,10 @@ select = [
     "TC", # flake8-type-checking
     "TID", # flake8-tidy-imports
     "PTH", # flake8-use-pathlib
+    "RET", # flake8-return
+    "PLR5501", # Pylint: elif after return
+    "PLR1711", # Pylint: useless return
+    "PLR1714", # Pylint: repeated equality comparison
 ]
 
 [tool.ruff.lint.mccabe]
