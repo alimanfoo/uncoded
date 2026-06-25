@@ -140,21 +140,18 @@ must pass `encoding=`. `tools/check_encoding.py` enforces this as a pre-commit
 hook. It covers receiver types that ruff PLW1514 misses.
 
 **Complexity ceiling.** The value is in `[tool.ruff.lint.mccabe]` in
-`pyproject.toml`. See "Linting and formatting" above for the response to a C901
-violation.
+`pyproject.toml`. See [Linting and formatting](#linting-and-formatting) for the
+response to a C901 violation.
 
 **Index committed.** Commit `.uncoded/` and keep it current with the pre-commit
-hook. See "Commands" and "Dev setup" above.
-
-**`namespace.yaml` first.** Load `.uncoded/namespace.yaml` before any symbol
-lookup. The `uncoded-code-navigation` skill has the full dispatch rule.
+hook. See [Commands](#commands) and [Dev setup](#dev-setup).
 
 ### Tools
 
-`tools/` holds custom check scripts that complement ruff. The current script is
-`check_encoding.py` (encoding invariant). Ruff lints the whole tree, so `tools/`
-is in scope for all ruff rules. It sits outside the coverage gate
-(`source = ["src"]` in `[tool.coverage.run]`). Its scripts have no coverage net.
+`tools/` holds custom check scripts that complement ruff. Ruff lints the whole
+tree, so `tools/` is in scope for all ruff rules. It sits outside the coverage
+gate (`source = ["src"]` in `[tool.coverage.run]`). Its scripts have no coverage
+net.
 
 ## Releasing
 
