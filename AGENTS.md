@@ -55,12 +55,12 @@ uv run uncoded body <name_path> --in <relative_path>
 # Find references to a symbol
 uv run uncoded refs <name_path> --in <relative_path>
 
-# Run tests. pytest enforces branch coverage. See [tool.coverage.report]
-# in pyproject.toml. Set PYTHONWARNDEFAULTENCODING=1 or the sentinel test fails.
+# Run tests. PYTHONWARNDEFAULTENCODING=1 arms the EncodingWarning gate.
+# pytest enforces branch coverage. See [tool.coverage.report] in pyproject.toml.
 PYTHONWARNDEFAULTENCODING=1 uv run pytest
 
 # Run a subset of tests without the coverage gate
-uv run pytest tests/test_stubs.py --no-cov
+PYTHONWARNDEFAULTENCODING=1 uv run pytest tests/test_stubs.py --no-cov
 
 # Run the full pre-commit suite (the same checks CI runs)
 uv run pre-commit run --all-files
