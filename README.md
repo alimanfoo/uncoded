@@ -245,55 +245,6 @@ The review saves a timestamped Markdown report to `.uncoded/reviews/`, with
 verbatim evidence and a confidence level (high / medium / low) for each finding.
 The review only reports. The human decides what to follow up.
 
-## Dev setup
-
-Clone, install dependencies, and wire up the pre-commit hooks:
-
-```sh
-git clone https://github.com/alimanfoo/uncoded
-cd uncoded
-uv sync --extra dev
-uv run pre-commit install
-```
-
-Run the tests. pytest enforces branch coverage. The threshold is in
-`[tool.coverage.report]` in `pyproject.toml`.
-
-```sh
-uv run pytest
-```
-
-To run a subset of tests without the coverage gate:
-
-```sh
-uv run pytest tests/test_stubs.py --no-cov
-```
-
-Run the same checks CI's lint job runs:
-
-```sh
-uv run pre-commit run --all-files
-```
-
-When testing local changes to uncoded, use `uv run uncoded ...` rather than
-`uvx uncoded ...`. `uvx` always pulls the published package from PyPI. `uv run`
-runs the local editable install. For example, after editing source files run
-`uv run uncoded sync` to regenerate the index from the working tree.
-
-This repo uses uncoded on itself: `.pre-commit-config.yaml` runs
-`uv run uncoded sync` as a pre-commit hook. On each commit the hook regenerates
-`.uncoded/namespace.yaml`, the stub files under `.uncoded/stubs/`,
-`.uncoded/docs.yaml`, and the skill files under `.claude/skills/` and
-`.agents/skills/`. If the hook modifies any of those files the commit fails.
-Re-stage the changes and commit again.
-
-### Note for Windows contributors
-
-`CLAUDE.md` is a symlink to `AGENTS.md`. On macOS and Linux this is transparent.
-On Windows, you must enable git's `core.symlinks` setting. Without it, git
-checks `CLAUDE.md` out as a plain file containing the literal string `AGENTS.md`
-rather than following the symlink.
-
 ## Upgrading from v1
 
 Version 2.0.0 replaces injection with skills. In v1, `uncoded sync` always
@@ -339,20 +290,6 @@ upgrading:
    - Load the `uncoded-doc-navigation` skill before searching, reading or editing any docs.
    ```
 
-## Releasing
+## Contributing
 
-GitHub releases publish to PyPI through `.github/workflows/publish.yml`. The
-workflow uses PyPI Trusted Publishing, so it does not need a `PYPI_TOKEN` or any
-other long-lived publishing secret.
-
-The PyPI trusted publisher is configured for:
-
-- PyPI project: `uncoded`
-- Owner: `alimanfoo`
-- Repository: `uncoded`
-- Workflow: `publish.yml`
-- Environment: `pypi`
-
-Create and publish a GitHub release from the release tag. The `published`
-release event builds the source distribution and wheel, then uploads them to
-PyPI.
+See [AGENTS.md](AGENTS.md).
