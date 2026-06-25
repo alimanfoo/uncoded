@@ -81,6 +81,7 @@ select = [
     "PERF", # perflint (performance anti-patterns)
     "RUF", # Ruff-specific rules
     "PLE", # Pylint errors
+    "PLW1514", # Pylint: unspecified-encoding
     "PLW2901", # Pylint: redefined loop variable
     "PLC0415", # Pylint: import not at top of file
     "TC", # flake8-type-checking
