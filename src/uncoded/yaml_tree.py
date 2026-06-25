@@ -6,7 +6,7 @@ import yaml
 class _CleanDumper(yaml.SafeDumper):
     """YAML dumper that indents list items and suppresses 'null' values."""
 
-    def increase_indent(self, flow=False, indentless=False):
+    def increase_indent(self, flow: bool = False, indentless: bool = False) -> None:
         """Force list items to be indented relative to their parent key."""
         return super().increase_indent(flow, False)
 
