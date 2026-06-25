@@ -1,6 +1,6 @@
 # uncoded
 
-> CLAUDE.md is a symlink to this file. Edit AGENTS.md.
+CLAUDE.md is a symlink to this file. Edit AGENTS.md.
 
 ## Problem
 
