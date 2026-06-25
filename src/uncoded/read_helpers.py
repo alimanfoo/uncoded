@@ -46,6 +46,8 @@ def read_doc_text_or_warn(
 ) -> str | None:
     """Read a Markdown document as UTF-8, returning None and warning on failure.
 
+    Strips a leading UTF-8 BOM on read. Files without a BOM are unaffected.
+
     Returns None and prints a one-line warning to stderr when the file is
     unreadable or contains non-UTF-8 bytes, so callers can skip-and-continue
     without aborting the whole sync.
@@ -55,7 +57,7 @@ def read_doc_text_or_warn(
     skip messages in the same iterator.
     """
     try:
-        return path.read_text(encoding="utf-8")
+        return path.read_text(encoding="utf-8-sig")
     except (UnicodeDecodeError, OSError) as e:
         label = warning_path if warning_path is not None else path
         print(f"warning: skipping {label}: {e}", file=sys.stderr)

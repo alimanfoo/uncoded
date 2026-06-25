@@ -73,7 +73,7 @@ def _skill_path(root: Path, name: str) -> Path:
 
 
 def _render_content(*, skill: Skill) -> str:
-    """Render the full SKILL.md content: YAML frontmatter followed by the skill body."""
+    """Render the full SKILL.md content."""
     front = yaml.dump(
         {"name": skill.name, "description": skill.description},
         default_flow_style=False,

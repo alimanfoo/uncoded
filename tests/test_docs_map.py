@@ -173,6 +173,15 @@ class TestIterDocFiles:
         err = capsys.readouterr().err
         assert "warning: skipping bad.md" in err
 
+    def test_bom_prefixed_file_heading_appears(self, tmp_path):
+        # A UTF-8 BOM before the first heading must not suppress it.
+        bom = b"\xef\xbb\xbf"
+        (tmp_path / "guide.md").write_bytes(bom + b"# Guide\n")
+        results = list(iter_doc_files(tmp_path, tmp_path))
+        assert len(results) == 1
+        text, _rel = results[0]
+        assert extract_headings(text) == [(1, "Guide")]
+
 
 class TestBuildDocsMap:
     def test_empty_files(self):

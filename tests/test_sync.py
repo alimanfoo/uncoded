@@ -8,24 +8,24 @@ class TestSyncFile:
         path = tmp_path / "out.txt"
         changed = sync_file(path, "hello", project_root=tmp_path)
         assert changed is True
-        assert path.read_text() == "hello"
+        assert path.read_text(encoding="utf-8") == "hello"
 
     def test_creates_parent_directories(self, tmp_path):
         path = tmp_path / "nested" / "deep" / "out.txt"
         changed = sync_file(path, "hello", project_root=tmp_path)
         assert changed is True
-        assert path.read_text() == "hello"
+        assert path.read_text(encoding="utf-8") == "hello"
 
     def test_updates_when_content_differs(self, tmp_path):
         path = tmp_path / "out.txt"
-        path.write_text("old")
+        path.write_text("old", encoding="utf-8")
         changed = sync_file(path, "new", project_root=tmp_path)
         assert changed is True
-        assert path.read_text() == "new"
+        assert path.read_text(encoding="utf-8") == "new"
 
     def test_noop_when_content_matches(self, tmp_path):
         path = tmp_path / "out.txt"
-        path.write_text("same")
+        path.write_text("same", encoding="utf-8")
         mtime_before = path.stat().st_mtime_ns
         changed = sync_file(path, "same", project_root=tmp_path)
         assert changed is False
@@ -40,14 +40,14 @@ class TestSyncFile:
 
     def test_check_mode_does_not_update_file(self, tmp_path):
         path = tmp_path / "out.txt"
-        path.write_text("old")
+        path.write_text("old", encoding="utf-8")
         changed = sync_file(path, "new", project_root=tmp_path, check=True)
         assert changed is True
-        assert path.read_text() == "old"
+        assert path.read_text(encoding="utf-8") == "old"
 
     def test_check_mode_reports_noop_when_clean(self, tmp_path):
         path = tmp_path / "out.txt"
-        path.write_text("same")
+        path.write_text("same", encoding="utf-8")
         changed = sync_file(path, "same", project_root=tmp_path, check=True)
         assert changed is False
 
@@ -61,7 +61,7 @@ class TestSyncFile:
 class TestRemoveFile:
     def test_removes_existing_file(self, tmp_path):
         path = tmp_path / "out.txt"
-        path.write_text("data")
+        path.write_text("data", encoding="utf-8")
         changed = remove_file(path, project_root=tmp_path)
         assert changed is True
         assert not path.exists()
@@ -73,7 +73,7 @@ class TestRemoveFile:
 
     def test_check_mode_does_not_remove(self, tmp_path):
         path = tmp_path / "out.txt"
-        path.write_text("data")
+        path.write_text("data", encoding="utf-8")
         changed = remove_file(path, project_root=tmp_path, check=True)
         assert changed is True
         assert path.exists()
@@ -96,7 +96,7 @@ class TestSyncFileProjectRootAnchor:
         changed = sync_file(rel, "hello", project_root=tmp_path)
 
         assert changed is True
-        assert (tmp_path / rel).read_text() == "hello"
+        assert (tmp_path / rel).read_text(encoding="utf-8") == "hello"
         # No write under cwd.
         assert not (sub / rel).exists()
 
@@ -123,7 +123,7 @@ class TestRemoveFileProjectRootAnchor:
         rel = Path("nested/out.txt")
         target = tmp_path / rel
         target.parent.mkdir(parents=True)
-        target.write_text("data")
+        target.write_text("data", encoding="utf-8")
 
         changed = remove_file(rel, project_root=tmp_path)
         assert changed is True

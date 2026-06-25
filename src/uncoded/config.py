@@ -52,8 +52,7 @@ def _find_config_file(*, start: Path) -> Path | None:
     - Only ``pyproject.toml`` with ``[tool.uncoded]`` → home is the pyproject.
     - Only ``.uncoded.toml`` → home is the ``.uncoded.toml``.
     - ``pyproject.toml`` without ``[tool.uncoded]``, no ``.uncoded.toml``
-      → home is the pyproject (bare Python project; ``read_config`` returns an
-      empty-roots Config, which ``_sync`` turns into "nothing to index").
+      → home is the pyproject (bare Python project; roots default to empty).
     - ``pyproject.toml`` without ``[tool.uncoded]`` AND ``.uncoded.toml``
       → home is the ``.uncoded.toml`` (bare pyproject does not shadow it).
     - Neither file → keep walking up.
@@ -87,19 +86,21 @@ def _find_config_file(*, start: Path) -> Path | None:
         current = parent
 
 
-def read_config(start: Path) -> Config | None:
+def read_config(start: Path) -> Config:
     """Locate the config file and read all uncoded settings from it.
 
     Walks up from ``start`` looking for ``pyproject.toml`` or
     ``.uncoded.toml`` (see ``_find_config_file`` for precedence rules).
-    Returns None when no config file is found. Raises :exc:`ConfigError`
-    when two config files in the same directory both configure uncoded. A
-    found config file with no uncoded settings returns a Config with empty
-    root lists — the caller raises "nothing to index" when both are empty.
+    Raises :exc:`ConfigError` when no config file is found, or when two
+    config files in the same directory both configure uncoded. A found
+    config file with no uncoded settings returns a Config with empty root
+    lists.
     """
     config_file = _find_config_file(start=start)
     if config_file is None:
-        return None
+        raise ConfigError(
+            "No pyproject.toml or .uncoded.toml found. Create one to configure uncoded."
+        )
 
     with config_file.open("rb") as f:
         data = tomllib.load(f)

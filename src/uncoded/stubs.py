@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from uncoded.ast_helpers import property_kind
+from uncoded.markers import GENERATED_MARKER
 from uncoded.sync import remove_file, sync_file
 
 # Width cap for inlining the right-hand side of an assignment. If the unparsed
@@ -262,7 +263,7 @@ def _render_assignment(a: StubAssignment, indent: str = "") -> str:
 
 def render_stub(module: StubModule) -> str:
     """Render a StubModule as a .pyi file string."""
-    lines: list[str] = [f"# {module.rel_path}", ""]
+    lines: list[str] = [f"# {GENERATED_MARKER}", f"# {module.rel_path}", ""]
 
     if module.imports:
         lines.extend(module.imports)

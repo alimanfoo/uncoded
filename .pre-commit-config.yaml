@@ -27,6 +27,11 @@ repos:
         entry: uvx ty check src tests
         language: system
         pass_filenames: false
+      - id: check-encoding
+        name: check encoding
+        entry: uv run python tools/check_encoding.py
+        language: system
+        pass_filenames: false
       # Runs before uncoded so the generated skill files are built from
       # already-formatted sources. The generated skill dirs are excluded
       # because uncoded sync owns those files.

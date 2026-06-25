@@ -35,8 +35,9 @@ def find_refs(name_path: NamePath, in_path: Path) -> list[Reference]:
     references, and returns results with 1-indexed line/col sorted by
     (rel_path, line, col). rel_path is relative to the current working
     directory when possible; otherwise absolute.
-    Propagates SymbolNotFound, OSError, UnicodeDecodeError, and SyntaxError
-    from resolve_name_position.
+    Propagates SymbolNotFound from resolve_name_position. OSError,
+    UnicodeDecodeError, and SyntaxError propagate from resolve_name_position
+    and from read_source_text in the LSP exchange.
     """
     position = resolve_name_position(name_path, in_path)
     raw_refs = _query_references(in_path=in_path, position=position)

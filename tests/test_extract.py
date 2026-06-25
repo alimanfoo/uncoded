@@ -231,7 +231,7 @@ class TestIterAndExtract:
         src = tmp_path / "src"
         pkg = src / "mypackage"
         pkg.mkdir(parents=True)
-        (pkg / "__init__.py").write_text("")
+        (pkg / "__init__.py").write_text("", encoding="utf-8")
         (pkg / "core.py").write_text(
             textwrap.dedent("""\
                 class Engine:
@@ -240,10 +240,11 @@ class TestIterAndExtract:
 
                 def start():
                     pass
-            """)
+            """),
+            encoding="utf-8",
         )
-        (pkg / "_internal.py").write_text("def helper(): pass\n")
-        (pkg / "empty.py").write_text("# nothing here\n")
+        (pkg / "_internal.py").write_text("def helper(): pass\n", encoding="utf-8")
+        (pkg / "empty.py").write_text("# nothing here\n", encoding="utf-8")
 
         modules = extract_modules(iter_source_files(src, project_root=tmp_path))
 
@@ -258,9 +259,11 @@ class TestIterAndExtract:
         pkg = src / "mypackage"
         sub = pkg / "utils"
         sub.mkdir(parents=True)
-        (pkg / "__init__.py").write_text("")
-        (sub / "__init__.py").write_text("")
-        (sub / "formatting.py").write_text("def format_output(): pass\n")
+        (pkg / "__init__.py").write_text("", encoding="utf-8")
+        (sub / "__init__.py").write_text("", encoding="utf-8")
+        (sub / "formatting.py").write_text(
+            "def format_output(): pass\n", encoding="utf-8"
+        )
 
         modules = extract_modules(iter_source_files(src, project_root=tmp_path))
 
@@ -271,8 +274,8 @@ class TestIterAndExtract:
         src = tmp_path / "src"
         pkg = src / "mypackage"
         pkg.mkdir(parents=True)
-        (pkg / "__init__.py").write_text("def create(): pass\n")
-        (pkg / "core.py").write_text("def run(): pass\n")
+        (pkg / "__init__.py").write_text("def create(): pass\n", encoding="utf-8")
+        (pkg / "core.py").write_text("def run(): pass\n", encoding="utf-8")
 
         modules = extract_modules(iter_source_files(src, project_root=tmp_path))
 
@@ -284,8 +287,8 @@ class TestIterAndExtract:
         src = tmp_path / "src"
         pkg = src / "mypackage"
         pkg.mkdir(parents=True)
-        (pkg / "__init__.py").write_text("")
-        (pkg / "core.py").write_text("def run(): pass\n")
+        (pkg / "__init__.py").write_text("", encoding="utf-8")
+        (pkg / "core.py").write_text("def run(): pass\n", encoding="utf-8")
 
         modules = extract_modules(iter_source_files(src, project_root=tmp_path))
 
@@ -296,9 +299,9 @@ class TestIterAndExtract:
         src = tmp_path / "src"
         pkg = src / "mypackage"
         pkg.mkdir(parents=True)
-        (pkg / "__init__.py").write_text("")
-        (pkg / "good.py").write_text("def works(): pass\n")
-        (pkg / "bad.py").write_text("def broken(:\n")
+        (pkg / "__init__.py").write_text("", encoding="utf-8")
+        (pkg / "good.py").write_text("def works(): pass\n", encoding="utf-8")
+        (pkg / "bad.py").write_text("def broken(:\n", encoding="utf-8")
 
         modules = extract_modules(iter_source_files(src, project_root=tmp_path))
 

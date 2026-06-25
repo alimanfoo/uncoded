@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 
 from uncoded.extract import iter_source_files
+from uncoded.markers import GENERATED_MARKER
 from uncoded.stubs import (
     StubAssignment,
     StubClass,
@@ -386,7 +387,9 @@ class TestExtractStub:
 class TestRenderStub:
     def test_header_contains_path(self):
         module = StubModule(rel_path="src/pkg/mod.py")
-        assert render_stub(module).startswith("# src/pkg/mod.py")
+        lines = render_stub(module).splitlines()
+        assert lines[0] == f"# {GENERATED_MARKER}"
+        assert lines[1] == "# src/pkg/mod.py"
 
     def test_imports_rendered(self):
         module = StubModule(
@@ -670,14 +673,14 @@ class TestBuildStubs:
 
     def test_writes_expected_stubs(self, tmp_path):
         src, out = _setup(tmp_path)
-        (src / "foo.py").write_text("def hello(): pass\n")
+        (src / "foo.py").write_text("def hello(): pass\n", encoding="utf-8")
         _build(src, out, tmp_path)
         assert (out / "src" / "foo.pyi").exists()
 
     def test_removes_orphan_stub_when_source_deleted(self, tmp_path):
         src, out = _setup(tmp_path)
-        (src / "foo.py").write_text("def hello(): pass\n")
-        (src / "bar.py").write_text("def goodbye(): pass\n")
+        (src / "foo.py").write_text("def hello(): pass\n", encoding="utf-8")
+        (src / "bar.py").write_text("def goodbye(): pass\n", encoding="utf-8")
         _build(src, out, tmp_path)
         assert (out / "src" / "bar.pyi").exists()
 
@@ -688,7 +691,7 @@ class TestBuildStubs:
 
     def test_removes_orphan_stub_when_source_renamed(self, tmp_path):
         src, out = _setup(tmp_path)
-        (src / "old_name.py").write_text("def hello(): pass\n")
+        (src / "old_name.py").write_text("def hello(): pass\n", encoding="utf-8")
         _build(src, out, tmp_path)
         assert (out / "src" / "old_name.pyi").exists()
 
@@ -701,7 +704,7 @@ class TestBuildStubs:
         src, out = _setup(tmp_path)
         pkg = src / "pkg"
         pkg.mkdir()
-        (pkg / "mod.py").write_text("def hello(): pass\n")
+        (pkg / "mod.py").write_text("def hello(): pass\n", encoding="utf-8")
         _build(src, out, tmp_path)
         assert (out / "src" / "pkg" / "mod.pyi").exists()
 
@@ -715,8 +718,8 @@ class TestBuildStubs:
         src, out = _setup(tmp_path)
         tests = tmp_path / "tests"
         tests.mkdir()
-        (src / "foo.py").write_text("def hello(): pass\n")
-        (tests / "test_foo.py").write_text("def test_hello(): pass\n")
+        (src / "foo.py").write_text("def hello(): pass\n", encoding="utf-8")
+        (tests / "test_foo.py").write_text("def test_hello(): pass\n", encoding="utf-8")
 
         _build(src, out, tmp_path)
         _build(tests, out, tmp_path)
@@ -729,7 +732,7 @@ class TestBuildStubs:
 
     def test_no_op_when_clean(self, tmp_path):
         src, out = _setup(tmp_path)
-        (src / "foo.py").write_text("def hello(): pass\n")
+        (src / "foo.py").write_text("def hello(): pass\n", encoding="utf-8")
         _build(src, out, tmp_path)
         # Second build with no source changes should not error and should
         # leave the stub in place.
@@ -738,20 +741,22 @@ class TestBuildStubs:
 
     def test_reports_count_on_first_build(self, tmp_path):
         src, out = _setup(tmp_path)
-        (src / "foo.py").write_text("def hello(): pass\n")
-        (src / "bar.py").write_text("def goodbye(): pass\n")
+        (src / "foo.py").write_text("def hello(): pass\n", encoding="utf-8")
+        (src / "bar.py").write_text("def goodbye(): pass\n", encoding="utf-8")
         assert _build(src, out, tmp_path) == 2
 
     def test_reports_zero_when_clean(self, tmp_path):
         src, out = _setup(tmp_path)
-        (src / "foo.py").write_text("def hello(): pass\n")
+        (src / "foo.py").write_text("def hello(): pass\n", encoding="utf-8")
         _build(src, out, tmp_path)
         assert _build(src, out, tmp_path) == 0
 
     def test_skips_module_with_no_symbols(self, tmp_path):
         src, out = _setup(tmp_path)
-        (src / "empty.py").write_text('"""Only a module docstring."""\n')
-        (src / "foo.py").write_text("def hello(): pass\n")
+        (src / "empty.py").write_text(
+            '"""Only a module docstring."""\n', encoding="utf-8"
+        )
+        (src / "foo.py").write_text("def hello(): pass\n", encoding="utf-8")
         _build(src, out, tmp_path)
         assert not (out / "src" / "empty.pyi").exists()
         assert (out / "src" / "foo.pyi").exists()
@@ -762,29 +767,31 @@ class TestBuildStubsCheckMode:
 
     def test_does_not_write_stub_in_check_mode(self, tmp_path):
         src, out = _setup(tmp_path)
-        (src / "foo.py").write_text("def hello(): pass\n")
+        (src / "foo.py").write_text("def hello(): pass\n", encoding="utf-8")
         changes = _build(src, out, tmp_path, check=True)
         assert changes == 1
         assert not (out / "src" / "foo.pyi").exists()
 
     def test_zero_changes_when_clean(self, tmp_path):
         src, out = _setup(tmp_path)
-        (src / "foo.py").write_text("def hello(): pass\n")
+        (src / "foo.py").write_text("def hello(): pass\n", encoding="utf-8")
         _build(src, out, tmp_path)
         assert _build(src, out, tmp_path, check=True) == 0
 
     def test_detects_stale_stub_content(self, tmp_path):
         src, out = _setup(tmp_path)
-        (src / "foo.py").write_text("def hello(): pass\n")
+        (src / "foo.py").write_text("def hello(): pass\n", encoding="utf-8")
         _build(src, out, tmp_path)
         # Simulate a source edit that would change the stub.
-        (src / "foo.py").write_text("def hello(name: str) -> str: pass\n")
+        (src / "foo.py").write_text(
+            "def hello(name: str) -> str: pass\n", encoding="utf-8"
+        )
         assert _build(src, out, tmp_path, check=True) == 1
 
     def test_detects_orphan_stub_without_removing_it(self, tmp_path):
         src, out = _setup(tmp_path)
-        (src / "foo.py").write_text("def hello(): pass\n")
-        (src / "bar.py").write_text("def goodbye(): pass\n")
+        (src / "foo.py").write_text("def hello(): pass\n", encoding="utf-8")
+        (src / "bar.py").write_text("def goodbye(): pass\n", encoding="utf-8")
         _build(src, out, tmp_path)
         (src / "bar.py").unlink()
         assert _build(src, out, tmp_path, check=True) == 1
@@ -808,7 +815,7 @@ class TestWriteStubs:
         )
 
         assert changes == 1
-        assert (out / "src" / "foo.pyi").read_text() == "# stub\n"
+        assert (out / "src" / "foo.pyi").read_text(encoding="utf-8") == "# stub\n"
 
     def test_check_mode_does_not_write(self, tmp_path):
         src = tmp_path / "src"
@@ -832,7 +839,7 @@ class TestWriteStubs:
         src.mkdir()
         out = tmp_path / "stubs"
         (out / "src" / "pkg").mkdir(parents=True)
-        (out / "src" / "pkg" / "orphan.pyi").write_text("# stale\n")
+        (out / "src" / "pkg" / "orphan.pyi").write_text("# stale\n", encoding="utf-8")
 
         changes = _write_stubs(
             stubs={},
@@ -869,7 +876,9 @@ class TestWriteStubs:
         )
 
         assert changes == 1
-        assert (tmp_path / out / "src" / "foo.pyi").read_text() == "# stub\n"
+        assert (tmp_path / out / "src" / "foo.pyi").read_text(
+            encoding="utf-8"
+        ) == "# stub\n"
         assert not (sub / out / "src" / "foo.pyi").exists()
 
     def test_project_root_anchors_orphan_pruning_independent_of_cwd(
@@ -882,7 +891,9 @@ class TestWriteStubs:
         src.mkdir()
         out = Path("stubs")
         (tmp_path / out / "src" / "pkg").mkdir(parents=True)
-        (tmp_path / out / "src" / "pkg" / "orphan.pyi").write_text("# stale\n")
+        (tmp_path / out / "src" / "pkg" / "orphan.pyi").write_text(
+            "# stale\n", encoding="utf-8"
+        )
 
         changes = _write_stubs(
             stubs={},
@@ -920,7 +931,7 @@ class TestRemoveAllStubs:
         stubs_dir = tmp_path / ".uncoded" / "stubs"
         pyi = stubs_dir / rel_pyi
         pyi.parent.mkdir(parents=True, exist_ok=True)
-        pyi.write_text("# stub\n")
+        pyi.write_text("# stub\n", encoding="utf-8")
         return stubs_dir, pyi
 
     def test_noop_when_output_dir_absent(self, tmp_path):
@@ -974,8 +985,8 @@ class TestRemoveAllStubs:
     def test_returns_count_of_pyi_files(self, tmp_path):
         stubs_dir = tmp_path / ".uncoded" / "stubs"
         (stubs_dir / "src").mkdir(parents=True)
-        (stubs_dir / "src" / "a.pyi").write_text("# a\n")
-        (stubs_dir / "src" / "b.pyi").write_text("# b\n")
+        (stubs_dir / "src" / "a.pyi").write_text("# a\n", encoding="utf-8")
+        (stubs_dir / "src" / "b.pyi").write_text("# b\n", encoding="utf-8")
         changes = remove_all_stubs(
             Path(".uncoded/stubs"), project_root=tmp_path, check=False
         )

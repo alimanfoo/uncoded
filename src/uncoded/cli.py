@@ -3,6 +3,7 @@
 import argparse
 import sys
 from pathlib import Path
+from typing import Literal
 
 from uncoded.body import resolve_body
 from uncoded.config import ConfigError, read_config
@@ -14,6 +15,42 @@ from uncoded.resolver import NamePath, SymbolNotFound, UnsupportedNamePath
 from uncoded.skill import sync_skills
 from uncoded.stubs import build_stubs, remove_all_stubs
 from uncoded.sync import remove_file, sync_file
+
+
+def _validate_root(
+    configured: Path,
+    *,
+    kind: Literal["source", "doc"],
+    project_root: Path,
+    resolved_project_root: Path,
+    accepts_md_file: bool,
+) -> Path:
+    """Resolve configured against project_root and validate the result.
+
+    Raises ConfigError if the resolved path falls outside the project root or
+    is not a valid target. When accepts_md_file is True, a lone .md file is
+    also valid. kind selects the noun used in the error messages.
+    """
+    resolved = (project_root / configured).resolve()
+    if not resolved.is_relative_to(resolved_project_root):
+        raise ConfigError(
+            f"{kind} root {configured} is outside the project root. "
+            f"Check {kind}-roots in your uncoded config file."
+        )
+    is_valid = resolved.is_dir() or (
+        accepts_md_file and resolved.is_file() and resolved.suffix == ".md"
+    )
+    if not is_valid:
+        if accepts_md_file:
+            raise ConfigError(
+                f"{kind} root {configured} is not a directory or .md file. "
+                f"Check {kind}-roots in your uncoded config file."
+            )
+        raise ConfigError(
+            f"{kind} root {configured} is not a directory. "
+            f"Check {kind}-roots in your uncoded config file."
+        )
+    return resolved
 
 
 def _sync_code_artefacts(
@@ -42,18 +79,15 @@ def _sync_code_artefacts(
 
     source_roots: list[Path] = []
     for configured in configured_source_roots:
-        src_root = (project_root / configured).resolve()
-        if not src_root.is_relative_to(resolved_project_root):
-            raise ConfigError(
-                f"source root {configured} is outside the project root. "
-                "Check source-roots in your uncoded config file."
+        source_roots.append(
+            _validate_root(
+                configured,
+                kind="source",
+                project_root=project_root,
+                resolved_project_root=resolved_project_root,
+                accepts_md_file=False,
             )
-        if not src_root.is_dir():
-            raise ConfigError(
-                f"source root {configured} is not a directory. "
-                "Check source-roots in your uncoded config file."
-            )
-        source_roots.append(src_root)
+        )
 
     roots_with_files = [
         (src_root, list(iter_source_files(src_root, project_root=project_root)))
@@ -102,31 +136,17 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
 
     try:
         config = read_config(start)
-    except ConfigError as e:
-        print(f"Error: {e}", file=sys.stderr)
-        return 1
-    if config is None:
-        print(
-            "Error: No pyproject.toml or .uncoded.toml found. "
-            "Create one to configure uncoded.",
-            file=sys.stderr,
-        )
-        return 1
+        if not config.source_roots and not config.doc_roots:
+            raise ConfigError(
+                "nothing to index. "
+                "Add source-roots or doc-roots to [tool.uncoded] in pyproject.toml, "
+                "or as top-level keys in .uncoded.toml."
+            )
 
-    if not config.source_roots and not config.doc_roots:
-        print(
-            "Error: nothing to index. "
-            "Add source-roots or doc-roots to [tool.uncoded] in pyproject.toml, "
-            "or as top-level keys in .uncoded.toml.",
-            file=sys.stderr,
-        )
-        return 1
+        project_root = config.project_root
+        resolved_project_root = project_root.resolve()
+        changes = 0
 
-    project_root = config.project_root
-    resolved_project_root = project_root.resolve()
-    changes = 0
-
-    try:
         # Code artefacts — build when source_roots configured, else remove.
         build = bool(config.source_roots)
         code_result = _sync_code_artefacts(
@@ -148,21 +168,15 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
         if config.doc_roots:
             doc_roots: list[Path] = []
             for configured in config.doc_roots:
-                doc_root = (project_root / configured).resolve()
-                if not doc_root.is_relative_to(resolved_project_root):
-                    raise ConfigError(
-                        f"doc root {configured} is outside the project root. "
-                        "Check doc-roots in your uncoded config file."
+                doc_roots.append(
+                    _validate_root(
+                        configured,
+                        kind="doc",
+                        project_root=project_root,
+                        resolved_project_root=resolved_project_root,
+                        accepts_md_file=True,
                     )
-                is_valid = doc_root.is_dir() or (
-                    doc_root.is_file() and doc_root.suffix == ".md"
                 )
-                if not is_valid:
-                    raise ConfigError(
-                        f"doc root {configured} is not a directory or .md file. "
-                        "Check doc-roots in your uncoded config file."
-                    )
-                doc_roots.append(doc_root)
 
             all_doc_files = []
             for dr in doc_roots:
@@ -191,6 +205,24 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
     return 0
 
 
+def _report_lookup_error(exc: Exception, *, name_path: str, in_path: str) -> int:
+    """Print the CLI error message for a lookup failure and return 1.
+
+    Covers the four shared error arms for _body and _refs: unsupported name
+    path, symbol not found, file not found, and read/parse error.
+    FileNotFoundError is checked before OSError because it subclasses it.
+    """
+    if isinstance(exc, UnsupportedNamePath):
+        print(f"Error: {exc}", file=sys.stderr)
+    elif isinstance(exc, SymbolNotFound):
+        print(f"Error: {name_path!r} not found in {in_path}", file=sys.stderr)
+    elif isinstance(exc, FileNotFoundError):
+        print(f"Error: {in_path}: file not found.", file=sys.stderr)
+    else:
+        print(f"Error: {in_path}: {exc}", file=sys.stderr)
+    return 1
+
+
 def _body(*, name_path: str, in_path: str) -> int:
     """Print the source body of name_path in in_path to stdout.
 
@@ -201,18 +233,15 @@ def _body(*, name_path: str, in_path: str) -> int:
     target = Path(in_path)
     try:
         body = resolve_body(NamePath.parse(name_path), target)
-    except UnsupportedNamePath as e:
-        print(f"Error: {e}", file=sys.stderr)
-        return 1
-    except SymbolNotFound:
-        print(f"Error: {name_path!r} not found in {in_path}", file=sys.stderr)
-        return 1
-    except FileNotFoundError:
-        print(f"Error: {in_path}: file not found.", file=sys.stderr)
-        return 1
-    except (OSError, UnicodeDecodeError, SyntaxError) as e:
-        print(f"Error: {in_path}: {e}", file=sys.stderr)
-        return 1
+    except (
+        UnsupportedNamePath,
+        SymbolNotFound,
+        FileNotFoundError,
+        OSError,
+        UnicodeDecodeError,
+        SyntaxError,
+    ) as e:
+        return _report_lookup_error(e, name_path=name_path, in_path=in_path)
 
     sys.stdout.write(body)
     return 0
@@ -229,21 +258,18 @@ def _refs(*, name_path: str, in_path: str) -> int:
     """
     try:
         refs = find_refs(NamePath.parse(name_path), Path(in_path))
-    except UnsupportedNamePath as e:
-        print(f"Error: {e}", file=sys.stderr)
-        return 1
-    except SymbolNotFound:
-        print(f"Error: {name_path!r} not found in {in_path}", file=sys.stderr)
-        return 1
-    except FileNotFoundError:
-        print(f"Error: {in_path}: file not found.", file=sys.stderr)
-        return 1
-    except (OSError, UnicodeDecodeError, SyntaxError) as e:
-        print(f"Error: {in_path}: {e}", file=sys.stderr)
-        return 1
     except RuntimeError as e:
         print(f"Error: {e}", file=sys.stderr)
         return 1
+    except (
+        UnsupportedNamePath,
+        SymbolNotFound,
+        FileNotFoundError,
+        OSError,
+        UnicodeDecodeError,
+        SyntaxError,
+    ) as e:
+        return _report_lookup_error(e, name_path=name_path, in_path=in_path)
 
     for ref in refs:
         print(f"{ref.rel_path}:{ref.line}:{ref.col}")

@@ -142,7 +142,7 @@ class TestSyncSkills:
         ]
         for path in legacy_paths:
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text("old skill\n")
+            path.write_text("old skill\n", encoding="utf-8")
 
         assert (
             sync_skills(source=True, docs=False, project_root=tmp_path, check=False) > 0
@@ -158,7 +158,7 @@ class TestSyncSkills:
         ]
         for path in legacy_paths:
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text("old skill\n")
+            path.write_text("old skill\n", encoding="utf-8")
 
         assert (
             sync_skills(source=True, docs=False, project_root=tmp_path, check=True) > 0
@@ -205,7 +205,7 @@ class TestSyncSkills:
         for root in SKILL_ROOTS:
             legacy_dir = tmp_path / root / "coherence-review"
             legacy_dir.mkdir(parents=True, exist_ok=True)
-            (legacy_dir / "SKILL.md").write_text("old skill\n")
+            (legacy_dir / "SKILL.md").write_text("old skill\n", encoding="utf-8")
         sync_skills(source=True, docs=False, project_root=tmp_path, check=False)
         for root in SKILL_ROOTS:
             assert not (tmp_path / root / "coherence-review").exists()
@@ -215,7 +215,7 @@ class TestSyncSkills:
         sync_skills(source=True, docs=False, project_root=tmp_path, check=False)
         for root in SKILL_ROOTS:
             extra = tmp_path / root / "uncoded-coherence-review" / "extra.md"
-            extra.write_text("extra\n")
+            extra.write_text("extra\n", encoding="utf-8")
         sync_skills(source=False, docs=False, project_root=tmp_path, check=False)
         for root in SKILL_ROOTS:
             assert (tmp_path / root / "uncoded-coherence-review").is_dir()
@@ -321,7 +321,7 @@ class TestSyncSkillsProjectRootAnchor:
             for legacy in ("coherence-review", "uncoded-review"):
                 legacy_path = tmp_path / root / legacy / "SKILL.md"
                 legacy_path.parent.mkdir(parents=True, exist_ok=True)
-                legacy_path.write_text("old skill\n")
+                legacy_path.write_text("old skill\n", encoding="utf-8")
 
         sync_skills(source=True, docs=False, project_root=tmp_path, check=False)
 

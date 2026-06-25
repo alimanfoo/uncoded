@@ -1,0 +1,104 @@
+"""Enforce encoding= on every text read/write in src/, tests/, and tools/.
+
+Scans all .py files under those directories (recursively) for calls to
+.read_text(), .write_text(), builtin open(), and Path.open() that lack an
+encoding= keyword argument. Exits non-zero on any violation so pre-commit
+can block the commit.
+
+Replaces ruff PLW1514 with a name-based check that covers every text IO call
+regardless of receiver type, including fixture-derived receivers such as
+(tmp_path / "f.py").write_text(...) that PLW1514 misses because ruff cannot
+infer the Path type through pytest fixture injection.
+"""
+
+import ast
+import sys
+from pathlib import Path
+
+_SCAN_ROOTS = ["src", "tests", "tools"]
+
+
+def _open_mode(call: ast.Call, *, mode_position: int = 1) -> str | None:
+    """Return the literal mode string from an open() call, or None.
+
+    mode_position is the index of the mode positional argument: 1 for builtin
+    open(file, mode, ...) and 0 for Path.open(mode, ...).
+    Returns None when the mode argument is absent or not a string literal.
+    """
+    if len(call.args) > mode_position:
+        arg = call.args[mode_position]
+        if isinstance(arg, ast.Constant) and isinstance(arg.value, str):
+            return arg.value
+        return None
+    for kw in call.keywords:
+        if kw.arg == "mode":
+            if isinstance(kw.value, ast.Constant) and isinstance(kw.value.value, str):
+                return kw.value.value
+            return None
+    return None
+
+
+def check_file(path: Path) -> list[str]:
+    """Return one error string per violation found in path."""
+    try:
+        source = path.read_text(encoding="utf-8")
+    except OSError as e:
+        return [f"{path}: cannot read: {e}"]
+
+    try:
+        tree = ast.parse(source, filename=str(path))
+    except SyntaxError as e:
+        return [f"{path}:{e.lineno}: SyntaxError: {e.msg}"]
+
+    errors: list[str] = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call):
+            continue
+
+        func = node.func
+        has_encoding = any(kw.arg == "encoding" for kw in node.keywords)
+
+        if isinstance(func, ast.Attribute) and func.attr in ("read_text", "write_text"):
+            if not has_encoding:
+                errors.append(f"{path}:{node.lineno}: .{func.attr}() missing encoding=")
+
+        elif isinstance(func, ast.Attribute) and func.attr == "open":
+            # Skip tokenize.open — it auto-detects encoding from the file content.
+            if isinstance(func.value, ast.Name) and func.value.id == "tokenize":
+                continue
+            # Path.open(mode, ...) — mode is the first positional arg.
+            mode = _open_mode(node, mode_position=0)
+            if mode is not None and "b" in mode:
+                continue
+            if not has_encoding:
+                errors.append(f"{path}:{node.lineno}: .open() missing encoding=")
+
+        elif isinstance(func, ast.Name) and func.id == "open":
+            mode = _open_mode(node)
+            # Skip binary-mode open(); "b" anywhere in the mode string means binary.
+            if mode is not None and "b" in mode:
+                continue
+            if not has_encoding:
+                errors.append(f"{path}:{node.lineno}: open() missing encoding=")
+
+    return errors
+
+
+def main() -> int:
+    """Scan src/, tests/, and tools/ for unencoded text IO and return an exit code."""
+    all_errors: list[str] = []
+    for root_name in _SCAN_ROOTS:
+        root = Path(root_name)
+        if not root.is_dir():
+            continue
+        for py_file in sorted(root.rglob("*.py")):
+            all_errors.extend(check_file(py_file))
+
+    for err in all_errors:
+        print(err, file=sys.stderr)
+
+    return 1 if all_errors else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
