@@ -70,7 +70,11 @@ select = [
     "UP", # pyupgrade
     "B",  # flake8-bugbear
     "SIM", # flake8-simplify
+    "C901", # mccabe complexity
 ]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 8
 
 [tool.ruff.lint.pydocstyle]
 convention = "pep257"  # policy stated in "Docstrings" section of AGENTS.md
