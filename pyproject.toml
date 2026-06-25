@@ -77,6 +77,9 @@ select = [
     "FLY",  # flynt (f-string conversion)
     "PERF", # perflint (performance anti-patterns)
     "RUF",  # Ruff-specific rules
+    "PLE",  # Pylint errors
+    "PLW2901", # Pylint: redefined loop variable
+    "PLC0415", # Pylint: import not at top of file
 ]
 
 [tool.ruff.lint.mccabe]
