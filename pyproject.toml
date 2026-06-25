@@ -80,6 +80,9 @@ select = [
     "PLE", # Pylint errors
     "PLW2901", # Pylint: redefined loop variable
     "PLC0415", # Pylint: import not at top of file
+    "TC", # flake8-type-checking
+    "TID", # flake8-tidy-imports
+    "PTH", # flake8-use-pathlib
 ]
 
 [tool.ruff.lint.mccabe]

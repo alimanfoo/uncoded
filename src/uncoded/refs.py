@@ -76,8 +76,8 @@ def _query_references(
         ) from exc
     try:
         return _run_exchange(
-            stdin=cast(IO[bytes], proc.stdin),
-            stdout=cast(IO[bytes], proc.stdout),
+            stdin=cast("IO[bytes]", proc.stdin),
+            stdout=cast("IO[bytes]", proc.stdout),
             in_path=in_path,
             position=position,
             root=root,
