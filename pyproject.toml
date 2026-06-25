@@ -94,6 +94,7 @@ select = [
     "PLR0915", # Pylint: too many statements
     "PLR1702", # Pylint: too many nested blocks (preview)
     "ANN", # flake8-annotations
+    "S", # flake8-bandit (security)
 ]
 
 ignore = [
@@ -107,4 +108,4 @@ max-complexity = 8
 convention = "pep257"  # policy stated in "Docstrings" section of AGENTS.md
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["D", "ANN"]
+"tests/**" = ["D", "ANN", "S101"]
