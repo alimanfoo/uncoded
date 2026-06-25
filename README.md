@@ -292,4 +292,4 @@ upgrading:
 
 ## Contributing
 
-See [AGENTS.md](AGENTS.md).
+See [AGENTS.md](https://github.com/alimanfoo/uncoded/blob/main/AGENTS.md).
