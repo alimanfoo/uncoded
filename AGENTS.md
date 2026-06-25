@@ -63,6 +63,9 @@ uv run pytest
 
 # Run a subset of tests without the coverage gate
 uv run pytest tests/test_stubs.py --no-cov
+
+# Run the full pre-commit suite (the same checks CI runs)
+uv run pre-commit run --all-files
 ```
 
 ## Dev setup
