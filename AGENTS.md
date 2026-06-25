@@ -120,6 +120,29 @@ in `src/uncoded/refs.py`.
 Public symbols need a pep257 plain-prose docstring. Magic methods are included.
 Private symbols (underscore-prefixed) and test code are exempt.
 
+## Testing
+
+The test suite enforces 100% branch coverage. The gate is `fail_under = 100` in
+`[tool.coverage.report]` in `pyproject.toml`. Every branch must have both arms
+exercised by a test.
+
+Use `# pragma: no branch` only when a branch's false arm is structurally
+unreachable in practice. Two cases qualify:
+
+- The branch follows an `rglob` that just yielded the item. `remove_file` on a
+  file `rglob` just found will always succeed; the false arm requires the file
+  to vanish between the two calls.
+- The condition is guaranteed true by operations immediately above it in the
+  same function. The false arm would contradict the state those operations
+  produced.
+
+The four uses in `stubs.py` (lines 344, 408, 420, 422) are the only examples in
+the codebase. Lines 344 and 408 are the rglob case. Lines 420 and 422 follow the
+removal of all `.pyi` files, so the directory is guaranteed empty.
+
+Do not use `# pragma: no branch` to avoid writing a test. If the false arm is
+reachable, write the test.
+
 ## Releasing
 
 GitHub releases publish to PyPI through `.github/workflows/publish.yml`. The
