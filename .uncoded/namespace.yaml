@@ -152,6 +152,8 @@ src/:
       _render_class:
       render_stub:
       _generate_stubs:
+      _remove_orphan_stubs:
+      _prune_empty_stub_dirs:
       _write_stubs:
       remove_all_stubs:
       build_stubs:
