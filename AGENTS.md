@@ -34,8 +34,7 @@ Index artefacts, generated from the configured roots:
    Outline only. No `uncoded body`, `uncoded refs`, or stubs for Markdown.
 
 Alongside the index, uncoded ships `uncoded body` to read symbol bodies and
-`uncoded refs` to find all references. See "How to read and edit code in this
-codebase" below for the dispatch rule.
+`uncoded refs` to find all references.
 
 ## Commands
 
@@ -142,6 +141,35 @@ removal of all `.pyi` files, so the directory is guaranteed empty.
 
 Do not use `# pragma: no branch` to avoid writing a test. If the false arm is
 reachable, write the test.
+
+## Conventions
+
+These cross-cutting conventions are enforced by checks.
+
+**Provenance marker.** Every generated file carries `GENERATED_MARKER`, defined
+in `src/uncoded/markers.py`. `tests/test_markers.py` verifies that all four
+output kinds carry it.
+
+**Explicit encoding.** Every text read/write in `src/`, `tests/`, and `tools/`
+must pass `encoding=`. `tools/check_encoding.py` enforces this as a pre-commit
+hook; it covers receiver types that ruff PLW1514 misses.
+
+**Complexity ceiling.** `max-complexity = 8` in `[tool.ruff.lint.mccabe]`. See
+"Linting and formatting" above for the response to a C901 violation.
+
+**Index committed.** Commit `.uncoded/` and keep it current with the pre-commit
+hook. See "Commands" and "Dev setup" above.
+
+**`namespace.yaml` first.** Load `.uncoded/namespace.yaml` before any symbol
+lookup. The `uncoded-code-navigation` skill has the full dispatch rule.
+
+### Tools
+
+`tools/` holds custom check scripts that complement ruff: `check_encoding.py`
+(encoding invariant) and `check_ty.py` (ty version wrapper). Ruff lints the
+whole tree, so `tools/` is in scope for all ruff rules. `tools/` sits outside
+the coverage gate (`source = ["src"]` in `[tool.coverage.run]`), so its scripts
+have no coverage net.
 
 ## Releasing
 

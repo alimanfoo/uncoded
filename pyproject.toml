@@ -105,7 +105,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.mccabe]
-max-complexity = 8
+max-complexity = 8  # policy stated in "Linting and formatting" section of AGENTS.md
 
 [tool.ruff.lint.pydocstyle]
 convention = "pep257"  # policy stated in "Docstrings" section of AGENTS.md
