@@ -261,7 +261,7 @@ def _render_assignment(a: StubAssignment, indent: str = "") -> str:
     return f"{indent}{body}"
 
 
-def _render_class(*, cls: StubClass) -> list[str]:
+def _render_class(cls: StubClass) -> list[str]:
     bases_str = f"({', '.join(cls.bases)})" if cls.bases else ""
     lines = [f"class {cls.name}{bases_str}:"]
     if not cls.attributes and not cls.methods:
@@ -296,7 +296,7 @@ def render_stub(module: StubModule) -> str:
         lines.append("")
 
     for cls in module.classes:
-        lines.extend(_render_class(cls=cls))
+        lines.extend(_render_class(cls))
 
     return "\n".join(lines).rstrip() + "\n"
 
