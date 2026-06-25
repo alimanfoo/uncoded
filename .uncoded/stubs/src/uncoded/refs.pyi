@@ -13,7 +13,7 @@ from uncoded.config import find_pyproject_toml
 from uncoded.read_helpers import read_source_text
 from uncoded.resolver import NamePath, resolve_name_position
 
-TY_VERSION = '0.0.37'
+TY_VERSION = '0.0.53'
 
 def find_refs(name_path: NamePath, in_path: Path) -> list[Reference]:
     ...

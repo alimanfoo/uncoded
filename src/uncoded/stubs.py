@@ -340,11 +340,7 @@ def _remove_orphan_stubs(
         if existing.resolve() in expected:
             continue
         display = existing.relative_to(project_root)
-        # .pyi may have been removed between rglob and remove_file
-        if remove_file(  # pragma: no branch
-            display, project_root=project_root, check=check
-        ):
-            changes += 1
+        changes += remove_file(display, project_root=project_root, check=check)
     return changes
 
 
@@ -405,21 +401,19 @@ def remove_all_stubs(output_dir: Path, *, project_root: Path, check: bool) -> in
     changes = 0
     for pyi_file in sorted(abs_output_dir.rglob("*.pyi")):
         display = pyi_file.relative_to(project_root)
-        if remove_file(  # pragma: no branch
-            display, project_root=project_root, check=check
-        ):
-            changes += 1
+        changes += remove_file(display, project_root=project_root, check=check)
 
     if check:
         return changes
 
-    # After removing all .pyi files, rglob("*") returns only directories.
+    # Prune empty directories deepest-first. Skip any foreign file or non-empty
+    # directory the tree should not contain.
     for d in sorted(
         abs_output_dir.rglob("*"), key=lambda p: len(p.parts), reverse=True
     ):
-        if d.is_dir() and not any(d.iterdir()):  # pragma: no branch
+        if d.is_dir() and not any(d.iterdir()):
             d.rmdir()
-    if not any(abs_output_dir.iterdir()):  # pragma: no branch
+    if not any(abs_output_dir.iterdir()):
         abs_output_dir.rmdir()
 
     return changes

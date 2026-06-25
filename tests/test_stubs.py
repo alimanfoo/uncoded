@@ -992,3 +992,16 @@ class TestRemoveAllStubs:
         )
         assert changes == 2
         assert not stubs_dir.exists()
+
+    def test_stray_non_pyi_file_not_removed(self, tmp_path):
+        stubs_dir, pyi = self._make_stubs(tmp_path)
+        stray = pyi.parent / "stray.txt"
+        stray.write_text("keep me\n", encoding="utf-8")
+        changes = remove_all_stubs(
+            Path(".uncoded/stubs"), project_root=tmp_path, check=False
+        )
+        assert changes == 1
+        assert not pyi.exists()
+        assert stray.exists()
+        assert stray.parent.exists()
+        assert stubs_dir.exists()

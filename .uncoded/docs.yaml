@@ -19,15 +19,19 @@ README.md:
     Find references to a symbol:
     How agents use it:
     Coherence review:
-    Dev setup:
-      Note for Windows contributors:
     Upgrading from v1:
-    Releasing:
+    Contributing:
 AGENTS.md:
   uncoded:
     Problem:
     Approach:
     Commands:
+    Dev setup:
+      Windows:
     Linting and formatting:
     Docstrings:
+    Testing:
+    Conventions:
+      Tools:
+    Releasing:
     Before you start:

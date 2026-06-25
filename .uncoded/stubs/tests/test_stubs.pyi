@@ -232,3 +232,6 @@ class TestRemoveAllStubs:
 
     def test_returns_count_of_pyi_files(self, tmp_path):
         ...
+
+    def test_stray_non_pyi_file_not_removed(self, tmp_path):
+        ...

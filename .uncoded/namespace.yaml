@@ -564,6 +564,7 @@ tests/:
       test_check_mode_reports_without_removing:
       test_check_mode_noop_when_absent:
       test_returns_count_of_pyi_files:
+      test_stray_non_pyi_file_not_removed:
     _setup:
     _build:
   test_sync.py:
