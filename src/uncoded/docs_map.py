@@ -19,6 +19,26 @@ DOCS_HEADER = f"""\
 """
 
 
+def _parse_atx_heading(line: str) -> tuple[int, str] | None:
+    if not line.startswith("#"):
+        return None
+    # Count consecutive leading #.
+    level = 0
+    while level < len(line) and line[level] == "#":
+        level += 1
+    # Valid ATX: 1–6 # followed by exactly one space.
+    if level > 6 or level >= len(line) or line[level] != " ":
+        return None
+    title = line[level + 1 :].strip()
+    # Strip a trailing # run only when it is a CommonMark closing
+    # sequence: preceded by whitespace, or the title is entirely #s.
+    if title.endswith("#"):
+        stripped = title.rstrip("#")
+        if not stripped or stripped[-1] in " \t":
+            title = stripped.rstrip()
+    return (level, title) if title else None
+
+
 def extract_headings(text: str) -> list[tuple[int, str]]:
     """Return the ATX headings in ``text`` as ordered (level, title) pairs.
 
@@ -54,27 +74,9 @@ def extract_headings(text: str) -> list[tuple[int, str]]:
             fence_marker = line[:3]
             continue
 
-        if not line.startswith("#"):
-            continue
-
-        # Count consecutive leading #.
-        level = 0
-        while level < len(line) and line[level] == "#":
-            level += 1
-
-        # Valid ATX: 1–6 # followed by exactly one space.
-        if level > 6 or level >= len(line) or line[level] != " ":
-            continue
-
-        title = line[level + 1 :].strip()
-        # Strip a trailing # run only when it is a CommonMark closing
-        # sequence: preceded by whitespace, or the title is entirely #s.
-        if title.endswith("#"):
-            stripped = title.rstrip("#")
-            if not stripped or stripped[-1] in " \t":
-                title = stripped.rstrip()
-        if title:
-            headings.append((level, title))
+        result = _parse_atx_heading(line)
+        if result is not None:
+            headings.append(result)
 
     return headings
 

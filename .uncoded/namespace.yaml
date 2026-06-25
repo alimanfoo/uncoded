@@ -37,6 +37,7 @@ src/:
       read_config:
     docs_map.py:
       DOCS_HEADER:
+      _parse_atx_heading:
       extract_headings:
       _unique_key:
       _collapse_empty:
