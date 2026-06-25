@@ -53,10 +53,13 @@ def render_stub(module: StubModule) -> str:
 def _generate_stubs(files: Iterable[tuple[str, str]]) -> dict[Path, str]:
     ...
 
-def _remove_orphan_stubs(*, expected: set[Path], source_root: Path, output_dir: Path, project_root: Path, check: bool) -> int:
+def _resolve_stubs_root(*, source_root: Path, output_dir: Path, project_root: Path) -> Path | None:
     ...
 
-def _prune_empty_stub_dirs(*, source_root: Path, output_dir: Path, project_root: Path) -> None:
+def _remove_orphan_stubs(*, expected: set[Path], abs_stubs_root: Path, project_root: Path, check: bool) -> int:
+    ...
+
+def _prune_empty_stub_dirs(*, abs_stubs_root: Path) -> None:
     ...
 
 def _write_stubs(*, stubs: dict[Path, str], source_root: Path, output_dir: Path, project_root: Path, check: bool) -> int:

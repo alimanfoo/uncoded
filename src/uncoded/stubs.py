@@ -318,22 +318,25 @@ def _generate_stubs(files: Iterable[tuple[str, str]]) -> dict[Path, str]:
     return result
 
 
-def _remove_orphan_stubs(
-    *,
-    expected: set[Path],
-    source_root: Path,
-    output_dir: Path,
-    project_root: Path,
-    check: bool,
-) -> int:
+def _resolve_stubs_root(
+    *, source_root: Path, output_dir: Path, project_root: Path
+) -> Path | None:
     # source_root must be under project_root; otherwise there is no safe subtree.
     try:
         source_rel = source_root.resolve().relative_to(project_root)
     except ValueError:
-        return 0
+        return None
     abs_stubs_root = project_root / output_dir / source_rel
-    if not abs_stubs_root.exists():
-        return 0
+    return abs_stubs_root if abs_stubs_root.exists() else None
+
+
+def _remove_orphan_stubs(
+    *,
+    expected: set[Path],
+    abs_stubs_root: Path,
+    project_root: Path,
+    check: bool,
+) -> int:
     changes = 0
     for existing in abs_stubs_root.rglob("*.pyi"):
         if existing.resolve() in expected:
@@ -347,16 +350,7 @@ def _remove_orphan_stubs(
     return changes
 
 
-def _prune_empty_stub_dirs(
-    *, source_root: Path, output_dir: Path, project_root: Path
-) -> None:
-    try:
-        source_rel = source_root.resolve().relative_to(project_root)
-    except ValueError:
-        return
-    abs_stubs_root = project_root / output_dir / source_rel
-    if not abs_stubs_root.exists():
-        return
+def _prune_empty_stub_dirs(*, abs_stubs_root: Path) -> None:
     # Prune now-empty directories, deepest-first, but keep abs_stubs_root itself.
     for d in sorted(
         abs_stubs_root.rglob("*"), key=lambda p: len(p.parts), reverse=True
@@ -381,17 +375,18 @@ def _write_stubs(
         if sync_file(stub_path, content, project_root=project_root, check=check):
             changes += 1
         expected.add((project_root / stub_path).resolve())
-    changes += _remove_orphan_stubs(
-        expected=expected,
-        source_root=source_root,
-        output_dir=output_dir,
-        project_root=project_root,
-        check=check,
+    abs_stubs_root = _resolve_stubs_root(
+        source_root=source_root, output_dir=output_dir, project_root=project_root
     )
-    if not check:
-        _prune_empty_stub_dirs(
-            source_root=source_root, output_dir=output_dir, project_root=project_root
+    if abs_stubs_root is not None:
+        changes += _remove_orphan_stubs(
+            expected=expected,
+            abs_stubs_root=abs_stubs_root,
+            project_root=project_root,
+            check=check,
         )
+        if not check:
+            _prune_empty_stub_dirs(abs_stubs_root=abs_stubs_root)
     return changes
 
 
