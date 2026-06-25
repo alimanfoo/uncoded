@@ -24,7 +24,7 @@ repos:
     hooks:
       - id: ty
         name: ty
-        entry: uvx ty check src tests
+        entry: uv run python tools/check_ty.py
         language: system
         pass_filenames: false
       - id: check-encoding
