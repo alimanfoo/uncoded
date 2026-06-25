@@ -38,6 +38,31 @@ def _open_mode(call: ast.Call, *, mode_position: int = 1) -> str | None:
     return None
 
 
+def _check_call(node: ast.Call, path: Path) -> str | None:
+    func = node.func
+    has_encoding = any(kw.arg == "encoding" for kw in node.keywords)
+    if has_encoding:
+        return None
+    if isinstance(func, ast.Attribute) and func.attr in ("read_text", "write_text"):
+        return f"{path}:{node.lineno}: .{func.attr}() missing encoding="
+    if isinstance(func, ast.Attribute) and func.attr == "open":
+        # Skip tokenize.open — it auto-detects encoding from the file content.
+        if isinstance(func.value, ast.Name) and func.value.id == "tokenize":
+            return None
+        # Path.open(mode, ...) — mode is the first positional arg.
+        mode = _open_mode(node, mode_position=0)
+        if mode is not None and "b" in mode:
+            return None
+        return f"{path}:{node.lineno}: .open() missing encoding="
+    if isinstance(func, ast.Name) and func.id == "open":
+        mode = _open_mode(node)
+        # Skip binary-mode open(); "b" anywhere in the mode string means binary.
+        if mode is not None and "b" in mode:
+            return None
+        return f"{path}:{node.lineno}: open() missing encoding="
+    return None
+
+
 def check_file(path: Path) -> list[str]:
     """Return one error string per violation found in path."""
     try:
@@ -54,33 +79,9 @@ def check_file(path: Path) -> list[str]:
     for node in ast.walk(tree):
         if not isinstance(node, ast.Call):
             continue
-
-        func = node.func
-        has_encoding = any(kw.arg == "encoding" for kw in node.keywords)
-
-        if isinstance(func, ast.Attribute) and func.attr in ("read_text", "write_text"):
-            if not has_encoding:
-                errors.append(f"{path}:{node.lineno}: .{func.attr}() missing encoding=")
-
-        elif isinstance(func, ast.Attribute) and func.attr == "open":
-            # Skip tokenize.open — it auto-detects encoding from the file content.
-            if isinstance(func.value, ast.Name) and func.value.id == "tokenize":
-                continue
-            # Path.open(mode, ...) — mode is the first positional arg.
-            mode = _open_mode(node, mode_position=0)
-            if mode is not None and "b" in mode:
-                continue
-            if not has_encoding:
-                errors.append(f"{path}:{node.lineno}: .open() missing encoding=")
-
-        elif isinstance(func, ast.Name) and func.id == "open":
-            mode = _open_mode(node)
-            # Skip binary-mode open(); "b" anywhere in the mode string means binary.
-            if mode is not None and "b" in mode:
-                continue
-            if not has_encoding:
-                errors.append(f"{path}:{node.lineno}: open() missing encoding=")
-
+        result = _check_call(node, path)
+        if result is not None:
+            errors.append(result)
     return errors
 
 
