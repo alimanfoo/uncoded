@@ -18,11 +18,11 @@ class NamePath(NamedTuple):
     def parse(cls, s: str) -> "NamePath":
         """Parse a raw name_path string into a validated NamePath.
 
-        Raises UnsupportedNamePath for more than two segments or any empty segment.
+        Raises UnsupportedNamePathError for more than two segments or any empty segment.
         """
         segments = s.split("/")
         if len(segments) > 2 or any(seg == "" for seg in segments):
-            raise UnsupportedNamePath(
+            raise UnsupportedNamePathError(
                 f"Unsupported name_path {s!r}: use 'name' or 'Class/member'"
             )
         head = segments[0]
@@ -34,11 +34,11 @@ class NamePath(NamedTuple):
         return f"{self.head}/{self.tail}" if self.tail is not None else self.head
 
 
-class SymbolNotFound(Exception):
+class SymbolNotFoundError(Exception):
     """Raised when name_path cannot be found in the given file."""
 
 
-class UnsupportedNamePath(Exception):
+class UnsupportedNamePathError(Exception):
     """Raised when name_path does not match a supported shape.
 
     Supported shapes are 'name' (one segment) or 'Class/member' (two segments),
@@ -49,7 +49,7 @@ class UnsupportedNamePath(Exception):
 def resolve_ast_node(name_path: NamePath, in_path: Path) -> ast.stmt:
     """Return the ast.stmt for the symbol named by name_path in in_path.
 
-    Raises SymbolNotFound if the symbol is not present. Lets OSError,
+    Raises SymbolNotFoundError if the symbol is not present. Lets OSError,
     UnicodeDecodeError, and SyntaxError propagate from the file read.
     """
     source = read_source_text(in_path)
@@ -64,7 +64,7 @@ def resolve_name_position(name_path: NamePath, in_path: Path) -> tuple[int, int]
     Follows LSP convention: both line and character are 0-indexed.
     For def/async def/class, character points past the keyword to the identifier.
     For assignments and type aliases, character points at the start of the target name.
-    Raises SymbolNotFound, OSError, UnicodeDecodeError, and SyntaxError under
+    Raises SymbolNotFoundError, OSError, UnicodeDecodeError, and SyntaxError under
     the same conditions as resolve_ast_node.
     """
     node = resolve_ast_node(name_path, in_path)
@@ -81,7 +81,7 @@ def resolve_name_position(name_path: NamePath, in_path: Path) -> tuple[int, int]
     if isinstance(node, ast.TypeAlias):
         return (node.name.lineno - 1, node.name.col_offset)
     node_type = type(node).__name__
-    raise UnsupportedNamePath(
+    raise UnsupportedNamePathError(
         f"Cannot extract name position from {node_type} for {str(name_path)!r}"
     )
 
@@ -98,7 +98,7 @@ def resolve_ast_node_from_source(
     file read. Callers that already have the source string call this directly
     to avoid reading in_path again. in_path is used only for ast.parse's
     filename argument and for error messages.
-    Raises SymbolNotFound if the symbol is not present; propagates SyntaxError
+    Raises SymbolNotFoundError if the symbol is not present; propagates SyntaxError
     if source cannot be parsed.
     """
     tree = ast.parse(source, filename=str(in_path))
@@ -124,7 +124,7 @@ def resolve_ast_node_from_source(
             top_match = node
 
     if top_match is None:
-        raise SymbolNotFound(f"{str(name_path)!r} not found in {in_path}")
+        raise SymbolNotFoundError(f"{str(name_path)!r} not found in {in_path}")
 
     if tail is not None and isinstance(top_match, ast.ClassDef):
         return _resolve_class_member(
@@ -159,6 +159,6 @@ def _resolve_class_member(
                 match = node
 
     if match is None:
-        raise SymbolNotFound(f"{str(name_path)!r} not found in {in_path}")
+        raise SymbolNotFoundError(f"{str(name_path)!r} not found in {in_path}")
 
     return match

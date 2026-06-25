@@ -62,6 +62,7 @@ line-length = 88
 extend-exclude = [".uncoded"]
 
 [tool.ruff.lint]
+preview = true
 select = [
     "D", # pydocstyle (pep257)
     "E", # pycodestyle errors
@@ -83,6 +84,23 @@ select = [
     "TC", # flake8-type-checking
     "TID", # flake8-tidy-imports
     "PTH", # flake8-use-pathlib
+    "RET", # flake8-return
+    "PLR5501", # Pylint: elif after return
+    "PLR1711", # Pylint: useless return
+    "PLR1714", # Pylint: repeated equality comparison
+    "PLR0911", # Pylint: too many return statements
+    "PLR0912", # Pylint: too many branches
+    "PLR0913", # Pylint: too many arguments
+    "PLR0915", # Pylint: too many statements
+    "PLR1702", # Pylint: too many nested blocks (preview)
+    "ANN", # flake8-annotations
+    "S", # flake8-bandit (security)
+    "PT", # flake8-pytest-style
+    "N", # pep8-naming
+]
+
+ignore = [
+    "ANN401", # Any as annotation type (too broad to enforce)
 ]
 
 [tool.ruff.lint.mccabe]
@@ -92,4 +110,4 @@ max-complexity = 8
 convention = "pep257"  # policy stated in "Docstrings" section of AGENTS.md
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["D"]
+"tests/**" = ["D", "ANN", "S101"]

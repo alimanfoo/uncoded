@@ -38,7 +38,7 @@ def _open_mode(call: ast.Call, *, mode_position: int = 1) -> str | None:
     return None
 
 
-def _check_call(node: ast.Call, path: Path) -> str | None:
+def _check_call(node: ast.Call, path: Path) -> str | None:  # noqa: PLR0911 -- flat dispatch, one return per text-IO call shape
     func = node.func
     has_encoding = any(kw.arg == "encoding" for kw in node.keywords)
     if has_encoding:

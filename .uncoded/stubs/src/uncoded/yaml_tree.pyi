@@ -7,5 +7,5 @@ def render_yaml_tree(header: str, mapping: dict) -> str:
     ...
 
 class _CleanDumper(yaml.SafeDumper):
-    def increase_indent(self, flow, indentless):
+    def increase_indent(self, flow: bool, indentless: bool) -> None:
         ...

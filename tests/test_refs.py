@@ -1,6 +1,6 @@
 import io
 import json
-import subprocess
+import subprocess  # noqa: S404 -- subprocess mocked in tests for the ty LSP client
 import textwrap
 from pathlib import Path
 from unittest import mock

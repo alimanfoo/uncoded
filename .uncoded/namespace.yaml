@@ -95,8 +95,8 @@ src/:
         tail:
         parse:
         __str__:
-      SymbolNotFound:
-      UnsupportedNamePath:
+      SymbolNotFoundError:
+      UnsupportedNamePathError:
       resolve_ast_node:
       resolve_name_position:
       resolve_ast_node_from_source:
@@ -193,7 +193,7 @@ tests/:
       test_shadowed_class_member_found_in_last_definition:
       test_shadowed_class_member_not_found_in_last_definition:
       test_not_found_in_class:
-    TestUnsupportedNamePath:
+    TestUnsupportedNamePathError:
       SUPPORTED_SHAPES:
       _assert_raises:
       test_three_segment_path:
