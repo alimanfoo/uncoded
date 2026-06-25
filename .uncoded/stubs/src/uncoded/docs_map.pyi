@@ -9,6 +9,9 @@ from uncoded.yaml_tree import render_yaml_tree
 
 DOCS_HEADER = ...
 
+def _parse_atx_heading(line: str) -> tuple[int, str] | None:
+    ...
+
 def extract_headings(text: str) -> list[tuple[int, str]]:
     ...
 

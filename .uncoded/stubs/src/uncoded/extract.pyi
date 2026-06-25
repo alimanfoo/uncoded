@@ -9,6 +9,9 @@ from pathlib import Path
 from uncoded.ast_helpers import assign_target_name, property_kind
 from uncoded.read_helpers import read_source_text_or_warn
 
+def _extract_class_members(node: ast.ClassDef) -> ClassInfo:
+    ...
+
 def extract_module(source: str, rel_path: str) -> ModuleInfo:
     ...
 

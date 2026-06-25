@@ -22,6 +22,9 @@ def _validate_root(configured: Path, *, kind: Literal['source', 'doc'], project_
 def _sync_code_artefacts(*, build: bool, configured_source_roots: list[Path], project_root: Path, resolved_project_root: Path, check: bool) -> int:
     ...
 
+def _sync_doc_artefacts(*, build: bool, configured_doc_roots: list[Path], project_root: Path, resolved_project_root: Path, check: bool) -> int:
+    ...
+
 def _sync(*, start: Path | None, check: bool) -> int:
     ...
 

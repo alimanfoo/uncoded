@@ -20,6 +20,7 @@ src/:
     cli.py:
       _validate_root:
       _sync_code_artefacts:
+      _sync_doc_artefacts:
       _sync:
       _report_lookup_error:
       _body:
@@ -37,6 +38,7 @@ src/:
       read_config:
     docs_map.py:
       DOCS_HEADER:
+      _parse_atx_heading:
       extract_headings:
       _unique_key:
       _collapse_empty:
@@ -53,6 +55,7 @@ src/:
         constants:
         classes:
         functions:
+      _extract_class_members:
       extract_module:
       iter_source_files:
       extract_modules:
@@ -148,8 +151,12 @@ src/:
       _render_function:
       _format_assignment_body:
       _render_assignment:
+      _render_class:
       render_stub:
       _generate_stubs:
+      _resolve_stubs_root:
+      _remove_orphan_stubs:
+      _prune_empty_stub_dirs:
       _write_stubs:
       remove_all_stubs:
       build_stubs:

@@ -261,6 +261,23 @@ def _render_assignment(a: StubAssignment, indent: str = "") -> str:
     return f"{indent}{body}"
 
 
+def _render_class(cls: StubClass) -> list[str]:
+    bases_str = f"({', '.join(cls.bases)})" if cls.bases else ""
+    lines = [f"class {cls.name}{bases_str}:"]
+    if not cls.attributes and not cls.methods:
+        lines.append("    ...")
+        lines.append("")
+        return lines
+    for attr in cls.attributes:
+        lines.append(_render_assignment(attr, indent="    "))
+    if cls.attributes:
+        lines.append("")
+    for method in cls.methods:
+        lines.extend(_render_function(method, indent="    "))
+        lines.append("")
+    return lines
+
+
 def render_stub(module: StubModule) -> str:
     """Render a StubModule as a .pyi file string."""
     lines: list[str] = [f"# {GENERATED_MARKER}", f"# {module.rel_path}", ""]
@@ -279,22 +296,7 @@ def render_stub(module: StubModule) -> str:
         lines.append("")
 
     for cls in module.classes:
-        bases_str = f"({', '.join(cls.bases)})" if cls.bases else ""
-        lines.append(f"class {cls.name}{bases_str}:")
-
-        if not cls.attributes and not cls.methods:
-            lines.append("    ...")
-            lines.append("")
-            continue
-
-        for attr in cls.attributes:
-            lines.append(_render_assignment(attr, indent="    "))
-        if cls.attributes:
-            lines.append("")
-
-        for method in cls.methods:
-            lines.extend(_render_function(method, indent="    "))
-            lines.append("")
+        lines.extend(_render_class(cls))
 
     return "\n".join(lines).rstrip() + "\n"
 
@@ -316,58 +318,26 @@ def _generate_stubs(files: Iterable[tuple[str, str]]) -> dict[Path, str]:
     return result
 
 
-def _write_stubs(
-    *,
-    stubs: dict[Path, str],
-    source_root: Path,
-    output_dir: Path,
-    project_root: Path,
-    check: bool,
-) -> int:
-    """Write *stubs* under *output_dir* and prune orphans under *source_root*.
-
-    *stubs* maps each stub's relative path (under *output_dir*) to its
-    rendered content; typically the return value of
-    :func:`_generate_stubs`.
-
-    Each stub is written to ``project_root / output_dir / <rel>``. Log
-    lines still name each path as given, so messages stay
-    project-relative regardless of where the caller is running from.
-    ``project_root`` must already be resolved.
-
-    Orphan cleanup walks the subtree under ``project_root`` that
-    mirrors ``source_root``. ``source_root`` must therefore live under
-    ``project_root``; otherwise cleanup is skipped.
-
-    Writes only files whose content has changed. After reconciling the
-    current set of stubs, any pre-existing ``.pyi`` files in the
-    corresponding subtree whose source has been removed or renamed are
-    deleted, and any directories left empty by the deletion are
-    pruned. Only the subtree corresponding to ``source_root`` is
-    touched, so other source roots' stubs are not affected.
-
-    When ``check=True``, the on-disk tree is not mutated; instead,
-    prospective writes and removals are reported and counted. Returns
-    the number of changes (or prospective changes).
-    """
-    changes = 0
-    expected: set[Path] = set()
-    for rel_stub_path, content in stubs.items():
-        stub_path = output_dir / rel_stub_path
-        if sync_file(stub_path, content, project_root=project_root, check=check):
-            changes += 1
-        expected.add((project_root / stub_path).resolve())
-
+def _resolve_stubs_root(
+    *, source_root: Path, output_dir: Path, project_root: Path
+) -> Path | None:
+    # source_root must be under project_root; otherwise there is no safe subtree.
     try:
         source_rel = source_root.resolve().relative_to(project_root)
     except ValueError:
-        # source_root is outside project_root; no safe subtree to clean.
-        return changes
-    stubs_root = output_dir / source_rel
-    abs_stubs_root = project_root / stubs_root
-    if not abs_stubs_root.exists():
-        return changes
+        return None
+    abs_stubs_root = project_root / output_dir / source_rel
+    return abs_stubs_root if abs_stubs_root.exists() else None
 
+
+def _remove_orphan_stubs(
+    *,
+    expected: set[Path],
+    abs_stubs_root: Path,
+    project_root: Path,
+    check: bool,
+) -> int:
+    changes = 0
     for existing in abs_stubs_root.rglob("*.pyi"):
         if existing.resolve() in expected:
             continue
@@ -377,10 +347,10 @@ def _write_stubs(
             display, project_root=project_root, check=check
         ):
             changes += 1
+    return changes
 
-    if check:
-        return changes
 
+def _prune_empty_stub_dirs(*, abs_stubs_root: Path) -> None:
     # Prune now-empty directories, deepest-first, but keep abs_stubs_root itself.
     for d in sorted(
         abs_stubs_root.rglob("*"), key=lambda p: len(p.parts), reverse=True
@@ -388,6 +358,35 @@ def _write_stubs(
         if d.is_dir() and not any(d.iterdir()):
             d.rmdir()
 
+
+def _write_stubs(
+    *,
+    stubs: dict[Path, str],
+    source_root: Path,
+    output_dir: Path,
+    project_root: Path,
+    check: bool,
+) -> int:
+    """Write each expected stub, remove orphans, and prune empty directories."""
+    changes = 0
+    expected: set[Path] = set()
+    for rel_stub_path, content in stubs.items():
+        stub_path = output_dir / rel_stub_path
+        if sync_file(stub_path, content, project_root=project_root, check=check):
+            changes += 1
+        expected.add((project_root / stub_path).resolve())
+    abs_stubs_root = _resolve_stubs_root(
+        source_root=source_root, output_dir=output_dir, project_root=project_root
+    )
+    if abs_stubs_root is not None:
+        changes += _remove_orphan_stubs(
+            expected=expected,
+            abs_stubs_root=abs_stubs_root,
+            project_root=project_root,
+            check=check,
+        )
+        if not check:
+            _prune_empty_stub_dirs(abs_stubs_root=abs_stubs_root)
     return changes
 
 
