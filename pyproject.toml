@@ -48,6 +48,7 @@ doc-roots = ["README.md", "AGENTS.md"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "--cov -m 'not integration'"
+filterwarnings = ["error::EncodingWarning"]
 markers = ["integration: spawns real ty subprocess (requires uvx)"]
 
 [tool.coverage.run]
