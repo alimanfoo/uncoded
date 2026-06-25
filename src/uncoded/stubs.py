@@ -406,13 +406,14 @@ def remove_all_stubs(output_dir: Path, *, project_root: Path, check: bool) -> in
     if check:
         return changes
 
-    # After removing all .pyi files, rglob("*") returns only directories.
+    # Prune empty directories deepest-first. Skip any foreign file or non-empty
+    # directory the tree should not contain.
     for d in sorted(
         abs_output_dir.rglob("*"), key=lambda p: len(p.parts), reverse=True
     ):
-        if d.is_dir() and not any(d.iterdir()):  # pragma: no branch
+        if d.is_dir() and not any(d.iterdir()):
             d.rmdir()
-    if not any(abs_output_dir.iterdir()):  # pragma: no branch
+    if not any(abs_output_dir.iterdir()):
         abs_output_dir.rmdir()
 
     return changes
