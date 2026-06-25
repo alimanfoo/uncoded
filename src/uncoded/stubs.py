@@ -268,8 +268,7 @@ def _render_class(cls: StubClass) -> list[str]:
         lines.append("    ...")
         lines.append("")
         return lines
-    for attr in cls.attributes:
-        lines.append(_render_assignment(attr, indent="    "))
+    lines.extend(_render_assignment(attr, indent="    ") for attr in cls.attributes)
     if cls.attributes:
         lines.append("")
     for method in cls.methods:
@@ -286,8 +285,7 @@ def render_stub(module: StubModule) -> str:
         lines.extend(module.imports)
         lines.append("")
 
-    for const in module.constants:
-        lines.append(_render_assignment(const))
+    lines.extend(_render_assignment(const) for const in module.constants)
     if module.constants:
         lines.append("")
 

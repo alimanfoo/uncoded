@@ -63,14 +63,20 @@ extend-exclude = [".uncoded"]
 
 [tool.ruff.lint]
 select = [
-    "D",  # pydocstyle (pep257)
-    "E",  # pycodestyle errors
-    "F",  # pyflakes
-    "I",  # isort
-    "UP", # pyupgrade
-    "B",  # flake8-bugbear
-    "SIM", # flake8-simplify
+    "D",    # pydocstyle (pep257)
+    "E",    # pycodestyle errors
+    "F",    # pyflakes
+    "I",    # isort
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "SIM",  # flake8-simplify
     "C901", # mccabe complexity
+    "W",    # pycodestyle warnings
+    "C4",   # flake8-comprehensions
+    "PIE",  # flake8-pie (misc. lints)
+    "FLY",  # flynt (f-string conversion)
+    "PERF", # perflint (performance anti-patterns)
+    "RUF",  # Ruff-specific rules
 ]
 
 [tool.ruff.lint.mccabe]
