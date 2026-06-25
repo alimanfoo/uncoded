@@ -44,6 +44,9 @@ def _format_assignment_body(a: StubAssignment) -> str:
 def _render_assignment(a: StubAssignment, indent: str) -> str:
     ...
 
+def _render_class(*, cls: StubClass) -> list[str]:
+    ...
+
 def render_stub(module: StubModule) -> str:
     ...
 

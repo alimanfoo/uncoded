@@ -149,6 +149,7 @@ src/:
       _render_function:
       _format_assignment_body:
       _render_assignment:
+      _render_class:
       render_stub:
       _generate_stubs:
       _write_stubs:

@@ -261,6 +261,23 @@ def _render_assignment(a: StubAssignment, indent: str = "") -> str:
     return f"{indent}{body}"
 
 
+def _render_class(*, cls: StubClass) -> list[str]:
+    bases_str = f"({', '.join(cls.bases)})" if cls.bases else ""
+    lines = [f"class {cls.name}{bases_str}:"]
+    if not cls.attributes and not cls.methods:
+        lines.append("    ...")
+        lines.append("")
+        return lines
+    for attr in cls.attributes:
+        lines.append(_render_assignment(attr, indent="    "))
+    if cls.attributes:
+        lines.append("")
+    for method in cls.methods:
+        lines.extend(_render_function(method, indent="    "))
+        lines.append("")
+    return lines
+
+
 def render_stub(module: StubModule) -> str:
     """Render a StubModule as a .pyi file string."""
     lines: list[str] = [f"# {GENERATED_MARKER}", f"# {module.rel_path}", ""]
@@ -279,22 +296,7 @@ def render_stub(module: StubModule) -> str:
         lines.append("")
 
     for cls in module.classes:
-        bases_str = f"({', '.join(cls.bases)})" if cls.bases else ""
-        lines.append(f"class {cls.name}{bases_str}:")
-
-        if not cls.attributes and not cls.methods:
-            lines.append("    ...")
-            lines.append("")
-            continue
-
-        for attr in cls.attributes:
-            lines.append(_render_assignment(attr, indent="    "))
-        if cls.attributes:
-            lines.append("")
-
-        for method in cls.methods:
-            lines.extend(_render_function(method, indent="    "))
-            lines.append("")
+        lines.extend(_render_class(cls=cls))
 
     return "\n".join(lines).rstrip() + "\n"
 
