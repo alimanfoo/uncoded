@@ -120,21 +120,11 @@ Private symbols (underscore-prefixed) and test code are exempt.
 ## Testing
 
 The test suite enforces 100% branch coverage. The threshold is set in
-`[tool.coverage.report]` in `pyproject.toml`. Every branch must have both arms
-exercised by a test.
+`[tool.coverage.report]` in `pyproject.toml`.
 
-Use `# pragma: no branch` only when a branch's false arm is structurally
-unreachable in practice. Two cases qualify:
-
-- The branch follows an `rglob` that just yielded the item. `remove_file` on a
-  file `rglob` just found will always succeed. The false arm requires the file
-  to vanish between the two calls.
-- The condition is guaranteed true by operations immediately above it in the
-  same function. The false arm would contradict the state those operations
-  produced.
-
-Do not use `# pragma: no branch` to avoid writing a test. If the false arm is
-reachable, write the test.
+Cover both arms of every branch. If an arm looks unreachable, the branch is dead
+code. Remove or restructure it rather than reach for a coverage pragma. The repo
+carries no coverage pragmas.
 
 ## Conventions
 
