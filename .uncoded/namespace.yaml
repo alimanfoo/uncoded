@@ -34,6 +34,7 @@ src/:
         doc_roots:
       find_pyproject_toml:
       _has_uncoded_section:
+      _config_file_at:
       _find_config_file:
       read_config:
     docs_map.py:

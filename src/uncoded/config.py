@@ -42,6 +42,35 @@ def _has_uncoded_section(*, pyproject_path: Path) -> bool:
         return False
 
 
+def _config_file_at(*, directory: Path) -> Path | None:
+    """Return the config file in ``directory``, or None.
+
+    Skips directories named ``.uncoded``. Raises :exc:`ConfigError` when
+    both ``pyproject.toml`` with ``[tool.uncoded]`` and ``.uncoded.toml``
+    are present in the same directory.
+    """
+    if directory.name == ".uncoded":
+        return None
+    pyproject = directory / "pyproject.toml"
+    uncoded_toml = directory / ".uncoded.toml"
+    has_uncoded_toml = uncoded_toml.exists()
+    if pyproject.exists():
+        has_section = _has_uncoded_section(pyproject_path=pyproject)
+        if has_section and has_uncoded_toml:
+            raise ConfigError(
+                "Ambiguous config: both pyproject.toml and .uncoded.toml "
+                "configure uncoded in the same directory. "
+                "Configure uncoded in one file only."
+            )
+        if not has_section and has_uncoded_toml:
+            # Bare pyproject does not shadow a sibling .uncoded.toml.
+            return uncoded_toml
+        return pyproject
+    if has_uncoded_toml:
+        return uncoded_toml
+    return None
+
+
 def _find_config_file(*, start: Path) -> Path | None:
     """Return the nearest config file walking up from ``start``.
 
@@ -60,30 +89,12 @@ def _find_config_file(*, start: Path) -> Path | None:
     When the two file types sit at different walk levels, the nearer one wins
     with no error. Ambiguity is only a same-directory condition.
     """
-    current = start.resolve()
-    while True:
-        if current.name != ".uncoded":
-            pyproject = current / "pyproject.toml"
-            uncoded_toml = current / ".uncoded.toml"
-            has_uncoded_toml = uncoded_toml.exists()
-            if pyproject.exists():
-                has_section = _has_uncoded_section(pyproject_path=pyproject)
-                if has_section and has_uncoded_toml:
-                    raise ConfigError(
-                        "Ambiguous config: both pyproject.toml and .uncoded.toml "
-                        "configure uncoded in the same directory. "
-                        "Configure uncoded in one file only."
-                    )
-                if not has_section and has_uncoded_toml:
-                    # Bare pyproject does not shadow a sibling .uncoded.toml.
-                    return uncoded_toml
-                return pyproject
-            if has_uncoded_toml:
-                return uncoded_toml
-        parent = current.parent
-        if parent == current:
-            return None
-        current = parent
+    start_resolved = start.resolve()
+    for directory in [start_resolved, *start_resolved.parents]:
+        result = _config_file_at(directory=directory)
+        if result is not None:
+            return result
+    return None
 
 
 def read_config(start: Path) -> Config:

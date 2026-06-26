@@ -11,6 +11,9 @@ def find_pyproject_toml(start: Path) -> Path | None:
 def _has_uncoded_section(*, pyproject_path: Path) -> bool:
     ...
 
+def _config_file_at(*, directory: Path) -> Path | None:
+    ...
+
 def _find_config_file(*, start: Path) -> Path | None:
     ...
 
