@@ -114,6 +114,7 @@ src/:
       _skill_path:
       _render_content:
       _remove_skill_file:
+      _sync_one_skill:
       sync_skills:
     stubs.py:
       VALUE_WIDTH_CAP:

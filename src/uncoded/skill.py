@@ -100,6 +100,46 @@ def _remove_skill_file(*, path: Path, project_root: Path, check: bool) -> bool:
     return removed
 
 
+def _sync_one_skill(
+    *,
+    skill: Skill,
+    source: bool,
+    docs: bool,
+    project_root: Path,
+    check: bool,
+) -> int:
+    """Build or remove one skill's files, then remove any legacy names.
+
+    Returns the number of file changes (writes and removals).
+    """
+    changes = 0
+    build = source if skill.gate == "code" else docs
+    if build:
+        content = _render_content(skill=skill)
+        for root in SKILL_ROOTS:
+            changes += sync_file(
+                _skill_path(root, skill.name),
+                content,
+                project_root=project_root,
+                check=check,
+            )
+    else:
+        for root in SKILL_ROOTS:
+            changes += _remove_skill_file(
+                path=_skill_path(root, skill.name),
+                project_root=project_root,
+                check=check,
+            )
+    for legacy_name in skill.legacy_names:
+        for root in SKILL_ROOTS:
+            changes += _remove_skill_file(
+                path=_skill_path(root, legacy_name),
+                project_root=project_root,
+                check=check,
+            )
+    return changes
+
+
 def sync_skills(
     *,
     source: bool,
@@ -117,28 +157,11 @@ def sync_skills(
     """
     changes = 0
     for skill in SKILLS:
-        build = source if skill.gate == "code" else docs
-        if build:
-            content = _render_content(skill=skill)
-            for root in SKILL_ROOTS:
-                changes += sync_file(
-                    _skill_path(root, skill.name),
-                    content,
-                    project_root=project_root,
-                    check=check,
-                )
-        else:
-            for root in SKILL_ROOTS:
-                changes += _remove_skill_file(
-                    path=_skill_path(root, skill.name),
-                    project_root=project_root,
-                    check=check,
-                )
-        for legacy_name in skill.legacy_names:
-            for root in SKILL_ROOTS:
-                changes += _remove_skill_file(
-                    path=_skill_path(root, legacy_name),
-                    project_root=project_root,
-                    check=check,
-                )
+        changes += _sync_one_skill(
+            skill=skill,
+            source=source,
+            docs=docs,
+            project_root=project_root,
+            check=check,
+        )
     return changes
