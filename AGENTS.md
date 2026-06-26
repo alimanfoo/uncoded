@@ -107,8 +107,9 @@ Do not pass `--unsafe-fixes` unless a specific violation needs it and you have
 reviewed the change.
 
 A complexity-check violation means a function is too complex to pass. Refactor
-or flatten it. Never suppress a violation with an ignore comment and never raise
-the threshold. The enabled checks and their thresholds are in `pyproject.toml`.
+or flatten it. Never suppress a complexity violation with an ignore comment and
+never raise the threshold. The enabled checks and their thresholds are in
+`pyproject.toml`.
 
 The ty pre-commit hook runs the type checker. It is pinned via the `dev`
 optional dependency, the same way ruff is.
