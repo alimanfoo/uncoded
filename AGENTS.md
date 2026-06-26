@@ -106,8 +106,9 @@ pull request and will fail a build where a hook was skipped.
 Do not pass `--unsafe-fixes` unless a specific violation needs it and you have
 reviewed the change.
 
-A C901 violation means a function is too complex to pass the check. Refactor or
-flatten it rather than raising the `max-complexity` threshold.
+A complexity-check violation means a function is too complex to pass. Refactor
+or flatten it. Never suppress a violation with an ignore comment and never raise
+the threshold. The enabled checks and their thresholds are in `pyproject.toml`.
 
 The ty pre-commit hook runs the type checker. It is pinned via the `dev`
 optional dependency, the same way ruff is.
@@ -158,9 +159,9 @@ Run tests locally as `PYTHONWARNDEFAULTENCODING=1 uv run pytest`. The sentinel
 in `tests/test_encoding_gate.py` fails loudly if either the env var is unset or
 the filterwarnings escalation is removed.
 
-**Complexity ceiling.** The value is in `[tool.ruff.lint.mccabe]` in
-`pyproject.toml`. See [Linting and formatting](#linting-and-formatting) for the
-response to a C901 violation.
+**Complexity ceiling.** The enabled complexity checks and their thresholds are
+in `pyproject.toml`. See [Linting and formatting](#linting-and-formatting) for
+the response to a violation.
 
 **Index committed.** Commit `.uncoded/` and keep it current with the pre-commit
 hook. See [Commands](#commands) and [Dev setup](#dev-setup).
