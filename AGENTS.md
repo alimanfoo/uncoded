@@ -55,12 +55,12 @@ uv run uncoded body <name_path> --in <relative_path>
 # Find references to a symbol
 uv run uncoded refs <name_path> --in <relative_path>
 
-# Run tests. pytest enforces branch coverage. See [tool.coverage.report]
-# in pyproject.toml.
-uv run pytest
+# Run tests. PYTHONWARNDEFAULTENCODING=1 arms the EncodingWarning gate.
+# pytest enforces branch coverage. See [tool.coverage.report] in pyproject.toml.
+PYTHONWARNDEFAULTENCODING=1 uv run pytest
 
 # Run a subset of tests without the coverage gate
-uv run pytest tests/test_stubs.py --no-cov
+PYTHONWARNDEFAULTENCODING=1 uv run pytest tests/test_stubs.py --no-cov
 
 # Run the full pre-commit suite (the same checks CI runs)
 uv run pre-commit run --all-files
@@ -135,9 +135,28 @@ in place.
 in `src/uncoded/markers.py`. `tests/test_markers.py` verifies that all four
 output kinds carry it.
 
-**Explicit encoding.** Every text read/write in `src/`, `tests/`, and `tools/`
-must pass `encoding=`. `tools/check_encoding.py` enforces this as a pre-commit
-hook. It covers receiver types that ruff PLW1514 misses.
+**Explicit encoding.** Every text read/write in the repository must pass
+`encoding=`. Configuration lives in `pyproject.toml` and
+`.github/workflows/ci.yml`.
+
+The static check is ruff rule PLW1514 (unspecified-encoding), enabled in the
+`select` list under `[tool.ruff.lint]`. It runs at pre-commit and in the CI lint
+job, covering the whole tree. PLW1514 requires `preview = true`. Disabling
+preview silently drops the rule.
+
+PLW1514 does not resolve fixture-derived Path receivers, such as
+`(tmp_path / "f.py").write_text(...)`. The runtime gate covers those calls when
+they execute. A write on a never-executed line is the accepted residual.
+
+The runtime gate turns EncodingWarning into a test failure.
+`filterwarnings = ["error::EncodingWarning"]` in `[tool.pytest.ini_options]`
+promotes the warning to an error. The CI test job sets
+`PYTHONWARNDEFAULTENCODING=1`. Without it the interpreter never emits
+EncodingWarning and the filter is inert.
+
+Run tests locally as `PYTHONWARNDEFAULTENCODING=1 uv run pytest`. The sentinel
+in `tests/test_encoding_gate.py` fails loudly if either the env var is unset or
+the filterwarnings escalation is removed.
 
 **Complexity ceiling.** The value is in `[tool.ruff.lint.mccabe]` in
 `pyproject.toml`. See [Linting and formatting](#linting-and-formatting) for the
@@ -145,13 +164,6 @@ response to a C901 violation.
 
 **Index committed.** Commit `.uncoded/` and keep it current with the pre-commit
 hook. See [Commands](#commands) and [Dev setup](#dev-setup).
-
-### Tools
-
-`tools/` holds custom check scripts that complement ruff. Ruff lints the whole
-tree, so `tools/` is in scope for all ruff rules. It sits outside the coverage
-gate (`source = ["src"]` in `[tool.coverage.run]`). Its scripts have no coverage
-net.
 
 ## Releasing
 

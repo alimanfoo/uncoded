@@ -48,6 +48,7 @@ doc-roots = ["README.md", "AGENTS.md"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "--cov -m 'not integration'"
+filterwarnings = ["error::EncodingWarning"]
 markers = ["integration: spawns real ty subprocess (requires uvx)"]
 
 [tool.coverage.run]
@@ -81,6 +82,7 @@ select = [
     "PERF", # perflint (performance anti-patterns)
     "RUF", # Ruff-specific rules
     "PLE", # Pylint errors
+    "PLW1514", # Pylint: unspecified-encoding
     "PLW2901", # Pylint: redefined loop variable
     "PLC0415", # Pylint: import not at top of file
     "TC", # flake8-type-checking

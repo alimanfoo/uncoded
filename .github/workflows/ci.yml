@@ -31,3 +31,5 @@ jobs:
       - run: uv python install ${{ matrix.python-version }}
       - run: uv sync --extra dev
       - run: uv run pytest -v -m "integration or not integration"
+        env:
+          PYTHONWARNDEFAULTENCODING: "1"
