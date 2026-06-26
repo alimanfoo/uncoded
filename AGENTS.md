@@ -135,9 +135,9 @@ in place.
 in `src/uncoded/markers.py`. `tests/test_markers.py` verifies that all four
 output kinds carry it.
 
-**Explicit encoding.** Every text read/write in `src/`, `tests/`, and `tools/`
-must pass `encoding=`. Two mechanisms enforce this, configured in
-`pyproject.toml` and `.github/workflows/ci.yml`.
+**Explicit encoding.** Every text read/write in the repository must pass
+`encoding=`. Configuration lives in `pyproject.toml` and
+`.github/workflows/ci.yml`.
 
 The static check is ruff rule PLW1514 (unspecified-encoding), enabled in the
 `select` list under `[tool.ruff.lint]`. It runs at pre-commit and in the CI lint
