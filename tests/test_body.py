@@ -298,14 +298,15 @@ class TestResolveBodyClassMember:
             resolve_body(NamePath("Foo", "missing"), path)
 
     def test_class_member_found_when_function_has_same_head_name(self, tmp_path):
-        # A top-level function sharing the class name must not block the
-        # class-member dispatch when the name_path carries a tail.
+        # The function comes AFTER the class so a broadened predicate that
+        # wrongly matches the function would latch it as the last match,
+        # making the tail dispatch see a function instead of a class and fail.
         source = textwrap.dedent("""\
-            def Foo(): pass
-
             class Foo:
                 def member(self):
                     pass
+
+            def Foo(): pass
         """)
         path = tmp_path / "m.py"
         path.write_text(source, encoding="utf-8")
