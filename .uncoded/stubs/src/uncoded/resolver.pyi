@@ -13,6 +13,9 @@ def resolve_ast_node(name_path: NamePath, in_path: Path) -> ast.stmt:
 def resolve_name_position(name_path: NamePath, in_path: Path) -> tuple[int, int]:
     ...
 
+def _top_level_match(*, node: ast.stmt, head: str, tail: str | None) -> bool:
+    ...
+
 def resolve_ast_node_from_source(*, name_path: NamePath, source: str, in_path: Path) -> ast.stmt:
     ...
 

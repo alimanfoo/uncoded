@@ -76,6 +76,9 @@ class TestResolveBodyClassMember:
     def test_not_found_in_class(self, tmp_path):
         ...
 
+    def test_class_member_found_when_function_has_same_head_name(self, tmp_path):
+        ...
+
 class TestUnsupportedNamePathError:
     SUPPORTED_SHAPES = ("'name'", "'Class/member'")
 

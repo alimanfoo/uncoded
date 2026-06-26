@@ -297,6 +297,23 @@ class TestResolveBodyClassMember:
         with pytest.raises(SymbolNotFoundError, match="missing"):
             resolve_body(NamePath("Foo", "missing"), path)
 
+    def test_class_member_found_when_function_has_same_head_name(self, tmp_path):
+        # A top-level function sharing the class name must not block the
+        # class-member dispatch when the name_path carries a tail.
+        source = textwrap.dedent("""\
+            def Foo(): pass
+
+            class Foo:
+                def member(self):
+                    pass
+        """)
+        path = tmp_path / "m.py"
+        path.write_text(source, encoding="utf-8")
+
+        result = resolve_body(NamePath("Foo", "member"), path)
+
+        assert result == "    def member(self):\n        pass\n"
+
 
 class TestUnsupportedNamePathError:
     SUPPORTED_SHAPES = ("'name'", "'Class/member'")

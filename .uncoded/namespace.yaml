@@ -100,6 +100,7 @@ src/:
       UnsupportedNamePathError:
       resolve_ast_node:
       resolve_name_position:
+      _top_level_match:
       resolve_ast_node_from_source:
       _resolve_class_member:
     skill.py:
@@ -197,6 +198,7 @@ tests/:
       test_shadowed_class_member_found_in_last_definition:
       test_shadowed_class_member_not_found_in_last_definition:
       test_not_found_in_class:
+      test_class_member_found_when_function_has_same_head_name:
     TestUnsupportedNamePathError:
       SUPPORTED_SHAPES:
       _assert_raises:

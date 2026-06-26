@@ -86,6 +86,31 @@ def resolve_name_position(name_path: NamePath, in_path: Path) -> tuple[int, int]
     )
 
 
+def _top_level_match(
+    *,
+    node: ast.stmt,
+    head: str,
+    tail: str | None,
+) -> bool:
+    """Return True if node matches head as a top-level symbol.
+
+    ClassDef matches regardless of tail (it is the dispatch target for
+    class-member lookups). Function, assignment, and type-alias nodes
+    match only when tail is None.
+    """
+    if isinstance(node, ast.ClassDef):
+        return node.name == head
+    if tail is not None:
+        return False
+    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+        return node.name == head
+    if isinstance(node, (ast.Assign, ast.AnnAssign)):
+        return assign_target_name(node) == head
+    if isinstance(node, ast.TypeAlias):
+        return node.name.id == head
+    return False
+
+
 def resolve_ast_node_from_source(
     *,
     name_path: NamePath,
@@ -108,19 +133,9 @@ def resolve_ast_node_from_source(
     top_match: ast.stmt | None = None
 
     for node in ast.iter_child_nodes(tree):
-        matches_class = isinstance(node, ast.ClassDef) and node.name == head
-        matches_function = (
-            isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
-            and tail is None
-            and node.name == head
-        )
-        if matches_class or matches_function:
-            top_match = node
-        elif isinstance(node, (ast.Assign, ast.AnnAssign)) and tail is None:
-            name = assign_target_name(node)
-            if name == head:
-                top_match = node
-        elif isinstance(node, ast.TypeAlias) and tail is None and node.name.id == head:
+        if isinstance(node, ast.stmt) and _top_level_match(
+            node=node, head=head, tail=tail
+        ):
             top_match = node
 
     if top_match is None:
