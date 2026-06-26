@@ -142,6 +142,8 @@ src/:
         constants:
         classes:
         functions:
+      _unparse_or_none:
+      _args_to_params:
       _extract_params:
       _render_value:
       _extract_assignment:
