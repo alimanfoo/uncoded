@@ -23,6 +23,7 @@ classifiers = [
 
 [project.optional-dependencies]
 dev = [
+    "complexipy==5.6.1",
     "hypothesis>=6.0",
     "pre-commit>=3.0",
     "pytest>=8.0",
@@ -109,6 +110,9 @@ ignore = [
 
 [tool.ruff.lint.mccabe]
 max-complexity = 8
+
+[tool.complexipy]
+max-complexity-allowed = 15
 
 [tool.ruff.lint.pydocstyle]
 convention = "pep257"
