@@ -154,7 +154,8 @@ promotes the warning to an error. The CI test job sets
 `PYTHONWARNDEFAULTENCODING=1`. Without it the interpreter never emits
 EncodingWarning and the filter is inert. Run tests locally as
 `PYTHONWARNDEFAULTENCODING=1 uv run pytest`. The sentinel in
-`tests/test_encoding_gate.py` fails loudly when the env var is absent.
+`tests/test_encoding_gate.py` fails loudly if either the env var is unset or the
+filterwarnings escalation is removed.
 
 **Complexity ceiling.** The value is in `[tool.ruff.lint.mccabe]` in
 `pyproject.toml`. See [Linting and formatting](#linting-and-formatting) for the
