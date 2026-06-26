@@ -11,6 +11,12 @@ from uncoded.sync import remove_file, sync_file
 
 VALUE_WIDTH_CAP = 80
 
+def _unparse_or_none(*, node: ast.expr | None) -> str | None:
+    ...
+
+def _args_to_params(*, arg_nodes: list[ast.arg]) -> list[StubParam]:
+    ...
+
 def _extract_params(args: ast.arguments) -> list[StubParam]:
     ...
 

@@ -68,37 +68,48 @@ class StubModule:
     functions: list[StubFunction] = field(default_factory=list)
 
 
+def _unparse_or_none(*, node: ast.expr | None) -> str | None:
+    """Unparse an optional annotation node, returning None when absent."""
+    return ast.unparse(node) if node else None
+
+
+def _args_to_params(*, arg_nodes: list[ast.arg]) -> list[StubParam]:
+    """Convert a list of AST argument nodes to StubParam records."""
+    return [
+        StubParam(name=a.arg, annotation=_unparse_or_none(node=a.annotation))
+        for a in arg_nodes
+    ]
+
+
 def _extract_params(args: ast.arguments) -> list[StubParam]:
     """Extract parameters from a function argument node, without defaults."""
     params: list[StubParam] = []
 
-    for arg in args.posonlyargs:
-        annotation = ast.unparse(arg.annotation) if arg.annotation else None
-        params.append(StubParam(name=arg.arg, annotation=annotation))
+    params.extend(_args_to_params(arg_nodes=args.posonlyargs))
     if args.posonlyargs:
         params.append(StubParam(name="/"))
 
-    for arg in args.args:
-        annotation = ast.unparse(arg.annotation) if arg.annotation else None
-        params.append(StubParam(name=arg.arg, annotation=annotation))
+    params.extend(_args_to_params(arg_nodes=args.args))
 
     if args.vararg:
-        annotation = (
-            ast.unparse(args.vararg.annotation) if args.vararg.annotation else None
+        params.append(
+            StubParam(
+                name=f"*{args.vararg.arg}",
+                annotation=_unparse_or_none(node=args.vararg.annotation),
+            )
         )
-        params.append(StubParam(name=f"*{args.vararg.arg}", annotation=annotation))
     elif args.kwonlyargs:
         params.append(StubParam(name="*"))
 
-    for arg in args.kwonlyargs:
-        annotation = ast.unparse(arg.annotation) if arg.annotation else None
-        params.append(StubParam(name=arg.arg, annotation=annotation))
+    params.extend(_args_to_params(arg_nodes=args.kwonlyargs))
 
     if args.kwarg:
-        annotation = (
-            ast.unparse(args.kwarg.annotation) if args.kwarg.annotation else None
+        params.append(
+            StubParam(
+                name=f"**{args.kwarg.arg}",
+                annotation=_unparse_or_none(node=args.kwarg.annotation),
+            )
         )
-        params.append(StubParam(name=f"**{args.kwarg.arg}", annotation=annotation))
 
     return params
 
@@ -153,7 +164,7 @@ def _extract_function(
     return StubFunction(
         name=node.name,
         params=_extract_params(node.args),
-        return_annotation=ast.unparse(node.returns) if node.returns else None,
+        return_annotation=_unparse_or_none(node=node.returns),
         is_async=isinstance(node, ast.AsyncFunctionDef),
     )
 
@@ -164,7 +175,7 @@ def _property_attribute(
     """Build a StubAssignment representing a @property as a class attribute."""
     return StubAssignment(
         name=node.name,
-        annotation=ast.unparse(node.returns) if node.returns else None,
+        annotation=_unparse_or_none(node=node.returns),
     )
 
 

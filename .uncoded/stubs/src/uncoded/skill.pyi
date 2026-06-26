@@ -21,6 +21,9 @@ def _render_content(*, skill: Skill) -> str:
 def _remove_skill_file(*, path: Path, project_root: Path, check: bool) -> bool:
     ...
 
+def _sync_one_skill(*, skill: Skill, source: bool, docs: bool, project_root: Path, check: bool) -> int:
+    ...
+
 def sync_skills(*, source: bool, docs: bool, project_root: Path, check: bool) -> int:
     ...
 

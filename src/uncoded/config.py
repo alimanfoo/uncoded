@@ -42,59 +42,66 @@ def _has_uncoded_section(*, pyproject_path: Path) -> bool:
         return False
 
 
-def _find_config_file(*, start: Path) -> Path | None:
-    """Return the nearest config file walking up from ``start``.
+def _config_file_at(*, directory: Path) -> Path | None:
+    """Return the config file in ``directory``, or None.
 
-    Discovery rules at each directory (skipping directories named ``.uncoded``):
+    Skips directories named ``.uncoded``. Per-directory resolution rules:
 
     - ``pyproject.toml`` with ``[tool.uncoded]`` AND ``.uncoded.toml`` both
-      present → raises :exc:`ConfigError` (ambiguous; configure in one file).
+      present → raises :exc:`ConfigError` (configure uncoded in one file only).
     - Only ``pyproject.toml`` with ``[tool.uncoded]`` → home is the pyproject.
     - Only ``.uncoded.toml`` → home is the ``.uncoded.toml``.
     - ``pyproject.toml`` without ``[tool.uncoded]``, no ``.uncoded.toml``
       → home is the pyproject (bare Python project; roots default to empty).
     - ``pyproject.toml`` without ``[tool.uncoded]`` AND ``.uncoded.toml``
       → home is the ``.uncoded.toml`` (bare pyproject does not shadow it).
-    - Neither file → keep walking up.
-
-    When the two file types sit at different walk levels, the nearer one wins
-    with no error. Ambiguity is only a same-directory condition.
+    - Neither file → returns None.
     """
-    current = start.resolve()
-    while True:
-        if current.name != ".uncoded":
-            pyproject = current / "pyproject.toml"
-            uncoded_toml = current / ".uncoded.toml"
-            has_uncoded_toml = uncoded_toml.exists()
-            if pyproject.exists():
-                has_section = _has_uncoded_section(pyproject_path=pyproject)
-                if has_section and has_uncoded_toml:
-                    raise ConfigError(
-                        "Ambiguous config: both pyproject.toml and .uncoded.toml "
-                        "configure uncoded in the same directory. "
-                        "Configure uncoded in one file only."
-                    )
-                if not has_section and has_uncoded_toml:
-                    # Bare pyproject does not shadow a sibling .uncoded.toml.
-                    return uncoded_toml
-                return pyproject
-            if has_uncoded_toml:
-                return uncoded_toml
-        parent = current.parent
-        if parent == current:
-            return None
-        current = parent
+    if directory.name == ".uncoded":
+        return None
+    pyproject = directory / "pyproject.toml"
+    uncoded_toml = directory / ".uncoded.toml"
+    has_uncoded_toml = uncoded_toml.exists()
+    if pyproject.exists():
+        has_section = _has_uncoded_section(pyproject_path=pyproject)
+        if has_section and has_uncoded_toml:
+            raise ConfigError(
+                "Ambiguous config: both pyproject.toml and .uncoded.toml "
+                "configure uncoded in the same directory. "
+                "Configure uncoded in one file only."
+            )
+        if not has_section and has_uncoded_toml:
+            # Bare pyproject does not shadow a sibling .uncoded.toml.
+            return uncoded_toml
+        return pyproject
+    if has_uncoded_toml:
+        return uncoded_toml
+    return None
+
+
+def _find_config_file(*, start: Path) -> Path | None:
+    """Return the nearest config file walking up from ``start``.
+
+    The nearest directory with a result wins. Ambiguity is a same-directory
+    condition only. Files at different levels do not conflict. Returns None
+    when no config file is found.
+    """
+    start_resolved = start.resolve()
+    for directory in [start_resolved, *start_resolved.parents]:
+        result = _config_file_at(directory=directory)
+        if result is not None:
+            return result
+    return None
 
 
 def read_config(start: Path) -> Config:
     """Locate the config file and read all uncoded settings from it.
 
     Walks up from ``start`` looking for ``pyproject.toml`` or
-    ``.uncoded.toml`` (see ``_find_config_file`` for precedence rules).
-    Raises :exc:`ConfigError` when no config file is found, or when two
-    config files in the same directory both configure uncoded. A found
-    config file with no uncoded settings returns a Config with empty root
-    lists.
+    ``.uncoded.toml``. Raises :exc:`ConfigError` when no config file is
+    found, or when two config files in the same directory both configure
+    uncoded. A found config file with no uncoded settings returns a Config
+    with empty root lists.
     """
     config_file = _find_config_file(start=start)
     if config_file is None:

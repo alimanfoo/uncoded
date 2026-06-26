@@ -34,6 +34,7 @@ src/:
         doc_roots:
       find_pyproject_toml:
       _has_uncoded_section:
+      _config_file_at:
       _find_config_file:
       read_config:
     docs_map.py:
@@ -99,6 +100,7 @@ src/:
       UnsupportedNamePathError:
       resolve_ast_node:
       resolve_name_position:
+      _top_level_match:
       resolve_ast_node_from_source:
       _resolve_class_member:
     skill.py:
@@ -113,6 +115,7 @@ src/:
       _skill_path:
       _render_content:
       _remove_skill_file:
+      _sync_one_skill:
       sync_skills:
     stubs.py:
       VALUE_WIDTH_CAP:
@@ -140,6 +143,8 @@ src/:
         constants:
         classes:
         functions:
+      _unparse_or_none:
+      _args_to_params:
       _extract_params:
       _render_value:
       _extract_assignment:
@@ -193,6 +198,7 @@ tests/:
       test_shadowed_class_member_found_in_last_definition:
       test_shadowed_class_member_not_found_in_last_definition:
       test_not_found_in_class:
+      test_class_member_found_when_function_has_same_head_name:
     TestUnsupportedNamePathError:
       SUPPORTED_SHAPES:
       _assert_raises:
