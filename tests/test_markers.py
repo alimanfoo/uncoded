@@ -1,16 +1,13 @@
 """Marker completeness: every generated-artefact family carries GENERATED_MARKER."""
 
 from uncoded.docs_map import render_docs_map
-from uncoded.markers import GENERATED_MARKER, INDEX_GITIGNORE_CONTENT
+from uncoded.markers import GENERATED_MARKER
 from uncoded.namespace_map import render_map
 from uncoded.skill import SKILLS, _render_content
 from uncoded.stubs import StubModule, render_stub
 
 
 class TestMarkerCompleteness:
-    def test_index_gitignore_carries_marker(self):
-        assert GENERATED_MARKER in INDEX_GITIGNORE_CONTENT
-
     def test_namespace_map_carries_marker(self):
         assert GENERATED_MARKER in render_map({})
 

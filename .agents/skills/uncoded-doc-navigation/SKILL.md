@@ -23,6 +23,6 @@ its heading hierarchy. Read it in full, now.
 **Step 2: Navigate.** Headings in the map are literal text. Use `Read` or `grep`
 to navigate to a specific section identified in the map.
 
-**Step 3: Refresh.** After every modification to indexed Markdown, run
-`uvx uncoded sync` before the next documentation-navigation operation. The
-modification can change the heading map.
+**Step 3: Refresh.** After every modification to indexed Markdown, run the
+repository's configured `uncoded sync` command before the next
+documentation-navigation operation. The modification can change the heading map.

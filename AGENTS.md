@@ -43,7 +43,7 @@ This project uses [uv](https://docs.astral.sh/uv/). Run all commands via
 install, which may have different behaviour.
 
 ```sh
-# Generate (or update) the namespace map, stub files, docs.yaml, and skill files
+# Generate or update the navigation artefacts
 uv run uncoded sync
 
 # Verify the index without writing. It exits non-zero if any file would change
@@ -136,8 +136,7 @@ This section names where each cross-cutting convention lives and what keeps it
 in place.
 
 **Provenance marker.** Every generated file carries `GENERATED_MARKER`, defined
-in `src/uncoded/markers.py`. `tests/test_markers.py` verifies that every output
-kind carries it.
+in `src/uncoded/markers.py`. The tests verify that every output kind carries it.
 
 **Explicit encoding.** Every text read/write in the repository must pass
 `encoding=`. Configuration lives in `pyproject.toml` and

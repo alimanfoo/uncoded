@@ -302,15 +302,14 @@ class TestSyncApplyMode:
         monkeypatch.chdir(from_subdir / "src")
         assert cli._sync() == 0
 
-        relpaths = [
-            Path(".uncoded/namespace.yaml"),
-            Path(".uncoded/stubs/src/foo.pyi"),
-            *_CODE_SKILL_PATHS,
-        ]
-        for rel in relpaths:
-            assert (from_root / rel).read_text(encoding="utf-8") == (
-                from_subdir / rel
-            ).read_text(encoding="utf-8"), f"artefact differs at {rel}"
+        def _file_contents(root: Path) -> dict[Path, str]:
+            return {
+                path.relative_to(root): path.read_text(encoding="utf-8")
+                for path in root.rglob("*")
+                if path.is_file()
+            }
+
+        assert _file_contents(from_root) == _file_contents(from_subdir)
 
 
 class TestSyncCheckMode:
@@ -770,11 +769,25 @@ class TestSyncDocRoots:
 
     def test_error_when_doc_root_missing(self, tmp_path, monkeypatch, capsys):
         (tmp_path / "pyproject.toml").write_text(
-            '[project]\nname = "demo"\n\n[tool.uncoded]\ndoc-roots = ["nope"]\n',
+            textwrap.dedent(
+                """\
+                [project]
+                name = "demo"
+
+                [tool.uncoded]
+                source-roots = ["src"]
+                doc-roots = ["nope"]
+                """
+            ),
             encoding="utf-8",
+        )
+        (tmp_path / "src").mkdir()
+        (tmp_path / "src" / "foo.py").write_text(
+            "def hello(): pass\n", encoding="utf-8"
         )
         monkeypatch.chdir(tmp_path)
         assert cli._sync() == 1
+        assert (tmp_path / ".uncoded" / ".gitignore").exists()
         err = capsys.readouterr().err
         assert "Error: doc root nope" in err
         assert "doc-roots" in err
