@@ -186,8 +186,9 @@ uvx uncoded refs <name_path> --in <relative_path>
 symbol, two for a class member (`Class/method`).
 
 Output is one reference per line as `<path>:<line>:<col>`. Line and column are
-1-indexed. Results are sorted by path, then line, then column. It exits 0 on
-success. Empty output means no references.
+1-indexed. Each path is relative to the current working directory when possible
+and otherwise absolute. Results are sorted by path, then line, then column. It
+exits 0 on success. Empty output means no references.
 
 For example, to find all callers of `resolve_body`:
 
