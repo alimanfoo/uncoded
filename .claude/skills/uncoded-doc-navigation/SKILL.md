@@ -10,8 +10,9 @@ description: Use before searching or reading a codebase's Markdown documentation
 This codebase uses [uncoded](https://github.com/alimanfoo/uncoded) to maintain a
 documentation index.
 
-**Step 1: Orient. Read the docs map first.** Before answering the user, before
-any other tool call:
+**Step 1: Orient. Read the docs map first.** If the map is missing, run the
+repository's configured `uncoded sync` command. Then, before answering the user,
+before any other tool call:
 
 ```text
 Read .uncoded/docs.yaml

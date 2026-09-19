@@ -74,6 +74,7 @@ Clone and install dev dependencies:
 git clone https://github.com/alimanfoo/uncoded
 cd uncoded
 uv sync --extra dev
+uv run uncoded sync
 uv run pre-commit install
 ```
 

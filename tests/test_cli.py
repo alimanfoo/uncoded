@@ -155,6 +155,7 @@ class TestSyncApplyMode:
         monkeypatch.chdir(tmp_path)
 
         assert cli._sync() == 1
+        assert (tmp_path / ".uncoded" / ".gitignore").exists()
 
         err = capsys.readouterr().err
         assert "Error: source root nope is not a directory." in err

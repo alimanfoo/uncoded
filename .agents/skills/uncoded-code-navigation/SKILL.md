@@ -30,10 +30,11 @@ arithmetic to slice a body. The indexed tools don't.
 
 ## How to execute the rule
 
-The index has two parts (a namespace map and per-file stubs) and three steps
-(orient, understand, act).
+The index has two parts: a namespace map and per-file stubs. Follow this
+sequence.
 
-**Step 1: Orient. Read the namespace map first.** Before answering the user,
+**Step 1: Orient. Read the namespace map first.** If the map is missing, run the
+repository's configured `uncoded sync` command. Then, before answering the user,
 before any other tool call:
 
 ```text

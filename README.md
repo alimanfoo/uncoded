@@ -134,8 +134,8 @@ The hook regenerates the ignored local index before every commit. If a skill
 template changed, the hook also updates its tracked generated skill files; stage
 those files and commit again.
 
-You can also set up your CI to run `pre-commit run --all-files` to verify the
-index is up to date.
+You can also run `pre-commit run --all-files` in CI to verify that index
+generation succeeds and the tracked skill files are current.
 
 ## Verify the index is fresh
 
