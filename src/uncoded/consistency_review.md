@@ -52,7 +52,7 @@ from signatures, docstrings, or bodies. Look for:
 - **Competing terms:** different names for substantively the same concept.
 - **Conflicting use:** the same term used incompatibly within a shared context.
 - **Stale qualifiers:** names such as `legacy`, `v2`, or `final` whose
-  distinction conflicts with another symbol or with documentation.
+  distinction conflicts with another symbol or a symbol's docstring.
 
 Similar spelling, low vocabulary overlap, or the presence of a qualifier is not
 evidence on its own. A finding needs two concrete claims that establish the
@@ -68,8 +68,8 @@ Findings may cover:
 - docstring-signature disagreement
 - name-behaviour disagreement
 
-Read each relevant source file's stub for names and signatures. Run
-`uvx uncoded body <name_path> --in <relative_path>` only when a docstring or
+Read each relevant source file's stub for names and signatures. Run the
+repository's configured `uncoded body` command only when a docstring or
 implementation is needed to confirm a candidate. Do not retrieve every public
 symbol body.
 

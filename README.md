@@ -233,11 +233,10 @@ matches a symbol's name.
 `uncoded sync` installs an `/uncoded-consistency-review` skill that checks for
 semantic and naming inconsistencies supported by concrete evidence.
 
-Invoke it in Claude Code:
+Invoke the skill by name:
 
-```text
-/uncoded-consistency-review
-```
+- Claude Code: `/uncoded-consistency-review`
+- Codex: `$uncoded-consistency-review`
 
 The review first checks vocabulary across the namespace, then checks symbol
 contracts across names, signatures, docstrings, and behaviour. Every finding
@@ -276,9 +275,10 @@ upgrading:
    uncoded no longer manages these sections. Leaving them in place is harmless
    but they are now dead markup.
 
-2. **Update any skill pointer** that references `coherence-review` or
-   `uncoded-coherence-review` to `uncoded-consistency-review`. The skill now
-   names its semantic consistency focus directly.
+2. **Update any skill pointer** that references `coherence-review`,
+   `uncoded-review`, or `uncoded-coherence-review` to
+   `uncoded-consistency-review`. The skill now names its semantic consistency
+   focus directly.
 
 3. **Remove the `instruction-files` config key** if your `pyproject.toml` or
    `.uncoded.toml` has it. uncoded no longer reads this key. Leaving it in place

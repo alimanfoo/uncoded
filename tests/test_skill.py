@@ -154,6 +154,7 @@ class TestSyncSkills:
             assert not path.parent.exists()
 
     def test_check_mode_reports_legacy_files_without_removing(self, tmp_path):
+        sync_skills(source=True, docs=False, project_root=tmp_path, check=False)
         legacy_paths = [
             tmp_path / root / legacy_file
             for legacy_file in _LEGACY_REVIEW_FILES
@@ -163,14 +164,22 @@ class TestSyncSkills:
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text("old skill\n", encoding="utf-8")
 
-        assert (
-            sync_skills(source=True, docs=False, project_root=tmp_path, check=True) > 0
-        )
+        assert sync_skills(
+            source=True, docs=False, project_root=tmp_path, check=True
+        ) == len(legacy_paths)
         for path in legacy_paths:
             assert path.exists()
 
-    def test_source_false_removes_existing_skill_files(self, tmp_path):
+    def test_source_false_removes_current_and_legacy_skill_files(self, tmp_path):
         sync_skills(source=True, docs=False, project_root=tmp_path, check=False)
+        legacy_paths = [
+            tmp_path / root / legacy_file
+            for legacy_file in _LEGACY_REVIEW_FILES
+            for root in SKILL_ROOTS
+        ]
+        for path in legacy_paths:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("old skill\n", encoding="utf-8")
         for root in SKILL_ROOTS:
             assert (tmp_path / root / _REVIEW_SKILL_FILE).exists()
         assert (
@@ -179,6 +188,8 @@ class TestSyncSkills:
         )
         for root in SKILL_ROOTS:
             assert not (tmp_path / root / _REVIEW_SKILL_FILE).exists()
+        for path in legacy_paths:
+            assert not path.parent.exists()
 
     def test_source_false_returns_zero_when_already_absent(self, tmp_path):
         assert (
