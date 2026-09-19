@@ -19,14 +19,14 @@ class TestSyncSkills:
         assert "uncoded-code-navigation" in names
         assert "uncoded-doc-navigation" in names
         assert _REVIEW_SKILL.name == "uncoded-consistency-review"
-        assert _REVIEW_SKILL.gate == "code"
+        assert _REVIEW_SKILL.gate == "source"
         assert set(_REVIEW_SKILL.legacy_names) == {
             "uncoded-coherence-review",
             "coherence-review",
             "uncoded-review",
         }
         code_nav = next(s for s in SKILLS if s.name == "uncoded-code-navigation")
-        assert code_nav.gate == "code"
+        assert code_nav.gate == "source"
         assert code_nav.legacy_names == ()
         doc_nav = next(s for s in SKILLS if s.name == "uncoded-doc-navigation")
         assert doc_nav.gate == "docs"
@@ -76,7 +76,7 @@ class TestSyncSkills:
 
         monkeypatch.setattr(skill_module, "files", lambda pkg: _FakeResource())
         test_skill = Skill(
-            name="test", description="A test.", body_file="test.md", gate="code"
+            name="test", description="A test.", body_file="test.md", gate="source"
         )
         content = skill_module._render_content(skill=test_skill)
         assert f"<!-- {GENERATED_MARKER} -->" in content
@@ -253,7 +253,7 @@ class TestSyncSkills:
             name="no-legacy",
             description="A skill with no legacy names.",
             body_file=_REVIEW_SKILL.body_file,
-            gate="code",
+            gate="source",
         )
         monkeypatch.setattr(skill_module, "SKILLS", [no_legacy_skill])
         result = sync_skills(
