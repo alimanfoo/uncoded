@@ -66,6 +66,7 @@ def resolve_name_position(name_path: NamePath, in_path: Path) -> tuple[int, int]
     For assignments and type aliases, character points at the start of the target name.
     Raises SymbolNotFoundError, OSError, UnicodeDecodeError, and SyntaxError under
     the same conditions as resolve_ast_node.
+    Raises TypeError if resolve_ast_node returns an unsupported node type.
     """
     node = resolve_ast_node(name_path, in_path)
     if isinstance(node, ast.FunctionDef):
@@ -81,7 +82,7 @@ def resolve_name_position(name_path: NamePath, in_path: Path) -> tuple[int, int]
     if isinstance(node, ast.TypeAlias):
         return (node.name.lineno - 1, node.name.col_offset)
     node_type = type(node).__name__
-    raise UnsupportedNamePathError(
+    raise TypeError(
         f"Cannot extract name position from {node_type} for {str(name_path)!r}"
     )
 
