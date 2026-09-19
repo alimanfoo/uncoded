@@ -23,7 +23,7 @@ class Skill:
     name: str
     description: str
     body_file: str
-    gate: Literal["code", "docs"]
+    gate: Literal["source", "docs"]
     legacy_names: tuple[str, ...] = ()
 
 
@@ -38,7 +38,7 @@ SKILLS: list[Skill] = [
             " present)."
         ),
         body_file="consistency_review.md",
-        gate="code",
+        gate="source",
         legacy_names=(
             "uncoded-coherence-review",
             "coherence-review",
@@ -54,7 +54,7 @@ SKILLS: list[Skill] = [
             " rename, or delete."
         ),
         body_file="code_navigation.md",
-        gate="code",
+        gate="source",
     ),
     Skill(
         name="uncoded-doc-navigation",
@@ -115,7 +115,7 @@ def _sync_one_skill(
     Returns the number of file changes (writes and removals).
     """
     changes = 0
-    build = source if skill.gate == "code" else docs
+    build = source if skill.gate == "source" else docs
     if build:
         content = _render_content(skill=skill)
         for root in SKILL_ROOTS:
@@ -152,7 +152,7 @@ def sync_skills(
     """Sync all registered skill files for the target repository.
 
     For each skill, builds the skill files when its gate condition is met
-    (gate "code" requires source=True; gate "docs" requires docs=True) and
+    (gate "source" requires source=True; gate "docs" requires docs=True) and
     removes them otherwise. Always removes any legacy skill paths.
 
     Returns the total number of file changes (writes and removals).

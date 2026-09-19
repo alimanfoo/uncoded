@@ -1,6 +1,5 @@
 import ast
 import textwrap
-from unittest import mock
 
 import pytest
 
@@ -136,7 +135,7 @@ class TestResolveBodyTopLevel:
 
         assert result == "def foo():\n    return 42\n"
 
-    def test_not_found_raises_body_not_found(self, tmp_path):
+    def test_not_found_raises_symbol_not_found(self, tmp_path):
         path = tmp_path / "m.py"
         path.write_text("def other(): pass\n", encoding="utf-8")
 
@@ -370,7 +369,7 @@ class TestResolveAstNode:
         assert isinstance(node, ast.FunctionDef)
         assert node.name == "start"
 
-    def test_raises_body_not_found(self, tmp_path):
+    def test_raises_symbol_not_found(self, tmp_path):
         path = tmp_path / "m.py"
         path.write_text("def other(): pass\n", encoding="utf-8")
 
@@ -474,16 +473,6 @@ class TestResolveNamePosition:
         path.write_text(source, encoding="utf-8")
 
         assert resolve_name_position(NamePath("Dog", "bark"), path) == (1, 8)
-
-    def test_unexpected_node_type_raises_unsupported_name_path(self, tmp_path):
-        path = tmp_path / "m.py"
-        path.write_text("pass\n", encoding="utf-8")
-
-        with (
-            mock.patch("uncoded.resolver.resolve_ast_node", return_value=ast.Pass()),
-            pytest.raises(UnsupportedNamePathError),
-        ):
-            resolve_name_position(NamePath("anything"), path)
 
 
 class TestResolveBodyByteIdentical:

@@ -23,7 +23,7 @@ TY_VERSION = "0.0.53"
 class Reference:
     """A reference location with 1-indexed line and column."""
 
-    rel_path: Path
+    path: Path
     line: int
     col: int
 
@@ -33,7 +33,7 @@ def find_refs(name_path: NamePath, in_path: Path) -> list[Reference]:
 
     Resolves the symbol's name-token position, queries ty's LSP server for
     references, and returns results with 1-indexed line/col sorted by
-    (rel_path, line, col). rel_path is relative to the current working
+    (path, line, col). path is relative to the current working
     directory when possible; otherwise absolute.
     Propagates SymbolNotFoundError from resolve_name_position. OSError,
     UnicodeDecodeError, and SyntaxError propagate from resolve_name_position
@@ -43,13 +43,13 @@ def find_refs(name_path: NamePath, in_path: Path) -> list[Reference]:
     raw_refs = _query_references(in_path=in_path, position=position)
     result = [
         Reference(
-            rel_path=_to_rel_path(path=ref.path),
+            path=_path_for_display(path=ref.path),
             line=ref.line + 1,
             col=ref.character + 1,
         )
         for ref in raw_refs
     ]
-    result.sort(key=lambda r: (r.rel_path, r.line, r.col))
+    result.sort(key=lambda r: (r.path, r.line, r.col))
     return result
 
 
@@ -108,7 +108,7 @@ def _terminate(*, proc: subprocess.Popen[bytes]) -> None:
         proc.wait()
 
 
-def _to_rel_path(*, path: Path) -> Path:
+def _path_for_display(*, path: Path) -> Path:
     try:
         return path.relative_to(Path.cwd())
     except ValueError:

@@ -76,10 +76,11 @@ for a method and `function_name` for a top-level function. Per task:
 
 - **Find every reference to a symbol.**
   `uvx uncoded refs <name_path> --in <relative_path>`. Prints one reference per
-  line as `file:line:col`, sorted. Grep on the name misses re-exports and adds
-  false positives from comments, strings, and attribute lookups on other types.
-  If the next move depends on the answer being complete, grep cannot give you
-  that.
+  line as `<path>:<line>:<col>`, sorted by path, then line, then column. Each
+  path is relative to the current working directory when possible and otherwise
+  absolute. Grep on the name misses re-exports and adds false positives from
+  comments, strings, and attribute lookups on other types. If the next move
+  depends on the answer being complete, grep cannot give you that.
 
 - **Edit a symbol.** `uvx uncoded body <name_path> --in <relative_path>` gives
   the exact `old_string`; then `Edit` to apply the change.

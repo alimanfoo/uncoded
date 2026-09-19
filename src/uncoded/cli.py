@@ -271,7 +271,7 @@ def _body(*, name_path: str, in_path: str) -> int:
 def _refs(*, name_path: str, in_path: str) -> int:
     """Find all references to name_path in in_path and print them to stdout.
 
-    Returns 0 on success. Each reference is printed as rel_path:line:col.
+    Returns 0 on success. Each reference is printed as path:line:col.
     Returns 1 if name_path is unsupported, if name_path is not present in
     the file, if the file cannot be read (missing, unreadable, or
     undecodable), if the source has a syntax error, or if the reference
@@ -293,7 +293,7 @@ def _refs(*, name_path: str, in_path: str) -> int:
         return _report_lookup_error(e, name_path=name_path, in_path=in_path)
 
     for ref in refs:
-        print(f"{ref.rel_path}:{ref.line}:{ref.col}")
+        print(f"{ref.path}:{ref.line}:{ref.col}")
     return 0
 
 
