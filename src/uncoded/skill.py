@@ -29,7 +29,7 @@ class Skill:
 
 SKILLS: list[Skill] = [
     Skill(
-        name="uncoded-coherence-review",
+        name="uncoded-consistency-review",
         description=(
             "Review a Python codebase for semantic and naming consistency. It"
             " reports only concrete disagreements between two claims about the"
@@ -37,9 +37,13 @@ SKILLS: list[Skill] = [
             " uncoded is installed (.uncoded/namespace.yaml and .uncoded/stubs/"
             " present)."
         ),
-        body_file="coherence_review.md",
+        body_file="consistency_review.md",
         gate="code",
-        legacy_names=("coherence-review", "uncoded-review"),
+        legacy_names=(
+            "uncoded-coherence-review",
+            "coherence-review",
+            "uncoded-review",
+        ),
     ),
     Skill(
         name="uncoded-code-navigation",

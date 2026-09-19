@@ -1,5 +1,5 @@
 ---
-name: uncoded-coherence-review
+name: uncoded-consistency-review
 description: Review a Python codebase for semantic and naming consistency. It reports only concrete disagreements between two claims about the same concept, with verbatim evidence for each claim. It assumes uncoded is installed (.uncoded/namespace.yaml and .uncoded/stubs/ present).
 ---
 

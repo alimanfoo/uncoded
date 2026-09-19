@@ -45,10 +45,10 @@ Git by default.
 - **`uncoded-doc-navigation`**: the docs navigation rule: load `docs.yaml` at
   session start, then use `Read` or `grep` to reach a heading. Generated when
   `doc-roots` is configured.
-- **`uncoded-coherence-review`**: a semantic consistency review that reports
+- **`uncoded-consistency-review`**: a semantic consistency review that reports
   concrete disagreements between claims about the same concept (see
-  [Coherence review](#coherence-review)). Generated when `source-roots` is
-  configured.
+  [Semantic consistency review](#semantic-consistency-review)). Generated when
+  `source-roots` is configured.
 
 Add these lines to your `AGENTS.md` or `CLAUDE.md` to load the navigation skills
 every session. Skills are on-demand by default. Tying the load to an action
@@ -224,19 +224,19 @@ code through `namespace.yaml` and docs through `docs.yaml`. `uncoded body`
 resolves a symbol's source body. `uncoded refs` maps every reference. Agents do
 not grep, guess line numbers, or do offset arithmetic.
 
-## Coherence review
+## Semantic consistency review
 
 A codebase can make conflicting claims about one concept through competing
 names, stale docstrings, mismatched signatures, or behaviour that no longer
 matches a symbol's name.
 
-`uncoded sync` installs an `/uncoded-coherence-review` skill that checks for
+`uncoded sync` installs an `/uncoded-consistency-review` skill that checks for
 semantic and naming inconsistencies supported by concrete evidence.
 
 Invoke it in Claude Code:
 
 ```text
-/uncoded-coherence-review
+/uncoded-consistency-review
 ```
 
 The review first checks vocabulary across the namespace, then checks symbol
@@ -276,9 +276,9 @@ upgrading:
    uncoded no longer manages these sections. Leaving them in place is harmless
    but they are now dead markup.
 
-2. **Update any skill pointer** that references `coherence-review` to
-   `uncoded-coherence-review`. The coherence review skill was renamed with the
-   `uncoded-` prefix to match the navigation skills.
+2. **Update any skill pointer** that references `coherence-review` or
+   `uncoded-coherence-review` to `uncoded-consistency-review`. The skill now
+   names its semantic consistency focus directly.
 
 3. **Remove the `instruction-files` config key** if your `pyproject.toml` or
    `.uncoded.toml` has it. uncoded no longer reads this key. Leaving it in place
