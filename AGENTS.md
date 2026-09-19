@@ -83,8 +83,9 @@ packages such as pytest and hypothesis. Without the dev extras in the venv, ty
 cannot resolve those imports and reports spurious errors.
 
 This repo uses uncoded on itself. The pre-commit hook runs `uv run uncoded sync`
-on each commit. If the hook modifies generated files, the commit fails. Re-stage
-and commit again.
+on each commit. The local `.uncoded/` index is ignored. If the hook modifies a
+tracked generated skill file, the commit fails. Re-stage the skill file and
+commit again.
 
 ### Windows
 
@@ -98,7 +99,8 @@ following the symlink.
 Run `uv run ruff check --fix` and `uv run ruff format` before committing. Both
 are pinned via the `dev` optional dependency. The pre-commit hooks run the same
 commands automatically. If a hook rewrites files, the commit fails. Re-stage the
-modified files and commit again. The uncoded sync hook follows the same pattern.
+modified files and commit again. The uncoded sync hook follows the same pattern
+for tracked generated skill files.
 
 Never commit with `--no-verify`. CI runs `pre-commit run --all-files` on every
 pull request and will fail a build where a hook was skipped.
@@ -164,8 +166,10 @@ the filterwarnings escalation is removed.
 in `pyproject.toml`. See [Linting and formatting](#linting-and-formatting) for
 the response to a violation.
 
-**Index committed.** Commit `.uncoded/` and keep it current with the pre-commit
-hook. See [Commands](#commands) and [Dev setup](#dev-setup).
+**Index local.** `uncoded sync` writes `.uncoded/.gitignore`, which keeps the
+whole index out of Git. Run `uv run uncoded sync` after every indexed source or
+documentation change and before using the index again. The pre-commit hook is a
+final refresh. See [Commands](#commands) and [Dev setup](#dev-setup).
 
 ## Releasing
 

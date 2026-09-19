@@ -81,6 +81,10 @@ for a method and `function_name` for a top-level function. Per task:
 - **Safely delete.** `uvx uncoded refs <name_path> --in <relative_path>` must
   return empty; then `Edit` to remove.
 
+**Step 4: Refresh.** After every modification to indexed Python source, run
+`uvx uncoded sync` before the next code-navigation operation. The modification
+can change the namespace map, stubs, and reference results.
+
 ## Where Read, Edit, and grep are still the right tools
 
 The rule is about source navigation by symbol name. Outside that, Read, Edit,
