@@ -58,7 +58,7 @@ def _init_repo(tmp_path, monkeypatch, source_roots=("src",)):
 
 
 class TestSyncApplyMode:
-    def test_writes_namespace_map_stubs_and_skills(self, tmp_path, monkeypatch):
+    def test_syncs_code_navigation_artefacts(self, tmp_path, monkeypatch):
         _init_repo(tmp_path, monkeypatch)
         (tmp_path / "src" / "foo.py").write_text(
             "def hello(): pass\n", encoding="utf-8"
@@ -740,7 +740,7 @@ def _init_doc_repo(tmp_path, monkeypatch, doc_roots=("docs",)):
 
 
 class TestSyncDocRoots:
-    def test_doc_only_writes_docs_yaml(self, tmp_path, monkeypatch):
+    def test_syncs_doc_navigation_artefacts(self, tmp_path, monkeypatch):
         _init_doc_repo(tmp_path, monkeypatch)
         assert cli._sync() == 0
         assert (tmp_path / ".uncoded" / ".gitignore").exists()
