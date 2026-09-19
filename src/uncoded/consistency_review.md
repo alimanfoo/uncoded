@@ -136,8 +136,3 @@ customer through sibling adapters.
 a cached value or absence.
 
 **Why these should agree:** Both claims describe the contract of `is_cached`.
-
-**Non-finding.** `archive_record(record)` and `delete_record(record)` have
-similar signatures, but their docstrings distinguish retained records from
-permanently removed records. The codebase supports two concepts, so omit the
-candidate.
