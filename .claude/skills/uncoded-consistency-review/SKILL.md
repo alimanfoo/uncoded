@@ -24,32 +24,15 @@ preferences unless they appear as a disagreement between two supported claims.
 Do not report overgrown public surfaces, private imports, cross-domain imports,
 zero-reference symbols, or redundant public surfaces merely because they exist.
 
-Prefer a small set of supported findings over exhaustive speculation. Describe
-the disagreement without diagnosing its cause or proposing a fix. Do not add
-confidence, severity, or priority ratings.
+## Prerequisites
 
-Review production code by default. Tests can provide evidence of intended
-vocabulary or behaviour, but do not treat test helpers and fixtures as public
-API unless the user includes tests in the review scope.
-
-## Prerequisites and scope
-
-Run the repository's configured `uncoded check` command before reviewing. If it
-reports missing or stale index artefacts, stop and tell the user to run the
-repository's configured sync command. Also read the repository's agent
-instructions and follow its navigation rules.
-
-State what the review covers and what it intentionally omits. For a large
-codebase, complete the vocabulary sweep, prioritise contract checks that the
-vocabulary sweep implicates, sample the other major production packages, and
-state which packages or symbols were and were not reviewed. Do not use a fixed
-symbol count or sampling percentage.
+Run the repository's configured `uncoded sync` command. Read the repository's
+agent instructions and follow its navigation rules.
 
 ## Orientation
 
 Read `.uncoded/namespace.yaml` in full. Use its package structure and symbol
-names to map the codebase's main concepts and vocabulary. Read the stubs for the
-production modules that the stated scope covers before starting the sweeps.
+names to map the codebase's main concepts and vocabulary.
 
 ## Vocabulary sweep
 
@@ -77,28 +60,12 @@ Findings may cover:
 
 Read each relevant source file's stub for names and signatures. Run the
 repository's configured `uncoded body` command only when a docstring or
-implementation is needed to confirm a candidate. Do not retrieve every public
-symbol body.
-
-Treat a defensive docstring as a signal to compare the contract claims. The
-warning is not a separate category and is not enough for a finding without an
-underlying disagreement.
-
-## Evidence
-
-Each claim carries its own path, symbol, and source kind: name, signature,
-docstring, or body. Quote enough verbatim evidence for a reader to verify the
-claim. After the claims, explain the observable difference before explaining why
-the comparison is legitimate.
-
-Two symbols can form the claims in a vocabulary finding. Two parts of one symbol
-can form the claims in a symbol-contract finding. Do not combine separate
-disagreements into one finding.
+implementation is needed to confirm a candidate. Do not retrieve every symbol
+body.
 
 ## Report
 
-Return the report directly as the final turn output. Do not create a report
-directory, write a timestamped file, or otherwise modify the repository.
+Return the report directly as the final turn output.
 
 Use this structure:
 
@@ -111,8 +78,7 @@ Use this structure:
 
 ### Summary
 
-<Two or three sentences that synthesise only the supported findings. Do not
-include causes or fixes.>
+<Two or three sentences that summarise the supported findings.>
 
 ### Vocabulary findings
 
@@ -141,22 +107,42 @@ concept.>
 Keep both finding headings. If a group has no supported findings, state that
 under its heading. Number findings independently within each group.
 
-Do not include the repository name or a date in the heading. Do not include
-confidence, severity, priority, location, or category fields; symbol, coverage,
-or finding counts; or a priority-regions section.
-
 ## Examples
 
-**Vocabulary finding.** `fetch_customer(customer_id) -> Customer` says that the
-operation fetches a customer. `load_customer(customer_id) -> Customer` in a
-sibling adapter has the same documented lookup contract. The matching inputs,
-return type, and documentation support comparing the terms `fetch` and `load`;
-quote both claims and report their difference.
+### Vocabulary finding
 
-**Symbol-contract finding.** The name `is_cached` claims a predicate. Its
-signature, `is_cached(key: str) -> str | None`, and docstring say that it
-returns the cached value. Quote the name as one claim and the signature or
-docstring as the other, then explain the value-versus-predicate disagreement.
+#### 1. Customer lookup uses competing verbs
+
+**Claim A** — `storage.py` · `fetch_customer` · signature
+
+> `fetch_customer(customer_id: str) -> Customer`
+
+**Claim B** — `adapter.py` · `load_customer` · signature
+
+> `load_customer(customer_id: str) -> Customer`
+
+**How they differ:** The same lookup uses `fetch` in one module and `load` in
+another.
+
+**Why these should agree:** Both signatures accept a customer ID and return a
+customer through sibling adapters.
+
+### Symbol-contract finding
+
+#### 1. Predicate name promises a boolean but returns a value
+
+**Claim A** — `cache.py` · `is_cached` · name
+
+> `is_cached`
+
+**Claim B** — `cache.py` · `is_cached` · signature
+
+> `is_cached(key: str) -> str | None`
+
+**How they differ:** The name promises a predicate, while the return type holds
+a cached value or absence.
+
+**Why these should agree:** Both claims describe the contract of `is_cached`.
 
 **Non-finding.** `archive_record(record)` and `delete_record(record)` have
 similar signatures, but their docstrings distinguish retained records from
