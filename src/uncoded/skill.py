@@ -29,20 +29,21 @@ class Skill:
 
 SKILLS: list[Skill] = [
     Skill(
-        name="uncoded-coherence-review",
+        name="uncoded-consistency-review",
         description=(
-            "Review a Python codebase for coherence. It sweeps for semantic"
-            " drift, naming inconsistency, mismatch between a symbol's name,"
-            " signature, and docstring, and structural incoherence. It produces a"
-            " Markdown report of"
-            " findings, with verbatim"
-            " evidence and confidence levels, for human investigation. It assumes"
+            "Review a Python codebase for semantic and naming consistency. It"
+            " reports only concrete disagreements between two claims about the"
+            " same concept, with verbatim evidence for each claim. It assumes"
             " uncoded is installed (.uncoded/namespace.yaml and .uncoded/stubs/"
             " present)."
         ),
-        body_file="coherence_review.md",
+        body_file="consistency_review.md",
         gate="code",
-        legacy_names=("coherence-review", "uncoded-review"),
+        legacy_names=(
+            "uncoded-coherence-review",
+            "coherence-review",
+            "uncoded-review",
+        ),
     ),
     Skill(
         name="uncoded-code-navigation",

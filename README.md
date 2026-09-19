@@ -45,8 +45,9 @@ Git by default.
 - **`uncoded-doc-navigation`**: the docs navigation rule: load `docs.yaml` at
   session start, then use `Read` or `grep` to reach a heading. Generated when
   `doc-roots` is configured.
-- **`uncoded-coherence-review`**: a structured diagnostic sweep for naming drift
-  and incoherence (see [Coherence review](#coherence-review)). Generated when
+- **`uncoded-consistency-review`**: a semantic consistency review that reports
+  concrete disagreements between claims about the same concept (see
+  [Semantic consistency review](#semantic-consistency-review)). Generated when
   `source-roots` is configured.
 
 Add these lines to your `AGENTS.md` or `CLAUDE.md` to load the navigation skills
@@ -223,40 +224,29 @@ code through `namespace.yaml` and docs through `docs.yaml`. `uncoded body`
 resolves a symbol's source body. `uncoded refs` maps every reference. Agents do
 not grep, guess line numbers, or do offset arithmetic.
 
-## Coherence review
+## Semantic consistency review
 
-AI coding agents tend to leave codebases in an incoherent state:
+A codebase can make conflicting claims about one concept through competing
+names, stale docstrings, mismatched signatures, or behaviour that no longer
+matches a symbol's name.
 
-- names that no longer match behaviour
-- docstrings that describe stale signatures
-- dead symbols
-- pattern changes applied in some places but not others
+`uncoded sync` installs an `/uncoded-consistency-review` skill that checks for
+semantic and naming inconsistencies supported by concrete evidence.
 
-`uncoded sync` installs an `/uncoded-coherence-review` skill that runs a
-structured diagnostic sweep to find these problems.
+Invoke the skill by name:
 
-Invoke it in Claude Code:
+- Claude Code: `/uncoded-consistency-review`
+- Codex: `$uncoded-consistency-review`
 
-```text
-/uncoded-coherence-review
-```
+The review first checks vocabulary across the namespace, then checks symbol
+contracts across names, signatures, docstrings, and behaviour. Every finding
+quotes two claims about the same concept, explains how they differ, and explains
+why they should agree. The review retrieves symbol bodies only when it needs a
+docstring or implementation to confirm a candidate.
 
-The review works in four sweeps:
-
-1. **Orient**: loads `namespace.yaml` and forms a vocabulary map.
-2. **Lexical**: scans the namespace for naming inconsistency: concept
-   duplication, qualifier accretion (`_v2`, `_legacy`, `_final`), vocabulary
-   islands, name collision with drift.
-3. **Promissory**: checks each public symbol's name / signature / docstring
-   triple for internal disagreement. Names and signatures come from the stub.
-   Docstrings come from `uncoded body`.
-4. **Structural**: checks for boundary violations (private symbols imported
-   across modules), overgrown public surfaces, cross-domain imports, and
-   zero-reference public symbols.
-
-The review saves a timestamped Markdown report to `.uncoded/reviews/`, with
-verbatim evidence and a confidence level (high / medium / low) for each finding.
-The review only reports. The human decides what to follow up.
+The skill returns its Markdown report directly. It does not modify the
+repository or report general design and hygiene concerns that do not establish a
+semantic inconsistency.
 
 ## Upgrading from v1
 
@@ -285,9 +275,10 @@ upgrading:
    uncoded no longer manages these sections. Leaving them in place is harmless
    but they are now dead markup.
 
-2. **Update any skill pointer** that references `coherence-review` to
-   `uncoded-coherence-review`. The coherence review skill was renamed with the
-   `uncoded-` prefix to match the navigation skills.
+2. **Update any skill pointer** that references `coherence-review`,
+   `uncoded-review`, or `uncoded-coherence-review` to
+   `uncoded-consistency-review`. The skill now names its semantic consistency
+   focus directly.
 
 3. **Remove the `instruction-files` config key** if your `pyproject.toml` or
    `.uncoded.toml` has it. uncoded no longer reads this key. Leaving it in place
