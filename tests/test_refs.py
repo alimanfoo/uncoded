@@ -12,12 +12,12 @@ from uncoded.refs import (
     Reference,
     _find_root,
     _LSPLocation,
+    _path_for_display,
     _query_references,
     _read_message,
     _read_response,
     _run_exchange,
     _terminate,
-    _to_rel_path,
     find_refs,
 )
 from uncoded.resolver import NamePath
@@ -69,7 +69,7 @@ class TestFindRefs:
 
         assert len(refs) == 2
         assert all(isinstance(r, Reference) for r in refs)
-        assert all(r.rel_path == pkg / "b.py" for r in refs)
+        assert all(r.path == pkg / "b.py" for r in refs)
         assert [r.line for r in refs] == [2, 3]
         assert all(r.col >= 1 for r in refs)
 
@@ -94,7 +94,7 @@ class TestFindRefs:
         refs = find_refs(NamePath("Dog", "bark"), pkg / "a.py")
 
         assert len(refs) == 2
-        assert all(r.rel_path == pkg / "b.py" for r in refs)
+        assert all(r.path == pkg / "b.py" for r in refs)
 
     def test_results_are_sorted(self, tmp_path):
         pkg = tmp_path / "pkg"
@@ -109,7 +109,7 @@ class TestFindRefs:
 
         refs = find_refs(NamePath("foo"), pkg / "a.py")
 
-        assert refs == sorted(refs, key=lambda r: (r.rel_path, r.line, r.col))
+        assert refs == sorted(refs, key=lambda r: (r.path, r.line, r.col))
 
     def test_line_and_col_are_one_indexed(self, tmp_path):
         pkg = tmp_path / "pkg"
@@ -138,16 +138,16 @@ class TestFindRefs:
         refs = find_refs(NamePath("foo"), root / "a.py")
 
         assert len(refs) == 1
-        assert "%20" not in str(refs[0].rel_path)
-        assert " " in str(refs[0].rel_path)
+        assert "%20" not in str(refs[0].path)
+        assert " " in str(refs[0].path)
 
 
-class TestToRelPath:
+class TestPathForDisplay:
     def test_returns_relative_path_when_under_cwd(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         path = tmp_path / "pkg" / "m.py"
 
-        result = _to_rel_path(path=path)
+        result = _path_for_display(path=path)
 
         assert result == Path("pkg/m.py")
 
@@ -157,7 +157,7 @@ class TestToRelPath:
         monkeypatch.chdir(workspace)
         other = tmp_path / "elsewhere" / "m.py"
 
-        result = _to_rel_path(path=other)
+        result = _path_for_display(path=other)
 
         assert result == other
 
