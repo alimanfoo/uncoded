@@ -31,10 +31,11 @@ tools don't.
 
 ## How to execute the rule
 
-The index has two parts (a namespace map and per-file stubs) and three steps
-(orient, understand, act).
+The index has two parts: a namespace map and per-file stubs. Follow this
+sequence.
 
-**Step 1: Orient. Read the namespace map first.** Before answering the user,
+**Step 1: Orient. Read the namespace map first.** If the map is missing, run the
+repository's configured `uncoded sync` command. Then, before answering the user,
 before any other tool call:
 
 ```text
@@ -88,6 +89,10 @@ for a method and `function_name` for a top-level function. Per task:
 
 - **Safely delete.** `uvx uncoded refs <name_path> --in <relative_path>` must
   return empty; then `Edit` to remove.
+
+**Step 4: Refresh.** After every modification to indexed Python source, run the
+repository's configured `uncoded sync` command before the next code-navigation
+operation. The modification can change the namespace map and stubs.
 
 ## Where Read, Edit, and grep are still the right tools
 

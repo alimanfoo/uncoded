@@ -52,4 +52,5 @@ repos:
         name: uncoded
         entry: uv run uncoded sync
         language: system
+        always_run: true
         pass_filenames: false

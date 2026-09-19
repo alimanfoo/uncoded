@@ -1,9 +1,8 @@
 """Content-aware file writes with an optional check-only mode.
 
-Every place that writes an artifact (namespace map, stubs, skill files)
-routes through :func:`sync_file` / :func:`remove_file` so that two
-concerns live in one place: only write when content actually changes, and
-when ``check=True`` report the prospective action without touching disk.
+Every generated navigation artefact routes through :func:`sync_file` or
+:func:`remove_file`. The helpers write only when content changes. When
+``check=True``, they report the prospective action without touching disk.
 
 ``check=True`` is what powers ``uncoded --check`` — the same pipeline runs,
 but the writers never mutate the tree, and the CLI exits non-zero if any

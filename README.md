@@ -33,6 +33,10 @@ load this to orient to the documentation. They then navigate to a heading with
 is an outline only. `uncoded body`, `uncoded refs`, and stubs do not apply to
 Markdown.
 
+**`.uncoded/.gitignore`**: a local ignore rule for the whole `.uncoded/`
+directory, including the rule itself. Generated indexes therefore stay out of
+Git by default.
+
 **Skills**, written to both `.claude/skills/` and `.agents/skills/`:
 
 - **`uncoded-code-navigation`**: the code dispatch rule: load `namespace.yaml`
@@ -99,10 +103,17 @@ uvx uncoded sync
 
 Run `uvx uncoded sync` from the repo root. It reads `pyproject.toml` (or
 `.uncoded.toml`) to find your configured roots and builds the index and skill
-files.
+files. Commit the generated skill files so that agents can load them in a fresh
+checkout. The generated `.uncoded/.gitignore` keeps the index itself local.
 
-Commit the generated `.uncoded/` directory so agents working in the repo always
-have a current index.
+If an existing repository already tracks `.uncoded/`, remove the directory from
+Git's index once. The files stay on disk, and the generated ignore rule keeps
+them out of later commits:
+
+```sh
+git rm -r --cached .uncoded
+uvx uncoded sync
+```
 
 ## Keep it current with pre-commit
 
@@ -119,16 +130,17 @@ automatically:
       pass_filenames: false
 ```
 
-Like `ruff format`: if `uncoded sync` modifies any files, the commit fails and
-you stage the updated index before committing again.
+The hook regenerates the ignored local index before every commit. If a skill
+template changed, the hook also updates its tracked generated skill files; stage
+those files and commit again.
 
-You can also set up your CI to run `pre-commit run --all-files` to verify the
-index is up to date.
+You can also run `pre-commit run --all-files` in CI to verify that index
+generation succeeds and the tracked skill files are current.
 
 ## Verify the index is fresh
 
-Use the `check` subcommand for CI or scripted checks that must not modify the
-working tree:
+Use the `check` subcommand for scripted checks that must not modify the working
+tree:
 
 ```sh
 uvx uncoded check
@@ -136,9 +148,8 @@ uvx uncoded check
 
 It runs the same pipeline but writes nothing. It exits 0 if every generated file
 is byte-identical to what a rebuild would produce. It exits 1 otherwise,
-printing which files would change. A stale index is a silent failure mode.
-Agents read misleading names and signatures. Gate on this in CI even alongside a
-pre-commit hook.
+printing which files would change. Run `sync` first in a fresh checkout, because
+the ignored local index does not come from Git.
 
 ## Retrieve a symbol body
 
@@ -204,6 +215,8 @@ up:
    `Edit` at each.
 7. Safely delete by running `uncoded refs` first. The output must be empty. Then
    `Edit` to remove.
+8. Run `uvx uncoded sync` after every source or indexed documentation change,
+   before using the index again.
 
 Each tool owns one job. `uncoded` provides the stable map and signature index,
 code through `namespace.yaml` and docs through `docs.yaml`. `uncoded body`

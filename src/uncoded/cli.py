@@ -9,6 +9,7 @@ from uncoded.body import resolve_body
 from uncoded.config import ConfigError, read_config
 from uncoded.docs_map import build_docs_map, iter_doc_files, render_docs_map
 from uncoded.extract import extract_modules, iter_source_files
+from uncoded.markers import GENERATED_MARKER
 from uncoded.namespace_map import build_map, render_map
 from uncoded.refs import find_refs
 from uncoded.resolver import NamePath, SymbolNotFoundError, UnsupportedNamePathError
@@ -161,8 +162,9 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
 
     source-roots drive code artefacts (namespace.yaml, stubs); doc-roots
     drive doc artefacts (docs.yaml). Each root type is independent: when
-    a root type is absent its artefacts are removed. At least one root
-    type must be configured.
+    a root type is absent its artefacts are removed. Before writing any index
+    artefact, sync writes .uncoded/.gitignore so the index stays local by
+    default. At least one root type must be configured.
 
     When ``check=True``, the on-disk tree is not mutated; the function
     reports each prospective write or removal, returns 1 if anything
@@ -182,7 +184,12 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
 
         project_root = config.project_root
         resolved_project_root = project_root.resolve()
-        changes = 0
+        changes = sync_file(
+            Path(".uncoded/.gitignore"),
+            f"# {GENERATED_MARKER}\n*\n",
+            project_root=project_root,
+            check=check,
+        )
 
         # Code artefacts — build when source_roots configured, else remove.
         changes += _sync_code_artefacts(
@@ -315,7 +322,7 @@ def main() -> int:
 
     sync_parser = subparsers.add_parser(
         "sync",
-        help=("Build or refresh the namespace map, stub files, and skill files."),
+        help="Build or refresh generated navigation artefacts.",
     )
     sync_parser.set_defaults(action=lambda: _sync(check=False))
 
