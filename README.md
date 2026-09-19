@@ -52,8 +52,8 @@ agents are about to take prompts them to act on it:
 ```text
 ## Before you start
 
-- Load the `uncoded-code-navigation` skill before searching, reading or editing any code.
-- Load the `uncoded-doc-navigation` skill before searching, reading or editing any docs.
+- Load the `uncoded-code-navigation` skill once, before searching, reading or editing any code.
+- Load the `uncoded-doc-navigation` skill once, before searching, reading or editing any docs.
 ```
 
 ## Install uv
