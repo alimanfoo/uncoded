@@ -134,8 +134,8 @@ This section names where each cross-cutting convention lives and what keeps it
 in place.
 
 **Provenance marker.** Every generated file carries `GENERATED_MARKER`, defined
-in `src/uncoded/markers.py`. `tests/test_markers.py` verifies that all four
-output kinds carry it.
+in `src/uncoded/markers.py`. `tests/test_markers.py` verifies that every output
+kind carries it.
 
 **Explicit encoding.** Every text read/write in the repository must pass
 `encoding=`. Configuration lives in `pyproject.toml` and

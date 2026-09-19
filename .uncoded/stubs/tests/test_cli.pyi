@@ -57,6 +57,9 @@ class TestSyncCheckMode:
     def test_returns_zero_when_index_is_up_to_date(self, tmp_path, monkeypatch):
         ...
 
+    def test_returns_one_without_recreating_missing_index_ignore(self, tmp_path, monkeypatch):
+        ...
+
     def test_returns_one_when_source_changes_after_sync(self, tmp_path, monkeypatch):
         ...
 

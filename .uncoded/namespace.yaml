@@ -62,6 +62,7 @@ src/:
       extract_modules:
     markers.py:
       GENERATED_MARKER:
+      INDEX_GITIGNORE_CONTENT:
     namespace_map.py:
       HEADER:
       build_map:
@@ -244,6 +245,7 @@ tests/:
     TestSyncCheckMode:
       test_returns_one_and_does_not_write_on_empty_repo:
       test_returns_zero_when_index_is_up_to_date:
+      test_returns_one_without_recreating_missing_index_ignore:
       test_returns_one_when_source_changes_after_sync:
       test_returns_one_when_source_file_deleted:
       test_error_still_returns_one:
@@ -409,6 +411,7 @@ tests/:
       test_skips_files_with_no_symbols:
   test_markers.py:
     TestMarkerCompleteness:
+      test_index_gitignore_carries_marker:
       test_namespace_map_carries_marker:
       test_docs_map_carries_marker:
       test_stub_carries_marker:

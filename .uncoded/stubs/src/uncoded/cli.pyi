@@ -9,6 +9,7 @@ from uncoded.body import resolve_body
 from uncoded.config import ConfigError, read_config
 from uncoded.docs_map import build_docs_map, iter_doc_files, render_docs_map
 from uncoded.extract import extract_modules, iter_source_files
+from uncoded.markers import INDEX_GITIGNORE_CONTENT
 from uncoded.namespace_map import build_map, render_map
 from uncoded.refs import find_refs
 from uncoded.resolver import NamePath, SymbolNotFoundError, UnsupportedNamePathError

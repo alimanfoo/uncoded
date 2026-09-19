@@ -2,12 +2,15 @@
 # tests/test_markers.py
 
 from uncoded.docs_map import render_docs_map
-from uncoded.markers import GENERATED_MARKER
+from uncoded.markers import GENERATED_MARKER, INDEX_GITIGNORE_CONTENT
 from uncoded.namespace_map import render_map
 from uncoded.skill import SKILLS, _render_content
 from uncoded.stubs import StubModule, render_stub
 
 class TestMarkerCompleteness:
+    def test_index_gitignore_carries_marker(self):
+        ...
+
     def test_namespace_map_carries_marker(self):
         ...
 
