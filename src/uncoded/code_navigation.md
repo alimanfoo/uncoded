@@ -10,16 +10,17 @@ for reading a symbol's body and `uncoded refs` for finding references.
 symbols are classes, functions, methods, attributes, and module-level constants.
 If it's a pattern, regex, or free-text phrase, use grep.**
 
-This applies to every tool call where you find code, not just the first in the
-session. The pretrained reflex for "find X" is grep, and that reflex is wrong
-here. Reaching for `grep -rn 'def parse_config'` to read a function's body is a
-case for `uncoded body`. Reaching for `grep -rn 'validate_input'` to check
-callers before a refactor is a case for `uncoded refs`. Reaching for `grep` then
-`Edit` to delete dead code is a case for `uncoded refs` to confirm the code is
-dead, then `Edit`. The grep version of any of these is noisier and less
-reliable. Grep matches comments, strings, and unrelated attributes. Grep misses
-re-exports, so caller and delete checks come back incomplete. Grep forces offset
-arithmetic to slice a body. The indexed tools don't.
+This dispatch rule applies to every tool call where you find code, not just the
+first in the session. The pretrained reflex for "find X" is grep, and that
+reflex is wrong here. Reaching for `grep -rn 'def parse_config'` to read a
+function's body is a case for `uncoded body`. Reaching for
+`grep -rn 'validate_input'` to check callers before a refactor is a case for
+`uncoded refs`. Reaching for `grep` then `Edit` to delete dead code is a case
+for `uncoded refs` to confirm the code is dead, then `Edit`. The grep version of
+any of these is noisier and less reliable. Grep matches comments, strings, and
+unrelated attributes. Grep misses re-exports, so caller and delete checks come
+back incomplete. Grep forces offset arithmetic to slice a body. The indexed
+tools don't.
 
 ## How to execute the rule
 
