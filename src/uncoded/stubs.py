@@ -396,13 +396,13 @@ def _write_stubs(
 
 
 def remove_all_stubs(output_dir: Path, *, project_root: Path, check: bool) -> int:
-    """Remove all .pyi stubs under output_dir, then remove the root directory.
+    """Remove all .pyi stubs under output_dir and prune empty directories.
 
     Removes every .pyi file under ``output_dir``, reporting each as
     apply/check mode dictates, then (in apply mode) prunes now-empty
-    directories deepest-first and removes the root itself. In check mode,
-    reports prospective removals without touching disk. Returns the number
-    of files removed (or that would be).
+    directories deepest-first, including the root when it becomes empty.
+    In check mode, reports prospective removals without touching disk.
+    Returns the number of files removed (or that would be).
     """
     project_root = project_root.resolve()
     abs_output_dir = project_root / output_dir
