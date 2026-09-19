@@ -84,8 +84,7 @@ for a method and `function_name` for a top-level function. Per task:
 
 **Step 4: Refresh.** After every modification to indexed Python source, run the
 repository's configured `uncoded sync` command before the next code-navigation
-operation. The modification can change the namespace map, stubs, and reference
-results.
+operation. The modification can change the namespace map and stubs.
 
 ## Where Read, Edit, and grep are still the right tools
 
