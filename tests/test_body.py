@@ -136,7 +136,7 @@ class TestResolveBodyTopLevel:
 
         assert result == "def foo():\n    return 42\n"
 
-    def test_not_found_raises_body_not_found(self, tmp_path):
+    def test_not_found_raises_symbol_not_found(self, tmp_path):
         path = tmp_path / "m.py"
         path.write_text("def other(): pass\n", encoding="utf-8")
 
@@ -370,7 +370,7 @@ class TestResolveAstNode:
         assert isinstance(node, ast.FunctionDef)
         assert node.name == "start"
 
-    def test_raises_body_not_found(self, tmp_path):
+    def test_raises_symbol_not_found(self, tmp_path):
         path = tmp_path / "m.py"
         path.write_text("def other(): pass\n", encoding="utf-8")
 
