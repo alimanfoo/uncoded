@@ -27,9 +27,10 @@ API unless the user includes tests in the review scope.
 
 ## Prerequisites and scope
 
-If `.uncoded/namespace.yaml` is missing or empty, stop and tell the user to run
-`uvx uncoded sync`. Also read the repository's agent instructions and follow its
-navigation rules.
+Run the repository's configured `uncoded check` command before reviewing. If it
+reports missing or stale index artefacts, stop and tell the user to run the
+repository's configured sync command. Also read the repository's agent
+instructions and follow its navigation rules.
 
 State what the review covers and what it intentionally omits. For a large
 codebase, complete the vocabulary sweep, prioritise contract checks that the
