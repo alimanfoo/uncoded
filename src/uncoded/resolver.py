@@ -2,10 +2,19 @@
 
 import ast
 from pathlib import Path
-from typing import NamedTuple
+from typing import NamedTuple, TypeGuard
 
 from uncoded.ast_helpers import assign_target_name, property_kind
 from uncoded.read_helpers import read_source_text
+
+type _SymbolNode = (
+    ast.FunctionDef
+    | ast.AsyncFunctionDef
+    | ast.ClassDef
+    | ast.AnnAssign
+    | ast.Assign
+    | ast.TypeAlias
+)
 
 
 class NamePath(NamedTuple):
@@ -46,8 +55,8 @@ class UnsupportedNamePathError(Exception):
     """
 
 
-def resolve_ast_node(name_path: NamePath, in_path: Path) -> ast.stmt:
-    """Return the ast.stmt for the symbol named by name_path in in_path.
+def resolve_ast_node(name_path: NamePath, in_path: Path) -> _SymbolNode:
+    """Return the AST node for the symbol named by name_path in in_path.
 
     Raises SymbolNotFoundError if the symbol is not present. Lets OSError,
     UnicodeDecodeError, and SyntaxError propagate from the file read.
@@ -66,7 +75,6 @@ def resolve_name_position(name_path: NamePath, in_path: Path) -> tuple[int, int]
     For assignments and type aliases, character points at the start of the target name.
     Raises SymbolNotFoundError, OSError, UnicodeDecodeError, and SyntaxError under
     the same conditions as resolve_ast_node.
-    Raises TypeError if resolve_ast_node returns an unsupported node type.
     """
     node = resolve_ast_node(name_path, in_path)
     if isinstance(node, ast.FunctionDef):
@@ -79,20 +87,15 @@ def resolve_name_position(name_path: NamePath, in_path: Path) -> tuple[int, int]
         return (node.target.lineno - 1, node.target.col_offset)
     if isinstance(node, ast.Assign):
         return (node.targets[0].lineno - 1, node.targets[0].col_offset)
-    if isinstance(node, ast.TypeAlias):
-        return (node.name.lineno - 1, node.name.col_offset)
-    node_type = type(node).__name__
-    raise TypeError(
-        f"Cannot extract name position from {node_type} for {str(name_path)!r}"
-    )
+    return (node.name.lineno - 1, node.name.col_offset)
 
 
 def _top_level_match(
-    *,
     node: ast.stmt,
+    *,
     head: str,
     tail: str | None,
-) -> bool:
+) -> TypeGuard[_SymbolNode]:
     """Return True if node matches head as a top-level symbol.
 
     ClassDef matches regardless of tail (it is the dispatch target for
@@ -117,8 +120,8 @@ def resolve_ast_node_from_source(
     name_path: NamePath,
     source: str,
     in_path: Path,
-) -> ast.stmt:
-    """Return the ast.stmt for name_path given an already-read source string.
+) -> _SymbolNode:
+    """Return the AST node for name_path given an already-read source string.
 
     The primitive that lets resolve_ast_node and resolve_body share a single
     file read. Callers that already have the source string call this directly
@@ -131,12 +134,10 @@ def resolve_ast_node_from_source(
     head = name_path.head
     tail = name_path.tail
 
-    top_match: ast.stmt | None = None
+    top_match: _SymbolNode | None = None
 
     for node in ast.iter_child_nodes(tree):
-        if isinstance(node, ast.stmt) and _top_level_match(
-            node=node, head=head, tail=tail
-        ):
+        if isinstance(node, ast.stmt) and _top_level_match(node, head=head, tail=tail):
             top_match = node
 
     if top_match is None:
@@ -159,8 +160,8 @@ def _resolve_class_member(
     in_path: Path,
     class_node: ast.ClassDef,
     member_name: str,
-) -> ast.stmt:
-    match: ast.stmt | None = None
+) -> _SymbolNode:
+    match: _SymbolNode | None = None
 
     for node in ast.iter_child_nodes(class_node):
         if isinstance(node, (ast.Assign, ast.AnnAssign)):

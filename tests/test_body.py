@@ -1,6 +1,5 @@
 import ast
 import textwrap
-from unittest import mock
 
 import pytest
 
@@ -474,16 +473,6 @@ class TestResolveNamePosition:
         path.write_text(source, encoding="utf-8")
 
         assert resolve_name_position(NamePath("Dog", "bark"), path) == (1, 8)
-
-    def test_unexpected_node_type_raises_type_error(self, tmp_path):
-        path = tmp_path / "m.py"
-        path.write_text("pass\n", encoding="utf-8")
-
-        with (
-            mock.patch("uncoded.resolver.resolve_ast_node", return_value=ast.Pass()),
-            pytest.raises(TypeError, match="Cannot extract name position from Pass"),
-        ):
-            resolve_name_position(NamePath("anything"), path)
 
 
 class TestResolveBodyByteIdentical:

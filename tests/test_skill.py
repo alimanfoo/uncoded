@@ -95,7 +95,6 @@ class TestSyncSkills:
         assert f"<!-- {GENERATED_MARKER} -->" in content[frontmatter_close:]
 
     def test_returns_change_count_on_first_write(self, tmp_path):
-        # Two code-gated skills x two roots = 4 writes; doc-nav skipped (docs=False).
         result = sync_skills(
             source=True, docs=False, project_root=tmp_path, check=False
         )
