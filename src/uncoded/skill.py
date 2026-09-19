@@ -47,9 +47,10 @@ SKILLS: list[Skill] = [
     Skill(
         name="uncoded-code-navigation",
         description=(
-            "Use before searching, reading, or editing Python source in a codebase"
-            " indexed by uncoded. This covers locating a symbol, reading a definition,"
-            " or checking references before you refactor, rename, or delete."
+            "Load once per session, before the first search, read, or edit of Python"
+            " source in a codebase indexed by uncoded. Covers locating a symbol,"
+            " reading a definition, or checking references before you refactor,"
+            " rename, or delete."
         ),
         body_file="code_navigation.md",
         gate="code",
@@ -57,9 +58,9 @@ SKILLS: list[Skill] = [
     Skill(
         name="uncoded-doc-navigation",
         description=(
-            "Use before searching or reading a codebase's Markdown documentation"
-            " indexed by uncoded. This covers locating which file and section cover a"
-            " topic, or orienting to what documentation exists."
+            "Load once per session, before the first search or read of a codebase's"
+            " Markdown documentation indexed by uncoded. Covers locating which file"
+            " and section cover a topic, or orienting to what documentation exists."
         ),
         body_file="doc_navigation.md",
         gate="docs",

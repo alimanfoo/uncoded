@@ -52,8 +52,8 @@ agents are about to take prompts them to act on it:
 ```text
 ## Before you start
 
-- Load the `uncoded-code-navigation` skill before searching, reading or editing any code.
-- Load the `uncoded-doc-navigation` skill before searching, reading or editing any docs.
+- Load the `uncoded-code-navigation` skill once per session, before searching, reading or editing any code.
+- Load the `uncoded-doc-navigation` skill once per session, before searching, reading or editing any docs.
 ```
 
 ## Install uv
@@ -280,15 +280,9 @@ upgrading:
    `.uncoded.toml` has it. uncoded no longer reads this key. Leaving it in place
    causes no error.
 
-4. **Restore always-on navigation** if you want v1 behaviour back. Add these
-   lines to your `AGENTS.md` and `CLAUDE.md`:
-
-   ```text
-   ## Before you start
-
-   - Load the `uncoded-code-navigation` skill before searching, reading or editing any code.
-   - Load the `uncoded-doc-navigation` skill before searching, reading or editing any docs.
-   ```
+4. **Restore always-on navigation** if you want v1 behaviour back. Add the
+   "Before you start" lines from [What it generates](#what-it-generates) to your
+   `AGENTS.md` and `CLAUDE.md`.
 
 ## Contributing
 

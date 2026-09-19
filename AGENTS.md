@@ -187,7 +187,7 @@ PyPI.
 
 ## Before you start
 
-- Load the `uncoded-code-navigation` skill before searching, reading or editing
-  any code.
-- Load the `uncoded-doc-navigation` skill before searching, reading or editing
-  any docs.
+- Load the `uncoded-code-navigation` skill once per session, before searching,
+  reading or editing any code.
+- Load the `uncoded-doc-navigation` skill once per session, before searching,
+  reading or editing any docs.
