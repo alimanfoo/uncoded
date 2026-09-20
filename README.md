@@ -128,6 +128,7 @@ automatically:
       name: uncoded
       entry: uvx uncoded sync
       language: system
+      always_run: true
       pass_filenames: false
 ```
 
@@ -249,12 +250,42 @@ The skill returns its Markdown report directly. It does not modify the
 repository or report general design and hygiene concerns that do not establish a
 semantic inconsistency.
 
-## Upgrading from v1
+## Upgrading from v2 to v3
+
+Version 3.0.0 keeps generated indexes local, renames the semantic consistency
+review, and makes navigation skills load once per session. Follow these steps
+after upgrading:
+
+1. **Stop tracking generated indexes.** Remove `.uncoded/` from Git's index,
+   then rebuild the index locally with v3:
+
+   ```sh
+   git rm -r --cached .uncoded
+   uvx uncoded sync
+   ```
+
+   Commit the updated files under `.agents/skills/` and `.claude/skills/`.
+   `.uncoded/.gitignore` now keeps the rebuilt index out of Git.
+
+2. **Run the pre-commit hook on every commit.** Add `always_run: true` to the
+   local `uncoded` hook. The ignored index must also be refreshed when a commit
+   only deletes files.
+
+3. **Update any skill pointer** that references `uncoded-coherence-review` to
+   `uncoded-consistency-review`. The new review reports semantic and naming
+   inconsistencies that have concrete conflicting evidence. `uncoded sync`
+   removes the old generated skill.
+
+4. **Load each navigation skill once per session.** Replace any matching
+   instructions in `AGENTS.md` or `CLAUDE.md` with the "Before you start" lines
+   from [What it generates](#what-it-generates).
+
+## Upgrading from v1 to v2
 
 Version 2.0.0 replaces injection with skills. In v1, `uncoded sync` always
 injected navigation guidance into `AGENTS.md`/`CLAUDE.md`. In v2 it ships as
-on-demand skills. Agents load them when relevant. Four manual steps after
-upgrading:
+on-demand skills. Agents load them when relevant. Run `uvx uncoded@2.1.1 sync`
+so the new skill files exist, then follow these steps:
 
 1. **Remove old marker blocks** from your `AGENTS.md` and `CLAUDE.md`. Look for
    and delete these blocks:
@@ -276,10 +307,9 @@ upgrading:
    uncoded no longer manages these sections. Leaving them in place is harmless
    but they are now dead markup.
 
-2. **Update any skill pointer** that references `coherence-review`,
-   `uncoded-review`, or `uncoded-coherence-review` to
-   `uncoded-consistency-review`. The skill now names its semantic consistency
-   focus directly.
+2. **Update any skill pointer** that references `coherence-review` to
+   `uncoded-coherence-review`. The coherence review skill was renamed with the
+   `uncoded-` prefix to match the navigation skills.
 
 3. **Remove the `instruction-files` config key** if your `pyproject.toml` or
    `.uncoded.toml` has it. uncoded no longer reads this key. Leaving it in place
