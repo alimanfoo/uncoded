@@ -254,8 +254,8 @@ semantic inconsistency.
 
 Version 2.0.0 replaces injection with skills. In v1, `uncoded sync` always
 injected navigation guidance into `AGENTS.md`/`CLAUDE.md`. In v2 it ships as
-on-demand skills. Agents load them when relevant. Follow these steps after
-upgrading:
+on-demand skills. Agents load them when relevant. Run `uvx uncoded sync` with v2
+so the new skill files exist, then follow these steps:
 
 1. **Remove old marker blocks** from your `AGENTS.md` and `CLAUDE.md`. Look for
    and delete these blocks:
