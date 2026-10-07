@@ -9,6 +9,9 @@ understanding of the code.
 the start of a task and navigate directly to what they need, without guessing or
 grepping.
 
+Read the [documentation](https://alimanfoo.github.io/uncoded/) for installation,
+configuration, command reference, and contributor guidance.
+
 It also ships `uncoded body` to read symbol bodies and `uncoded refs` to find
 every reference to a symbol. References cover callers, dead-symbol checks, and
 the full set of sites to update before a rename.

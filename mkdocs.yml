@@ -1,0 +1,41 @@
+site_name: uncoded
+site_description: Static codebase navigation for AI coding agents
+site_url: https://alimanfoo.github.io/uncoded/
+repo_url: https://github.com/alimanfoo/uncoded
+repo_name: alimanfoo/uncoded
+edit_uri: edit/main/docs/
+
+# Warnings catch broken links, missing anchors, and pages omitted from the
+# navigation before the site reaches GitHub Pages.
+strict: true
+validation:
+  omitted_files: warn
+  absolute_links: warn
+  unrecognized_links: warn
+  anchors: warn
+
+theme:
+  name: material
+  features:
+    - content.code.copy
+    - navigation.footer
+    - navigation.sections
+    - toc.follow
+
+markdown_extensions:
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - tables
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - User guide:
+      - Getting started: getting-started.md
+      - Configuration: configuration.md
+      - Command reference: commands.md
+      - Agent workflow: agent-workflow.md
+  - Development:
+      - Architecture: architecture.md
+      - Contributing: contributing.md
