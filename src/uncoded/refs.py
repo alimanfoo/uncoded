@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import IO, cast
 from urllib.parse import unquote, urlparse
 
-from uncoded.config import find_pyproject_toml
+from uncoded.config import ConfigError, find_pyproject_toml, read_config
 from uncoded.read_helpers import read_source_text
 from uncoded.resolver import NamePath, resolve_name_position
 
@@ -96,8 +96,11 @@ class _LSPLocation:
 
 
 def _find_root(in_path: Path) -> Path:
-    pyproject = find_pyproject_toml(in_path.parent)
-    return pyproject.parent if pyproject is not None else in_path.parent
+    try:
+        return read_config(in_path.parent).project_root
+    except ConfigError:
+        pyproject = find_pyproject_toml(in_path.parent)
+        return pyproject.parent if pyproject is not None else in_path.parent
 
 
 def _terminate(*, proc: subprocess.Popen[bytes]) -> None:

@@ -12,7 +12,7 @@ the configured work.
 The code path performs these steps:
 
 1. `extract.py` walks the source roots and extracts a `ModuleInfo` from each
-   parseable Python file.
+   parseable Python file that contains indexed symbols.
 2. `namespace_map.py` renders the module hierarchy into
    `.uncoded/namespace.yaml`.
 3. `stubs.py` extracts signatures and assignments, then writes a mirrored `.pyi`

@@ -4,6 +4,12 @@ _uncoded_ runs through [uv](https://docs.astral.sh/uv/). A repository needs a
 configuration file, at least one root to index, and a short instruction that
 tells agents to load the generated navigation skills.
 
+## Install uv
+
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/) before
+running _uncoded_. `uvx` downloads and runs the published package on demand, so
+_uncoded_ needs no separate installation.
+
 ## Choose a configuration file
 
 If `pyproject.toml` should own the configuration, add an `uncoded` section:
@@ -46,9 +52,8 @@ Add these instructions to the repository's `AGENTS.md` or `CLAUDE.md`:
 - Load the `uncoded-doc-navigation` skill once per session, before searching, reading or editing any docs.
 ```
 
-Omit the documentation line when the repository has no `doc-roots`. The code
-navigation skill exists only when `source-roots` is configured, and the
-documentation navigation skill exists only when `doc-roots` is configured.
+Keep the code navigation line only when `source-roots` is configured. Keep the
+documentation navigation line only when `doc-roots` is configured.
 
 ## Keep the index current
 
@@ -63,6 +68,12 @@ Add a local pre-commit hook after formatters that may change indexed files:
       language: system
       always_run: true
       pass_filenames: false
+```
+
+Install the configured hooks once:
+
+```sh
+uvx pre-commit install
 ```
 
 See [Agent workflow](agent-workflow.md) for the update sequence that agents

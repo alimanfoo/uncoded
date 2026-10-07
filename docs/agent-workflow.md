@@ -17,7 +17,8 @@ This outline lists every indexed Markdown file and its heading hierarchy.
 
 The agent reads a file's matching stub under `.uncoded/stubs/` before it reads
 implementation code. A stub records imports, signatures, constants, classes, and
-attributes without the bodies.
+attributes without the bodies. A file with no indexed symbols has no stub, so
+the agent reads that source file directly.
 
 When the agent needs an implementation, it runs `uncoded body` for that exact
 symbol. A symbol name goes through the index and `body`; free text and patterns
@@ -40,6 +41,9 @@ skill. It compares concrete claims in symbol names, signatures, docstrings, and
 behavior. A finding must quote both conflicting claims and explain why they
 describe the same concept. The review excludes general style, complexity,
 performance, security, and design advice.
+
+Invoke the skill as `/uncoded-consistency-review` in Claude Code or
+`$uncoded-consistency-review` in Codex.
 
 ## Know the limits
 

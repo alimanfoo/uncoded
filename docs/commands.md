@@ -42,10 +42,11 @@ uvx uncoded body resolve_body --in src/uncoded/body.py
 uvx uncoded body NamePath/parse --in src/uncoded/resolver.py
 ```
 
-The name path has one segment for a top-level function, class, or module
-assignment. Use `Class/member` for a method or class attribute. Deeper paths and
-empty segments are not supported. The output goes to standard output without
-normalizing or reformatting the source.
+The name path has one segment for a top-level function, class, module
+assignment, or PEP 695 type alias. Use `Class/member` for a method or class
+attribute. Deeper paths and empty segments are not supported. The `--in` path is
+resolved from the current working directory. The output goes to standard output
+without normalizing or reformatting the source.
 
 The command exits with status 1 when the file cannot be read or parsed, the
 symbol does not exist, or the name path is unsupported.
@@ -62,6 +63,7 @@ uvx uncoded refs NamePath/parse --in src/uncoded/resolver.py
 Each result has the form `path:line:column`, with one-based positions, sorted by
 path and position. Paths under the current directory are relative; other paths
 are absolute. No output with status 0 means that the symbol has no references.
+The `--in` path follows the same current-directory rule as `body`.
 
 `refs` runs the pinned `ty` language server through `uvx`. The first call may
 therefore download `ty`, and `uvx` must be available on `PATH`.

@@ -17,10 +17,21 @@ The development extra includes the test, lint, type-check, documentation, and
 pre-commit tools. Run `uncoded sync` before navigating the checkout because the
 local index is ignored by Git.
 
+### Windows checkout
+
+Enable symbolic links before cloning on Windows:
+
+```sh
+git config --global core.symlinks true
+```
+
+Without this setting, Git checks out `CLAUDE.md` as a plain text file instead of
+the symbolic link to `AGENTS.md`.
+
 ## Run the tests
 
 ```sh
-PYTHONWARNDEFAULTENCODING=1 uv run pytest
+uv run python -X warn_default_encoding -m pytest
 ```
 
 The environment variable enables Python's `EncodingWarning`. Pytest promotes
@@ -31,7 +42,7 @@ For a focused test run that should not enforce repository-wide coverage, use
 `--no-cov`:
 
 ```sh
-PYTHONWARNDEFAULTENCODING=1 uv run pytest tests/test_stubs.py --no-cov
+uv run python -X warn_default_encoding -m pytest tests/test_stubs.py --no-cov
 ```
 
 ## Run the checks
