@@ -36,6 +36,7 @@ nav:
       - Configuration: configuration.md
       - Command reference: commands.md
       - Agent workflow: agent-workflow.md
+      - Upgrading: upgrading.md
   - Development:
       - Architecture: architecture.md
       - Contributing: contributing.md

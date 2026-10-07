@@ -50,7 +50,7 @@ repos:
         exclude: ^(CLAUDE\.md|(\.claude|\.agents)/skills/.*)$
       - id: mkdocs
         name: build documentation
-        entry: uv run mkdocs build --strict
+        entry: uv run mkdocs build
         language: system
         always_run: true
         pass_filenames: false

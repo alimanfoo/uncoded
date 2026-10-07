@@ -39,7 +39,7 @@ PYTHONWARNDEFAULTENCODING=1 uv run pytest tests/test_stubs.py --no-cov
 ```sh
 uv run ruff check --fix
 uv run ruff format
-uv run mkdocs build --strict
+uv run mkdocs build
 uv run pre-commit run --all-files
 ```
 

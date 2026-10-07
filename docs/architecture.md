@@ -1,8 +1,7 @@
 # Architecture
 
-_uncoded_ is a small pipeline with separate stages for configuration, source
-discovery, extraction, rendering, and file synchronization. The command-line
-module coordinates the stages and keeps each output type independent.
+_uncoded_ builds independent code and documentation indexes from one project
+configuration. The command-line module coordinates both paths.
 
 ## Sync pipeline
 
@@ -40,28 +39,12 @@ and converts the returned locations into sorted, one-based references. The
 language server owns semantic reference resolution; _uncoded_ owns the stable
 command and output format.
 
-## Module boundaries
-
-| Concern                                  | Modules                                                 |
-| ---------------------------------------- | ------------------------------------------------------- |
-| Command coordination and root validation | `cli.py`, `config.py`                                   |
-| Python structure extraction              | `ast_helpers.py`, `extract.py`, `stubs.py`              |
-| Symbol lookup and references             | `resolver.py`, `body.py`, `refs.py`                     |
-| Documentation extraction                 | `docs_map.py`                                           |
-| Rendering and file updates               | `namespace_map.py`, `yaml_tree.py`, `sync.py`           |
-| Generated agent guidance                 | `skill.py` and the Markdown resources in `src/uncoded/` |
-
 The generated navigation skills are package resources and repository outputs at
 the same time. `skill.py` renders the packaged Markdown into both supported
 agent directories. The shared provenance marker in `markers.py` identifies all
 generated output.
 
-## Invariants
-
-Every file read or write supplies an explicit encoding. Every public Python
-symbol has a plain-prose docstring. The test suite enforces complete branch
-coverage, and the configured complexity checks reject functions that grow past
-their thresholds.
+## Path boundary
 
 Generated index paths are always anchored at the configuration file's parent,
 even when the command runs in a subdirectory. A configured root cannot escape

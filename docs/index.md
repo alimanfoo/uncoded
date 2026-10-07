@@ -17,6 +17,8 @@ its index, and tell agents to use it.
   command.
 - [Agent workflow](agent-workflow.md) explains how the generated index and
   skills work together during a coding task.
+- [Upgrading](upgrading.md) gives the changes needed when moving between major
+  versions.
 
 ## Development
 

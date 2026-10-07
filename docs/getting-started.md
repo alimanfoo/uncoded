@@ -4,9 +4,9 @@ _uncoded_ runs through [uv](https://docs.astral.sh/uv/). A repository needs a
 configuration file, at least one root to index, and a short instruction that
 tells agents to load the generated navigation skills.
 
-## Configure a Python repository
+## Choose a configuration file
 
-Add an `uncoded` section to `pyproject.toml`:
+If `pyproject.toml` should own the configuration, add an `uncoded` section:
 
 ```toml
 [tool.uncoded]
@@ -18,21 +18,13 @@ doc-roots = ["README.md", "docs"]
 Markdown files for the documentation outline. Either setting can be omitted, but
 at least one must contain a root.
 
-## Configure another repository
-
-Create `.uncoded.toml` in a repository that has no `pyproject.toml`, or where
-the Python project file should not own this configuration:
-
-```toml
-source-roots = ["scripts"]
-doc-roots = ["docs"]
-```
-
-The settings sit at the top level of `.uncoded.toml`.
+Use `.uncoded.toml` when the configuration should stand alone, including in a
+Python repository. [Configuration](configuration.md) gives both file formats and
+the rules for choosing between them.
 
 ## Build the index
 
-Run the command from the repository root:
+Build the index:
 
 ```sh
 uvx uncoded sync
@@ -73,6 +65,5 @@ Add a local pre-commit hook after formatters that may change indexed files:
       pass_filenames: false
 ```
 
-Run `uvx uncoded check` in any read-only check that should fail when the local
-index is stale. See [Agent workflow](agent-workflow.md) for the update sequence
-that agents follow during a task.
+See [Agent workflow](agent-workflow.md) for the update sequence that agents
+follow during a task.
