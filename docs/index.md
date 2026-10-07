@@ -22,7 +22,6 @@ its index, and tell agents to use it.
 
 ## Development
 
-- [Architecture](architecture.md) maps the indexing pipeline and module
-  boundaries.
+- [Architecture](architecture.md) maps the indexing pipeline and symbol tools.
 - [Contributing](contributing.md) covers the development setup, checks, and
   release path.

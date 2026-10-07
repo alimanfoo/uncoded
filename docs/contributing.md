@@ -34,9 +34,9 @@ the symbolic link to `AGENTS.md`.
 uv run python -X warn_default_encoding -m pytest
 ```
 
-The environment variable enables Python's `EncodingWarning`. Pytest promotes
-that warning to an error, and a sentinel test fails when either half of the gate
-is missing. The suite requires complete branch coverage.
+The interpreter option enables Python's `EncodingWarning`. Pytest promotes that
+warning to an error, and a sentinel test fails when either half of the gate is
+missing. The suite requires complete branch coverage.
 
 For a focused test run that should not enforce repository-wide coverage, use
 `--no-cov`:
