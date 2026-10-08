@@ -56,12 +56,7 @@ uvx uncoded body greet --in src/greetings.py
 ```
 
 Before a rename, `uncoded refs` finds the references to check and update.
+Markdown docs get a separate map of files and headings.
 
-## What you set up
-
-Choose the directories to index, run `uncoded sync`, and add a short instruction
-to your repository so agents load the generated navigation skills. The index
-stays local; the skills are committed with your project.
-
-[Set up your repository](getting-started.md). Already using uncoded? See the
-[commands](commands.md) or [keep your index current](keeping-current.md).
+The index stays local. The generated navigation skills are committed with your
+project so agents know how to use it.

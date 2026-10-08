@@ -19,9 +19,6 @@ Replace these paths with directories and files that exist in your repository.
 `source-roots` indexes Python files. `doc-roots` indexes Markdown headings.
 Remove either line if you only need the other index.
 
-If you prefer to use `pyproject.toml`, put the same settings under
-`[tool.uncoded]` there instead. Use one configuration file.
-
 <span id="build-the-index"></span>
 
 ## 2. Build the index
@@ -65,8 +62,9 @@ Keep only the lines for the root types you configured.
 Start a new agent session in the repository and ask:
 
 ```text title="Example prompt"
-Use the uncoded navigation skills to explain this repository.
-Show me its main modules and read one function that helps explain how it works.
+Explain this repository using the uncoded navigation skills.
+Read the index first, then show me one function or documentation section
+that explains how the project works.
 ```
 
 For Python code, the agent should load `.uncoded/namespace.yaml`, read a
@@ -79,3 +77,6 @@ section.
 When you change indexed code or docs, run `uvx uncoded sync` again before
 navigating. [Keep the index current](keeping-current.md) explains how to
 automate this with pre-commit.
+
+See [Configuration](configuration.md) to use `pyproject.toml` or change the
+indexed paths.

@@ -27,16 +27,16 @@ This lets Git check out `CLAUDE.md` as the symbolic link to `AGENTS.md`.
 ## Run the tests
 
 ```sh
-PYTHONWARNDEFAULTENCODING=1 uv run pytest -q --tb=short
+uv run python -X warn_default_encoding -m pytest -q --tb=short
 ```
 
-The suite requires complete branch coverage. The environment variable enables
+The suite requires complete branch coverage. The Python option enables
 `EncodingWarning`, which the test configuration turns into an error.
 
 For a focused run without the repository-wide coverage gate:
 
 ```sh
-PYTHONWARNDEFAULTENCODING=1 uv run pytest -q --tb=short tests/test_stubs.py --no-cov
+uv run python -X warn_default_encoding -m pytest -q --tb=short tests/test_stubs.py --no-cov
 ```
 
 ## Run the checks
@@ -62,7 +62,9 @@ links, anchors, and navigation. The strict build treats warnings as errors.
 
 After editing Python code or indexed Markdown, run `uv run uncoded sync` before
 navigating again. Commit any changed generated skill files with the sources that
-produced them. Read `AGENTS.md` for the code and testing conventions.
+produced them. Read
+[AGENTS.md](https://github.com/alimanfoo/uncoded/blob/main/AGENTS.md) for the
+code and testing conventions.
 
 ## Release
 
