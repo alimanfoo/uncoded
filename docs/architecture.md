@@ -1,51 +1,43 @@
 # Architecture
 
-_uncoded_ builds independent code and documentation indexes from one project
-configuration. The command-line module coordinates both paths.
+uncoded builds static code and documentation indexes. The CLI reads the
+configuration, validates roots, and coordinates extraction and file writes.
 
 ## Sync pipeline
 
-`config.py` finds the nearest configuration and turns its paths into a `Config`.
-`cli.py` validates that every root stays within the project and then dispatches
-the configured work.
+| Module             | Responsibility                                                                            |
+| ------------------ | ----------------------------------------------------------------------------------------- |
+| `config.py`        | Finds the nearest configuration and resolves the project root.                            |
+| `cli.py`           | Validates roots and dispatches the configured work.                                       |
+| `extract.py`       | Extracts symbols from parseable Python files.                                             |
+| `namespace_map.py` | Renders the Python hierarchy as YAML.                                                     |
+| `stubs.py`         | Extracts imports, signatures, and assignments into a mirrored `.pyi` tree.                |
+| `docs_map.py`      | Extracts Markdown headings and renders their hierarchy as YAML.                           |
+| `skill.py`         | Writes navigation and consistency review skills to both agent directories.                |
+| `sync.py`          | Writes and removes files only when needed; reports changes without writing in check mode. |
 
-The code path performs these steps:
+Code and documentation indexes are independent. Removing a root type removes its
+generated index and skills on the next sync.
 
-1. `extract.py` walks the source roots and extracts a `ModuleInfo` from each
-   parseable Python file that contains indexed symbols.
-2. `namespace_map.py` renders the module hierarchy into
-   `.uncoded/namespace.yaml`.
-3. `stubs.py` extracts signatures and assignments, then writes a mirrored `.pyi`
-   tree under `.uncoded/stubs/`.
-4. `skill.py` writes the code navigation and consistency review skills.
-
-The documentation path performs these steps:
-
-1. `docs_map.py` walks the documentation roots and extracts ATX headings.
-2. The module renders the hierarchy into `.uncoded/docs.yaml`.
-3. `skill.py` writes the documentation navigation skill.
-
-`sync.py` owns idempotent writes and removals for both paths. In check mode it
-reports the changes without mutating the filesystem.
+The skill instructions ship as Markdown package resources. `skill.py` renders
+them into repository skill files. `markers.py` defines the provenance marker
+shared by every generated output.
 
 ## Symbol tools
 
-`resolver.py` maps a `NamePath` to an abstract syntax tree node and its source
-position. `body.py` uses the node's source lines to return the byte-identical
-symbol body.
+`resolver.py` locates a named Python symbol in the abstract syntax tree and
+records its source position. `body.py` uses that location to return the original
+source text.
 
-`refs.py` sends the resolved source position to a one-shot `ty` language server
-and converts the returned locations into sorted, one-based references. The
-language server owns semantic reference resolution; _uncoded_ owns the stable
-command and output format.
-
-The generated navigation skills are package resources and repository outputs at
-the same time. `skill.py` renders the packaged Markdown into both supported
-agent directories. The shared provenance marker in `markers.py` identifies all
-generated output.
+`refs.py` sends the position to a one-shot `ty` language server, then sorts and
+formats the returned references. `ty` resolves the references; uncoded provides
+the command and output format.
 
 ## Path boundary
 
-Generated index paths are always anchored at the configuration file's parent,
-even when the command runs in a subdirectory. A configured root cannot escape
-that project root after path resolution.
+`sync` and `check` anchor all generated files at the configuration file's parent
+directory. Every configured root must remain inside that directory after
+resolving symbolic links.
+
+`body` and `refs` resolve their `--in` paths from the current working directory.
+They can operate without a project configuration.

@@ -1,27 +1,67 @@
-# uncoded
+---
+hide:
+  - toc
+---
 
-_uncoded_ gives AI coding agents a map of a codebase and exact tools for reading
-symbols and finding their references. The agent can see the codebase's real
-vocabulary before it starts to search, so it does not have to guess names or
-infer structure from a few files.
+<div class="home-intro" markdown="1">
 
-## Start here
+# Give your agent a map of your codebase
 
-Follow [Getting started](getting-started.md) to configure a repository, build
-its index, and tell agents to use it.
+uncoded indexes Python code and Markdown docs. Your coding agent sees the names
+and structure before it starts reading, then uses exact tools to retrieve source
+and find references.
 
-## User guide
+[Get started](getting-started.md){ .md-button .md-button--primary }
+[How agents use it](agent-workflow.md){ .home-secondary }
 
-- [Configuration](configuration.md) defines the supported files and settings.
-- [Command reference](commands.md) gives the exact syntax and output of every
-  command.
-- [Agent workflow](agent-workflow.md) explains how the generated index and
-  skills work together during a coding task.
-- [Upgrading](upgrading.md) gives the changes needed when moving between major
-  versions.
+</div>
 
-## Development
+## What the agent sees
 
-- [Architecture](architecture.md) maps the indexing pipeline and symbol tools.
-- [Contributing](contributing.md) covers the development setup, checks, and
-  release path.
+For a repository containing this function, uncoded generates a map with its name
+and location.
+
+<div class="home-example" markdown="1">
+
+<div markdown="1">
+
+### Your source
+
+```python title="src/greetings.py"
+def greet(name: str) -> str:
+    return f"Hello, {name}!"
+```
+
+</div>
+
+<div markdown="1">
+
+### The map
+
+```yaml title=".uncoded/namespace.yaml (excerpt)"
+src/:
+  greetings.py:
+    greet:
+```
+
+</div>
+
+</div>
+
+The agent reads the map to locate `greet`, checks its signature in the generated
+stub, and retrieves the implementation when it needs it:
+
+```sh
+uvx uncoded body greet --in src/greetings.py
+```
+
+Before a rename, `uncoded refs` finds the references to check and update.
+
+## What you set up
+
+Choose the directories to index, run `uncoded sync`, and add a short instruction
+to your repository so agents load the generated navigation skills. The index
+stays local; the skills are committed with your project.
+
+[Set up your repository](getting-started.md). Already using uncoded? See the
+[commands](commands.md) or [keep your index current](keeping-current.md).

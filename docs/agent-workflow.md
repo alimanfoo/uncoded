@@ -1,56 +1,65 @@
 # Agent workflow
 
-The generated skills divide navigation into orientation, focused reading, and
-reference checks. The index gives the agent the names that exist before it
-chooses a file or search term.
+The generated skills tell your agent when to load the index, read source, and
+check references. Once you have [set up the repository](getting-started.md), the
+agent follows this workflow during a coding task.
 
 ## Start a task
 
-An agent loads `.uncoded/namespace.yaml` in full. This map lists directories,
-Python files, classes, methods, attributes, functions, and module constants as a
-YAML hierarchy.
+The agent loads `.uncoded/namespace.yaml` in full to learn the Python symbols
+that exist. For a documentation task, it loads `.uncoded/docs.yaml` to find the
+relevant file and heading.
 
-If the task concerns documentation, the agent also loads `.uncoded/docs.yaml`.
-This outline lists every indexed Markdown file and its heading hierarchy.
+Navigation skills load once per session. Their instructions apply throughout the
+session.
 
 ## Read code
 
-The agent reads a file's matching stub under `.uncoded/stubs/` before it reads
-implementation code. A stub records imports, signatures, constants, classes, and
-attributes without the bodies. A file with no indexed symbols has no stub, so
-the agent reads that source file directly.
+The agent reads the file's stub under `.uncoded/stubs/` to see imports,
+signatures, constants, and attributes. Then it runs `uncoded body` for the
+specific implementation it needs:
 
-When the agent needs an implementation, it runs `uncoded body` for that exact
-symbol. A symbol name goes through the index and `body`; free text and patterns
-still belong in a text search.
+```sh
+uvx uncoded body greet --in src/greetings.py
+```
 
-## Change code safely
+This example assumes `greet` is defined in `src/greetings.py`. For a method, use
+`ClassName/method_name`. See [the command reference](commands.md#body) for
+supported symbols and paths.
 
-Before renaming, changing a signature, or deleting a symbol, the agent runs
-`uncoded refs`. The reference list supplies the complete set of call sites that
-must be checked. An empty result supports a dead-symbol check.
+A file with no indexed symbols has no stub, so the agent reads the file
+directly. Free text and patterns still belong in a text search.
 
-After an indexed Python or Markdown change, the agent runs `uncoded sync` before
-the next navigation operation. This refresh keeps the namespace, stubs, and
-documentation outline aligned with the working tree.
+## Change a symbol
+
+Before renaming, changing a signature, or deleting a symbol, the agent checks
+its references:
+
+```sh
+uvx uncoded refs greet --in src/greetings.py
+```
+
+The results identify the sites to inspect and update. After changing indexed
+Python or Markdown files, the agent runs `uncoded sync` before navigating again.
 
 ## Review consistency
 
-Repositories with `source-roots` also receive the `uncoded-consistency-review`
-skill. It compares concrete claims in symbol names, signatures, docstrings, and
-behavior. A finding must quote both conflicting claims and explain why they
-describe the same concept. The review excludes general style, complexity,
-performance, security, and design advice.
+With `source-roots` configured, uncoded also generates a consistency review
+skill. It looks for concrete disagreements between names, signatures,
+docstrings, and behavior. Every finding must quote both conflicting claims and
+show that they describe the same concept.
 
-Invoke the skill as `/uncoded-consistency-review` in Claude Code or
-`$uncoded-consistency-review` in Codex.
+Invoke it with `$uncoded-consistency-review` in Codex or
+`/uncoded-consistency-review` in Claude Code.
 
 ## Know the limits
 
-The namespace and stub extractors use Python's abstract syntax tree. Files that
-cannot be parsed or decoded are skipped with a warning. The documentation map
-indexes ATX headings that begin with `#`; it does not index Setext headings or
-headings inside fenced code blocks.
+The code index describes static Python structure. It does not run imports or
+resolve runtime registration. Files that cannot be parsed or decoded are skipped
+with a warning.
 
-The index describes static source structure. It does not execute imports,
-resolve runtime registration, or replace tests and type checks.
+The documentation index records headings that begin with `#`. It excludes
+underlined headings and headings inside fenced code blocks. Read documentation
+sections directly; `body` and `refs` operate on Python symbols.
+
+Keep using tests and type checks to verify changes.

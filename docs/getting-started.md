@@ -1,80 +1,81 @@
-# Getting started
+# Get started
 
-_uncoded_ runs through [uv](https://docs.astral.sh/uv/). A repository needs a
-configuration file, at least one root to index, and a short instruction that
-tells agents to load the generated navigation skills.
+Set up uncoded in your repository, then ask your agent to use the index. You
+need [uv](https://docs.astral.sh/uv/getting-started/installation/). `uvx` runs
+uncoded on demand; there is no separate install step.
 
-## Install uv
+<span id="install-uv"></span> <span id="choose-a-configuration-file"></span>
 
-Install [uv](https://docs.astral.sh/uv/getting-started/installation/) before
-running _uncoded_. `uvx` downloads and runs the published package on demand, so
-_uncoded_ needs no separate installation.
+## 1. Choose what to index
 
-## Choose a configuration file
+Create `.uncoded.toml` in your repository root:
 
-If `pyproject.toml` should own the configuration, add an `uncoded` section:
-
-```toml
-[tool.uncoded]
+```toml title=".uncoded.toml"
 source-roots = ["src", "tests"]
 doc-roots = ["README.md", "docs"]
 ```
 
-`source-roots` selects Python files for the symbol index. `doc-roots` selects
-Markdown files for the documentation outline. Either setting can be omitted, but
-at least one must contain a root.
+Replace these paths with directories and files that exist in your repository.
+`source-roots` indexes Python files. `doc-roots` indexes Markdown headings.
+Remove either line if you only need the other index.
 
-Use `.uncoded.toml` when the configuration should stand alone, including in a
-Python repository. [Configuration](configuration.md) gives both file formats and
-the rules for choosing between them.
+If you prefer to use `pyproject.toml`, put the same settings under
+`[tool.uncoded]` there instead. Use one configuration file.
 
-## Build the index
+<span id="build-the-index"></span>
 
-Build the index:
+## 2. Build the index
+
+Run from your repository root:
 
 ```sh
 uvx uncoded sync
 ```
 
-The first run writes the local index under `.uncoded/` and writes navigation
-skills under `.agents/skills/` and `.claude/skills/`. Commit the skill files so
-that agents receive the navigation protocol in a fresh checkout. The generated
-`.uncoded/.gitignore` keeps the index itself out of Git.
+The command prints the files it creates. With both root types configured, you
+will find:
 
-## Tell agents to use the skills
+| Output                                  | Purpose                                                 |
+| --------------------------------------- | ------------------------------------------------------- |
+| `.uncoded/namespace.yaml`               | Lists Python symbols and their locations.               |
+| `.uncoded/stubs/`                       | Records imports, signatures, constants, and attributes. |
+| `.uncoded/docs.yaml`                    | Lists Markdown files and headings.                      |
+| `.agents/skills/` and `.claude/skills/` | Give agents the navigation instructions.                |
 
-Add these instructions to the repository's `AGENTS.md` or `CLAUDE.md`:
+Commit the generated skill files. The `.uncoded/` index stays local and is
+ignored by Git.
 
-```text
+<span id="tell-agents-to-use-the-skills"></span>
+
+## 3. Tell your agent to use it
+
+Add these instructions to your repository's `AGENTS.md` or `CLAUDE.md`:
+
+```text title="Agent instructions"
 ## Before you start
 
 - Load the `uncoded-code-navigation` skill once per session, before searching, reading or editing any code.
 - Load the `uncoded-doc-navigation` skill once per session, before searching, reading or editing any docs.
 ```
 
-Keep the code navigation line only when `source-roots` is configured. Keep the
-documentation navigation line only when `doc-roots` is configured.
+Keep only the lines for the root types you configured.
 
-## Keep the index current
+## 4. Try a task
 
-Add a local pre-commit hook after formatters that may change indexed files:
+Start a new agent session in the repository and ask:
 
-```yaml
-- repo: local
-  hooks:
-    - id: uncoded
-      name: uncoded
-      entry: uvx uncoded sync
-      language: system
-      always_run: true
-      pass_filenames: false
+```text title="Example prompt"
+Use the uncoded navigation skills to explain this repository.
+Show me its main modules and read one function that helps explain how it works.
 ```
 
-Install the configured hooks once:
+For Python code, the agent should load `.uncoded/namespace.yaml`, read a
+matching stub, and run `uncoded body` for the function it chooses. For
+documentation, it should load `.uncoded/docs.yaml` and read the relevant
+section.
 
-```sh
-uvx pre-commit install
-```
+<span id="keep-the-index-current"></span>
 
-See [Agent workflow](agent-workflow.md) for the update sequence that agents
-follow during a task.
+When you change indexed code or docs, run `uvx uncoded sync` again before
+navigating. [Keep the index current](keeping-current.md) explains how to
+automate this with pre-commit.
