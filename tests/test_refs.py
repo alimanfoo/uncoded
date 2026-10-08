@@ -292,6 +292,27 @@ class TestFindRoot:
 
         assert _find_root(sub / "m.py") == tmp_path
 
+    def test_returns_uncoded_toml_parent_when_found(self, tmp_path):
+        sub = tmp_path / "pkg"
+        sub.mkdir()
+        (tmp_path / ".uncoded.toml").write_text(
+            'source-roots = ["pkg"]\n', encoding="utf-8"
+        )
+
+        assert _find_root(sub / "m.py") == tmp_path
+
+    def test_returns_pyproject_parent_when_config_is_ambiguous(self, tmp_path):
+        sub = tmp_path / "pkg"
+        sub.mkdir()
+        (tmp_path / "pyproject.toml").write_text(
+            '[tool.uncoded]\nsource-roots = ["pkg"]\n', encoding="utf-8"
+        )
+        (tmp_path / ".uncoded.toml").write_text(
+            'source-roots = ["pkg"]\n', encoding="utf-8"
+        )
+
+        assert _find_root(sub / "m.py") == tmp_path
+
     def test_returns_in_path_parent_when_not_found(self, tmp_path):
         sub = tmp_path / "pkg"
         sub.mkdir()

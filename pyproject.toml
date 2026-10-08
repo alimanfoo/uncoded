@@ -25,6 +25,8 @@ classifiers = [
 dev = [
     "complexipy==5.6.1",
     "hypothesis>=6.0",
+    "mkdocs==1.6.1",
+    "mkdocs-material==9.7.7",
     "pre-commit>=3.0",
     "pytest>=8.0",
     "pytest-cov>=6.0",
@@ -44,7 +46,7 @@ source = "vcs"
 
 [tool.uncoded]
 source-roots = ["src", "tests"]
-doc-roots = ["README.md", "AGENTS.md", "src/uncoded"]
+doc-roots = ["README.md", "AGENTS.md", "docs", "src/uncoded"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
