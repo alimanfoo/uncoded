@@ -8,9 +8,9 @@ hide:
 # Give your agent a map of your codebase
 
 uncoded indexes Python code and Markdown docs. It gives your coding agent
-progressively deeper views of Python code. A map shows every symbol, compact
-stubs add signatures and types, and `uncoded body` returns exact source on
-demand. The agent stops as soon as one view gives it enough information.
+progressively deeper views of Python code. A map shows the indexed symbols,
+compact stubs add signatures and types, and `uncoded body` returns exact source
+on demand. The agent stops as soon as one view gives it enough information.
 
 [Get started](getting-started.md){ .md-button .md-button--primary }
 [How agents use it](agent-workflow.md){ .home-secondary }
@@ -56,7 +56,7 @@ When the agent needs the function's interface, it reads the generated stub:
 def greet(name: str) -> str: ...
 ```
 
-When the agent needs the implementation, it retrieves that body without reading
+When the agent needs the exact source, it retrieves that body without reading
 the rest of the source file:
 
 ```sh
@@ -64,7 +64,7 @@ uvx uncoded body greet --in src/greetings.py
 ```
 
 Broad questions may need only the map. Questions about an interface may stop at
-the stub. Only questions about behaviour need the body.
+the stub.
 
 Before a rename, `uncoded refs` finds the references to check and update.
 Markdown docs get a separate map of files and headings.

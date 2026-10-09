@@ -23,8 +23,7 @@ that matter.
    for questions about structure or where a feature lives.
 2. The file's stub under `.uncoded/stubs/` adds imports, signatures, constants,
    and attributes. It is often enough for questions about interfaces and types.
-3. `uncoded body` returns one exact implementation. The agent uses it when the
-   task depends on behaviour:
+3. `uncoded body` returns one symbol's exact source when the task needs it:
 
 ```sh
 uvx uncoded body greet --in src/greetings.py
