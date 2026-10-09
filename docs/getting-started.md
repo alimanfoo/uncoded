@@ -67,8 +67,9 @@ Read the index first, then show me one function or documentation section
 that explains how the project works.
 ```
 
-For Python code, the agent should load `.uncoded/namespace.yaml`, read a
-matching stub, and run `uncoded body` for the function it chooses. For
+For Python code, the agent should move from `.uncoded/namespace.yaml` to a
+matching stub and then to `uncoded body` as it needs more detail. The agent can
+stop after the map or stub when that view answers the question. For
 documentation, it should load `.uncoded/docs.yaml` and read the relevant
 section.
 
