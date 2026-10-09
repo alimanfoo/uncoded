@@ -7,14 +7,14 @@ Use Python 3.12 or later and [uv](https://docs.astral.sh/uv/).
 ```sh
 git clone https://github.com/alimanfoo/uncoded
 cd uncoded
-uv sync --extra dev
+uv sync
 uv run uncoded sync
 uv run pre-commit install
 ```
 
-The development extra includes tests, linting, type checking, documentation, and
-pre-commit tools. The local index is ignored by Git, so build it before
-navigating the checkout.
+The development dependency group includes tests, linting, type checking,
+documentation, and pre-commit tools. The local index is ignored by Git, so build
+it before navigating the checkout.
 
 On Windows, enable symbolic links before cloning:
 

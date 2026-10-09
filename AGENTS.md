@@ -73,15 +73,10 @@ Clone and install dev dependencies:
 ```sh
 git clone https://github.com/alimanfoo/uncoded
 cd uncoded
-uv sync --extra dev
+uv sync
 uv run uncoded sync
 uv run pre-commit install
 ```
-
-Run `uv sync --extra dev` before the first pre-commit run in a clean checkout.
-The ty hook type-checks `src` and `tests`. The test modules import dev-only
-packages such as pytest and hypothesis. Without the dev extras in the venv, ty
-cannot resolve those imports and reports spurious errors.
 
 This repo uses uncoded on itself. The pre-commit hook runs `uv run uncoded sync`
 on each commit. The local `.uncoded/` index is ignored. If the hook modifies a
