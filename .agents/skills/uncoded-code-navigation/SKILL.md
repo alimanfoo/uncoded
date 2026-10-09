@@ -55,10 +55,12 @@ src/foo/bar.py      →  .uncoded/stubs/src/foo/bar.pyi
 tests/test_foo.py   →  .uncoded/stubs/tests/test_foo.pyi
 ```
 
-The stub contains imports, every signature with types, module-level assignments,
-and class attributes. That is enough for most navigation. Read source only when
-the task needs exact code. If no stub exists at the expected path, the file has
-no symbols indexed. In that narrow case, read source directly.
+The stub contains imports, parameter names and annotations, return types,
+module-level assignments, and class attributes. It omits parameter defaults,
+decorators, docstrings, and function bodies. Read source when the task depends
+on an omitted detail or needs exact code. If no stub exists at the expected
+path, the file has no symbols indexed. In that narrow case, read source
+directly.
 
 **Step 3: Act.** Use `uncoded body` to read a symbol's body. Use `uncoded refs`
 to find every reference to a symbol. Use `Edit` (with `uncoded body`'s output as

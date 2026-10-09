@@ -9,7 +9,7 @@ hide:
 
 uncoded indexes Python code and Markdown docs. It gives your coding agent
 progressively deeper views of Python code. A map shows the indexed symbols,
-compact stubs add signatures and types, and `uncoded body` returns exact source
+compact stubs add parameters and types, and `uncoded body` returns exact source
 on demand. The agent stops as soon as one view gives it enough information.
 
 [Get started](getting-started.md){ .md-button .md-button--primary }
@@ -50,10 +50,12 @@ src/:
 </div>
 
 The map is the first view. It shows that `greet` exists and where to find it.
-When the agent needs the function's interface, it reads the generated stub:
+When the agent needs the function's parameters and return type, it reads the
+generated stub:
 
-```python title=".uncoded/stubs/src/greetings.pyi"
-def greet(name: str) -> str: ...
+```python title=".uncoded/stubs/src/greetings.pyi (excerpt)"
+def greet(name: str) -> str:
+    ...
 ```
 
 When the agent needs the exact source, it retrieves that body without reading
@@ -63,8 +65,8 @@ the rest of the source file:
 uvx uncoded body greet --in src/greetings.py
 ```
 
-Broad questions may need only the map. Questions about an interface may stop at
-the stub.
+Broad questions may need only the map. Questions about names and types may stop
+at the stub.
 
 Before a rename, `uncoded refs` finds the references to check and update.
 Markdown docs get a separate map of files and headings.

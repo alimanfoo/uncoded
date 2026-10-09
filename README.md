@@ -7,7 +7,7 @@ understanding of the code.
 
 **uncoded** builds a static navigation index that gives coding agents
 progressively deeper views of a codebase. Agents start with the namespace map,
-read compact stubs when they need signatures and types, and retrieve only the
+read compact stubs when they need parameters and types, and retrieve only the
 symbol bodies that they need. Each view adds detail without making the agent
 read whole source files.
 
