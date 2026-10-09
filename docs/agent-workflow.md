@@ -15,9 +15,16 @@ session.
 
 ## Read code
 
-The agent reads the file's stub under `.uncoded/stubs/` to see imports,
-signatures, constants, and attributes. Then it runs `uncoded body` for the
-specific implementation it needs:
+The agent adds detail only when the task needs it. This progressive disclosure
+keeps broad work on compact views and limits source reads to the implementations
+that matter.
+
+1. The namespace map shows every indexed symbol and its file. It is often enough
+   for questions about structure or where a feature lives.
+2. The file's stub under `.uncoded/stubs/` adds imports, signatures, constants,
+   and attributes. It is often enough for questions about interfaces and types.
+3. `uncoded body` returns one exact implementation. The agent uses it when the
+   task depends on behaviour:
 
 ```sh
 uvx uncoded body greet --in src/greetings.py

@@ -5,11 +5,13 @@ the first few lines of files, and fill gaps from pretraining rather than reading
 the actual code. The result is plausible-looking output built on a hallucinated
 understanding of the code.
 
-**uncoded** builds a static navigation index for the codebase. Agents load it at
-the start of a task and navigate directly to what they need, without guessing or
-grepping.
+**uncoded** builds a static navigation index that gives coding agents
+progressively deeper views of a codebase. Agents start with a map of every
+symbol, read compact stubs when they need signatures and types, and retrieve
+only the symbol bodies that they need. Each view adds detail without making the
+agent read whole source files.
 
-It also ships `uncoded body` to read symbol bodies and `uncoded refs` to find
+The `uncoded body` command retrieves symbol bodies, and `uncoded refs` finds
 every reference to a symbol. References cover callers, dead-symbol checks, and
 the full set of sites to update before a rename.
 
