@@ -8,9 +8,13 @@ hide:
 # Give your agent a map of your codebase
 
 uncoded indexes Python code and Markdown docs. It gives your coding agent
-progressively deeper views of Python code. A map shows the indexed symbols,
-compact stubs add parameters and types, and `uncoded body` returns exact source
-on demand. The agent stops as soon as one view gives it enough information.
+progressively deeper views of Python code:
+
+1. A map shows the code symbols
+2. Stubs add parameters and types
+3. `uncoded body` returns exact source on demand.
+
+The agent can stop as soon as one view gives it enough information.
 
 [Get started](getting-started.md){ .md-button .md-button--primary }
 [How agents use it](agent-workflow.md){ .home-secondary }
