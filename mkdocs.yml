@@ -1,5 +1,5 @@
 site_name: uncoded
-site_description: Static codebase navigation for AI coding agents
+site_description: Give your coding agent a map of your codebase. Index Python code and Markdown docs with uncoded.
 site_url: https://alimanfoo.github.io/uncoded/
 repo_url: https://github.com/alimanfoo/uncoded
 repo_name: alimanfoo/uncoded
@@ -16,13 +16,40 @@ validation:
 
 theme:
   name: material
+  font: false
+  icon:
+    logo: material/file-tree-outline
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
   features:
     - content.code.copy
     - navigation.footer
     - navigation.sections
+    - search.highlight
     - toc.follow
 
+extra_css:
+  - stylesheets/extra.css
+
+extra:
+  generator: false
+
 markdown_extensions:
+  - attr_list
+  - md_in_html
   - pymdownx.highlight
   - pymdownx.superfences
   - tables
@@ -31,12 +58,14 @@ markdown_extensions:
 
 nav:
   - Home: index.md
-  - User guide:
-      - Getting started: getting-started.md
-      - Configuration: configuration.md
-      - Command reference: commands.md
+  - Get started: getting-started.md
+  - Use uncoded:
       - Agent workflow: agent-workflow.md
+      - Keep the index current: keeping-current.md
+  - Reference:
+      - Configuration: configuration.md
+      - Commands: commands.md
       - Upgrading: upgrading.md
-  - Development:
-      - Architecture: architecture.md
+  - Contribute:
       - Contributing: contributing.md
+      - Architecture: architecture.md
