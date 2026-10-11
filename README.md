@@ -11,9 +11,5 @@ read compact stubs when they need parameters and types, and retrieve only the
 symbol bodies that they need. Each view adds detail without making the agent
 read whole source files.
 
-The `uncoded body` command retrieves symbol bodies, and `uncoded refs` finds
-every reference to a symbol. References cover callers, dead-symbol checks, and
-the full set of sites to update before a rename.
-
 Read the [documentation](https://alimanfoo.github.io/uncoded/) for installation,
 configuration, command reference, upgrades, and contributor guidance.
