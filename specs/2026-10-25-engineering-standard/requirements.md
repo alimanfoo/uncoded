@@ -38,6 +38,12 @@ selectively:
 - A new family of criteria covers the infrastructure: the supply chain,
   supported platforms and Python versions, packaging, and releases.
 
+The standard names its own exemplar projects, chosen by reading candidates,
+including exemplars for the infrastructure family. It credits each exemplar only
+with what reading it verified.
+
+Linux, macOS and Windows are supported platforms, and CI tests on all three.
+
 Dreamcatcher's infrastructure is the floor. Each of the further suggestions on
 GH257 is considered on its merits as the criteria are written.
 
@@ -60,6 +66,10 @@ Specifications live in dated folders under `specs/`, starting with this one.
 
 ## What limits this?
 
+The behaviour budget is zero. No stage changes a command, a flag, an output, a
+generated artefact or a skill, except where the stage says so and names the
+change.
+
 The open issues that overlap this work, such as #223, #231, #234, #205 and #179,
 become part of it rather than being duplicated.
 
@@ -71,7 +81,4 @@ measurement again before each major or minor release.
 
 ## What's still open?
 
-- Whether Windows and macOS are supported platforms.
-- Which exemplar projects, if any, the standard names beyond dreamcatcher's.
-- Whether the work changes no behaviour except where a stage says so, as
-  dreamcatcher's phase required.
+I have no remaining requirements questions.
