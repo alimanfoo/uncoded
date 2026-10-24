@@ -35,17 +35,17 @@ selectively:
 - C2 names uncoded's own enduring documents.
 - K1 covers the few structural rules uncoded has, such as the one module that
   spawns a subprocess and the path boundary.
-- A new family of criteria covers the infrastructure: the supply chain,
-  supported platforms and Python versions, packaging, and releases.
+- The standard covers code and documentation only. Infrastructure is kept in
+  force by its own checks, not by criteria.
 
 The standard names its own exemplar projects, chosen by reading candidates,
-including exemplars for the infrastructure family. It credits each exemplar only
-with what reading it verified.
+including exemplars for the infrastructure. It credits each exemplar only with
+what reading it verified.
 
 Linux, macOS and Windows are supported platforms, and CI tests on all three.
 
 Dreamcatcher's infrastructure is the floor. Each of the further suggestions on
-GH257 is considered on its merits as the criteria are written.
+GH257 is considered on its merits as the design is written.
 
 The package version is the only version. Any breaking change to the agent-facing
 contract needs a major release. A change is breaking when it removes or changes
