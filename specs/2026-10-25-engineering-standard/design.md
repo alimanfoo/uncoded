@@ -163,6 +163,16 @@ Two things have no check of their own, so the release checklist covers them:
   testing page can record what each establishes if one is adopted. `hypothesis`
   leaves the dev dependencies until a test uses it.
 
+## Ontology
+
+The ontology lives at `docs/ontology.md`, in dreamcatcher's form: an opening
+that says it is authoritative over the dated specifications, a **Definitions**
+section with one heading per concept, and a **Relationships and rules** section.
+It defines uncoded's terms, starting with name path, source root, doc root,
+project root, index, namespace map, stub, docs map, artefact, skill and
+provenance marker. Where the code, documents or issues use another word for one
+of these, the ontology's word wins.
+
 ## Definition of done
 
 Dreamcatcher's seven questions, with an eighth: any change to the agent-facing
