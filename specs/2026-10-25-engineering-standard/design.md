@@ -86,7 +86,7 @@ uncoded measures.
 - **C1. One vocabulary.** Transfers. The check is the
   `uncoded-consistency-review` skill, which uncoded itself ships.
 - **C2. The enduring documents are true.** uncoded's enduring documents are the
-  ontology, the architecture and this standard.
+  ontology, the user stories, the architecture and this standard.
 - **C3. Documentation is organised by purpose.** Transfers. The current site
   already separates a tutorial (`getting-started.md`), task guides, references
   and explanation.
@@ -172,6 +172,25 @@ It defines uncoded's terms, starting with name path, source root, doc root,
 project root, index, namespace map, stub, docs map, artefact, skill and
 provenance marker. Where the code, documents or issues use another word for one
 of these, the ontology's word wins.
+
+## Stories
+
+The user stories live at `docs/stories.md`, in dreamcatcher's form. They tell
+what happens from the user's seat, in the ontology's words, citing no mechanism.
+Happy paths come first, then **user errors**, things the user did, and then
+**expected faults**, things outside uncoded going wrong. A bug is behaviour that
+contradicts a story.
+
+uncoded has two users, and the stories cover both:
+
+- the **developer**, who configures uncoded, runs `sync` and `check`, and
+  commits the skills; and
+- the **agent**, which reads the namespace map, stubs and docs map, and runs
+  `body` and `refs`.
+
+The stories settle how uncoded handles errors, such as a file it cannot parse
+(#179), a configuration it cannot accept, `uvx` missing from `PATH`, and an
+index that has gone stale.
 
 ## Definition of done
 

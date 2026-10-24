@@ -55,7 +55,8 @@ releases, and wording changes are patches. A compatibility statement says this
 where users will find it.
 
 uncoded has an ontology that fixes its vocabulary, so that agents and I use the
-same word for the same thing.
+same word for the same thing. It has user stories, for both the developer and
+the agent, that settle how uncoded behaves, including when things go wrong.
 
 The work follows dreamcatcher's
 [engineering standard phase](https://github.com/alimanfoo/dreamcatcher/issues/330):
