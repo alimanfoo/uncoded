@@ -259,5 +259,7 @@ index that has gone stale.
 ## Definition of done
 
 Dreamcatcher's seven questions, with an eighth: any change to the agent-facing
-contract is classed as breaking, minor or patch under
-[Breaking changes](#breaking-changes), and has a changelog entry.
+contract has a changelog entry under **Unreleased**, under the heading that fits
+it by [Breaking changes](#breaking-changes). An entry does not state a release
+type. The headings imply it: any **Breaking** entry makes the next release
+major, any **Added** or **Changed** entry minor, and **Fixed** alone a patch.
