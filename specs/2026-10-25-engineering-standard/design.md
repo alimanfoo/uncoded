@@ -170,6 +170,11 @@ Branch protection leaves "require branches to be up to date" off, because
 campaigns merge stages without a merge queue, and leaves conversation resolution
 off, because with one maintainer it protects nothing.
 
+The classifier `Development Status :: 3 - Alpha` becomes `4 - Beta`, as in
+dreamcatcher. A project that is shared, not supported, does not claim to be
+production-ready, and the compatibility statement carries the versioning
+promise.
+
 Per-version Python classifiers are not added. The CI matrix is the one list of
 supported versions, and `requires-python` is what installers enforce.
 
