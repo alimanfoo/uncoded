@@ -117,10 +117,11 @@ uncoded measures.
   close.
 - **K4. Every change is reviewed against this standard.** Transfers, including
   the exemption for Dependabot pull requests.
-- **K5. The suite fails loudly.** New, after nox. pytest runs with
-  `--strict-markers`, `--strict-config` and `xfail_strict`, and each test has a
-  timeout, scaled for macOS and Windows as pipx does. The check is
-  `pyproject.toml`.
+- **K5. The suite fails loudly.** New, after nox. pytest 9's single
+  `strict = true` turns on strict config, markers, xfail and parametrisation
+  IDs, and the dev floor rises to `pytest>=9.0`. Each test has a timeout, scaled
+  for macOS and Windows as pipx does. `-ra` is not added, as it adds output to
+  every run. The check is `pyproject.toml`.
 
 ### Elegance
 
@@ -133,35 +134,47 @@ uncoded measures.
 
 ## Infrastructure
 
-The standard covers code and documentation only, as dreamcatcher's does.
-Infrastructure is roadmap work, and each piece is kept in force by its own check
-rather than by a criterion. The exemplar named beside each item is the one it
-follows.
+The standard covers code and documentation only, as dreamcatcher's does
+(alimanfoo/dreamcatcher#785). `docs/standard.md` says so in one sentence.
+Infrastructure is roadmap work, and each piece is kept in force by its own
+check, explained where that check is configured. The exemplar named beside an
+item is the one it follows.
 
-| Work                                                                                                                                | Kept in force by                                 |
-| ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
-| Actions pinned to commits, read-only top-level `permissions`, `uv sync --locked` (urllib3)                                          | zizmor and actionlint in pre-commit              |
-| Pre-commit revisions pinned to commits                                                                                              | Dependabot updates them in that form             |
-| Grouped Dependabot updates for uv, pre-commit and GitHub Actions, with a cooldown, and dependency review on pull requests (urllib3) | `.github/dependabot.yml` and the review workflow |
-| Linux, macOS and Windows across Python versions, with 100% branch coverage combined across platforms (nox)                          | Every CI job is a required check                 |
-| The installed package runs `uncoded --version` on each operating system (pipx, dreamcatcher)                                        | A required CI job                                |
-| Trusted Publishing through a protected environment, attestations, and a check that the tag matches the built version (urllib3)      | The publish workflow, and zizmor                 |
-| Correct classifiers and URLs, and deliberate sdist contents                                                                         | validate-pyproject in pre-commit                 |
-| Branch protection on `main`, `SECURITY.md` and private vulnerability reporting (urllib3)                                            | The release checklist                            |
+| Work                                                                                                                                           | Kept in force by                                          |
+| ---------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| Actions pinned to commits, read-only top-level `permissions` with job-level grants, `persist-credentials: false`, `uv sync --locked` (urllib3) | zizmor and actionlint in pre-commit                       |
+| Pre-commit revisions pinned to commits                                                                                                         | Dependabot updates them in that form                      |
+| Grouped Dependabot updates for uv, pre-commit and GitHub Actions, each with a cooldown, and dependency review on pull requests (urllib3)       | `.github/dependabot.yml`, zizmor, and the review workflow |
+| Linux, macOS and Windows across Python versions, with 100% branch coverage combined across platforms (nox)                                     | Every CI job is a required check                          |
+| An sdist that holds `src` alone, and a wheel built from it that runs `uncoded --version` on each operating system (pipx, dreamcatcher)         | A required CI job                                         |
+| Trusted Publishing through a protected environment, attestations, and a check that the tag matches the built version (urllib3)                 | The publish workflow, and zizmor                          |
+| No `License ::` classifier beside the SPDX `license`, and no restated `src = ["src"]` for ruff                                                 | validate-pyproject in pre-commit                          |
+| CodeQL default setup for Python and Actions, with secret scanning and push protection                                                          | Repository settings, read by the release checklist        |
+| Branch protection on `main`: a pull request and every check required, enforced for admins                                                      | Repository settings, read by the release checklist        |
+| `SECURITY.md` pointing to private vulnerability reporting                                                                                      | Repository settings, read by the release checklist        |
 
-Two things have no check of their own, so the release checklist covers them:
+Branch protection leaves "require branches to be up to date" off, because
+campaigns merge stages without a merge queue, and leaves conversation resolution
+off, because with one maintainer it protects nothing.
+
+Per-version Python classifiers are not added. The CI matrix is the one list of
+supported versions, and `requires-python` is what installers enforce.
+
+The release checklist covers what has no check of its own:
 
 - adding each new Python release to the CI matrix; and
-- confirming that branch protection and private vulnerability reporting are
-  still on, since those settings live outside the repository.
+- confirming the repository settings above, which live outside the repository.
 
 ### Not adopted
 
-- **CodeQL and Scorecard.** zizmor and ruff's security rules cover the same
-  ground for a project this size. Revisit if a finding slips past them.
-- **Mutation and property-based testing.** These are techniques, not criteria. A
-  testing page can record what each establishes if one is adopted. `hypothesis`
-  leaves the dev dependencies until a test uses it.
+- **Scorecard.** zizmor, Dependabot, CodeQL and branch protection cover the
+  checks of it that matter here. The rest, such as a second approver, fuzzing
+  and a badge, do not fit a one-maintainer project.
+- **Mutation and property-based testing.** These are techniques, not criteria,
+  and nothing so far traces to a test that ran a change without catching it.
+  `hypothesis` leaves the dev dependencies until a test uses it.
+- **A spell checker.** C1 concerns the choice of words, which the consistency
+  review checks, not their spelling.
 
 ## Ontology
 
