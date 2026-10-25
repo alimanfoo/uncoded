@@ -193,6 +193,11 @@ dreamcatcher. A project that is shared, not supported, does not claim to be
 production-ready, and the compatibility statement carries the versioning
 promise.
 
+Dependabot moves the dev dependency on ty but not `TY_VERSION` in `refs.py`, and
+the two may differ. The dev ty type-checks uncoded. `TY_VERSION` decides what
+`refs` reports, so raising it is a deliberate change to `refs`, released as a
+patch once the integration tests pass.
+
 Per-version Python classifiers are not added. The CI matrix is the one list of
 supported versions, and `requires-python` is what installers enforce.
 
