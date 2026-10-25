@@ -29,12 +29,15 @@ adapted from
 with a measure, a bar and a check for each criterion. The criteria transfer
 selectively:
 
-- S1 to S5, C1, C3, K2 to K4, and E1 to E4 transfer as they are.
-- C4 covers the agent-facing contract: the generated skills, the index formats,
-  and the commands, flags, output and exit statuses of the command-line tool.
-- C2 names uncoded's own enduring documents.
-- K1 covers the few structural rules uncoded has, such as the one module that
-  spawns a subprocess and the path boundary.
+- Every criterion transfers as it is, except these three.
+- Its versioned contract covers the agent-facing contract: the generated skills,
+  the index formats, and the commands, flags, output and exit statuses of the
+  command-line tool.
+- Its true documents are uncoded's own enduring documents.
+- Its machine-checked rules are the few structural rules uncoded has, such as
+  the one module that spawns a subprocess and the path boundary.
+- Each criterion has a short, memorable title in place of dreamcatcher's codes,
+  such as S1.
 - The standard covers code and documentation only. Infrastructure is kept in
   force by its own checks, not by criteria.
 

@@ -64,47 +64,52 @@ There is no preview tier until something needs one.
 ## Criteria
 
 Each criterion has a measure, a bar and a check, as in dreamcatcher's standard.
-Where a criterion transfers unchanged, this section says so and notes only what
-uncoded measures.
+Unlike dreamcatcher's, it has no code such as S1. A short title names it
+everywhere, and its first line in the standard is the full statement. Where a
+criterion transfers unchanged, this section says so and notes only what uncoded
+measures.
 
 ### Simplicity
 
-- **S1. Modules are cohesive.** Transfers. The largest modules are `stubs.py`
-  (471 lines) and `cli.py` (377).
-- **S2. Functions do one thing.** Transfers.
-- **S3. Exports are used.** Transfers. uncoded promises no Python API, so the
-  permitted public names are those another module imports, the console entry
-  point `main`, and `__version__`. Nothing is public because a test wanted it.
-- **S4. Each thing is done one way.** Transfers. #234 is an example: two walks
-  up the directory tree in `config.py`.
-- **S5. Nothing is suppressed.** Transfers, with zero `noqa` and zero
-  `type: ignore`. The subprocess waivers in `refs.py` and `tests/test_refs.py`
-  move to `[tool.ruff.lint.per-file-ignores]` with a comment giving the reason,
-  as dreamcatcher does.
+- **Cohesive modules.** Modules are cohesive. Transfers. The largest modules are
+  `stubs.py` (471 lines) and `cli.py` (377).
+- **Focused functions.** Functions do one thing. Transfers.
+- **No unused exports.** Exports are used. Transfers. uncoded promises no Python
+  API, so the permitted public names are those another module imports, the
+  console entry point `main`, and `__version__`. Nothing is public because a
+  test wanted it.
+- **One way.** Each thing is done one way. Transfers. #234 is an example: two
+  walks up the directory tree in `config.py`.
+- **No suppressions.** Nothing is suppressed. Transfers, with zero `noqa` and
+  zero `type: ignore`. The subprocess waivers in `refs.py` and
+  `tests/test_refs.py` move to `[tool.ruff.lint.per-file-ignores]` with a
+  comment giving the reason, as dreamcatcher does.
 
 ### Clarity
 
-- **C1. One vocabulary.** Transfers. The check is the
-  `uncoded-consistency-review` skill, which uncoded itself ships.
-- **C2. The enduring documents are true.** uncoded's enduring documents are the
-  ontology, the user stories, the architecture and this standard.
-- **C3. Documentation is organised by purpose.** Transfers. The current site
-  already separates a tutorial (`getting-started.md`), task guides, references
-  and explanation.
-- **C4. The contract is versioned.** The measure is whether a compatibility
-  statement gives the rules in [Breaking changes](#breaking-changes), and
-  whether every breaking change has a changelog entry saying what the user must
-  do. The changelog uses Breaking, Added, Changed and Fixed headings.
-- **C5. The references agree with the tool.** New, after llm. The measure is
-  commands, flags, exit statuses and settings that the command reference, the
-  configuration reference or a skill describes differently from the code. The
-  bar is zero. The check is a test that compares the command reference with the
-  parser, as llm's CI does, and review for the skills.
+- **One vocabulary.** Transfers. The check is the `uncoded-consistency-review`
+  skill, which uncoded itself ships.
+- **True documents.** The enduring documents are true. uncoded's enduring
+  documents are the ontology, the user stories, the architecture and this
+  standard.
+- **Docs by purpose.** Documentation is organised by purpose. Transfers. The
+  current site already separates a tutorial (`getting-started.md`), task guides,
+  references and explanation.
+- **Versioned contract.** The contract is versioned. The measure is whether a
+  compatibility statement gives the rules in
+  [Breaking changes](#breaking-changes), and whether every breaking change has a
+  changelog entry saying what the user must do. The changelog uses Breaking,
+  Added, Changed and Fixed headings.
+- **Accurate references.** The references agree with the tool. New, after llm.
+  The measure is commands, flags, exit statuses and settings that the command
+  reference, the configuration reference or a skill describes differently from
+  the code. The bar is zero. The check is a test that compares the command
+  reference with the parser, as llm's CI does, and review for the skills.
 
 ### Consistency
 
-- **K1. A structural rule that review keeps missing is checked by a machine.**
-  Transfers. uncoded's structural rules are:
+- **Machine-checked rules.** A structural rule that review keeps missing is
+  checked by a machine. Transfers. uncoded's structural rules are:
   - only `refs.py` imports `subprocess` (ruff, with the per-file waiver);
   - only `sync.py` writes or removes files or directories. The empty-directory
     pruning in `skill.py` and `stubs.py` moves there, so the rule has no
@@ -112,13 +117,13 @@ uncoded measures.
   - only `cli.py` imports the command modules, and no module imports `cli`;
   - every generated file carries `GENERATED_MARKER` (`tests/test_markers.py`);
   - every text read and write names its encoding (PLW1514 and the runtime gate).
-- **K2. The suite is fast and speaks the user's language.** Transfers, with the
-  bar at 60 seconds. The suite takes about 3 seconds today.
-- **K3. The tracker is current.** Transfers. #226 and #162 are candidates to
-  close.
-- **K4. Every change is reviewed against this standard.** Transfers, including
-  the exemption for Dependabot pull requests.
-- **K5. The suite fails loudly.** New, after nox. pytest 9's single
+- **Fast readable tests.** The suite is fast and speaks the user's language.
+  Transfers, with the bar at 60 seconds. The suite takes about 3 seconds today.
+- **Current tracker.** The tracker is current. Transfers. #226 and #162 are
+  candidates to close.
+- **Reviewed changes.** Every change is reviewed against this standard.
+  Transfers, including the exemption for Dependabot pull requests.
+- **Loud failures.** The suite fails loudly. New, after nox. pytest 9's single
   `strict = true` turns on strict config, markers, xfail and parametrisation
   IDs, and the dev floor rises to `pytest>=9.0`. Each test has a timeout, scaled
   for macOS and Windows as pipx does. `-ra` is not added, as it adds output to
@@ -126,11 +131,13 @@ uncoded measures.
 
 ### Elegance
 
-- **E1. Rules, not cases.** Transfers, with a ledger at `docs/special-cases.md`.
-- **E2. Invariants held by construction.** Transfers.
-- **E3. Concept economy.** Transfers, against the new ontology.
-- **E4. Symmetry.** Transfers. The parallel pairs are `body` and `refs`, code
-  and documentation artefacts, and the code and documentation skills. #205 is an
+- **Rules not cases.** Rules, not cases. Transfers, with a ledger at
+  `docs/special-cases.md`.
+- **Invariants by construction.** Invariants are held by construction.
+  Transfers.
+- **Few concepts.** Concept economy. Transfers, against the new ontology.
+- **Symmetry.** Transfers. The parallel pairs are `body` and `refs`, code and
+  documentation artefacts, and the code and documentation skills. #205 is an
   example.
 
 ## Infrastructure
@@ -202,8 +209,8 @@ The release checklist covers what has no check of its own:
 - **Mutation and property-based testing.** These are techniques, not criteria,
   and nothing so far traces to a test that ran a change without catching it.
   `hypothesis` leaves the dev dependencies until a test uses it.
-- **A spell checker.** C1 concerns the choice of words, which the consistency
-  review checks, not their spelling.
+- **A spell checker.** One vocabulary concerns the choice of words, which the
+  consistency review checks, not their spelling.
 
 ## Ontology
 
@@ -214,7 +221,7 @@ It defines uncoded's terms, starting with name path, source root, doc root,
 project root, index, namespace map, stub, docs map, artefact, skill and
 provenance marker. Where the code, documents or issues use another word for one
 of these, the ontology's word wins. Each definition names the words it replaces,
-so that renames and the K3 triage have a list to work from.
+so that renames and the current-tracker triage have a list to work from.
 
 ## Stories
 
