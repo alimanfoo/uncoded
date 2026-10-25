@@ -19,7 +19,8 @@ credited only with what reading it verified on 2026-10-25.
   patchable `_PLATFORM`, and runs pytest with strict markers, strict config and
   `xfail_strict`.
 - **pipx**, second to nox, for testing the installed wheel and for test timeouts
-  scaled by platform.
+  scaled by platform. Its "Required checks pass" job runs `if: always()`, needs
+  every other job, and fails unless each succeeded.
 - **llm** for a command reference generated from the code. CI fails when
   `docs/help.md` no longer matches the command's `--help` output.
 - **uv and ruff** for what counts as a breaking change. uv separates public
@@ -145,12 +146,12 @@ item is the one it follows.
 | Actions pinned to commits, read-only top-level `permissions` with job-level grants, `persist-credentials: false`, `uv sync --locked` (urllib3) | zizmor and actionlint in pre-commit                       |
 | Pre-commit revisions pinned to commits                                                                                                         | Dependabot updates them in that form                      |
 | Grouped Dependabot updates for uv, pre-commit and GitHub Actions, each with a cooldown, and dependency review on pull requests (urllib3)       | `.github/dependabot.yml`, zizmor, and the review workflow |
-| Linux, macOS and Windows across Python versions, with 100% branch coverage combined across platforms (nox)                                     | Every CI job is a required check                          |
+| Linux, macOS and Windows across Python versions, with 100% branch coverage combined across platforms (nox)                                     | The gate job requires every CI job                        |
 | An sdist that holds `src` alone, and a wheel built from it that runs `uncoded --version` on each operating system (pipx, dreamcatcher)         | A required CI job                                         |
 | Trusted Publishing through a protected environment, attestations, and a check that the tag matches the built version (urllib3)                 | The publish workflow, and zizmor                          |
 | No `License ::` classifier beside the SPDX `license`, and no restated `src = ["src"]` for ruff                                                 | validate-pyproject in pre-commit                          |
 | CodeQL default setup for Python and Actions, with secret scanning and push protection                                                          | Repository settings, read by the release checklist        |
-| Branch protection on `main`: a pull request and every check required, enforced for admins                                                      | Repository settings, read by the release checklist        |
+| Branch protection on `main`: a pull request and the gate job required, enforced for admins                                                     | Repository settings, read by the release checklist        |
 | `SECURITY.md` pointing to private vulnerability reporting                                                                                      | Repository settings, read by the release checklist        |
 
 uncoded is shared, not supported, as dreamcatcher is. So:
@@ -165,6 +166,12 @@ uncoded is shared, not supported, as dreamcatcher is. So:
   within any time; and
 - there is no code of conduct and no issue template. `docs/contributing.md`
   stays, for collaborators.
+
+CI ends in one gate job, after pipx. It runs `if: always()`, needs every other
+job, and fails unless each succeeded, since GitHub counts a skipped required
+check as passing. Branch protection requires that job alone, so adding or
+renaming a job changes the workflow, where review sees it, and not the
+repository settings.
 
 Branch protection leaves "require branches to be up to date" off, because
 campaigns merge stages without a merge queue, and leaves conversation resolution
