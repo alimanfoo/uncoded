@@ -164,8 +164,11 @@ uncoded is shared, not supported, as dreamcatcher is. So:
 - `.github/SECURITY.md` points to the private reporting form, asks that nothing
   be reported in a discussion, and says the project promises no reply or fix
   within any time; and
-- there is no code of conduct and no issue template. `docs/contributing.md`
-  stays, for collaborators.
+- there is no code of conduct, no issue template and no contributing guide.
+  `docs/contributing.md` goes. What only it says, editing the docs and changing
+  indexed content, moves to `AGENTS.md`, which already holds the rest. The
+  documentation's "Contribute" section becomes "Development", as in
+  dreamcatcher.
 
 CI ends in one gate job, after pipx. It runs `if: always()`, needs every other
 job, and fails unless each succeeded, since GitHub counts a skipped required
@@ -209,7 +212,8 @@ section with one heading per concept, and a **Relationships and rules** section.
 It defines uncoded's terms, starting with name path, source root, doc root,
 project root, index, namespace map, stub, docs map, artefact, skill and
 provenance marker. Where the code, documents or issues use another word for one
-of these, the ontology's word wins.
+of these, the ontology's word wins. Each definition names the words it replaces,
+so that renames and the K3 triage have a list to work from.
 
 ## Stories
 
