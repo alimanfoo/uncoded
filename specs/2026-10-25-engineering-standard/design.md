@@ -63,6 +63,10 @@ There is no preview tier until something needs one.
 
 ## Criteria
 
+The checks that hold the standard in place are as little code as will do. An
+existing tool is preferred to code uncoded writes, and configuration to a
+script.
+
 Each criterion has a measure, a bar and a check, as in dreamcatcher's standard.
 Unlike dreamcatcher's, it has no code such as S1. A short title names it
 everywhere, and its first line in the standard is the full statement. Where a
@@ -103,8 +107,13 @@ measures.
 - **Accurate references.** The references agree with the tool. New, after llm.
   The measure is commands, flags, exit statuses and settings that the command
   reference, the configuration reference or a skill describes differently from
-  the code. The bar is zero. The check is a test that compares the command
-  reference with the parser, as llm's CI does, and review for the skills.
+  the code. The bar is zero. The check follows llm. Under each command's
+  heading, `docs/commands.md` keeps its prose and examples and gains a block
+  that cog generates from that command's `--help`. The settings table in
+  `docs/configuration.md` is generated from the keys `config.py` reads.
+  `cog --check` runs in pre-commit, on one Python version with a fixed
+  `COLUMNS`, since argparse lays out help by both. Exit statuses are held by the
+  tests of each story, and the skills and the surrounding prose by review.
 
 ### Consistency
 
