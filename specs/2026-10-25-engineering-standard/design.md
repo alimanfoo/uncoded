@@ -151,7 +151,7 @@ item is the one it follows.
 | Trusted Publishing through a protected environment, attestations, and a check that the tag matches the built version (urllib3)                 | The publish workflow, and zizmor                          |
 | No `License ::` classifier beside the SPDX `license`, and no restated `src = ["src"]` for ruff                                                 | validate-pyproject in pre-commit                          |
 | CodeQL default setup for Python and Actions, with secret scanning and push protection                                                          | Repository settings, read by the release checklist        |
-| Branch protection on `main`: a pull request and the gate job required, enforced for admins                                                     | Repository settings, read by the release checklist        |
+| Branch protection on `main`: a pull request, the gate job and dependency review required, enforced for admins                                  | Repository settings, read by the release checklist        |
 | `SECURITY.md` pointing to private vulnerability reporting                                                                                      | Repository settings, read by the release checklist        |
 
 uncoded is shared, not supported, as dreamcatcher is. So:
@@ -172,9 +172,10 @@ uncoded is shared, not supported, as dreamcatcher is. So:
 
 CI ends in one gate job, after pipx. It runs `if: always()`, needs every other
 job, and fails unless each succeeded, since GitHub counts a skipped required
-check as passing. Branch protection requires that job alone, so adding or
-renaming a job changes the workflow, where review sees it, and not the
-repository settings.
+check as passing. Branch protection requires that job and `dependency-review`,
+which runs only on pull requests in a workflow of its own, where the gate cannot
+need it. Both names are stable, so adding or renaming a job changes the
+workflow, where review sees it, and not the repository settings.
 
 Branch protection leaves "require branches to be up to date" off, because
 campaigns merge stages without a merge queue, and leaves conversation resolution
