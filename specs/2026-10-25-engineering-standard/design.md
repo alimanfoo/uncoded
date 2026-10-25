@@ -114,7 +114,11 @@ measures.
   - only `sync.py` writes or removes files or directories. The empty-directory
     pruning in `skill.py` and `stubs.py` moves there, so the rule has no
     exception;
-  - only `cli.py` imports the command modules, and no module imports `cli`;
+  - imports point down three layers, as they do today, and
+    `docs/architecture.md` states them. `cli` is on top. The middle layer holds
+    one module per artefact or tool, `namespace_map`, `stubs`, `docs_map`,
+    `skill`, `body` and `refs`, and none of them imports another. The foundation
+    is everything else. A test reads the import graph;
   - every generated file carries `GENERATED_MARKER` (`tests/test_markers.py`);
   - every text read and write names its encoding (PLW1514 and the runtime gate);
     and
