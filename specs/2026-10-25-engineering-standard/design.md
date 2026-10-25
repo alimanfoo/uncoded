@@ -256,6 +256,12 @@ The stories settle how uncoded handles errors, such as a file it cannot parse
 (#179), a configuration it cannot accept, `uvx` missing from `PATH`, and an
 index that has gone stale.
 
+## Testing page
+
+`docs/testing.md`, in dreamcatcher's form, says what each kind of test
+establishes and what it does not, and what CI runs, including the integration
+tests that spawn ty. It lives under "Development" and settles #231.
+
 ## Definition of done
 
 Dreamcatcher's seven questions, with an eighth: any change to the agent-facing
