@@ -153,6 +153,19 @@ item is the one it follows.
 | Branch protection on `main`: a pull request and every check required, enforced for admins                                                      | Repository settings, read by the release checklist        |
 | `SECURITY.md` pointing to private vulnerability reporting                                                                                      | Repository settings, read by the release checklist        |
 
+uncoded is shared, not supported, as dreamcatcher is. So:
+
+- only collaborators can open issues and pull requests;
+- Discussions are on, and the README invites ideas, suggestions and questions
+  there, in dreamcatcher's words;
+- `[project.urls]` gives the documentation site as Homepage, with Repository,
+  Changelog and Discussions, and no Issues;
+- `.github/SECURITY.md` points to the private reporting form, asks that nothing
+  be reported in a discussion, and says the project promises no reply or fix
+  within any time; and
+- there is no code of conduct and no issue template. `docs/contributing.md`
+  stays, for collaborators.
+
 Branch protection leaves "require branches to be up to date" off, because
 campaigns merge stages without a merge queue, and leaves conversation resolution
 off, because with one maintainer it protects nothing.
