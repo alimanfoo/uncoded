@@ -278,13 +278,30 @@ The stories settle how uncoded handles errors, such as a file it cannot parse
 (#179), a configuration it cannot accept, a root configured outside the project
 directory, `uvx` missing from `PATH`, and an index that has gone stale.
 
-One behaviour change is already settled, in #260. A reference includes the
-symbol's definition and its imports, as the ontology defines it, so `refs` lists
-every location ty returns with `includeDeclaration` set, where today it lists
-only uses. The code navigation skill's rename and safe-delete guidance changes
-to match: a delete is safe when every reference is part of the symbol's own
-definition. The change is a **Fixed** entry. The stories record it, and stage 13
-of the roadmap builds it.
+Settling the ontology in #260 also gave the stories these questions to answer:
+what happens when no root is configured, whether as a user error or as normal
+behaviour; how `sync` treats a part of the index whose roots are removed; and
+how `sync` and `check` treat stale generated files.
+
+Three behaviour changes are already settled, in #260.
+
+Every command works inside a project. Each finds the project directory by
+walking up from the current directory to the nearest configuration file, as
+ruff, pytest and uv do, so it runs from the project directory or anywhere inside
+it. Today `body` needs no configuration file and `refs` walks up from the file
+it is given. Running `body` or `refs` outside a project becomes a user error,
+and so does an `--in` file outside the project directory, as a root outside it
+already is. `--in` paths stay relative to the current directory, and the code
+navigation skill tells an agent to run `body` and `refs` from the project
+directory, where the namespace map's paths work as given. These are **Breaking**
+entries, for one major release.
+
+A reference includes the symbol's definition and its imports, as the ontology
+defines it, so `refs` lists every location ty returns with `includeDeclaration`
+set, where today it lists only uses. The code navigation skill's rename and
+safe-delete guidance changes to match: a delete is safe when every reference is
+part of the symbol's own definition. The change is a **Fixed** entry. The
+stories record all three changes, and stage 13 of the roadmap builds them.
 
 ## Testing page
 

@@ -167,38 +167,31 @@ Replaces: "user", "contributor".
 
 ## Relationships and rules
 
-### The project directory and its roots
+This section says how the things above relate. What uncoded does with them, and
+when, is for the user stories.
 
-uncoded finds the configuration file by walking up from the current directory to
-the nearest `pyproject.toml` or `.uncoded.toml`. That file's directory is the
-project directory.
+### The project directory
 
-Every root must sit inside the project directory after symbolic links are
-resolved.
+Everything uncoded reads or writes sits inside the project directory: its roots,
+the files `body` and `refs` read, and its generated files.
 
-### The index and its roots
+### The index
 
-The code index exists while at least one source root is configured, and the
-documentation index while at least one doc root is. The two are independent.
-When the last root of one kind is removed, the next `sync` removes that part of
-the index and the skills that go with it.
+The code index is built from the source roots, and the documentation index from
+the doc roots. Neither depends on the other.
 
-The code navigation skill and the consistency review go with the source roots.
-The doc navigation skill goes with the doc roots.
+Each uncoded skill belongs with one part of the index. The code navigation skill
+and the consistency review belong with the code index, and the doc navigation
+skill with the documentation index.
 
-### Keeping generated files current
-
-`sync` writes each generated file that is stale and leaves the rest. `check`
-writes nothing, and reports whether every generated file is current.
-
-The index is local to the developer's checkout and is not committed. The
-installed skill files are committed.
+The installed skill files are part of the project, in its version control. The
+index is not: it is local to each checkout.
 
 ### Symbols and references
 
-A name path has one segment or two. Deeper name paths are not supported.
+A name path has one segment or two.
 
-A symbol's references include its definition, so a symbol always has at least
-one. A symbol is unused when every reference to it is part of its own
-definition. An unused property with a setter, or an unused function with
-overloads, still has more than one such reference.
+A symbol's references are its definition, its imports and its uses, so every
+symbol has at least one. A symbol is unused when every reference to it is part
+of its own definition. An unused property with a setter, or an unused function
+with overloads, has more than one such reference.
