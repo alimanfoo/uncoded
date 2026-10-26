@@ -105,12 +105,6 @@ The **namespace map** is the file `.uncoded/namespace.yaml`: one tree of every
 directory, Python file and symbol under the source roots, nested by path
 relative to the project directory.
 
-### Stub
-
-A **stub** summarises one Python file under the source roots: its imports, and
-each symbol's signature or annotation, without bodies. It is a `.pyi` file at
-the same relative path under `.uncoded/stubs/`.
-
 ### Docs map
 
 The **docs map** is the file `.uncoded/docs.yaml`: one tree of every directory,
@@ -118,6 +112,12 @@ Markdown file and heading under the doc roots, nested by path relative to the
 project directory.
 
 Replaces: "doc map", "heading map", "heading outline".
+
+### Stub
+
+A **stub** summarises one Python file under the source roots: its imports, and
+each symbol's signature or annotation, without bodies. It is a `.pyi` file at
+the same relative path under `.uncoded/stubs/`.
 
 ### Code index
 
