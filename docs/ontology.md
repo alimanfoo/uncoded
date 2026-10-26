@@ -101,8 +101,9 @@ single file can be a root because its headings form a tree of their own.
 
 ### Namespace map
 
-The **namespace map** is the file `.uncoded/namespace.yaml`. It lists every
-directory, file and symbol under the source roots as one tree.
+The **namespace map** is the file `.uncoded/namespace.yaml`: one tree of every
+directory, Python file and symbol under the source roots, nested by path
+relative to the project directory.
 
 ### Stub
 
@@ -112,8 +113,9 @@ annotation, without bodies.
 
 ### Docs map
 
-The **docs map** is the file `.uncoded/docs.yaml`. It lists every Markdown file
-under the doc roots and nests each file's headings as a tree.
+The **docs map** is the file `.uncoded/docs.yaml`: one tree of every directory,
+Markdown file and heading under the doc roots, nested by path relative to the
+project directory.
 
 Replaces: "doc map", "heading map", "heading outline".
 
