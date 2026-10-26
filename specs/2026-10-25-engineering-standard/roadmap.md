@@ -131,7 +131,8 @@ Proof: every job is green, and `uncoded check` passes on Windows.
 
 Leaves pinning the existing jobs to stage 8, and test timeouts to stage 11.
 
-Needs stage 3 for the Windows path decision, and stage 6 for the changelog.
+Needs stage 3 for the Windows path decision, stage 6 for the changelog, and
+stage 8, because both edit `ci.yml`.
 
 ## Stage 8: Workflows
 
@@ -150,7 +151,7 @@ says that the tag check is first exercised at the next release.
 
 Leaves the other hook revisions to stage 9.
 
-Needs nothing.
+Needs stage 1, because both edit `ci.yml`.
 
 ## Stage 9: Hooks
 
@@ -167,7 +168,7 @@ link it found is fixed in the same pull request.
 Leaves the hook that confines writes to `sync.py` to stage 11. A later stage
 that adds a remote hook freezes it the same way.
 
-Needs nothing.
+Needs stage 8, because both edit `.pre-commit-config.yaml`.
 
 ## Stage 10: Shared, not supported
 
@@ -185,7 +186,8 @@ new metadata.
 
 Leaves PyPI's copy of the metadata to the next release.
 
-Needs stage 4.
+Needs stage 4 for the settings, and stage 9, because both edit
+`.pre-commit-config.yaml`.
 
 ## Stage 11: Structure
 
@@ -206,7 +208,9 @@ Proof: the suite and every hook pass on every platform, no `noqa` or
 
 Leaves keyword parameters to stage 12.
 
-Needs stage 7, because the timeouts are scaled for its platforms.
+Needs stage 7, because the timeouts are scaled for its platforms, and stage 10,
+because both edit `.pre-commit-config.yaml` and `pyproject.toml`. From here on
+the stages run one at a time, since each edits `src` and `tests`.
 
 ## Stage 12: Keyword parameters
 
@@ -220,8 +224,8 @@ changes.
 
 Leaves nothing.
 
-Needs stage 5, so the baseline is measured before any gap closes. It must not be
-open at the same time as stage 14.
+Needs stage 11, because both edit `src` and `tests`. That also puts it after
+stage 5's baseline.
 
 ## Stage 13: Behaviour
 
@@ -236,7 +240,8 @@ story's behaviour is covered by a test, and nothing else a user sees changes.
 
 Leaves nothing, unless stage 3 split it.
 
-Needs stage 3 for the stories and the list, and stage 6 for the changelog.
+Needs stage 3 for the stories and the list, stage 6 for the changelog, and stage
+12, because both edit `src` and `tests`.
 
 ## Stage 14: Words
 
@@ -251,7 +256,8 @@ remains outside the ontology's own list. Tests, hooks and the strict build pass.
 
 Leaves the shape criteria to stage 15, and remeasuring the tracker to stage 17.
 
-Needs stage 2 for the words, and stage 6 for the changelog.
+Needs stage 2 for the words, stage 6 for the changelog, and stage 13, because
+both edit `src` and `tests`.
 
 ## Stage 15: Shape
 
@@ -276,7 +282,8 @@ a user gets goes to the user, to be added to stage 3's list, not made here.
 
 Leaves nothing.
 
-Needs stage 5 for the measurements, and stage 6 for the changelog.
+Needs stage 5 for the measurements, stage 6 for the changelog, and stage 14,
+because both edit `src` and `tests`.
 
 ## Stage 16: Accurate references
 
@@ -293,7 +300,7 @@ The skills are reviewed against the commands and nothing is found.
 Leaves nothing.
 
 Needs stage 7, because `docs/testing.md` describes its CI and `--help` includes
-`--version`.
+`--version`, and stage 15, because both may edit `src`.
 
 ## Stage 17: Keep it there
 
