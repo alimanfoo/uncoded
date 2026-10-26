@@ -52,8 +52,9 @@ Replaces: "module constant", which is a module-level assignment.
 
 ### Definition
 
-A **definition** is the code a symbol names, as Python's grammar defines it. For
-a function or class, it runs from its first decorator to the end of its body.
+A symbol's **definition** is the code that defines it, as Python's grammar has
+it. For a function or class, it runs from its first decorator to the end of its
+body.
 
 `uncoded body` prints a symbol's definition.
 
