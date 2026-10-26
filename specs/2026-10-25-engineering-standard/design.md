@@ -272,8 +272,8 @@ uncoded has two users, and the stories cover both:
   `body` and `refs`.
 
 The stories settle how uncoded handles errors, such as a file it cannot parse
-(#179), a configuration it cannot accept, `uvx` missing from `PATH`, and an
-index that has gone stale.
+(#179), a configuration it cannot accept, a root configured outside the project
+root, `uvx` missing from `PATH`, and an index that has gone stale.
 
 ## Testing page
 

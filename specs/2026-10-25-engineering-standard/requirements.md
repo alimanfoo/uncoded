@@ -35,7 +35,7 @@ selectively:
   command-line tool.
 - Its true documents are uncoded's own enduring documents.
 - Its machine-checked rules are the few structural rules uncoded has, such as
-  the one module that spawns a subprocess and the path boundary.
+  the one module that spawns a subprocess.
 - Each criterion has a short, memorable title in place of dreamcatcher's codes,
   such as S1.
 - The standard covers code and documentation only. Infrastructure is kept in
