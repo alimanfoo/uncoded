@@ -75,8 +75,9 @@ Replaces: "symbol path".
 
 ### Reference
 
-A **reference** is a place where a symbol's name appears as that symbol: its
-definition, an import of it, or a use of it.
+A **reference** is a place in Python source where a symbol's name stands for
+that symbol, and not for another symbol with the same name. It is where the
+symbol is defined, imported or used.
 
 `uncoded refs` prints each reference as `path:line:column`. These are the
 references a language server returns when asked to include the declaration.
@@ -235,7 +236,7 @@ index is not: it is local to each checkout.
 
 ### Symbols and references
 
-A symbol's references are its definition, its imports and its uses, so every
+A symbol's references are where it is defined, imported and used, so every
 symbol has at least one. A symbol is unused when every reference to it is part
 of its own definition. An unused property with a setter, or an unused function
 with overloads, has more than one such reference.
