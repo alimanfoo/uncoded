@@ -122,18 +122,24 @@ measures.
   - only `refs.py` imports `subprocess` (ruff, with the per-file waiver);
   - only `sync.py` writes or removes files or directories. The empty-directory
     pruning in `skill.py` and `stubs.py` moves there, so the rule has no
-    exception;
+    exception. A pre-commit `pygrep` hook over `src`, excluding `sync.py`,
+    matches calls such as `.write_text(`, `.unlink(`, `.rmdir(` and `.mkdir(`;
   - imports point down three layers, as they do today, and
     `docs/architecture.md` states them. `cli` is on top. The middle layer holds
     one module per artefact or tool, `namespace_map`, `stubs`, `docs_map`,
     `skill`, `body` and `refs`, and none of them imports another. The foundation
-    is everything else. A test reads the import graph;
+    is everything else. An import-linter `layers` contract in `pyproject.toml`
+    lists them, with the middle layer's modules separated by `|` so they are
+    independent, and `exhaustive = true` so a new module fails until it is
+    placed;
   - every generated file carries `GENERATED_MARKER` (`tests/test_markers.py`);
   - every text read and write names its encoding (PLW1514 and the runtime gate);
     and
-  - every parameter is keyword-only, unless something outside uncoded passes it
-    by position, when it is positional-only. Dreamcatcher's
-    `require_keyword_parameters.py` checks it in pre-commit. This settles #219.
+  - every parameter is keyword-only. Ruff's `too-many-positional-arguments`
+    (PLR0917) with `max-positional-args = 0` checks it, in place of
+    dreamcatcher's script. It counts positional-only parameters too, so a
+    parameter that something outside uncoded passes by position needs a per-file
+    ignore with its reason. `src` has none today. This settles #219.
 - **Fast readable tests.** The suite is fast and speaks the user's language.
   Transfers, with the bar at 60 seconds. The suite takes about 3 seconds today.
 - **Current tracker.** The tracker is current. Transfers. #226 and #162 are
@@ -165,19 +171,19 @@ Infrastructure is roadmap work, and each piece is kept in force by its own
 check, explained where that check is configured. The exemplar named beside an
 item is the one it follows.
 
-| Work                                                                                                                                                                                                                                                              | Kept in force by                                          |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| Actions pinned to commits, read-only top-level `permissions` with job-level grants, `persist-credentials: false`, `uv sync --locked` (urllib3)                                                                                                                    | zizmor and actionlint in pre-commit                       |
-| Pre-commit revisions pinned to commits                                                                                                                                                                                                                            | Dependabot updates them in that form                      |
-| The rest of dreamcatcher's hooks: fix-byte-order-marker, check-illegal-windows-names, check-merge-conflict, detect-private-key, the pygrep checks against blanket `noqa` and `type: ignore`, forbid-invisible-characters and remark-validate-links (dreamcatcher) | Pre-commit                                                |
-| Grouped Dependabot updates for uv, pre-commit and GitHub Actions, each with a cooldown, and dependency review on pull requests (urllib3)                                                                                                                          | `.github/dependabot.yml`, zizmor, and the review workflow |
-| Linux, macOS and Windows across Python versions, with 100% branch coverage combined across platforms (nox)                                                                                                                                                        | The gate job requires every CI job                        |
-| An sdist that holds `src` alone, and a wheel built from it that runs `uncoded --version` on each operating system (pipx, dreamcatcher)                                                                                                                            | A required CI job                                         |
-| Trusted Publishing through a protected environment, attestations, and a check that the tag matches the built version (urllib3)                                                                                                                                    | The publish workflow, and zizmor                          |
-| No `License ::` classifier beside the SPDX `license`, and no restated `src = ["src"]` for ruff                                                                                                                                                                    | validate-pyproject in pre-commit                          |
-| CodeQL default setup for Python and Actions, with secret scanning and push protection                                                                                                                                                                             | Repository settings, read by the release checklist        |
-| Branch protection on `main`: a pull request, the gate job and dependency review required, enforced for admins                                                                                                                                                     | Repository settings, read by the release checklist        |
-| `SECURITY.md` pointing to private vulnerability reporting                                                                                                                                                                                                         | Repository settings, read by the release checklist        |
+| Work                                                                                                                                                                                                                                                                                                                                                                                 | Kept in force by                                          |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------- |
+| Actions pinned to commits, read-only top-level `permissions` with job-level grants, `persist-credentials: false`, `uv sync --locked` (urllib3)                                                                                                                                                                                                                                       | zizmor and actionlint in pre-commit                       |
+| Pre-commit revisions pinned to commits                                                                                                                                                                                                                                                                                                                                               | Dependabot updates them in that form                      |
+| The rest of dreamcatcher's hooks: fix-byte-order-marker, check-illegal-windows-names, check-merge-conflict, detect-private-key, the pygrep checks against blanket `noqa` and `type: ignore`, a `pygrep` hook against U+00A0 and the zero-width and bidirectional characters, in place of dreamcatcher's forbid-invisible-characters script, and remark-validate-links (dreamcatcher) | Pre-commit                                                |
+| Grouped Dependabot updates for uv, pre-commit and GitHub Actions, each with a cooldown, and dependency review on pull requests (urllib3)                                                                                                                                                                                                                                             | `.github/dependabot.yml`, zizmor, and the review workflow |
+| Linux, macOS and Windows across Python versions, with 100% branch coverage combined across platforms (nox)                                                                                                                                                                                                                                                                           | The gate job requires every CI job                        |
+| An sdist that holds `src` alone, and a wheel built from it that runs `uncoded --version` on each operating system (pipx, dreamcatcher)                                                                                                                                                                                                                                               | A required CI job                                         |
+| Trusted Publishing through a protected environment, attestations, and a check that the tag matches the built version (urllib3)                                                                                                                                                                                                                                                       | The publish workflow, and zizmor                          |
+| No `License ::` classifier beside the SPDX `license`, and no restated `src = ["src"]` for ruff                                                                                                                                                                                                                                                                                       | validate-pyproject in pre-commit                          |
+| CodeQL default setup for Python and Actions, with secret scanning and push protection                                                                                                                                                                                                                                                                                                | Repository settings, read by the release checklist        |
+| Branch protection on `main`: a pull request, the gate job and dependency review required, enforced for admins                                                                                                                                                                                                                                                                        | Repository settings, read by the release checklist        |
+| `SECURITY.md` pointing to private vulnerability reporting                                                                                                                                                                                                                                                                                                                            | Repository settings, read by the release checklist        |
 
 uncoded is shared, not supported, as dreamcatcher is. So:
 
