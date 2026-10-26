@@ -91,13 +91,13 @@ Replaces: "root type", which is "source roots" or "doc roots".
 ### Source root
 
 A **source root** is a directory listed in `source-roots`. uncoded builds a tree
-of directories, files and symbols from it.
+of directories, Python files and symbols from it.
 
 ### Doc root
 
 A **doc root** is a directory or a single Markdown file listed in `doc-roots`.
-uncoded builds a tree of headings from it. A single file is a root because its
-headings form a tree.
+uncoded builds a tree of directories, Markdown files and headings from it. A
+single file can be a root because its headings form a tree of their own.
 
 ### Namespace map
 
