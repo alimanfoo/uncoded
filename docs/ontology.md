@@ -166,7 +166,11 @@ source.
 
 ### Installed skill file
 
-An **installed skill file** is a skill's `SKILL.md` in a project.
+An **installed skill file** is a skill's `SKILL.md`, placed in a project where
+agents look for skills.
+
+uncoded writes each skill to `.claude/skills/<name>/SKILL.md` for Claude Code
+and to `.agents/skills/<name>/SKILL.md` for Codex.
 
 ### Consistency review
 
