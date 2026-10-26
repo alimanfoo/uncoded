@@ -1,0 +1,18 @@
+name: Dependency review
+
+# Branch protection requires the dependency-review job by name. It lives apart
+# from ci.yml because it runs only on pull requests, so the CI gate cannot need
+# it. The action compares the pull request's base and head through GitHub's
+# API, so the job needs no checkout.
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  dependency-review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
