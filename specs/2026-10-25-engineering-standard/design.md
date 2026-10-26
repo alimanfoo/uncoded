@@ -111,11 +111,11 @@ measures.
   reference, the configuration reference or a skill describes differently from
   the code. The bar is zero. The check follows llm. Under each command's
   heading, `docs/commands.md` keeps its prose and examples and gains a block
-  that cog generates from that command's `--help`. The settings table in
-  `docs/configuration.md` is generated from the keys `config.py` reads.
-  `cog --check` runs in pre-commit, on one Python version with a fixed
-  `COLUMNS`, since argparse lays out help by both. Exit statuses are held by the
-  tests of each story, and the skills and the surrounding prose by review.
+  that cog generates from that command's `--help`. `cog --check` runs in
+  pre-commit, on one Python version with a fixed `COLUMNS`, since argparse lays
+  out help by both. Exit statuses are held by the tests of each story. The
+  skills, the surrounding prose and `docs/configuration.md`, which has only two
+  settings, are held by the consistency review at each release.
 
 ### Consistency
 
