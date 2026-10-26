@@ -281,8 +281,26 @@ tests that spawn ty. It lives under "Development" and settles #231.
 
 ## Definition of done
 
-Dreamcatcher's seven questions, with an eighth: any change to the agent-facing
-contract has a changelog entry under **Unreleased**, under the heading that fits
-it by [Breaking changes](#breaking-changes). An entry does not state a release
-type. The headings imply it: any **Breaking** entry makes the next release
-major, any **Added** or **Changed** entry minor, and **Fixed** alone a patch.
+Dreamcatcher's seven questions, with an eighth, each named by a short title
+rather than a number:
+
+1. **Explained.** It says what it changes and why, and links any issue or spec.
+2. **Checks pass.** The tests and every required check pass, and none is
+   suppressed or bypassed.
+3. **Small and used.** What it adds meets cohesive modules and focused
+   functions, and nothing it exports lacks a caller.
+4. **Ontology's words.** Every word it introduces is in the ontology, or the
+   ontology grew in the same change.
+5. **Documents still true.** Any enduring document it makes false, it corrects.
+6. **Replaced things removed.** It removes what it replaces.
+7. **Conditionals are rules.** Every conditional it adds applies a rule, or is
+   on the ledger with its external cause.
+8. **Changelog entry.** Any change to the agent-facing contract has an entry
+   under **Unreleased**, under the heading that fits it by
+   [Breaking changes](#breaking-changes). An entry does not state a release
+   type. The headings imply it: any **Breaking** entry makes the next release
+   major, any **Added** or **Changed** entry minor, and **Fixed** alone a patch.
+
+A pull request answers each under a "Definition of done" heading, starting with
+the title in bold, not the number, and giving its evidence. "Yes" alone is not
+an answer.
