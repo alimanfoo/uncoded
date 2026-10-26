@@ -53,26 +53,31 @@ Replaces: "module constant", which is a module-level assignment.
 
 A **definition** is the code a symbol names, as Python's grammar defines it. For
 a function or class, it runs from its first decorator to the end of its body.
+
 `body` prints a symbol's definition.
 
-Replaces: "body" and "source body" for what `body` prints. In Python's grammar a
-body is only the indented block.
+Replaces: "body" and "source body" for the whole definition. In Python's grammar
+a body is only the indented block.
 
 ### Name path
 
-A **name path** says which symbol `body` or `refs` means. For a symbol defined
+A **name path** identifies a symbol within one Python file. For a symbol defined
 at module level, it is the symbol's name, as `greet`. For a method or class
 attribute, it is the class's name, a slash, and the symbol's name, as
-`Greeter/greet`. The term is the one LSP-based tools such as Serena use.
+`Greeter/greet`.
+
+`body` and `refs` take a name path to say which symbol they mean. The term is
+the one LSP-based tools such as Serena use.
 
 Replaces: "symbol path".
 
 ### Reference
 
 A **reference** is a place where a symbol's name appears as that symbol: its
-definition, an import of it, or a use of it. `refs` prints each reference as
-`path:line:column`. This matches the references a language server returns when
-asked to include the declaration.
+definition, an import of it, or a use of it.
+
+`refs` prints each reference as `path:line:column`. These are the references a
+language server returns when asked to include the declaration.
 
 ### Root
 
@@ -166,8 +171,10 @@ the evidence for each.
 
 ### Generated file
 
-A **generated file** is any file `sync` writes: the index's files, the installed
-skill files and `.uncoded/.gitignore`.
+A **generated file** is any file uncoded generates in a project: the index's
+files, the installed skill files and `.uncoded/.gitignore`.
+
+`sync` writes the generated files.
 
 Replaces: "artefact", "index artefact", "navigation artefact".
 
@@ -179,8 +186,10 @@ once, as `GENERATED_MARKER`.
 
 ### Current
 
-A generated file is **current** when it matches what `sync` would write now. The
-index is current when all its files are.
+A generated file is **current** when it matches what uncoded would generate from
+the project as it is now. The index is current when all its files are.
+
+`check` reports whether every generated file is current, without writing any.
 
 Replaces: "up to date", "matches a fresh build".
 
@@ -191,9 +200,10 @@ any of its files is.
 
 ### Developer
 
-A **developer** is the person who sets up uncoded in a project. They write the
-configuration file, run `sync` and `check`, and commit the installed skill
-files. The documentation addresses them as "you".
+A **developer** is the person who sets up uncoded in a project.
+
+A developer writes the configuration file, runs `sync` and `check`, and commits
+the installed skill files. The documentation addresses them as "you".
 
 Replaces: "user", "contributor".
 
@@ -205,7 +215,7 @@ when, is for the user stories.
 ### The project directory
 
 Everything uncoded reads or writes sits inside the project directory: its roots,
-the files `body` and `refs` read, and its generated files.
+any Python file it is asked about, and its generated files.
 
 ### The index
 
