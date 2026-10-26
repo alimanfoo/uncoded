@@ -54,7 +54,7 @@ Replaces: "module constant", which is a module-level assignment.
 A **definition** is the code a symbol names, as Python's grammar defines it. For
 a function or class, it runs from its first decorator to the end of its body.
 
-`body` prints a symbol's definition.
+`uncoded body` prints a symbol's definition.
 
 Replaces: "body" and "source body" for the whole definition. In Python's grammar
 a body is only the indented block.
@@ -66,8 +66,8 @@ at module level, it is the symbol's name, as `greet`. For a method or class
 attribute, it is the class's name, a slash, and the symbol's name, as
 `Greeter/greet`.
 
-`body` and `refs` take a name path to say which symbol they mean. The term is
-the one LSP-based tools such as Serena use.
+`uncoded body` and `uncoded refs` take a name path to say which symbol they
+mean. The term is the one LSP-based tools such as Serena use.
 
 Replaces: "symbol path".
 
@@ -76,8 +76,8 @@ Replaces: "symbol path".
 A **reference** is a place where a symbol's name appears as that symbol: its
 definition, an import of it, or a use of it.
 
-`refs` prints each reference as `path:line:column`. These are the references a
-language server returns when asked to include the declaration.
+`uncoded refs` prints each reference as `path:line:column`. These are the
+references a language server returns when asked to include the declaration.
 
 ### Root
 
@@ -174,7 +174,7 @@ the evidence for each.
 A **generated file** is any file uncoded generates in a project: the index's
 files, the installed skill files and `.uncoded/.gitignore`.
 
-`sync` writes the generated files.
+`uncoded sync` writes the generated files.
 
 Replaces: "artefact", "index artefact", "navigation artefact".
 
@@ -189,7 +189,8 @@ once, as `GENERATED_MARKER`.
 A generated file is **current** when it matches what uncoded would generate from
 the project as it is now. The index is current when all its files are.
 
-`check` reports whether every generated file is current, without writing any.
+`uncoded check` reports whether every generated file is current, without writing
+any.
 
 Replaces: "up to date", "matches a fresh build".
 
@@ -202,8 +203,9 @@ any of its files is.
 
 A **developer** is the person who sets up uncoded in a project.
 
-A developer writes the configuration file, runs `sync` and `check`, and commits
-the installed skill files. The documentation addresses them as "you".
+A developer writes the configuration file, runs `uncoded sync` and
+`uncoded check`, and commits the installed skill files. The documentation
+addresses them as "you".
 
 Replaces: "user", "contributor".
 
