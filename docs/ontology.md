@@ -107,9 +107,9 @@ relative to the project directory.
 
 ### Stub
 
-A **stub** is the file at a Python file's path under `.uncoded/stubs/`, with a
-`.pyi` suffix. It holds the Python file's imports and each symbol's signature or
-annotation, without bodies.
+A **stub** summarises one Python file under the source roots: its imports, and
+each symbol's signature or annotation, without bodies. It is a `.pyi` file at
+the same relative path under `.uncoded/stubs/`.
 
 ### Docs map
 
