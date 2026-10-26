@@ -118,9 +118,10 @@ body is only the indented block.
 
 ### Name path
 
-A **name path** says which symbol `body` or `refs` means: `name` for a top-level
-symbol, or `Class/member` for a method or class attribute. The term is the one
-LSP-based tools such as Serena use.
+A **name path** says which symbol `body` or `refs` means. For a symbol defined
+at module level, it is the symbol's name, as `greet`. For a method or class
+attribute, it is the class's name, a slash, and the symbol's name, as
+`Greeter/greet`. The term is the one LSP-based tools such as Serena use.
 
 Replaces: "symbol path".
 
@@ -188,8 +189,6 @@ The installed skill files are part of the project, in its version control. The
 index is not: it is local to each checkout.
 
 ### Symbols and references
-
-A name path has one segment or two.
 
 A symbol's references are its definition, its imports and its uses, so every
 symbol has at least one. A symbol is unused when every reference to it is part
