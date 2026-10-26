@@ -139,7 +139,9 @@ measures.
     (PLR0917) with `max-positional-args = 0` checks it, in place of
     dreamcatcher's script. It counts positional-only parameters too, so a
     parameter that something outside uncoded passes by position needs a per-file
-    ignore with its reason. `src` has none today. This settles #219.
+    ignore with its reason. `src` has none today. Tests are not exempt: pytest
+    passes fixtures and parameters by name, so a test takes them after `*`, as
+    `def test_sync(*, tmp_path)`. This settles #219.
 - **Fast readable tests.** The suite is fast and speaks the user's language.
   Transfers, with the bar at 60 seconds. The suite takes about 3 seconds today.
 - **Current tracker.** The tracker is current. Transfers. #226 and #162 are
