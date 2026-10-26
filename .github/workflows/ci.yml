@@ -35,9 +35,9 @@ jobs:
           PYTHONWARNDEFAULTENCODING: "1"
 
   # This job gives branch protection one check for the whole workflow, so its
-  # name stays fixed while the jobs above change. Add every new job to `needs`. The job runs even when a needed
-  # job fails. GitHub would otherwise skip it, and GitHub counts a skipped
-  # required check as passing.
+  # name stays fixed while the jobs above change. Add every new job to `needs`.
+  # The job runs even when a needed job fails. GitHub would otherwise skip it,
+  # and GitHub counts a skipped required check as passing.
   required-checks-pass:
     name: Required checks pass
     if: always()
