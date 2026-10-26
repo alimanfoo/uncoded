@@ -1,9 +1,8 @@
 name: Dependency review
 
 # This workflow gives branch protection its dependency-review check. It lives
-# apart from ci.yml because it runs only on pull requests, where the CI gate
-# cannot need it. The action reads the dependency graph through GitHub's API, so
-# the job needs no checkout.
+# apart from ci.yml because it runs only on pull requests, and the CI gate fails
+# when a job it needs is skipped.
 on:
   pull_request:
     branches: [main]
