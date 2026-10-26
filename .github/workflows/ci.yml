@@ -47,4 +47,4 @@ jobs:
     steps:
       - env:
           NEEDS: ${{ toJSON(needs) }}
-        run: jq --exit-status 'all(.[]; .result == "success")' <<< "$NEEDS"
+        run: jq --exit-status 'map_values(.result) | ., all(.[]; . == "success")' <<< "$NEEDS"
