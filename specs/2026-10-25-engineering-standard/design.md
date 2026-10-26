@@ -35,19 +35,19 @@ definition of a breaking change, following uv and ruff.
 
 A change is **breaking**, and needs a major release, when it:
 
-- removes or renames a command, a flag, a configuration key or an artefact path,
-  or changes its meaning or default;
+- removes or renames a command, a flag, a configuration key or a generated
+  file's path, or changes its meaning or default;
 - changes an exit status, or the format of the data a command writes to standard
   output;
-- changes an artefact's layout rules, such as how keys nest or which keys end in
-  `/`, as opposed to which symbols or headings it lists;
+- changes a generated file's layout rules, such as how keys nest or which keys
+  end in `/`, as opposed to which symbols or headings it lists;
 - changes the intent of a skill, by removing, reversing or narrowing an
   instruction or reordering a workflow step; or
 - drops support for a Python version.
 
 A change is a **minor** release when it adds a command, flag, configuration key,
-artefact or skill guidance, or deprecates something with a warning. Removing a
-deprecated feature is breaking.
+generated file or skill guidance, or deprecates something with a warning.
+Removing a deprecated feature is breaking.
 
 A change is a **patch** when it fixes behaviour to match its documented intent.
 That includes correcting a skill to match the command-line tool, listing a
@@ -128,7 +128,7 @@ measures.
     matches calls such as `.write_text(`, `.unlink(`, `.rmdir(` and `.mkdir(`;
   - imports point down three layers, as they do today, and
     `docs/architecture.md` states them. `cli` is on top. The middle layer holds
-    one module per artefact or tool, `namespace_map`, `stubs`, `docs_map`,
+    one module per generated file or tool, `namespace_map`, `stubs`, `docs_map`,
     `skill`, `body` and `refs`, and none of them imports another. The foundation
     is everything else. An import-linter `layers` contract in `pyproject.toml`
     lists them, with the middle layer's modules separated by `|` so they are
@@ -163,8 +163,8 @@ measures.
 - **Invariants by construction.** Invariants are held by construction.
   Transfers.
 - **Few concepts.** Concept economy. Transfers, against the new ontology.
-- **Symmetry.** Transfers. The parallel pairs are `body` and `refs`, code and
-  documentation artefacts, and the code and documentation skills. #205 is an
+- **Symmetry.** Transfers. The parallel pairs are `body` and `refs`, the code
+  and documentation indexes, and the code and documentation skills. #205 is an
   example.
 
 ## Infrastructure
@@ -250,11 +250,14 @@ The release checklist covers what has no check of its own:
 The ontology lives at `docs/ontology.md`, in dreamcatcher's form: an opening
 that says it is authoritative over the dated specifications, a **Definitions**
 section with one heading per concept, and a **Relationships and rules** section.
-It defines uncoded's terms, starting with name path, source root, doc root,
-project root, index, namespace map, stub, docs map, artefact, skill and
-provenance marker. Where the code, documents or issues use another word for one
-of these, the ontology's word wins. Each definition names the words it replaces,
-so that renames and the current-tracker triage have a list to work from.
+It defines uncoded's terms, settled with the user in #260: project, project
+directory, configuration file, root, source root, doc root, index, code index,
+documentation index, namespace map, stub, docs map, generated file, provenance
+marker, current, stale, symbol, definition, name path, reference, skill,
+consistency review, agent and developer. Where the code, documents or issues use
+another word for one of these, the ontology's word wins. Each definition names
+the words it replaces, so that renames and the current-tracker triage have a
+list to work from.
 
 ## Stories
 
@@ -273,7 +276,15 @@ uncoded has two users, and the stories cover both:
 
 The stories settle how uncoded handles errors, such as a file it cannot parse
 (#179), a configuration it cannot accept, a root configured outside the project
-root, `uvx` missing from `PATH`, and an index that has gone stale.
+directory, `uvx` missing from `PATH`, and an index that has gone stale.
+
+One behaviour change is already settled, in #260. A reference includes the
+symbol's definition and its imports, as the ontology defines it, so `refs` lists
+every location ty returns with `includeDeclaration` set, where today it lists
+only uses. The code navigation skill's rename and safe-delete guidance changes
+to match: a delete is safe when every reference is part of the symbol's own
+definition. The change is a **Fixed** entry. The stories record it, and stage 13
+of the roadmap builds it.
 
 ## Testing page
 

@@ -35,8 +35,8 @@ Proof: the user accepts the ontology, and the strict mkdocs build passes.
 
 Leaves every rename in code, documents, skills and issues to stage 14. Where the
 ontology would rename something a user types or reads as a path (a command, a
-flag, a configuration key or an artefact path), the session records it in the
-design as a named breaking change for the user to accept or refuse.
+flag, a configuration key or a generated file's path), the session records it in
+the design as a named breaking change for the user to accept or refuse.
 
 Needs nothing.
 
@@ -46,9 +46,9 @@ Delivers `docs/stories.md`, written with the user in the ontology's words, under
 "Development", in the form the design's Stories section gives. It covers the
 developer and the agent: happy paths, then user errors, then expected faults.
 Among them it settles what `sync` says about files it skipped (#179), a
-configuration uncoded cannot accept, a root configured outside the project root,
-`uvx` missing from `PATH`, a stale index, and how paths look on Windows,
-including the paths `refs` prints and the paths in `sync`'s messages.
+configuration uncoded cannot accept, a root configured outside the project
+directory, `uvx` missing from `PATH`, a stale index, and how paths look on
+Windows, including the paths `refs` prints and the paths in `sync`'s messages.
 
 Proof: the user accepts the stories, the strict build passes, and every place a
 story contradicts what uncoded does today is listed in the design as a named
@@ -247,9 +247,9 @@ Needs stage 3 for the stories and the list, stage 6 for the changelog, and stage
 
 Delivers the consistency review against the ontology, and every rename it calls
 for: code identifiers, documents, skill prose and open issues. It renames no
-command, flag, configuration key or artefact path, unless stage 2 recorded the
-rename in the design and the user accepted it. The skills are regenerated, and
-their rewording gets a **Fixed** entry in the changelog.
+command, flag, configuration key or generated file path, unless stage 2 recorded
+the rename in the design and the user accepted it. The skills are regenerated,
+and their rewording gets a **Fixed** entry in the changelog.
 
 Proof: the consistency review reports nothing, and no word the ontology replaces
 remains outside the ontology's own list. Tests, hooks and the strict build pass.
@@ -271,7 +271,7 @@ Delivers:
   that names a situation entered with its cause, and any whose cause is internal
   removed or generalised.
 - **Symmetry.** `body` and `refs` (#205), any asymmetry the baseline records
-  between the code and documentation artefact paths in `cli.py`, and the two
+  between the code and documentation index paths in `cli.py`, and the two
   navigation skills. Rewording a skill without changing its intent gets a
   **Fixed** changelog entry.
 

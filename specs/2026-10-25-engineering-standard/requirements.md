@@ -52,10 +52,10 @@ GH257 is considered on its merits as the design is written.
 
 The package version is the only version. Any breaking change to the agent-facing
 contract needs a major release. A change is breaking when it removes or changes
-a command, a flag, an exit status or an output format, changes an artefact's
-path or shape, or changes what a skill tells an agent to do. Additions are minor
-releases, and wording changes are patches. A compatibility statement says this
-where users will find it.
+a command, a flag, an exit status or an output format, changes a generated
+file's path or shape, or changes what a skill tells an agent to do. Additions
+are minor releases, and wording changes are patches. A compatibility statement
+says this where users will find it.
 
 uncoded has an ontology that fixes its vocabulary, so that agents and I use the
 same word for the same thing. It has user stories, for both the developer and
@@ -71,8 +71,7 @@ Specifications live in dated folders under `specs/`, starting with this one.
 ## What limits this?
 
 The behaviour budget is zero. No stage changes a command, a flag, an output, a
-generated artefact or a skill, except where the stage says so and names the
-change.
+generated file or a skill, except where the stage says so and names the change.
 
 The open issues that overlap this work, such as #223, #231, #234, #205 and #179,
 become part of it rather than being duplicated.
