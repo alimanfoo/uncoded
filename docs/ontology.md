@@ -43,9 +43,10 @@ Replaces: "project root", "repository root".
 
 ### Symbol
 
-A **symbol** is a name in Python source that names a class, a function, a
-method, a module-level assignment, a class attribute or a `type` alias.
-Directories and files are not symbols.
+A **symbol** is a class, function, method, module-level assignment, class
+attribute or `type` alias in Python source. Each symbol has a name and a
+definition. Two symbols can share a name, such as two functions called `parse`
+in different modules. Directories and files are not symbols.
 
 Replaces: "module constant", which is a module-level assignment.
 
