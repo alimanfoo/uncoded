@@ -371,9 +371,11 @@ Settled in #261:
   failure of ty as a fault in the `--in` file. It has no time limit: one would
   need a background thread or a way of waiting on a pipe that works on Windows,
   and nobody has reported ty hanging.
-- **A failed write is one line** (**Fixed**). When `uncoded sync` cannot write
-  or remove a generated file, it says which file and why, in place of a Python
-  traceback.
+- **A generated file that cannot be read, written or removed gives one line**
+  (**Fixed**). When `uncoded sync` or `uncoded check` cannot read, write or
+  remove a generated file, it says which file and why, in place of a Python
+  traceback. Two `uncoded sync` runs at once can meet this, and uncoded adds no
+  lock to prevent it: nobody has reported the race, and a lock is new machinery.
 - **Paths use `/` on every system** (**Breaking**). `uncoded refs` output,
   `uncoded sync` messages and warnings, and the path comment in each stub use
   `/` on Windows too, as the namespace map and docs map already do.

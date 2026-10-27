@@ -503,12 +503,17 @@ it. It has no time limit.
 
 The agent tries again later, or finds references by searching.
 
-### A generated file cannot be written
+### A generated file cannot be read, written or removed
 
-`uncoded sync` cannot write or remove a generated file, for example because it
-lacks permission or the disk is full. It stops, says in one line which file and
-why, and exits with status `1`. The files it had already written stay as they
+`uncoded sync` or `uncoded check` cannot read, write or remove a generated file.
+For example, the file lacks permission, the disk is full, or a hand-edited file
+is no longer UTF-8. The command stops, says in one line which file and why, and
+exits with status `1`. The files `uncoded sync` had already written stay as they
 are. Until the cause is fixed and `uncoded sync` runs again, `uncoded check`
 reports the generated files as stale.
+
+Two `uncoded sync` runs at once in the same project, for example from two
+agents, can meet this fault, when one removes a file the other is about to
+remove. uncoded does not prevent it.
 
 The user fixes the cause, and runs `uncoded sync` again.

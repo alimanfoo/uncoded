@@ -327,13 +327,13 @@ and exit status `0`.
 
 Needs 13.6.
 
-### Stage 13.8: A failed write is one line
+### Stage 13.8: A generated file that cannot be used is one line
 
-Delivers a one-line message, in place of a traceback, when `uncoded sync` cannot
-write or remove a generated file.
+Delivers a one-line message, in place of a traceback, when `uncoded sync` or
+`uncoded check` cannot read, write or remove a generated file.
 
-Proof: a test with a generated file that cannot be written shows the message and
-exit status `1`.
+Proof: tests with a generated file that cannot be written, and one that is not
+UTF-8, show the message and exit status `1`.
 
 Needs 13.7.
 
