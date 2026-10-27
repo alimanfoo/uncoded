@@ -360,11 +360,11 @@ Needs 13.4, and #289, so that it is built against the newer ty.
 
 ### Stage 13.11: ty failures are reported
 
-Delivers `uncoded refs` passing on what ty or `uvx` says about a failure, giving
-up after 60 seconds if ty stops responding, and never blaming the `--in` file.
+Delivers `uncoded refs` passing on what ty or `uvx` says about a failure, and
+never blaming the `--in` file. There is no time limit, for want of any report of
+ty hanging.
 
-Proof: tests with a stand-in for ty that fails, exits early or hangs show each
-message, and that `uncoded refs` stops within the time limit.
+Proof: tests with a stand-in for ty that fails or exits early show each message.
 
 Needs 13.10.
 

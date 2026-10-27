@@ -388,6 +388,10 @@ project directory. It exits with status `1` and writes nothing.
 The developer names a root inside the project directory instead, or moves the
 configuration file to a directory that contains the root.
 
+Symbolic links beneath a root are not checked in this way. A linked file beneath
+a root is indexed, wherever its target is, and a linked directory beneath a root
+is not followed.
+
 ### Two configuration files in one directory
 
 One directory holds both `.uncoded.toml` and a `pyproject.toml` with a
@@ -490,10 +494,12 @@ The developer installs uv. Until then, the agent finds references by searching.
 ### ty fails
 
 ty cannot be fetched, for example on a first run with no network, or it cannot
-start, it fails, or it stops responding. `uncoded refs` stops, says that ty
-failed, and passes on what ty or `uvx` said about why. If ty stops responding,
-`uncoded refs` gives up after 60 seconds, and says so. It exits with status `1`.
-It never reports a failure of ty as a problem with the `--in` file.
+start, or it fails. `uncoded refs` stops, says that ty failed, and passes on
+what ty or `uvx` said about why. It exits with status `1`. It never reports a
+failure of ty as a problem with the `--in` file.
+
+If ty stops responding, `uncoded refs` waits until the agent or the user stops
+it. It has no time limit.
 
 The agent tries again later, or finds references by searching.
 

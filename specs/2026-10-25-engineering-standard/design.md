@@ -367,9 +367,10 @@ Settled in #261:
   after it changes indexed files or notices that files have changed under it.
   Today they say to run it only if the map is missing.
 - **ty failures are reported** (**Fixed**). `uncoded refs` passes on what ty or
-  `uvx` said about why ty failed, where today it discards it. It gives up after
-  60 seconds if ty stops responding, where today it can wait for ever. It never
-  reports a failure of ty as a fault in the `--in` file.
+  `uvx` said about why ty failed, where today it discards it. It never reports a
+  failure of ty as a fault in the `--in` file. It has no time limit: one would
+  need a background thread or a way of waiting on a pipe that works on Windows,
+  and nobody has reported ty hanging.
 - **A failed write is one line** (**Fixed**). When `uncoded sync` cannot write
   or remove a generated file, it says which file and why, in place of a Python
   traceback.
