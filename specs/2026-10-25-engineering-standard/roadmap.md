@@ -21,7 +21,8 @@ Leaves branch protection to stage 4, and pinning the existing workflows to
 stage 8. Every later stage that adds a job to `ci.yml` adds it to the gate's
 `needs`.
 
-Needs nothing.
+Needs one repository setting: the dependency graph, turned on, because the
+dependency review check depends on it.
 
 ## Stage 2: Ontology (interactive)
 
@@ -63,15 +64,17 @@ Needs stage 2.
 
 Delivers the repository settings the design names, changed by the user: turn on
 Discussions and private vulnerability reporting; enable CodeQL default setup for
-Python and Actions; confirm secret scanning and push protection; limit issues
-and pull requests to collaborators; protect `main` with a required pull request,
-the "Required checks pass" and `dependency-review` checks required, enforced for
-admins, with "require branches to be up to date" and conversation resolution
-left off; and give the `pypi` environment a deployment rule that allows only
-tags matching `v*`, with no required reviewer.
+Python and Actions; confirm the dependency graph, secret scanning and push
+protection; limit issues and pull requests to collaborators; protect `main` with
+a required pull request, the "Required checks pass" and `dependency-review`
+checks required, enforced for admins, with "require branches to be up to date"
+and conversation resolution left off; and give the `pypi` environment a
+deployment rule that allows only tags matching `v*`, with no required reviewer.
 
 Proof: an agent reads each setting back through `gh api` and finds it matches
-the design. The user confirms the collaborators-only limit by eye.
+the design. For the dependency graph, it reads
+`gh api repos/alimanfoo/uncoded/dependency-graph/sbom`. The user confirms the
+collaborators-only limit by eye.
 
 Leaves `SECURITY.md`, the README's invitation and the Discussions link to
 stage 10.
