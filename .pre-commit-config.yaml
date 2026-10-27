@@ -7,11 +7,15 @@ repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: cef0300fd0fc4d2a87a85fa2093c6b283ea36f4b # frozen: v5.0.0
     hooks:
+      - id: fix-byte-order-marker
       - id: trailing-whitespace
       - id: end-of-file-fixer
+      - id: check-illegal-windows-names
+      - id: check-merge-conflict
       - id: check-yaml
       - id: check-toml
       - id: check-added-large-files
+      - id: detect-private-key
 
   - repo: https://github.com/rhysd/actionlint
     rev: 914e7df21a07ef503a81201c76d2b11c789d3fca # frozen: v1.7.12
