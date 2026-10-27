@@ -4,7 +4,8 @@ Every session that implements a stage should correct the specifications as
 details change and say on its pull request what it corrected. It may change how
 it delivers the stage when earlier work or implementation discoveries justify
 that change. It should raise any change to the roadmap's stages, boundaries,
-order or dependencies with the user instead of restructuring the roadmap itself.
+order or dependencies with the product owner instead of restructuring the
+roadmap itself.
 
 ## Stage 1: Required checks
 
@@ -25,37 +26,40 @@ Needs nothing.
 
 ## Stage 2: Ontology (interactive)
 
-Delivers `docs/ontology.md`, written with the user, in the form the design's
-Ontology section gives. It starts from the terms the design lists, and the
-session adds or drops terms with the user. Each entry ends with the words its
-term replaces. The mkdocs nav section "Contribute" becomes "Development", and
-the ontology goes there. `AGENTS.md` gains one line pointing to it.
+Delivers `docs/ontology.md`, written with the product owner, in the form the
+design's Ontology section gives. It starts from the terms the design lists, and
+the session adds or drops terms with the product owner. Each entry ends with the
+words its term replaces. The mkdocs nav section "Contribute" becomes
+"Development", and the ontology goes there. `AGENTS.md` gains one line pointing
+to it.
 
-Proof: the user accepts the ontology, and the strict mkdocs build passes.
+Proof: the product owner accepts the ontology, and the strict mkdocs build
+passes.
 
 Leaves every rename in code, documents, skills and issues to stage 14. Where the
 ontology would rename something a user types or reads as a path (a command, a
 flag, a configuration key or a generated file's path), the session records it in
-the design as a named breaking change for the user to accept or refuse.
+the design as a named breaking change for the product owner to accept or refuse.
 
 Needs nothing.
 
 ## Stage 3: Stories (interactive)
 
-Delivers `docs/stories.md`, written with the user in the ontology's words, under
-"Development", in the form the design's Stories section gives. It covers the
-developer and the agent: happy paths, then user errors, then expected faults.
-Among them it settles what `uncoded sync` says about files it skipped (#179), a
-configuration uncoded cannot accept, a root configured outside the project
-directory, `uvx` missing from `PATH`, a stale index, and how paths look on
-Windows, including the paths `uncoded refs` prints and the paths in
+Delivers `docs/stories.md`, written with the product owner in the ontology's
+words, under "Development", in the form the design's Stories section gives. It
+covers the developer and the agent: happy paths, then user errors, then expected
+faults. Among them it settles what `uncoded sync` says about files it skipped
+(#179), a configuration uncoded cannot accept, a root configured outside the
+project directory, `uvx` missing from `PATH`, a stale index, and how paths look
+on Windows, including the paths `uncoded refs` prints and the paths in
 `uncoded sync`'s messages. It also settles the questions that #260 recorded in
 the design.
 
-Proof: the user accepts the stories, the strict build passes, and every place a
-story contradicts what uncoded does today is listed in the design as a named
-behaviour change. The session sizes that list, and raises a split of stage 13
-with the user if the list is too large to review as one pull request.
+Proof: the product owner accepts the stories, the strict build passes, and every
+place a story contradicts what uncoded does today is listed in the design as a
+named behaviour change. The session sizes that list, and raises a split of stage
+13 with the product owner if the list is too large to review as one pull
+request.
 
 Leaves all code changes: Windows paths to stage 7, the rest to stage 13.
 
@@ -63,17 +67,17 @@ Needs stage 2.
 
 ## Stage 4: Repository admin (manual)
 
-Delivers the repository settings the design names, changed by the user: turn on
-Discussions and private vulnerability reporting; enable CodeQL default setup for
-Python and Actions; confirm secret scanning and push protection; limit issues
-and pull requests to collaborators; protect `main` with a required pull request,
-the "Required checks pass" and `dependency-review` checks required, enforced for
-admins, with "require branches to be up to date" and conversation resolution
-left off; and give the `pypi` environment a deployment rule that allows only
-tags matching `v*`, with no required reviewer.
+Delivers the repository settings the design names, changed by the product owner:
+turn on Discussions and private vulnerability reporting; enable CodeQL default
+setup for Python and Actions; confirm secret scanning and push protection; limit
+issues and pull requests to collaborators; protect `main` with a required pull
+request, the "Required checks pass" and `dependency-review` checks required,
+enforced for admins, with "require branches to be up to date" and conversation
+resolution left off; and give the `pypi` environment a deployment rule that
+allows only tags matching `v*`, with no required reviewer.
 
 Proof: an agent reads each setting back through `gh api` and finds it matches
-the design. The user confirms the collaborators-only limit by eye.
+the design. The product owner confirms the collaborators-only limit by eye.
 
 Leaves `SECURITY.md`, the README's invitation and the Discussions link to
 stage 10.
@@ -90,8 +94,8 @@ of every criterion and saying how each number was taken, so the next measurement
 can repeat it. Both go under "Development".
 
 Proof: every criterion has a measured value, and every shortfall is owned by a
-later stage of this roadmap. A shortfall no stage owns goes to the user, not
-into a stage.
+later stage of this roadmap. A shortfall no stage owns goes to the product
+owner, not into a stage.
 
 Leaves every gap to the stages that close it. The definition of done is not yet
 asked of pull requests; stage 17 does that.
@@ -250,10 +254,10 @@ Needs stage 3 for the stories and the list, stage 6 for the changelog, and stage
 Delivers the consistency review against the ontology, and every rename it calls
 for: code identifiers, documents, skill prose and open issues. It renames no
 command, flag, configuration key or generated file path, unless stage 2 recorded
-the rename in the design and the user accepted it. It also replaces "you" in the
-documentation with the reader it means, the developer or the agent, as the
-design's Ontology section says. The skills are regenerated, and their rewording
-gets a **Fixed** entry in the changelog.
+the rename in the design and the product owner accepted it. It also replaces
+"you" in the documentation with the reader it means, the developer or the agent,
+as the design's Ontology section says. The skills are regenerated, and their
+rewording gets a **Fixed** entry in the changelog.
 
 Proof: the consistency review reports nothing, and no word the ontology replaces
 remains outside the ontology's own list. Tests, hooks and the strict build pass.
@@ -282,7 +286,8 @@ Delivers:
 Proof: the four criteria meet their bars, measured the way the baseline measured
 them, and #234 and #205 are closed. Nothing a user sees changes, apart from
 skill wording with its **Fixed** entry. A change to which message or exit status
-a user gets goes to the user, to be added to stage 3's list, not made here.
+a user gets goes to the product owner, to be added to stage 3's list, not made
+here.
 
 Leaves nothing.
 

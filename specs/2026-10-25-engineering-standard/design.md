@@ -57,7 +57,7 @@ Messages on standard error, and the wording of any message, are not part of the
 contract. Commands write data to standard output and everything else to standard
 error.
 
-Where a case is unclear, the expected impact on agents and users decides.
+Where a case is unclear, the expected impact on users decides.
 
 There is no preview tier until something needs one.
 
@@ -250,11 +250,11 @@ The release checklist covers what has no check of its own:
 The ontology lives at `docs/ontology.md`, in dreamcatcher's form: an opening
 that says it is authoritative over the dated specifications, a **Terms** section
 with one entry per term, and a **Relationships and rules** section. It defines
-uncoded's terms, settled with the user in #260, and is the one place they are
-listed. Where the code, documents, skills or issues use another word for one of
-these, the ontology's word wins. The documentation names its reader, the
-developer or the agent, and addresses neither as "you", because both read it.
-Each entry ends with the words its term replaces, so that renames and the
+uncoded's terms, settled with the product owner in #260, and is the one place
+they are listed. Where the code, documents, skills or issues use another word
+for one of these, the ontology's word wins. The documentation names its reader,
+the developer or the agent, and addresses neither as "you", because both read
+it. Each entry ends with the words its term replaces, so that renames and the
 current-tracker triage have a list to work from.
 
 ## Stories
