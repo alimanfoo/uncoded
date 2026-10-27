@@ -40,7 +40,8 @@ and the developer rarely runs uncoded themselves. Agents decide when to run
 `uncoded sync`, so that a commit never leaves the installed skill files stale.
 
 Every uncoded command works the same way when run from the project directory or
-from any directory beneath it.
+from any directory beneath it. uncoded is not designed for projects nested
+inside one another, each with its own configuration file.
 
 uncoded works the same way on Linux, macOS and Windows. Every path that uncoded
 prints, or writes into a generated file, uses `/` to separate directories, on
