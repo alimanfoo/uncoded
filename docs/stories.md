@@ -310,7 +310,8 @@ another agent or the developer works in the same project. The navigation skills
 tell the agent to run `uncoded sync` after it changes an indexed file, and
 whenever it sees that something else has changed files, before it relies on the
 index again. `uncoded sync` writes only the generated files whose content
-changes, lists them, and exits with status `0`.
+changes, removes those the project no longer calls for, such as the stub of a
+deleted Python file, lists them all, and exits with status `0`.
 
 The value to the agent is that what it reads in the index is true of the project
 as it is.

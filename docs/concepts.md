@@ -43,9 +43,6 @@ A project's **required version** is the version of uncoded it uses, named
 exactly, such as `"3.1.0"`, by the `required-version` setting in its
 configuration file.
 
-Every uncoded command refuses to run at any other version, and says which
-version the project needs.
-
 ### Project directory
 
 A project's **project directory** is the directory that holds its configuration
@@ -88,9 +85,6 @@ definition, from its first decorator to the end of its body, or an assignment or
 `type` statement. A property's definition is its getter's definition. Its setter
 and deleter are neither symbols nor part of its definition.
 
-`uncoded body` prints a symbol's definition, which is always one unbroken
-stretch of the file, exactly as it is.
-
 Replaces: "body" and "source body" for a whole definition. In Python's grammar a
 body is only the suite after the definition's colon.
 
@@ -126,9 +120,6 @@ same name in an outer one.
 A **reference** is a place in Python source where a symbol's name stands for
 that symbol, and not for another symbol with the same name: where the symbol is
 defined, imported or used.
-
-`uncoded refs` finds a symbol's references through the ty language server, and
-prints each as `path:line:column`.
 
 ### Heading
 
@@ -268,10 +259,6 @@ the same concept, with verbatim evidence for each.
 A **generated file** is a file that uncoded writes in a project: one of the
 index's files, an installed skill file, or `.uncoded/.gitignore`.
 
-`uncoded sync` writes the generated files. It also removes generated files that
-the project no longer calls for, such as the stub of a deleted Python file, but
-not files that earlier versions of uncoded wrote under names it no longer uses.
-
 Replaces: "artefact", "index artefact", "navigation artefact".
 
 ### Provenance marker
@@ -286,9 +273,6 @@ A project's generated files are **current** when they are exactly what uncoded
 would generate from the project as it is now: none missing, none left over, and
 none with different content. The index is current when its files are.
 
-`uncoded check` reports whether the generated files are current, without writing
-any.
-
 Replaces: "up to date", "matches a fresh build".
 
 ### Stale
@@ -299,12 +283,6 @@ is stale when its files are.
 ### Developer
 
 A **developer** is a person who sets up uncoded in a project.
-
-A developer runs `uncoded init`, checks the configuration file it writes, adds
-the lines it prints to `AGENTS.md` or `CLAUDE.md`, and commits the configuration
-file and the installed skill files. From then on, agents run `uncoded sync`, and
-tools the developer sets up, such as a pre-commit hook or CI, may run
-`uncoded sync` or `uncoded check`.
 
 Replaces: "contributor".
 
