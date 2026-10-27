@@ -10,14 +10,15 @@ update this document deliberately.
 
 The product's name is uncoded, in lower case even at the start of a sentence.
 
-Each term has its own definition, and uses only terms defined before it. A
-definition ends with the words the term replaces. Those words are not used for
-the concept, in code, documents, skills or issues.
+Each term has its own entry, which uses only terms explained before it. An entry
+ends with the words the term replaces. Those words are not used for the concept,
+in code, documents, skills or issues. Where the code, documents or skills
+disagree with this document, they are wrong and are corrected to match it.
 
 The dated specifications record the design of particular pieces of work. Where
 their words conflict with this document, this document is authoritative.
 
-## Definitions
+## Terms
 
 ### Project
 
@@ -43,17 +44,27 @@ can have its own project directory, and a project need not use Git at all.
 
 Replaces: "project root", "repository root".
 
+### Python file
+
+A **Python file** is a file whose name ends in `.py`. Python calls the code in
+one a module, and the statements directly in it, not nested in another
+statement, its module body.
+
 ### Symbol
 
-A **symbol** is a named thing that uncoded indexes in a Python file. At module
-level it is a class, a function, a `type` alias, or an assignment to a single
-name, such as `x = 1` or `x: int`. Directly in a class body it is a method, a
-property, or an assignment to a single name.
+A **symbol** is a named thing that uncoded indexes in a Python file. In the
+module body it is a class, a function, a `type` statement, or an assignment or
+annotation whose one target is a bare name, such as `x = 1` or `x: int`.
+Directly in a class body it is a method, a property, or such an assignment or
+annotation. A property is a method decorated with `@property`, which uncoded
+treats as a property and not as a method.
 
 Each symbol has a name and one definition. Two symbols can share a name, such as
-two functions called `parse` in different modules. Directories and files are not
-symbols, and neither are names defined inside a function or inside a nested
-class.
+two functions called `parse` in different Python files. Directories and files
+are not symbols, and neither are names defined inside a function, inside a
+nested class, or inside another statement such as `if` or `try`. This is
+narrower than Python's own sense, in which imports and other bindings also name
+symbols.
 
 Replaces: "module constant", which is an assignment at module level.
 
@@ -64,11 +75,11 @@ definition, from its first decorator to the end of its body, or an assignment or
 `type` statement. A property's definition also includes its setter and deleter,
 which are not symbols of their own.
 
-`uncoded body` prints a symbol's definition. For a property, it prints only the
-getter.
+`uncoded body` prints a symbol's definition, except that for a property it
+prints only the getter.
 
 Replaces: "body" and "source body" for a whole definition. In Python's grammar a
-body is only the indented block.
+body is only the suite after the definition's colon.
 
 ### Name path
 
@@ -84,13 +95,14 @@ Replaces: "symbol path".
 ### Shadowing
 
 A symbol **shadows** another when it has the same name and is defined later in
-the same module or class body. As in Python, where the later binding replaces
-the earlier, a name path refers to the later symbol, and the earlier one cannot
-be named.
+the same module body or class body. A name path refers to the later symbol, and
+the earlier one cannot be named, as in Python, where the later binding replaces
+the earlier. A bare annotation such as `x: int` binds nothing, but is treated
+the same way.
 
-Shadowing is rare, and usually a mistake. The signatures of an overloaded
-function are the common exception: each is shadowed by the next, and the last is
-the implementation.
+Shadowing is rare, and usually a mistake. An overloaded function is the common
+exception: each `@overload` definition is shadowed by the next, and the last
+definition, usually the implementation, is the symbol.
 
 ### Reference
 
@@ -103,22 +115,22 @@ prints each as `path:line:column`.
 
 ### Heading
 
-A **heading** is a Markdown ATX heading, as CommonMark defines it: a line that
-starts with one to six `#` characters and a space, outside a fenced code block.
-uncoded does not index setext headings, which are underlined.
+A **heading** is one of a subset of CommonMark's ATX headings: a line that
+starts in its first column with one to six `#` characters and a space, followed
+by non-empty text, outside a fenced code block. uncoded does not index setext
+headings, which are underlined.
 
 ### Root
 
 A **root** is a directory or file at the top of a part of a project that uncoded
 indexes. The `source-roots` and `doc-roots` settings list a project's roots.
 
-Replaces: "root type", which is "source roots" or "doc roots".
+Replaces: "root type", for whether a root is a source root or a doc root.
 
 ### Source root
 
 A **source root** is a directory listed in the `source-roots` setting. uncoded
-indexes the symbols in every Python file beneath it, at any depth. A Python file
-is a file whose name ends in `.py`.
+indexes the symbols in every Python file beneath it, at any depth.
 
 ### Doc root
 
@@ -147,12 +159,15 @@ Replaces: "doc map", "heading map", "heading outline".
 
 ### Stub
 
-A **stub** is a stub file, in the Python typing sense, that uncoded writes for
-one Python file that has symbols. It holds the file's module-level imports and a
-declaration of each symbol: signatures without parameter defaults or bodies, and
-assignments with their annotation and, when short, their value. It sits at the
-Python file's path relative to the project directory, under `.uncoded/stubs/`,
-with the suffix `.pyi`.
+A **stub** is a `.pyi` file in Python's stub syntax that uncoded writes, for
+agents to read, for one Python file that has symbols. It holds the file's
+imports from its module body, each class's bases, each function's and method's
+signature, and each assignment's annotation and, when short, its value. It sits
+at the Python file's path relative to the project directory, under
+`.uncoded/stubs/`.
+
+A stub is not a type stub for type checkers. It leaves out parameter defaults
+and decorators, so a type checker would misread it.
 
 ### Code index
 
@@ -194,11 +209,11 @@ The **navigation skills** are `uncoded-code-navigation` and
 
 ### Skill source
 
-A **skill source** is the Markdown file in uncoded's package that holds a
-skill's instructions. uncoded adds the skill's name and description when it
-generates the skill.
+A **skill source** is the Markdown file in uncoded's package that holds the text
+of a skill. uncoded adds the skill's name and description when it generates the
+skill.
 
-Replaces: "package resource", "skill instructions", and "source" for a skill
+Replaces: "package resource", and "skill instructions" or "source" for a skill
 source.
 
 ### Installed skill file
@@ -260,7 +275,7 @@ Replaces: "user", "contributor".
 ## Relationships and rules
 
 This section says how the things above relate. What uncoded does with them, and
-when, is for the user stories.
+when, is for the stories.
 
 ### The project directory
 
@@ -272,9 +287,9 @@ sits inside the project directory.
 The code index is built from the source roots, and the documentation index from
 the doc roots. Neither depends on the other.
 
-Each uncoded skill belongs with one part of the index. The code navigation skill
-and the consistency review belong with the code index, and the doc navigation
-skill with the documentation index.
+Each uncoded skill belongs with one part of the index. `uncoded-code-navigation`
+and `uncoded-consistency-review` belong with the code index, and
+`uncoded-doc-navigation` with the documentation index.
 
 `.uncoded/.gitignore` keeps the index out of Git: it ignores everything under
 `.uncoded/`, itself included. The installed skill files are meant to be
@@ -285,6 +300,6 @@ committed with the project.
 A symbol's references include its definition, so every symbol has at least one.
 A symbol is unused when every reference to it lies within its own definition.
 
-A reference that lies within the definition of a symbol it shadows is not a use
-either. An unused overloaded function therefore has a reference in each of its
-signatures, and is still unused.
+References within the definition of a symbol that it shadows are not uses
+either. An unused overloaded function therefore has a reference in each
+`@overload` definition, and is still unused.
