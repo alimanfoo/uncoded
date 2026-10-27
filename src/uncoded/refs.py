@@ -15,7 +15,9 @@ from uncoded.read_helpers import read_source_text
 from uncoded.resolver import NamePath, resolve_name_position
 
 # Strict pin: ty is pre-1.0 with known textDocument/references edge cases.
-# See #111 before bumping.
+# Dependabot moves the dev dependency on ty but not this pin, so the two may
+# differ. Raising it changes what `uncoded refs` reports, so run the
+# integration tests and release it as a patch. See #111 before bumping.
 TY_VERSION = "0.0.53"
 
 
