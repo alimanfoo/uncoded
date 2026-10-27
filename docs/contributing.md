@@ -69,7 +69,6 @@ code and testing conventions.
 
 ## Release
 
-Publish a GitHub release from its version tag, named `v` followed by the
-version, such as `v3.0.1`. `.github/workflows/publish.yml` builds the source
-distribution and wheel and uploads them with PyPI Trusted Publishing. The
-repository does not store a PyPI token.
+Publish a GitHub release from its version tag. `.github/workflows/publish.yml`
+builds the source distribution and wheel and uploads them with PyPI Trusted
+Publishing. The repository does not store a PyPI token.
