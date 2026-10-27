@@ -269,8 +269,9 @@ contradicts a story.
 
 uncoded has two users, and the stories cover both:
 
-- the **developer**, who configures uncoded, runs `sync` and `check`, and
-  commits the skills; and
+- the **developer**, who configures uncoded, adds its pre-commit hook and
+  commits the installed skill files, while agents and pre-commit hooks run
+  `uncoded sync` and `uncoded check`; and
 - the **agent**, which reads the namespace map, stubs and docs map, and runs
   `body` and `refs`.
 
@@ -281,7 +282,9 @@ directory, `uvx` missing from `PATH`, and an index that has gone stale.
 Settling the ontology in #260 also gave the stories these questions to answer:
 what happens when no root is configured, whether as a user error or as normal
 behaviour; how `sync` treats a part of the index whose roots are removed; and
-how `sync` and `check` treat stale generated files.
+how `sync` and `check` treat stale generated files; and how a developer sets
+uncoded up without running `uncoded sync` or `uncoded check` themselves, where
+`docs/keeping-current.md` and `docs/getting-started.md` now tell them to.
 
 Three behaviour changes are already settled, in #260.
 
