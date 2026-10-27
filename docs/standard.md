@@ -31,8 +31,11 @@ The criteria below turn each word into something we can measure.
 
 The standard is not invented from nothing. Each of the projects below sets the
 bar for part of it. Each is credited only with what reading the project
-verified, so that a criterion can be traced to a project that meets it.
-Dreamcatcher's standard read the first five. The rest were read on 2026-10-25.
+verified, so that a criterion can be traced to a project that meets it. This
+standard adapts the one that
+[dreamcatcher](https://github.com/alimanfoo/dreamcatcher/blob/main/docs/standard.md)
+keeps. Its reading verified pre-commit, Trio, attrs and structlog, Click and
+Flask, and SQLite. The others were read on 2026-10-25.
 
 - **pre-commit.** A Python command that runs other programs, with no source file
   over 600 lines, full coverage enforced, and five runtime dependencies. It sets
@@ -48,7 +51,7 @@ Dreamcatcher's standard read the first five. The rest were read on 2026-10-25.
 - **Click and Flask.** Click's documentation is organised by what the reader is
   trying to do, and says so. Flask keeps its logic apart from its input and
   output. They set the bar for the shape of the documentation, and for keeping
-  file writes in one module. Neither keeps its modules small.
+  logic apart from input and output. Neither keeps its modules small.
 - **SQLite.** A versioned file format, a compatibility promise phrased as
   intent, and a published account of how the project is tested. It sets the bar
   for the index formats and the agent-facing contract. We borrow its forms, not
@@ -136,7 +139,8 @@ Each thing is done one way.
   the same concept.
 - Bar: zero. A fact derived in one module is not derived again in another, and
   the same concept has one representation.
-- Check: review, guided by the consistency review.
+- Check: review, guided by
+  [the consistency review](concepts.md#consistency-review).
 
 #### No suppressions
 
@@ -188,7 +192,7 @@ Documentation is organised by purpose.
   for every command and setting, and explanation of the design. The README is a
   short entrance to the documentation. Pages for users do not link to the pages
   under "Development".
-- Check: review of the docs map.
+- Check: review of the docs map, which `uncoded sync` writes.
 
 #### Versioned contract
 
@@ -338,7 +342,7 @@ Parallel concepts have parallel operations.
 - Bar: parallel concepts have parallel operations with parallel names, and share
   code where the concepts page says they are the same. An asymmetry stands only
   where the concepts page names the difference.
-- Check: review, reading the namespace map.
+- Check: review, reading the namespace map, which `uncoded sync` writes.
 
 ## Definition of done
 

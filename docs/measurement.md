@@ -6,10 +6,17 @@ earlier measurements are in Git history.
 
 This is the first measurement, the baseline. It was taken on 2026-10-27 at
 `0071673`, the commit on `main` after the stories were added in #290 and before
-any gap was closed. A stage of the engineering standard roadmap (#257) owns most
-shortfalls below. The rest go to the product owner: three are open bugs that no
-stage owns, and one, the test names, was raised on the pull request that took
-this measurement, #306.
+any gap was closed.
+
+A stage of the
+[roadmap](https://github.com/alimanfoo/uncoded/blob/main/specs/2026-10-25-engineering-standard/roadmap.md)
+for the engineering standard (#257) owns most shortfalls below. Each stage is an
+issue, and "stage 15 (#273)" names a stage and its issue. "The design" is the
+[design](https://github.com/alimanfoo/uncoded/blob/main/specs/2026-10-25-engineering-standard/design.md)
+that the roadmap builds. The rest of the shortfalls go to the product owner, who
+decides what the project takes on: three are open bugs that no stage owns, and
+one, the test names, was raised on pull request #306, which took this
+measurement.
 
 ## Results
 
@@ -109,8 +116,10 @@ this measurement, #306.
   references. The README sends the reader to the site. `docs/contributing.md`
   sits under "Development", and stage 10 (#268) removes it.
 - **Versioned contract.** Stage 6 (#264) writes the compatibility statement and
-  the changelog. The stories also record two **Breaking** changes to come, which
-  stage 13.4 (#296) and stage 7 (#265) build.
+  the changelog. Until then, the rules for what counts as a breaking, minor or
+  patch change are in the design's Breaking changes section. The stories also
+  record two **Breaking** changes to come, which stage 13.4 (#296) and stage 7
+  (#265) build.
 - **Accurate references.** `docs/commands.md` has no block generated from
   `--help`, and stage 16 (#274) adds them with cog. Review read
   `docs/commands.md`, `docs/configuration.md` and the three skill sources
@@ -277,12 +286,27 @@ with the development dependencies installed.
   and the stories.
 - **Reviewed changes** come from `git log --first-parent v3.0.0..origin/main`
   and from the bodies of the pull requests merged since v3.0.0, read through
-  `gh pr list --state merged`.
+  `gh pr list --state merged`. A commit outside a pull request is one that
+  `git log --first-parent --no-merges v3.0.0..origin/main` lists.
+- **Terms on the concepts page** are its `###` headings under "Terms".
+- **Docs by purpose** comes from the `nav` in `mkdocs.yml`, and from
+  `grep -nE "\]\((concepts|stories|architecture|contributing|standard|measurement)\.md" README.md docs/*.md`,
+  which must find nothing in the pages outside "Development".
+- **Versioned contract** comes from looking for a compatibility statement and a
+  changelog under `docs`.
+- **Loud failures** come from `[tool.pytest.ini_options]` and the `dev` group in
+  `pyproject.toml`.
+- **Conditionals that name a situation** start from
+  `grep -nE "^\s*(if|elif|while)\b.*(==|!=| in | not in )\s*[\(\{\[]?['\"]|startswith|endswith|legacy|\.name ==" src/uncoded/*.py`,
+  read with every other conditional in `src`.
 - **Branch protection** comes from
   `gh api repos/alimanfoo/uncoded/branches/main/protection`.
-- **True documents, accurate references, rules not cases and symmetry** come
-  from review: the stories and the design's Stories section read against the
-  code, `docs/commands.md`, `docs/configuration.md` and the skill sources read
-  against the code and each command's `--help`, every conditional under `src`
-  read for the situation it names, and the namespace map read for parallel
+- **Cohesive modules, focused functions, true documents, accurate references,
+  rules not cases, invariants by construction and symmetry** come from review:
+  each module and the longest functions read for one responsibility or job, the
+  stories and the design's Stories section read against the code,
+  `docs/commands.md`, `docs/configuration.md` and the skill sources read against
+  the code and each command's `--help`, every conditional under `src` read for
+  the situation it names, every branch, raise and assert under `src` read for a
+  state the types could rule out, and the namespace map read for parallel
   operations.
