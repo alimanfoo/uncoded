@@ -241,14 +241,14 @@ stage 5's baseline.
 
 Builds the behaviour changes the design records in its Stories section, apart
 from paths on Windows, which stage 7 builds. Stage 13 is one pull request per
-change, 13.1 to 13.11, and a last, 13.12, that checks every story is covered by
+change, 13.1 to 13.12, and a last, 13.13, that checks every story is covered by
 tests. Each part has tests and a changelog entry under "Unreleased", and changes
 nothing else a user sees. The design's Stories section gives each change in
 full.
 
 13.1 to 13.8 edit `cli.py` or `config.py`, so they run one after another. 13.10
-and 13.11 edit `refs.py` after 13.4 does. 13.9 changes only a skill source, so
-it can run beside the others.
+and 13.11 edit `refs.py` after 13.4 does. 13.9 changes only a skill source, and
+13.12 only `skill.py`, so they can run beside the others.
 
 Needs stage 3 for the stories and the list, stage 6 for the changelog, and stage
 12, because both edit `src` and `tests`.
@@ -368,14 +368,26 @@ message, and that `uncoded refs` stops within the time limit.
 
 Needs 13.10.
 
-### Stage 13.12: Every story is covered
+### Stage 13.12: Only the current skills are removed
+
+Delivers `uncoded sync` no longer removing the skill names of earlier versions
+of uncoded, `coherence-review`, `uncoded-coherence-review` and `uncoded-review`.
+It removes only skills the current version generates, when the roots they belong
+with are gone.
+
+Proof: a test with a skill of the user's own called `coherence-review` shows it
+left in place.
+
+Needs stage 6, for the changelog.
+
+### Stage 13.13: Every story is covered
 
 Delivers tests for any behaviour a story describes that no test covers yet,
 including each exit status, at whatever grain suits the code.
 
 Proof: every story's behaviour is covered by some test.
 
-Needs 13.1 to 13.11.
+Needs 13.1 to 13.12.
 
 ## Stage 14: Words
 

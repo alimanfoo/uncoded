@@ -268,8 +268,9 @@ the same concept, with verbatim evidence for each.
 A **generated file** is a file that uncoded writes in a project: one of the
 index's files, an installed skill file, or `.uncoded/.gitignore`.
 
-`uncoded sync` writes the generated files, and removes any that uncoded no
-longer generates.
+`uncoded sync` writes the generated files. It also removes generated files that
+the project no longer calls for, such as the stub of a deleted Python file, but
+not files that earlier versions of uncoded wrote under names it no longer uses.
 
 Replaces: "artefact", "index artefact", "navigation artefact".
 

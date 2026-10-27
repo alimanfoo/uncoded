@@ -377,6 +377,12 @@ Settled in #261:
   `uncoded sync` messages and warnings, and the path comment in each stub use
   `/` on Windows too, as the namespace map and docs map already do.
 - **Messages point to `uncoded init`** where a configuration file is missing.
+- **Only the current skills are removed** (**Changed**). `uncoded sync` stops
+  removing the skill names of earlier versions of uncoded, `coherence-review`,
+  `uncoded-coherence-review` and `uncoded-review`, which today it deletes on
+  every run whoever wrote them. It removes only skills the current version
+  generates, when the roots they belong with are gone. A project that still has
+  an old-named skill deletes it by hand, as `docs/upgrading.md` says.
 
 The stories record every one of these changes.
 
