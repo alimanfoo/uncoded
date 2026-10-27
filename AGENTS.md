@@ -126,6 +126,11 @@ Cover both arms of every branch. If an arm looks unreachable, the branch is dead
 code. Remove or restructure it rather than reach for a coverage pragma. The repo
 carries no coverage pragmas.
 
+## Vocabulary
+
+[docs/ontology.md](docs/ontology.md) says what the words mean. Use its words and
+no others.
+
 ## Conventions
 
 This section names where each cross-cutting convention lives and what keeps it

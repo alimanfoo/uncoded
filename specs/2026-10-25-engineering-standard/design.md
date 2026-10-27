@@ -35,19 +35,19 @@ definition of a breaking change, following uv and ruff.
 
 A change is **breaking**, and needs a major release, when it:
 
-- removes or renames a command, a flag, a configuration key or an artefact path,
-  or changes its meaning or default;
+- removes or renames a command, a flag, a configuration key or a generated
+  file's path, or changes its meaning or default;
 - changes an exit status, or the format of the data a command writes to standard
   output;
-- changes an artefact's layout rules, such as how keys nest or which keys end in
-  `/`, as opposed to which symbols or headings it lists;
+- changes a generated file's layout rules, such as how keys nest or which keys
+  end in `/`, as opposed to which symbols or headings it lists;
 - changes the intent of a skill, by removing, reversing or narrowing an
   instruction or reordering a workflow step; or
 - drops support for a Python version.
 
 A change is a **minor** release when it adds a command, flag, configuration key,
-artefact or skill guidance, or deprecates something with a warning. Removing a
-deprecated feature is breaking.
+generated file or skill guidance, or deprecates something with a warning.
+Removing a deprecated feature is breaking.
 
 A change is a **patch** when it fixes behaviour to match its documented intent.
 That includes correcting a skill to match the command-line tool, listing a
@@ -57,7 +57,7 @@ Messages on standard error, and the wording of any message, are not part of the
 contract. Commands write data to standard output and everything else to standard
 error.
 
-Where a case is unclear, the expected impact on agents and users decides.
+Where a case is unclear, the expected impact on users decides.
 
 There is no preview tier until something needs one.
 
@@ -107,9 +107,9 @@ measures.
   rebuilt briefly from the GitHub releases: one entry for each release from
   1.0.0, linking it, and one line for the 0.x releases.
 - **Accurate references.** The references agree with the tool. New, after llm.
-  The measure is commands, flags, exit statuses and settings that the command
-  reference, the configuration reference or a skill describes differently from
-  the code. The bar is zero. The check follows llm. Under each command's
+  The measure is commands, flags, exit statuses and settings that
+  `docs/commands.md`, `docs/configuration.md` or a skill describes differently
+  from the code. The bar is zero. The check follows llm. Under each command's
   heading, `docs/commands.md` keeps its prose and examples and gains a block
   that cog generates from that command's `--help`. `cog --check` runs in
   pre-commit, on one Python version with a fixed `COLUMNS`, since argparse lays
@@ -128,7 +128,7 @@ measures.
     matches calls such as `.write_text(`, `.unlink(`, `.rmdir(` and `.mkdir(`;
   - imports point down three layers, as they do today, and
     `docs/architecture.md` states them. `cli` is on top. The middle layer holds
-    one module per artefact or tool, `namespace_map`, `stubs`, `docs_map`,
+    one module per generated file or tool, `namespace_map`, `stubs`, `docs_map`,
     `skill`, `body` and `refs`, and none of them imports another. The foundation
     is everything else. An import-linter `layers` contract in `pyproject.toml`
     lists them, with the middle layer's modules separated by `|` so they are
@@ -163,9 +163,9 @@ measures.
 - **Invariants by construction.** Invariants are held by construction.
   Transfers.
 - **Few concepts.** Concept economy. Transfers, against the new ontology.
-- **Symmetry.** Transfers. The parallel pairs are `body` and `refs`, code and
-  documentation artefacts, and the code and documentation skills. #205 is an
-  example.
+- **Symmetry.** Transfers. The parallel pairs are `uncoded body` and
+  `uncoded refs`, the code and documentation indexes, and the two navigation
+  skills. #205 is an example.
 
 ## Infrastructure
 
@@ -225,8 +225,8 @@ promise.
 
 Dependabot moves the dev dependency on ty but not `TY_VERSION` in `refs.py`, and
 the two may differ. The dev ty type-checks uncoded. `TY_VERSION` decides what
-`refs` reports, so raising it is a deliberate change to `refs`, released as a
-patch once the integration tests pass.
+`uncoded refs` reports, so raising it is a deliberate change to `uncoded refs`,
+released as a patch once the integration tests pass.
 
 Per-version Python classifiers are not added. The CI matrix is the one list of
 supported versions, and `requires-python` is what installers enforce.
@@ -250,13 +250,14 @@ The release checklist covers what has no check of its own:
 ## Ontology
 
 The ontology lives at `docs/ontology.md`, in dreamcatcher's form: an opening
-that says it is authoritative over the dated specifications, a **Definitions**
-section with one heading per concept, and a **Relationships and rules** section.
-It defines uncoded's terms, starting with name path, source root, doc root,
-project root, index, namespace map, stub, docs map, artefact, skill and
-provenance marker. Where the code, documents or issues use another word for one
-of these, the ontology's word wins. Each definition names the words it replaces,
-so that renames and the current-tracker triage have a list to work from.
+that says it is authoritative over the dated specifications, a **Terms** section
+with one entry per term, and a **Relationships and rules** section. It defines
+uncoded's terms, settled with the product owner in #260, and is the one place
+they are listed. Where the code, documents, skills or issues use another word
+for one of these, the ontology's word wins. The documentation names its reader,
+the developer or the agent, and addresses neither as "you", because both read
+it. Each entry ends with the words its term replaces, so that renames and the
+current-tracker triage have a list to work from.
 
 ## Stories
 
@@ -268,14 +269,53 @@ contradicts a story.
 
 uncoded has two users, and the stories cover both:
 
-- the **developer**, who configures uncoded, runs `sync` and `check`, and
-  commits the skills; and
+- the **developer**, who writes the configuration file and commits the installed
+  skill files, while agents, or tools the developer sets up such as a pre-commit
+  hook of their own, run `uncoded sync` and `uncoded check`; and
 - the **agent**, which reads the namespace map, stubs and docs map, and runs
-  `body` and `refs`.
+  `uncoded body` and `uncoded refs`.
 
 The stories settle how uncoded handles errors, such as a file it cannot parse
 (#179), a configuration it cannot accept, a root configured outside the project
-root, `uvx` missing from `PATH`, and an index that has gone stale.
+directory, `uvx` missing from `PATH`, and an index that has gone stale.
+
+Settling the ontology in #260 also gave the stories these questions to answer:
+
+- what happens when no root is configured, whether as a user error or as normal
+  behaviour;
+- how a developer sets uncoded up without running `uncoded sync` or
+  `uncoded check` themselves, where `docs/keeping-current.md` and
+  `docs/getting-started.md` now tell them to; and
+- whether `uncoded body` should print a property's setter and deleter with its
+  getter, which today it does not.
+
+Four behaviour changes are already settled, in #260.
+
+Every command works inside a project. Each finds the project directory by
+walking up from the current directory to the nearest configuration file, as
+ruff, pytest and uv do, so it runs from the project directory or anywhere inside
+it. Today `uncoded body` needs no configuration file and `uncoded refs` walks up
+from the file it is given. Running `uncoded body` or `uncoded refs` outside a
+project becomes a user error, and so does an `--in` file outside the project
+directory, as a root outside it already is. `--in` paths stay relative to the
+current directory, and the code navigation skill tells an agent to run
+`uncoded body` and `uncoded refs` from the project directory, where the
+namespace map's paths work as given. These are **Breaking** entries, for one
+major release.
+
+A reference includes the symbol's definition and its imports, as the ontology
+defines it, so `uncoded refs` lists every location ty returns with
+`includeDeclaration` set, where today it lists only uses. The code navigation
+skill's rename and safe-delete guidance changes to match: a delete is safe when
+the symbol is unused, as the ontology defines it. The change is a **Fixed**
+entry.
+
+The search for the configuration file passes over a `pyproject.toml` without a
+`[tool.uncoded]` table, as ruff's passes over one without `[tool.ruff]`. Today
+it stops there, so a subproject's `pyproject.toml` hides the settings above it
+and `uncoded sync` finds nothing to index. The change is a **Fixed** entry.
+
+The stories record all four changes, and stage 13 of the roadmap builds them.
 
 ## Testing page
 

@@ -66,6 +66,7 @@ nav:
       - Configuration: configuration.md
       - Commands: commands.md
       - Upgrading: upgrading.md
-  - Contribute:
+  - Development:
       - Contributing: contributing.md
+      - Ontology: ontology.md
       - Architecture: architecture.md
