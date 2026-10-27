@@ -14,11 +14,10 @@ from uncoded.config import ConfigError, find_pyproject_toml, read_config
 from uncoded.read_helpers import read_source_text
 from uncoded.resolver import NamePath, resolve_name_position
 
-# Strict pin: ty is pre-1.0 with known textDocument/references edge cases.
-# This is the ty that `uncoded refs` runs through uvx, kept apart from the dev
-# dependency on ty. Raising it changes what `uncoded refs` reports. Before you
-# raise it, run the integration tests (`uv run pytest -m integration --no-cov`)
-# and check the ty issues on textDocument/references that #111 lists.
+# The ty that `uncoded refs` runs through uvx, kept apart from the dev dependency
+# on ty. It is pinned exactly because any ty release can change what
+# `uncoded refs` reports. Before you raise it, compare `uncoded refs` output on
+# this repository under the old and the new version.
 TY_VERSION = "0.0.92"
 
 
