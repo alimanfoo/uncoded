@@ -27,9 +27,9 @@ Needs nothing.
 
 Delivers `docs/ontology.md`, written with the user, in the form the design's
 Ontology section gives. It starts from the terms the design lists, and the
-session adds or drops terms with the user. Each definition names the words it
-replaces. The mkdocs nav section "Contribute" becomes "Development", and the
-ontology goes there. `AGENTS.md` gains one line pointing to it.
+session adds or drops terms with the user. Each entry ends with the words its
+term replaces. The mkdocs nav section "Contribute" becomes "Development", and
+the ontology goes there. `AGENTS.md` gains one line pointing to it.
 
 Proof: the user accepts the ontology, and the strict mkdocs build passes.
 
@@ -45,10 +45,12 @@ Needs nothing.
 Delivers `docs/stories.md`, written with the user in the ontology's words, under
 "Development", in the form the design's Stories section gives. It covers the
 developer and the agent: happy paths, then user errors, then expected faults.
-Among them it settles what `sync` says about files it skipped (#179), a
+Among them it settles what `uncoded sync` says about files it skipped (#179), a
 configuration uncoded cannot accept, a root configured outside the project
 directory, `uvx` missing from `PATH`, a stale index, and how paths look on
-Windows, including the paths `refs` prints and the paths in `sync`'s messages.
+Windows, including the paths `uncoded refs` prints and the paths in
+`uncoded sync`'s messages. It also settles the questions that #260 recorded in
+the design.
 
 Proof: the user accepts the stories, the strict build passes, and every place a
 story contradicts what uncoded does today is listed in the design as a named
@@ -204,7 +206,8 @@ Delivers:
 - `hypothesis` leaves the dev dependencies.
 
 Proof: the suite and every hook pass on every platform, no `noqa` or
-`type: ignore` remains, and `sync` prints exactly what it printed before.
+`type: ignore` remains, and `uncoded sync` prints exactly what it printed
+before.
 
 Leaves keyword parameters to stage 12.
 
@@ -229,11 +232,10 @@ stage 5's baseline.
 
 ## Stage 13: Behaviour
 
-Delivers each behaviour change that stage 3 recorded in the design, apart from
-Windows paths, each with tests and a changelog entry under "Unreleased". It also
-checks that what every story says happens, including each exit status, is
-covered by some test, at whatever grain suits the code, and adds tests where it
-is not.
+Delivers each behaviour change recorded in the design, apart from Windows paths,
+each with tests and a changelog entry under "Unreleased". It also checks that
+what every story says happens, including each exit status, is covered by some
+test, at whatever grain suits the code, and adds tests where it is not.
 
 Proof: every change on the design's list has its tests and its entry, every
 story's behaviour is covered by a test, and nothing else a user sees changes.
@@ -272,10 +274,10 @@ Delivers:
 - **Rules not cases.** `docs/special-cases.md` starts, with every conditional
   that names a situation entered with its cause, and any whose cause is internal
   removed or generalised.
-- **Symmetry.** `body` and `refs` (#205), any asymmetry the baseline records
-  between the code and documentation index paths in `cli.py`, and the two
-  navigation skills. Rewording a skill without changing its intent gets a
-  **Fixed** changelog entry.
+- **Symmetry.** `uncoded body` and `uncoded refs` (#205), any asymmetry the
+  baseline records between the code and documentation index paths in `cli.py`,
+  and the two navigation skills. Rewording a skill without changing its intent
+  gets a **Fixed** changelog entry.
 
 Proof: the four criteria meet their bars, measured the way the baseline measured
 them, and #234 and #205 are closed. Nothing a user sees changes, apart from

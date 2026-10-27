@@ -107,9 +107,9 @@ measures.
   rebuilt briefly from the GitHub releases: one entry for each release from
   1.0.0, linking it, and one line for the 0.x releases.
 - **Accurate references.** The references agree with the tool. New, after llm.
-  The measure is commands, flags, exit statuses and settings that the command
-  reference, the configuration reference or a skill describes differently from
-  the code. The bar is zero. The check follows llm. Under each command's
+  The measure is commands, flags, exit statuses and settings that
+  `docs/commands.md`, `docs/configuration.md` or a skill describes differently
+  from the code. The bar is zero. The check follows llm. Under each command's
   heading, `docs/commands.md` keeps its prose and examples and gains a block
   that cog generates from that command's `--help`. `cog --check` runs in
   pre-commit, on one Python version with a fixed `COLUMNS`, since argparse lays
@@ -163,9 +163,9 @@ measures.
 - **Invariants by construction.** Invariants are held by construction.
   Transfers.
 - **Few concepts.** Concept economy. Transfers, against the new ontology.
-- **Symmetry.** Transfers. The parallel pairs are `body` and `refs`, the code
-  and documentation indexes, and the code and documentation skills. #205 is an
-  example.
+- **Symmetry.** Transfers. The parallel pairs are `uncoded body` and
+  `uncoded refs`, the code and documentation indexes, and the two navigation
+  skills. #205 is an example.
 
 ## Infrastructure
 
@@ -223,8 +223,8 @@ promise.
 
 Dependabot moves the dev dependency on ty but not `TY_VERSION` in `refs.py`, and
 the two may differ. The dev ty type-checks uncoded. `TY_VERSION` decides what
-`refs` reports, so raising it is a deliberate change to `refs`, released as a
-patch once the integration tests pass.
+`uncoded refs` reports, so raising it is a deliberate change to `uncoded refs`,
+released as a patch once the integration tests pass.
 
 Per-version Python classifiers are not added. The CI matrix is the one list of
 supported versions, and `requires-python` is what installers enforce.
@@ -248,13 +248,13 @@ The release checklist covers what has no check of its own:
 ## Ontology
 
 The ontology lives at `docs/ontology.md`, in dreamcatcher's form: an opening
-that says it is authoritative over the dated specifications, a **Definitions**
-section with one heading per concept, and a **Relationships and rules** section.
-It defines uncoded's terms, settled with the user in #260, and is the one place
-they are listed. Where the code, documents or issues use another word for one of
+that says it is authoritative over the dated specifications, a **Terms** section
+with one entry per term, and a **Relationships and rules** section. It defines
+uncoded's terms, settled with the user in #260, and is the one place they are
+listed. Where the code, documents, skills or issues use another word for one of
 these, the ontology's word wins. The documentation names its reader, the
 developer or the agent, and addresses neither as "you", because both read it.
-Each definition names the words it replaces, so that renames and the
+Each entry ends with the words its term replaces, so that renames and the
 current-tracker triage have a list to work from.
 
 ## Stories
@@ -281,8 +281,6 @@ Settling the ontology in #260 also gave the stories these questions to answer:
 
 - what happens when no root is configured, whether as a user error or as normal
   behaviour;
-- how `uncoded sync` treats a part of the index whose roots are removed;
-- how `uncoded sync` and `uncoded check` treat stale generated files;
 - how a developer sets uncoded up without running `uncoded sync` or
   `uncoded check` themselves, where `docs/keeping-current.md` and
   `docs/getting-started.md` now tell them to;
@@ -297,20 +295,22 @@ Three behaviour changes are already settled, in #260.
 Every command works inside a project. Each finds the project directory by
 walking up from the current directory to the nearest configuration file, as
 ruff, pytest and uv do, so it runs from the project directory or anywhere inside
-it. Today `body` needs no configuration file and `refs` walks up from the file
-it is given. Running `body` or `refs` outside a project becomes a user error,
-and so does an `--in` file outside the project directory, as a root outside it
-already is. `--in` paths stay relative to the current directory, and the code
-navigation skill tells an agent to run `body` and `refs` from the project
-directory, where the namespace map's paths work as given. These are **Breaking**
-entries, for one major release.
+it. Today `uncoded body` needs no configuration file and `uncoded refs` walks up
+from the file it is given. Running `uncoded body` or `uncoded refs` outside a
+project becomes a user error, and so does an `--in` file outside the project
+directory, as a root outside it already is. `--in` paths stay relative to the
+current directory, and the code navigation skill tells an agent to run
+`uncoded body` and `uncoded refs` from the project directory, where the
+namespace map's paths work as given. These are **Breaking** entries, for one
+major release.
 
 A reference includes the symbol's definition and its imports, as the ontology
-defines it, so `refs` lists every location ty returns with `includeDeclaration`
-set, where today it lists only uses. The code navigation skill's rename and
-safe-delete guidance changes to match: a delete is safe when every reference is
-part of the symbol's own definition. The change is a **Fixed** entry. The
-stories record all three changes, and stage 13 of the roadmap builds them.
+defines it, so `uncoded refs` lists every location ty returns with
+`includeDeclaration` set, where today it lists only uses. The code navigation
+skill's rename and safe-delete guidance changes to match: a delete is safe when
+the symbol is unused, as the ontology defines it. The change is a **Fixed**
+entry. The stories record all three changes, and stage 13 of the roadmap builds
+them.
 
 ## Testing page
 
