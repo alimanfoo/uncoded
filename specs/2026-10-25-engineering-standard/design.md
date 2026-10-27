@@ -250,15 +250,12 @@ The release checklist covers what has no check of its own:
 The ontology lives at `docs/ontology.md`, in dreamcatcher's form: an opening
 that says it is authoritative over the dated specifications, a **Definitions**
 section with one heading per concept, and a **Relationships and rules** section.
-It defines uncoded's terms, settled with the user in #260: project, project
-directory, configuration file, root, source root, doc root, index, code index,
-documentation index, namespace map, stub, docs map, generated file, provenance
-marker, current, stale, symbol, definition, name path, reference, skill,
-consistency review, agent and developer. Where the code, documents or issues use
-another word for one of these, the ontology's word wins. The documentation names
-its reader, the developer or the agent, and addresses neither as "you", because
-both read it. Each definition names the words it replaces, so that renames and
-the current-tracker triage have a list to work from.
+It defines uncoded's terms, settled with the user in #260, and is the one place
+they are listed. Where the code, documents or issues use another word for one of
+these, the ontology's word wins. The documentation names its reader, the
+developer or the agent, and addresses neither as "you", because both read it.
+Each definition names the words it replaces, so that renames and the
+current-tracker triage have a list to work from.
 
 ## Stories
 
