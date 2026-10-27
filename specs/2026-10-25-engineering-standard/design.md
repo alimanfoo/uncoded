@@ -313,8 +313,8 @@ Settled in #260:
   unused, as the concepts page defines it.
 - **The search for the configuration file passes over a `pyproject.toml` without
   a `[tool.uncoded]` table** (**Fixed**), as ruff's passes over one without
-  `[tool.ruff]`. Today it stops there, so a subproject's `pyproject.toml` hides
-  the settings above it.
+  `[tool.ruff]`. Today it stops there, so a Python package's own
+  `pyproject.toml` inside the project hides the configuration file above it.
 
 Settled in #261:
 

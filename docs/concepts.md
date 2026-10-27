@@ -51,8 +51,9 @@ version the project needs.
 A project's **project directory** is the directory that holds its configuration
 file.
 
-It is not necessarily the top of a Git repository. A subproject in a monorepo
-can have its own project directory, and a project need not use Git at all.
+It is not necessarily the top of a Git repository, and a project need not use
+Git at all. uncoded is not designed for projects nested inside one another, each
+with its own configuration file.
 
 Replaces: "project root", "repository root".
 
