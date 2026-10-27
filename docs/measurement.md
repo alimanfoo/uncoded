@@ -10,13 +10,9 @@ any gap was closed.
 
 A stage of the
 [roadmap](https://github.com/alimanfoo/uncoded/blob/main/specs/2026-10-25-engineering-standard/roadmap.md)
-for the engineering standard (#257) owns most shortfalls below. Each stage is an
-issue, and "stage 15 (#273)" names a stage and its issue. "The design" is the
-[design](https://github.com/alimanfoo/uncoded/blob/main/specs/2026-10-25-engineering-standard/design.md)
-that the roadmap builds. The rest of the shortfalls go to the product owner, who
-decides what the project takes on: three are open bugs that no stage owns, and
-one, the test names, was raised on pull request #306, which took this
-measurement.
+for the engineering standard (#257) owns most shortfalls below, and the product
+owner, who decides what the project takes on, owns the rest: #310 and three open
+bugs.
 
 ## Results
 
@@ -33,7 +29,7 @@ measurement.
 | Versioned contract         | No compatibility statement and no changelog; `docs/upgrading.md` covers the two major releases                                   | not met | #264                                 |
 | Accurate references        | No generated `--help` blocks; 2 behaviours that a reference or skill describes differently from the code                         | not met | #274; #292                           |
 | Machine-checked rules      | 3 of the 6 rules checked; removals outside `sync.py` at 4 places; 286 functions with positional parameters                       | not met | #269, #270                           |
-| Fast readable tests        | 368 tests in 2.07 seconds at 100% branch coverage; 18 of 326 distinct test names name a mechanism, not a behaviour               | not met | product owner, #306                  |
+| Fast readable tests        | 368 tests in 2.07 seconds at 100% branch coverage; 18 of 326 distinct test names name a mechanism, not a behaviour               | not met | product owner, #310                  |
 | Current tracker            | 7 of 46 open issues fall short: 4 use a replaced word, and 4 ask for work done or ruled out                                      | not met | #272, #275                           |
 | Reviewed changes           | 11 pull requests merged since v3.0.0, 10 linking an issue or spec, 0 answering the definition of done; 4 commits outside one     | not met | #275                                 |
 | Loud failures              | No `strict = true`, `pytest>=8.0`, no test timeout                                                                               | not met | #269                                 |
@@ -83,7 +79,7 @@ measurement.
   in `extract.py`, `stubs.py` and `resolver.py`, and `extract.ModuleInfo` and
   `stubs.StubModule` are two models of a Python file's symbols. Stage 15 (#273)
   owns these, and stage 13.4 (#296) removes the fallback in `refs.py`.
-- **No suppressions.** The four `noqa` comments are the subprocess waivers in
+- **No suppressions.** The `noqa` comments are the subprocess waivers in
   `refs.py` (S404, S603, S607) and `tests/test_refs.py` (S404). Stage 11 (#269)
   moves them to per-file ignores, and stage 9 (#267) adds the hooks against
   blanket `noqa` and `type: ignore`.
@@ -100,24 +96,27 @@ measurement.
   promising a stub for every Python file. Words that the concepts page replaces
   occur 337 times: 95 in prose and 242 in identifiers, of which 217 are
   `project_root` and its variants. Stage 14 (#272) settles all of these.
-- **True documents.** The design's Stories section lists 14 behaviour changes
-  that the stories settle and the code does not yet do. Stage 7 (#265) builds
-  paths that use `/` on every system, and stages 13.1 to 13.12 (#293 to #304)
-  build the rest. Three open bugs contradict a story, and no stage owns them:
-  #280, where `uncoded check` reports the index as current after a source root
-  is removed; #281, where a name path with a slash reaches a class that a later
-  definition redefines; and #292, where `uncoded body` changes CRLF line endings
-  and drops a byte-order mark. The architecture contradicts nothing, but it does
-  not yet state the three layers, which stage 11 (#269) adds.
+- **True documents.** The design's
+  [Stories](https://github.com/alimanfoo/uncoded/blob/main/specs/2026-10-25-engineering-standard/design.md#behaviour-changes)
+  section lists 14 behaviour changes that the stories settle and the code does
+  not yet do. Stage 7 (#265) builds paths that use `/` on every system, and
+  stages 13.1 to 13.12 (#293 to #304) build the rest. Three open bugs contradict
+  a story, and no stage owns them: #280, where `uncoded check` reports the index
+  as current after a source root is removed; #281, where a name path with a
+  slash reaches a class that a later definition redefines; and #292, where
+  `uncoded body` changes CRLF line endings and drops a byte-order mark. The
+  architecture contradicts nothing, but it does not yet state the three layers,
+  which stage 11 (#269) adds.
 - **Docs by purpose.** "Get started" is the tutorial, "Use uncoded" holds the
   how-to pages, and "Reference" holds the configuration, command and upgrading
   references. The README sends the reader to the site. `docs/contributing.md`
   sits under "Development", and stage 10 (#268) removes it.
 - **Versioned contract.** Stage 6 (#264) writes the compatibility statement and
   the changelog. Until then, the rules for what counts as a breaking, minor or
-  patch change are in the design's Breaking changes section. The stories also
-  record two **Breaking** changes to come, which stage 13.4 (#296) and stage 7
-  (#265) build.
+  patch change are in the design's
+  [Breaking changes](https://github.com/alimanfoo/uncoded/blob/main/specs/2026-10-25-engineering-standard/design.md#breaking-changes)
+  section. The stories also record two **Breaking** changes to come, which stage
+  13.4 (#296) and stage 7 (#265) build.
 - **Accurate references.** `docs/commands.md` has no block generated from
   `--help`, and stage 16 (#274) adds them with cog. Review read
   `docs/commands.md`, `docs/configuration.md` and the three skill sources
@@ -129,7 +128,7 @@ measurement.
   navigation skill says the headings in the docs map are literal text, but the
   docs map adds a suffix such as " (2)" to a repeated heading. Stage 16 (#274)
   reviews the skills against the code.
-- **Machine-checked rules.** Three rules are checked today: only `refs.py`
+- **Machine-checked rules.** These rules are checked today: only `refs.py`
   imports `subprocess` (ruff's S404, with the waivers above), every generated
   file carries the provenance marker (`tests/test_markers.py`), and every text
   read and write names its encoding (PLW1514 and the runtime gate). Three are
@@ -139,23 +138,11 @@ measurement.
   checks it. Stage 11 (#269) checks both. Ruff's PLR0917, with
   `max-positional-args = 0`, finds 48 functions with positional parameters in
   `src` and 238 in `tests`, and stage 12 (#270) makes them keyword-only.
-- **Fast readable tests.** The default run passed 368 tests in 2.07 seconds, as
-  pytest reports it, at 100% statement and branch coverage. The 8 integration
-  tests, which spawn ty, passed in 0.77 seconds. Review read all 326 distinct
-  test names and found 18 that name a function, a type or a step of a protocol
-  that a user never sees: `test_extract_params_covers_input_kind`,
-  `test_render_param_covers_input_kind`, `test_docs_gate_builds_when_docs_true`,
-  `test_docs_gate_skips_when_docs_false`,
-  `test_gate_unmet_removal_prunes_empty_directory`, `test_happy_path_dispatch`,
-  `test_parses_framed_message`,
-  `test_renderer_supplies_separator_for_body_without_leading_newline`,
-  `test_returns_frozen_dataclass`,
-  `test_returns_lsp_locations_when_popen_succeeds`, `test_skill_registry`,
-  `test_skips_notifications_until_matching_id`, `test_lsp_error_raises`,
-  `test_raises_on_closed_stream`, `test_kills_on_timeout`, `test_import`,
-  `test_file_not_found_propagates` and `test_syntax_error_propagates`. No stage
-  of the roadmap renames tests for the behaviour they test, so this goes to the
-  product owner.
+- **Fast readable tests.** The time is the default run's, as pytest reports it.
+  The 8 integration tests, which spawn ty, passed in 0.77 seconds. Review read
+  every distinct test name, and #310 lists the ones that name a function, a type
+  or a step of a protocol that a user never sees. No stage of the roadmap
+  renames tests for the behaviour they test.
 - **Current tracker.** Four open issues use a word the concepts page replaces:
   #162 ("artefact"), #231 and #235 ("contributor"), and #280 ("up to date").
   Four ask for work that is done or that a story rules out: #162, since
@@ -286,9 +273,10 @@ with the development dependencies installed.
 - **Cohesive modules, focused functions, true documents, accurate references,
   rules not cases, invariants by construction and symmetry** come from review:
   each module and the longest functions read for one responsibility or job, the
-  stories and the design's Stories section read against the code,
-  `docs/commands.md`, `docs/configuration.md` and the skill sources read against
-  the code and each command's `--help`, every conditional under `src` read for
-  the situation it names, every branch, raise and assert under `src` read for a
-  state the types could rule out, and the namespace map read for parallel
-  operations.
+  stories and the design's
+  [Stories](https://github.com/alimanfoo/uncoded/blob/main/specs/2026-10-25-engineering-standard/design.md#behaviour-changes)
+  section read against the code, `docs/commands.md`, `docs/configuration.md` and
+  the skill sources read against the code and each command's `--help`, every
+  conditional under `src` read for the situation it names, every branch, raise
+  and assert under `src` read for a state the types could rule out, and the
+  namespace map read for parallel operations.

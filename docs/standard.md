@@ -34,8 +34,7 @@ bar for part of it. Each is credited only with what reading the project
 verified, so that a criterion can be traced to a project that meets it. This
 standard adapts the one that
 [dreamcatcher](https://github.com/alimanfoo/dreamcatcher/blob/main/docs/standard.md)
-keeps. Its reading verified pre-commit, Trio, attrs and structlog, Click and
-Flask, and SQLite. The others were read on 2026-10-25.
+keeps.
 
 - **pre-commit.** A Python command that runs other programs, with no source file
   over 600 lines, full coverage enforced, and five runtime dependencies. It sets
@@ -115,7 +114,7 @@ Functions do one thing.
   do, read longest first.
 - Bar: zero. A function is split where a clean seam gives each part a job of its
   own, never to meet a line count. A long function that reads as a sequence of
-  steps, such as the one exchange with ty's language server, stays whole.
+  steps stays whole.
 - Check: review, ordered by the line counts the measurement reports and focused
   on any function a change grows. The complexity limits in `pyproject.toml` stop
   the worst cases before review.
@@ -126,9 +125,9 @@ Exports are used.
 
 - Measure: top-level names under `src` without a leading underscore that no
   other module under `src` imports.
-- Bar: zero, apart from `main`, the console entry point, and `__version__`.
-  uncoded promises no Python API, so a name is public only because another
-  module imports it. Nothing is public because a test wanted it.
+- Bar: zero, apart from `main`, the console entry point. uncoded promises no
+  Python API, so a name is public only because another module imports it.
+  Nothing is public because a test wanted it.
 - Check: review.
 
 #### One way
