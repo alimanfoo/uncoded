@@ -248,8 +248,9 @@ Needs stage 3 for the stories and the list, stage 6 for the changelog, and stage
 Delivers the consistency review against the ontology, and every rename it calls
 for: code identifiers, documents, skill prose and open issues. It renames no
 command, flag, configuration key or generated file path, unless stage 2 recorded
-the rename in the design and the user accepted it. The skills are regenerated,
-and their rewording gets a **Fixed** entry in the changelog.
+the \1 It also replaces \"you\" in the documentation with the reader it means,
+the developer or the agent, as the design's Ontology section says. The skills
+are regenerated, and their rewording gets a **Fixed** entry in the changelog.
 
 Proof: the consistency review reports nothing, and no word the ontology replaces
 remains outside the ontology's own list. Tests, hooks and the strict build pass.

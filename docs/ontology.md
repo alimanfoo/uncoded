@@ -253,8 +253,7 @@ A **developer** is a person who sets up uncoded in a project.
 
 A developer writes the configuration file and commits the installed skill files.
 `uncoded sync` and `uncoded check` are run for them, by agents or by tools they
-set up, such as a pre-commit hook of their own. The documentation addresses the
-developer as "you".
+set up, such as a pre-commit hook of their own.
 
 Replaces: "user", "contributor".
 
