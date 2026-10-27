@@ -72,6 +72,18 @@ repos:
         entry: uv run complexipy src tests
         language: system
         pass_filenames: false
+      # The strict documentation build checks the links under docs/, so this
+      # hook checks the rest. .remarkrc.json loads the plugin and names the
+      # repository.
+      - id: remark-validate-links
+        name: validate markdown links
+        entry: remark --frail --quiet --no-stdout
+        language: node
+        additional_dependencies:
+          - remark-cli@12.0.1
+          - remark-validate-links@13.1.0
+        files: \.md$
+        exclude: ^docs/
       # Runs before uncoded so the generated skill files are built from
       # already-formatted sources. The generated skill dirs are excluded
       # because uncoded sync owns those files.
