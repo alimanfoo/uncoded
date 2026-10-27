@@ -327,15 +327,16 @@ Settled in #261:
   looked for and how to write the file by hand, and exits with status `1`. An
   existing configuration file is left as it is, and `uncoded init` says so. It
   then runs `uncoded sync`, says what to commit, and prints the lines for
-  `AGENTS.md` or `CLAUDE.md` that tell agents to load the navigation skills,
-  saying that without them agents load the uncoded skills only when they choose
-  to. It edits neither file, because version 2 deliberately stopped uncoded
-  writing into them. It is safe to run again. `docs/getting-started.md` and
-  `docs/keeping-current.md` change to match, and no longer tell the developer to
-  run `uncoded sync`. `docs/keeping-current.md` also stops suggesting
-  `uncoded check` for CI: the index is never committed, so in a fresh checkout
-  `uncoded check` always reports it as stale. A pre-commit hook that runs
-  `uncoded sync` is the check that works in CI.
+  `AGENTS.md` or `CLAUDE.md` that tell agents to load the navigation skills, one
+  for each kind of root the project has, saying that without them agents load
+  the uncoded skills only when they choose to. It edits neither file, because
+  version 2 deliberately stopped uncoded writing into them. It is safe to run
+  again. `docs/getting-started.md` and `docs/keeping-current.md` change to
+  match, and no longer tell the developer to run `uncoded sync`.
+  `docs/keeping-current.md` also stops suggesting `uncoded check` for CI: the
+  index is never committed, so in a fresh checkout `uncoded check` always
+  reports it as stale. A pre-commit hook that runs `uncoded sync` is the check
+  that works in CI.
 - **The required version** (**Added**). A `required-version` setting names one
   exact version, such as `"3.1.0"`, with no wider specifiers, so that uncoded
   needs no new dependency. Every command at any other version stops before doing
