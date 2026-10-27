@@ -70,7 +70,18 @@ getter.
 Replaces: "body" and "source body" for a whole definition. In Python's grammar a
 body is only the indented block.
 
-\1### Shadowing
+### Name path
+
+A **name path** identifies a symbol within one Python file. For a symbol at
+module level, it is the symbol's name, as `greet`. For a symbol in a class body,
+it is the class's name, a slash and the symbol's name, as `Greeter/greet`.
+
+`uncoded body` and `uncoded refs` take a name path to say which symbol they
+mean. Serena, an LSP-based toolkit for agents, uses the same term.
+
+Replaces: "symbol path".
+
+### Shadowing
 
 A symbol **shadows** another when it has the same name and is defined later in
 the same module or class body. As in Python, where the later binding replaces
