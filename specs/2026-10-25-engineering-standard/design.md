@@ -94,7 +94,7 @@ measures.
 - **One vocabulary.** Transfers. The check is the `uncoded-consistency-review`
   skill, which uncoded itself ships.
 - **True documents.** The enduring documents are true. uncoded's enduring
-  documents are the ontology, the user stories, the architecture and this
+  documents are the concepts page, the stories, the architecture and this
   standard.
 - **Docs by purpose.** Documentation is organised by purpose. Transfers. The
   current site already separates a tutorial (`getting-started.md`), task guides,
@@ -162,7 +162,7 @@ measures.
   `docs/special-cases.md`.
 - **Invariants by construction.** Invariants are held by construction.
   Transfers.
-- **Few concepts.** Concept economy. Transfers, against the new ontology.
+- **Few concepts.** Concept economy. Transfers, against the concepts page.
 - **Symmetry.** Transfers. The parallel pairs are `uncoded body` and
   `uncoded refs`, the code and documentation indexes, and the two navigation
   skills. #205 is an example.
@@ -248,75 +248,146 @@ The release checklist covers what has no check of its own:
 - **A spell checker.** One vocabulary concerns the choice of words, which the
   consistency review checks, not their spelling.
 
-## Ontology
+## Concepts
 
-The ontology lives at `docs/ontology.md`, in dreamcatcher's form: an opening
-that says it is authoritative over the dated specifications, a **Terms** section
-with one entry per term, and a **Relationships and rules** section. It defines
-uncoded's terms, settled with the product owner in #260, and is the one place
+The concepts page lives at `docs/concepts.md`, in dreamcatcher's form: an
+opening that says it is authoritative over the dated specifications, a **Terms**
+section with one entry per term, and a **Relationships and rules** section. It
+was written as `docs/ontology.md` in #260 and renamed in #261, because
+"concepts" is plain English and lines up with the "few concepts" criterion. It
+defines uncoded's terms, settled with the product owner, and is the one place
 they are listed. Where the code, documents, skills or issues use another word
-for one of these, the ontology's word wins. The documentation names its reader,
-the developer or the agent, and addresses neither as "you", because both read
-it. Each entry ends with the words its term replaces, so that renames and the
-current-tracker triage have a list to work from.
+for one of these, the concepts page's word wins. The documentation names its
+reader, the developer or the agent, and addresses neither as "you", because both
+read it. Each entry ends with the words its term replaces, so that renames and
+the current-tracker triage have a list to work from.
 
 ## Stories
 
-The user stories live at `docs/stories.md`, in dreamcatcher's form. They tell
-what happens from the user's seat, in the ontology's words, citing no mechanism.
-Happy paths come first, then **user errors**, things the user did, and then
-**expected faults**, things outside uncoded going wrong. A bug is behaviour that
-contradicts a story.
+The stories live at `docs/stories.md`, in dreamcatcher's form, settled with the
+product owner in #261. They open with why uncoded exists, to raise the recall
+and precision of an agent's code reading, which is an untested hypothesis
+(#288), and with how it is used. They then tell what happens from the user's
+seat, in the concepts page's words, citing no mechanism. Happy paths come first,
+for the developer and then the agent, then **user errors**, things the user did,
+and then **expected faults**, things outside uncoded going wrong. A bug is
+behaviour that contradicts a story.
 
 uncoded has two users, and the stories cover both:
 
-- the **developer**, who writes the configuration file and commits the installed
-  skill files, while agents, or tools the developer sets up such as a pre-commit
-  hook of their own, run `uncoded sync` and `uncoded check`; and
+- the **developer**, who sets uncoded up with `uncoded init` and commits the
+  configuration file and the installed skill files, while agents, or tools the
+  developer sets up such as a pre-commit hook or CI, run `uncoded sync` and
+  `uncoded check`; and
 - the **agent**, which reads the namespace map, stubs and docs map, and runs
-  `uncoded body` and `uncoded refs`.
+  `uncoded body`, `uncoded refs` and `uncoded sync`.
 
-The stories settle how uncoded handles errors, such as a file it cannot parse
-(#179), a configuration it cannot accept, a root configured outside the project
-directory, `uvx` missing from `PATH`, and an index that has gone stale.
+A property's definition is its getter's, so `uncoded body` keeps printing only
+the getter: a setter or deleter need not follow it in the file, and what
+`uncoded body` prints must be one unbroken stretch an agent can replace.
+Alternatives are recorded in #291.
 
-Settling the ontology in #260 also gave the stories these questions to answer:
+### Behaviour changes
 
-- what happens when no root is configured, whether as a user error or as normal
-  behaviour;
-- how a developer sets uncoded up without running `uncoded sync` or
-  `uncoded check` themselves, where `docs/keeping-current.md` and
-  `docs/getting-started.md` now tell them to; and
-- whether `uncoded body` should print a property's setter and deleter with its
-  getter, which today it does not.
-
-Four behaviour changes are already settled, in #260.
-
-Every command works inside a project. Each finds the project directory by
-walking up from the current directory to the nearest configuration file, as
-ruff, pytest and uv do, so it runs from the project directory or anywhere inside
-it. Today `uncoded body` needs no configuration file and `uncoded refs` walks up
-from the file it is given. Running `uncoded body` or `uncoded refs` outside a
-project becomes a user error, and so does an `--in` file outside the project
-directory, as a root outside it already is. `--in` paths stay relative to the
-current directory, and the code navigation skill tells an agent to run
-`uncoded body` and `uncoded refs` from the project directory, where the
-namespace map's paths work as given. These are **Breaking** entries, for one
+The stories settle the following changes to what uncoded does today. Stage 13 of
+the roadmap builds them, one pull request each, with tests and a changelog
+entry, apart from paths on Windows, which stage 7 builds. Together they make a
 major release.
 
-A reference includes the symbol's definition and its imports, as the ontology
-defines it, so `uncoded refs` lists every location ty returns with
-`includeDeclaration` set, where today it lists only uses. The code navigation
-skill's rename and safe-delete guidance changes to match: a delete is safe when
-the symbol is unused, as the ontology defines it. The change is a **Fixed**
-entry.
+Settled in #260:
 
-The search for the configuration file passes over a `pyproject.toml` without a
-`[tool.uncoded]` table, as ruff's passes over one without `[tool.ruff]`. Today
-it stops there, so a subproject's `pyproject.toml` hides the settings above it
-and `uncoded sync` finds nothing to index. The change is a **Fixed** entry.
+- **Every command works inside a project** (**Breaking**). Each finds the
+  project directory by walking up from the current directory to the nearest
+  configuration file, as ruff, pytest and uv do. Today `uncoded body` needs no
+  configuration file and `uncoded refs` walks up from the file it is given.
+  Running `uncoded body` or `uncoded refs` outside a project becomes a user
+  error, and so does an `--in` file outside the project directory, as a root
+  outside it already is. `--in` paths stay relative to the current directory,
+  and the code navigation skill tells an agent to run `uncoded body` and
+  `uncoded refs` from the project directory, where the namespace map's paths
+  work as given.
+- **A reference includes the symbol's definition and its imports** (**Fixed**).
+  `uncoded refs` lists every location ty returns with `includeDeclaration` set,
+  where today it lists only uses. The code navigation skill's rename and
+  safe-delete guidance changes to match: a delete is safe when the symbol is
+  unused, as the concepts page defines it.
+- **The search for the configuration file passes over a `pyproject.toml` without
+  a `[tool.uncoded]` table** (**Fixed**), as ruff's passes over one without
+  `[tool.ruff]`. Today it stops there, so a Python package's own
+  `pyproject.toml` inside the project hides the configuration file above it.
 
-The stories record all four changes, and stage 13 of the roadmap builds them.
+Settled in #261:
+
+- **`uncoded init`** (**Added**). It finds an existing configuration file the
+  way every command does. Finding none, it writes `.uncoded.toml` in the current
+  directory, with whichever of `src` and `tests` exist as source roots and
+  whichever of `README.md`, `AGENTS.md` and `docs` exist as doc roots, and with
+  the required version set to its own version. It never edits `pyproject.toml`.
+  If none of those roots exist, it writes no configuration file, says what it
+  looked for and how to write the file by hand, and exits with status `1`. An
+  existing configuration file is left as it is, and `uncoded init` says so. It
+  then runs `uncoded sync`, says what to commit, and prints the lines for
+  `AGENTS.md` or `CLAUDE.md` that tell agents to load the navigation skills, one
+  for each kind of root the project has, saying that without them agents load
+  the uncoded skills only when they choose to. It edits neither file, because
+  version 2 deliberately stopped uncoded writing into them. It is safe to run
+  again. `docs/getting-started.md` and `docs/keeping-current.md` change to
+  match, and no longer tell the developer to run `uncoded sync`.
+  `docs/keeping-current.md` also stops suggesting `uncoded check` for CI: the
+  index is never committed, so in a fresh checkout `uncoded check` always
+  reports it as stale. A pre-commit hook that runs `uncoded sync` is the check
+  that works in CI.
+- **The required version** (**Added**). A `required-version` setting names one
+  exact version, such as `"3.1.0"`, with no wider specifiers, so that uncoded
+  needs no new dependency. Every command at any other version stops before doing
+  anything, says which version the project needs, and gives the command
+  `uvx uncoded@<version> <command>`. The reason is that `uvx` caches one version
+  per user and shares it across projects, so without a pin one project's upgrade
+  becomes every project's, and machines disagree about the installed skill
+  files, so a pre-commit hook that runs `uncoded sync` in CI, with an empty
+  cache and so the newest release, fails on the day of a release. The skills do
+  not carry the version: agents adapt from the message. A pre-commit hook's
+  command names the version, as `uvx uncoded@<version> sync`, so upgrading means
+  raising the version in the configuration file and in the hook.
+- **A configuration file that cannot be read gives one line** (**Fixed**). When
+  the configuration file is not valid TOML, a setting has the wrong type, or
+  `required-version` is not one exact version, uncoded names the file and the
+  problem, exits with status `1` and writes nothing. Today these give a Python
+  traceback, or a misleading message such as "source root s is not a directory"
+  for `source-roots = "src"`.
+- **Every root is checked before anything is written** (**Fixed**). Today a bad
+  doc root is found only after the code index and all six installed skill files
+  are written. The message also says whether a root is missing or the wrong
+  kind, where today a missing root is reported as "not a directory".
+- **Skipped files are counted** (**Fixed**). `uncoded sync` ends with a line
+  saying how many files it skipped, which settles #179. The exit status stays
+  `0`.
+- **Agents run `uncoded sync` at the start of every session** (**Fixed**). The
+  navigation skills tell the agent to run it before reading the maps, and again
+  after it changes indexed files or notices that files have changed under it.
+  Today they say to run it only if the map is missing.
+- **ty failures are reported** (**Fixed**). `uncoded refs` passes on what ty or
+  `uvx` said about why ty failed, where today it discards it. It never reports a
+  failure of ty as a fault in the `--in` file. It has no time limit: one would
+  need a background thread or a way of waiting on a pipe that works on Windows,
+  and nobody has reported ty hanging.
+- **A generated file that cannot be read, written or removed gives one line**
+  (**Fixed**). When `uncoded sync` or `uncoded check` cannot read, write or
+  remove a generated file, it says which file and why, in place of a Python
+  traceback. Two `uncoded sync` runs at once can meet this, and uncoded adds no
+  lock to prevent it: nobody has reported the race, and a lock is new machinery.
+- **Paths use `/` on every system** (**Breaking**). `uncoded refs` output,
+  `uncoded sync` messages and warnings, and the path comment in each stub use
+  `/` on Windows too, as the namespace map and docs map already do.
+- **Messages point to `uncoded init`** where a configuration file is missing.
+- **Only the current skills are removed** (**Changed**). `uncoded sync` stops
+  removing the skill names of earlier versions of uncoded, `coherence-review`,
+  `uncoded-coherence-review` and `uncoded-review`, which today it deletes on
+  every run whoever wrote them. It removes only skills the current version
+  generates, when the roots they belong with are gone. A project that still has
+  an old-named skill deletes it by hand, as `docs/upgrading.md` says.
+
+The stories record every one of these changes.
 
 ## Testing page
 
@@ -334,8 +405,8 @@ rather than a number:
    suppressed or bypassed.
 3. **Small and used.** What it adds meets cohesive modules and focused
    functions, and nothing it exports lacks a caller.
-4. **Ontology's words.** Every word it introduces is in the ontology, or the
-   ontology grew in the same change.
+4. **Concepts' words.** Every word it introduces is on the concepts page, or the
+   concepts page grew in the same change.
 5. **Documents still true.** Any enduring document it makes false, it corrects.
 6. **Replaced things removed.** It removes what it replaces.
 7. **Conditionals are rules.** Every conditional it adds applies a rule, or is

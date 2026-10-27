@@ -1,10 +1,11 @@
-# Ontology
+# Concepts
 
-This document names the things uncoded deals with and says what the words mean,
-while [the architecture](architecture.md) says where each thing lives in the
-code.
+This page names the things uncoded deals with, says what each word means, and
+says how the things relate. It is a page of terms, not an explanation of how
+uncoded works: [the stories](stories.md) say what users do and see, and
+[the architecture](architecture.md) says where each thing lives in the code.
 
-The ontology is an enduring part of the project. Changes to the code, the
+The concepts page is an enduring part of the project. Changes to the code, the
 documentation, the skills and the specifications should keep these meanings, or
 update this document deliberately.
 
@@ -17,6 +18,8 @@ disagree with this document, they are wrong and are corrected to match it.
 
 The dated specifications record the design of particular pieces of work. Where
 their words conflict with this document, this document is authoritative.
+
+This page replaces "ontology", the name it was first written under.
 
 ## Terms
 
@@ -34,13 +37,20 @@ file, with the settings in its `[tool.uncoded]` table.
 
 Replaces: "config file".
 
+### Required version
+
+A project's **required version** is the version of uncoded it uses, named
+exactly, such as `"3.1.0"`, by the `required-version` setting in its
+configuration file.
+
 ### Project directory
 
 A project's **project directory** is the directory that holds its configuration
 file.
 
-It is not necessarily the top of a Git repository. A subproject in a monorepo
-can have its own project directory, and a project need not use Git at all.
+It is not necessarily the top of a Git repository, and a project need not use
+Git at all. uncoded is not designed for projects nested inside one another, each
+with its own configuration file.
 
 Replaces: "project root", "repository root".
 
@@ -72,11 +82,8 @@ Replaces: "module constant", which is an assignment at module level.
 
 A symbol's **definition** is the statement that defines it: a class or function
 definition, from its first decorator to the end of its body, or an assignment or
-`type` statement. A property's definition also includes its setter and deleter,
-which are not symbols of their own.
-
-`uncoded body` prints a symbol's definition, except that for a property it
-prints only the getter.
+`type` statement. A property's definition is its getter's definition. Its setter
+and deleter are neither symbols nor part of its definition.
 
 Replaces: "body" and "source body" for a whole definition. In Python's grammar a
 body is only the suite after the definition's colon.
@@ -113,9 +120,6 @@ same name in an outer one.
 A **reference** is a place in Python source where a symbol's name stands for
 that symbol, and not for another symbol with the same name: where the symbol is
 defined, imported or used.
-
-`uncoded refs` finds a symbol's references through the ty language server, and
-prints each as `path:line:column`.
 
 ### Heading
 
@@ -195,6 +199,22 @@ Claude Code or Codex.
 
 Replaces: "coding agent" and "AI coding agent", except to introduce the term.
 
+### Recall
+
+An agent's **recall**, when it reads code for a task, is the share of the code
+relevant to the task that it finds.
+
+Replaces: "sensitivity".
+
+### Precision
+
+An agent's **precision**, when it reads code for a task, is the share of the
+code it reads that is relevant to the task.
+
+uncoded aims to raise both recall and precision, as the stories explain.
+
+Replaces: "specificity".
+
 ### Skill
 
 A **skill** is a named set of instructions that uncoded generates for an agent
@@ -239,9 +259,6 @@ the same concept, with verbatim evidence for each.
 A **generated file** is a file that uncoded writes in a project: one of the
 index's files, an installed skill file, or `.uncoded/.gitignore`.
 
-`uncoded sync` writes the generated files, and removes any that uncoded no
-longer generates.
-
 Replaces: "artefact", "index artefact", "navigation artefact".
 
 ### Provenance marker
@@ -256,9 +273,6 @@ A project's generated files are **current** when they are exactly what uncoded
 would generate from the project as it is now: none missing, none left over, and
 none with different content. The index is current when its files are.
 
-`uncoded check` reports whether the generated files are current, without writing
-any.
-
 Replaces: "up to date", "matches a fresh build".
 
 ### Stale
@@ -269,10 +283,6 @@ is stale when its files are.
 ### Developer
 
 A **developer** is a person who sets up uncoded in a project.
-
-A developer writes the configuration file and commits the installed skill files.
-`uncoded sync` and `uncoded check` are run for them, by agents or by tools they
-set up, such as a pre-commit hook of their own.
 
 Replaces: "contributor".
 
@@ -311,3 +321,7 @@ A symbol is unused when every reference to it lies within its own definition.
 References within the definition of a symbol that it redefines are not uses
 either. An unused overloaded function therefore has a reference in each
 `@overload` definition, and is still unused.
+
+Nor are references within a property's setter or deleter uses of the property.
+An unused property with a setter therefore has references in the setter, and is
+still unused.
