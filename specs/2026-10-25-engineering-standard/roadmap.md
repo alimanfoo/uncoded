@@ -150,10 +150,11 @@ Delivers the workflow half of the design's Infrastructure table: every action in
 with job-level grants; `persist-credentials: false` on every checkout;
 `uv sync --locked`; a publish step that checks the tag matches the built
 version, keeping the `pypi` environment and the attestations Trusted Publishing
-makes by default; zizmor and actionlint in pre-commit, frozen to commits; and
-`.github/dependabot.yml` for uv, pre-commit and GitHub Actions, grouped and with
-a cooldown. This settles #223. `TY_VERSION` stays apart from the dev dependency,
-as the design says.
+makes by default; `hatchling` and `hatch-vcs` pinned exactly in
+`[build-system] requires`; zizmor and actionlint in pre-commit, frozen to
+commits; and `.github/dependabot.yml` for uv, pre-commit and GitHub Actions,
+grouped and with a cooldown. This settles #223. `TY_VERSION` stays apart from
+the dev dependency, as the design says.
 
 Proof: zizmor and actionlint pass with no ignores, and CI is green. The stage
 says that the tag check is first exercised at the next release.
