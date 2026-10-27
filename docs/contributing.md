@@ -45,9 +45,10 @@ uv run python -X warn_default_encoding -m pytest -q --tb=short tests/test_stubs.
 uv run pre-commit run --all-files
 ```
 
-The suite runs formatters, linters, type and complexity checks, the strict
-documentation build, and `uncoded sync`. If a hook changes files, stage the
-changes and run the suite again. Never commit with `--no-verify`.
+The suite runs formatters, linters, type and complexity checks, actionlint and
+zizmor over the workflows, the strict documentation build, and `uncoded sync`.
+If a hook changes files, stage the changes and run the suite again. Never commit
+with `--no-verify`.
 
 ## Edit the docs
 
@@ -68,6 +69,7 @@ code and testing conventions.
 
 ## Release
 
-Publish a GitHub release from its version tag. `.github/workflows/publish.yml`
-builds the source distribution and wheel and uploads them with PyPI Trusted
-Publishing. The repository does not store a PyPI token.
+Publish a GitHub release from its version tag, named `v` followed by the
+version, such as `v3.0.1`. `.github/workflows/publish.yml` builds the source
+distribution and wheel and uploads them with PyPI Trusted Publishing. The
+repository does not store a PyPI token.

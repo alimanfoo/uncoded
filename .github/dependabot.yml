@@ -1,7 +1,7 @@
 version: 2
 
-# Each ecosystem opens one pull request for its version updates and one for
-# its security updates, majors included, because a group applies to one kind.
+# A group covers either version updates or security updates, not both. So each
+# ecosystem has two groups, and opens one pull request for each, majors included.
 # A version update waits until its release is a week old, so a compromised
 # release has time to be found and pulled first. Security updates do not wait.
 
