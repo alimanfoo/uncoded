@@ -74,7 +74,8 @@ repos:
         pass_filenames: false
       # The strict documentation build checks the links under docs/, so this
       # hook checks the rest. .remarkrc.json loads the plugin and names the
-      # repository.
+      # repository, so that a link to a file on GitHub's copy of the repository
+      # is checked against the local file.
       - id: remark-validate-links
         name: validate markdown links
         entry: remark --frail --quiet --no-stdout

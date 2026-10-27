@@ -45,10 +45,12 @@ uv run python -X warn_default_encoding -m pytest -q --tb=short tests/test_stubs.
 uv run pre-commit run --all-files
 ```
 
-The suite runs formatters, linters, type, complexity and workflow checks, checks
-for invisible characters and for broken links in Markdown outside `docs/`, the
-strict documentation build, and `uncoded sync`. If a hook changes files, stage
-the changes and run the suite again. Never commit with `--no-verify`.
+The suite runs formatters, linters, type, complexity and workflow checks, the
+strict documentation build, and `uncoded sync`. It also fails on a blanket
+`# noqa` or `# type: ignore` comment that names no code, on an invisible
+character, and on a broken link in Markdown outside `docs/`. If a hook changes
+files, stage the changes and run the suite again. Never commit with
+`--no-verify`.
 
 ## Edit the docs
 
