@@ -239,18 +239,131 @@ stage 5's baseline.
 
 ## Stage 13: Behaviour
 
-Delivers each behaviour change recorded in the design, apart from Windows paths,
-each with tests and a changelog entry under "Unreleased". It also checks that
-what every story says happens, including each exit status, is covered by some
-test, at whatever grain suits the code, and adds tests where it is not.
+Builds the behaviour changes the design records in its Stories section, apart
+from paths on Windows, which stage 7 builds. Stage 13 is one pull request per
+change, 13.1 to 13.10, and a last, 13.11, that checks every story is covered by
+tests. Each part has tests and a changelog entry under "Unreleased", and changes
+nothing else a user sees. The design's Stories section gives each change in
+full.
 
-Proof: every change on the design's list has its tests and its entry, every
-story's behaviour is covered by a test, and nothing else a user sees changes.
-
-Leaves nothing, unless stage 3 split it.
+13.1 to 13.7 edit `cli.py` or `config.py`, so they run one after another. 13.9
+and 13.10 edit `refs.py` after 13.4 does. 13.8 changes only a skill source, so
+it can run beside the others.
 
 Needs stage 3 for the stories and the list, stage 6 for the changelog, and stage
 12, because both edit `src` and `tests`.
+
+### Stage 13.1: The configuration search
+
+Delivers the search for the configuration file passing over a `pyproject.toml`
+without a `[tool.uncoded]` table.
+
+Proof: a test with a subproject's `pyproject.toml` and no `[tool.uncoded]` table
+finds the configuration file above it.
+
+Needs stage 12.
+
+### Stage 13.2: The required version
+
+Delivers the `required-version` setting, one exact version, and every command
+refusing to run at any other version, with the message the story gives.
+
+Proof: tests show each command refusing at another version, writing nothing, and
+running at the required version or with no `required-version` set.
+
+Needs 13.1.
+
+### Stage 13.3: `uncoded init`
+
+Delivers `uncoded init` as the design describes it, the messages that point to
+it when no configuration file is found, and `docs/getting-started.md` and
+`docs/keeping-current.md` rewritten around it.
+
+Proof: tests cover a project with the conventional roots, one with none of them,
+one already configured, and a second run.
+
+Needs 13.2, because `uncoded init` writes the required version.
+
+### Stage 13.4: Every command works inside a project
+
+Delivers `uncoded body` and `uncoded refs` finding the project directory as the
+other commands do, refusing outside a project, and refusing an `--in` file
+outside the project directory. The code navigation skill tells the agent to run
+them from the project directory. Both changes are **Breaking**.
+
+Proof: tests show each refusal, and `uncoded body` and `uncoded refs` working
+from a subdirectory of the project.
+
+Needs 13.3.
+
+### Stage 13.5: Every root is checked before anything is written
+
+Delivers every root checked before `uncoded sync` writes anything, and messages
+that say whether a root is missing or the wrong kind.
+
+Proof: a test with a valid source root and a missing doc root writes nothing.
+
+Needs 13.4.
+
+### Stage 13.6: Skipped files are counted
+
+Delivers the closing line from `uncoded sync` saying how many files it skipped,
+which settles #179.
+
+Proof: a test with an unparseable Python file shows the warning and the count,
+and exit status `0`.
+
+Needs 13.5.
+
+### Stage 13.7: A failed write is one line
+
+Delivers a one-line message, in place of a traceback, when `uncoded sync` cannot
+write or remove a generated file.
+
+Proof: a test with a generated file that cannot be written shows the message and
+exit status `1`.
+
+Needs 13.6.
+
+### Stage 13.8: `uncoded sync` at the start of every session
+
+Delivers the navigation skills telling the agent to run `uncoded sync` before it
+reads the maps, and again after it changes indexed files or notices that files
+have changed under it.
+
+Proof: the skill sources say so, and the installed skill files are regenerated.
+
+Needs stage 6, for the changelog.
+
+### Stage 13.9: References include definitions and imports
+
+Delivers `uncoded refs` listing every location ty returns with
+`includeDeclaration` set, and the code navigation skill's rename and safe-delete
+guidance changed to match.
+
+Proof: the integration tests show the definition and each import among a
+symbol's references.
+
+Needs 13.4, and #289, so that it is built against the newer ty.
+
+### Stage 13.10: ty failures are reported
+
+Delivers `uncoded refs` passing on what ty or `uvx` says about a failure, giving
+up after 60 seconds if ty stops responding, and never blaming the `--in` file.
+
+Proof: tests with a stand-in for ty that fails, exits early or hangs show each
+message, and that `uncoded refs` stops within the time limit.
+
+Needs 13.9.
+
+### Stage 13.11: Every story is covered
+
+Delivers tests for any behaviour a story describes that no test covers yet,
+including each exit status, at whatever grain suits the code.
+
+Proof: every story's behaviour is covered by some test.
+
+Needs 13.1 to 13.10.
 
 ## Stage 14: Words
 

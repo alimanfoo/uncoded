@@ -290,8 +290,9 @@ Alternatives are recorded in #291.
 ### Behaviour changes
 
 The stories settle the following changes to what uncoded does today. Stage 13 of
-the roadmap builds them, each with tests and a changelog entry. Together they
-make a major release.
+the roadmap builds them, one pull request each, with tests and a changelog
+entry, apart from paths on Windows, which stage 7 builds. Together they make a
+major release.
 
 Settled in #260:
 
