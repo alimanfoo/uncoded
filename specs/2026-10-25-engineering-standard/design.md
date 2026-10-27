@@ -323,25 +323,31 @@ Settled in #261:
   directory, with whichever of `src` and `tests` exist as source roots and
   whichever of `README.md`, `AGENTS.md` and `docs` exist as doc roots, and with
   the required version set to its own version. It never edits `pyproject.toml`.
-  If none of those roots exist, it writes no configuration file, and says what
-  it looked for and how to write the file by hand. An existing configuration
-  file is left as it is, and `uncoded init` says so. It then runs
-  `uncoded sync`, says what to commit, and prints the lines for `AGENTS.md` or
-  `CLAUDE.md` that tell agents to load the navigation skills, saying that
-  without them agents load the uncoded skills only when they choose to. It edits
-  neither file, because version 2 deliberately stopped uncoded writing into
-  them. It is safe to run again. `docs/getting-started.md` and
+  If none of those roots exist, it writes no configuration file, says what it
+  looked for and how to write the file by hand, and exits with status `1`. An
+  existing configuration file is left as it is, and `uncoded init` says so. It
+  then runs `uncoded sync`, says what to commit, and prints the lines for
+  `AGENTS.md` or `CLAUDE.md` that tell agents to load the navigation skills,
+  saying that without them agents load the uncoded skills only when they choose
+  to. It edits neither file, because version 2 deliberately stopped uncoded
+  writing into them. It is safe to run again. `docs/getting-started.md` and
   `docs/keeping-current.md` change to match, and no longer tell the developer to
-  run `uncoded sync`.
+  run `uncoded sync`. `docs/keeping-current.md` also stops suggesting
+  `uncoded check` for CI: the index is never committed, so in a fresh checkout
+  `uncoded check` always reports it as stale. A pre-commit hook that runs
+  `uncoded sync` is the check that works in CI.
 - **The required version** (**Added**). A `required-version` setting names one
   exact version, such as `"3.1.0"`, with no wider specifiers, so that uncoded
   needs no new dependency. Every command at any other version stops before doing
   anything, says which version the project needs, and gives the command
   `uvx uncoded@<version> <command>`. The reason is that `uvx` caches one version
   per user and shares it across projects, so without a pin one project's upgrade
-  becomes every project's, machines disagree about the installed skill files,
-  and `uncoded check` in CI fails on the day of a release. The skills do not
-  carry the version: agents adapt from the message.
+  becomes every project's, and machines disagree about the installed skill
+  files, so a pre-commit hook that runs `uncoded sync` in CI, with an empty
+  cache and so the newest release, fails on the day of a release. The skills do
+  not carry the version: agents adapt from the message. A pre-commit hook's
+  command names the version, as `uvx uncoded@<version> sync`, so upgrading means
+  raising the version in the configuration file and in the hook.
 - **Every root is checked before anything is written** (**Fixed**). Today a bad
   doc root is found only after the code index and all six installed skill files
   are written. The message also says whether a root is missing or the wrong
