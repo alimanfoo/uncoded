@@ -1,10 +1,11 @@
-# Ontology
+# Concepts
 
-This document names the things uncoded deals with and says what the words mean,
-while [the architecture](architecture.md) says where each thing lives in the
-code.
+This page names the things uncoded deals with, says what each word means, and
+says how the things relate. It is a page of terms, not an explanation of how
+uncoded works: [the stories](stories.md) say what users do and see, and
+[the architecture](architecture.md) says where each thing lives in the code.
 
-The ontology is an enduring part of the project. Changes to the code, the
+The concepts page is an enduring part of the project. Changes to the code, the
 documentation, the skills and the specifications should keep these meanings, or
 update this document deliberately.
 
@@ -17,6 +18,8 @@ disagree with this document, they are wrong and are corrected to match it.
 
 The dated specifications record the design of particular pieces of work. Where
 their words conflict with this document, this document is authoritative.
+
+This page replaces "ontology", the name it was first written under.
 
 ## Terms
 
@@ -33,6 +36,15 @@ A project's **configuration file** is where its uncoded settings live: either a
 file, with the settings in its `[tool.uncoded]` table.
 
 Replaces: "config file".
+
+### Required version
+
+A project's **required version** is the version of uncoded it uses, named
+exactly, such as `"3.1.0"`, by the `required-version` setting in its
+configuration file.
+
+Every uncoded command refuses to run at any other version, and says which
+version the project needs.
 
 ### Project directory
 
@@ -195,6 +207,22 @@ Claude Code or Codex.
 
 Replaces: "coding agent" and "AI coding agent", except to introduce the term.
 
+### Recall
+
+An agent's **recall**, when it reads code for a task, is the share of the code
+relevant to the task that it finds.
+
+Replaces: "sensitivity".
+
+### Precision
+
+An agent's **precision**, when it reads code for a task, is the share of the
+code it reads that is relevant to the task.
+
+uncoded aims to raise both recall and precision, as the stories explain.
+
+Replaces: "specificity".
+
 ### Skill
 
 A **skill** is a named set of instructions that uncoded generates for an agent
@@ -270,9 +298,11 @@ is stale when its files are.
 
 A **developer** is a person who sets up uncoded in a project.
 
-A developer writes the configuration file and commits the installed skill files.
-`uncoded sync` and `uncoded check` are run for them, by agents or by tools they
-set up, such as a pre-commit hook of their own.
+A developer runs `uncoded init`, checks the configuration file it writes, adds
+the lines it prints to `AGENTS.md` or `CLAUDE.md`, and commits the configuration
+file and the installed skill files. From then on, agents run `uncoded sync`, and
+tools the developer sets up, such as a pre-commit hook or CI, may run
+`uncoded sync` or `uncoded check`.
 
 Replaces: "contributor".
 

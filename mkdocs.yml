@@ -68,5 +68,6 @@ nav:
       - Upgrading: upgrading.md
   - Development:
       - Contributing: contributing.md
-      - Ontology: ontology.md
+      - Concepts: concepts.md
+      - Stories: stories.md
       - Architecture: architecture.md

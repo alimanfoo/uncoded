@@ -126,10 +126,14 @@ Cover both arms of every branch. If an arm looks unreachable, the branch is dead
 code. Remove or restructure it rather than reach for a coverage pragma. The repo
 carries no coverage pragmas.
 
-## Vocabulary
+## Concepts and stories
 
-[docs/ontology.md](docs/ontology.md) says what the words mean. Use its words and
+[docs/concepts.md](docs/concepts.md) says what the words mean. Use its words and
 no others.
+
+[docs/stories.md](docs/stories.md) says what users do with uncoded and what they
+see, including what happens when things go wrong. Behaviour that contradicts a
+story is a bug.
 
 ## Conventions
 

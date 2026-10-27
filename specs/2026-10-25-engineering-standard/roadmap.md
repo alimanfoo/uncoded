@@ -27,34 +27,33 @@ dependency review check depends on it.
 
 ## Stage 2: Ontology (interactive)
 
-Delivers `docs/ontology.md`, written with the product owner, in the form the
-design's Ontology section gives. It starts from the terms the design lists, and
-the session adds or drops terms with the product owner. Each entry ends with the
-words its term replaces. The mkdocs nav section "Contribute" becomes
-"Development", and the ontology goes there. `AGENTS.md` gains one line pointing
-to it.
+Delivers `docs/ontology.md`, renamed `docs/concepts.md` in stage 3, written with
+the product owner, in the form the design's Concepts section gives. It starts
+from the terms the design lists, and the session adds or drops terms with the
+product owner. Each entry ends with the words its term replaces. The mkdocs nav
+section "Contribute" becomes "Development", and the page goes there. `AGENTS.md`
+gains one line pointing to it.
 
-Proof: the product owner accepts the ontology, and the strict mkdocs build
-passes.
+Proof: the product owner accepts the page, and the strict mkdocs build passes.
 
-Leaves every rename in code, documents, skills and issues to stage 14. Where the
-ontology would rename something a user types or reads as a path (a command, a
-flag, a configuration key or a generated file's path), the session records it in
-the design as a named breaking change for the product owner to accept or refuse.
+Leaves every rename in code, documents, skills and issues to stage 14. Where a
+term would rename something a user types or reads as a path (a command, a flag,
+a configuration key or a generated file's path), the session records it in the
+design as a named breaking change for the product owner to accept or refuse.
 
 Needs nothing.
 
 ## Stage 3: Stories (interactive)
 
-Delivers `docs/stories.md`, written with the product owner in the ontology's
-words, under "Development", in the form the design's Stories section gives. It
-covers the developer and the agent: happy paths, then user errors, then expected
-faults. Among them it settles what `uncoded sync` says about files it skipped
-(#179), a configuration uncoded cannot accept, a root configured outside the
-project directory, `uvx` missing from `PATH`, a stale index, and how paths look
-on Windows, including the paths `uncoded refs` prints and the paths in
-`uncoded sync`'s messages. It also settles the questions that #260 recorded in
-the design.
+Delivers `docs/stories.md`, written with the product owner in the concepts
+page's words, under "Development", in the form the design's Stories section
+gives. It covers the developer and the agent: happy paths, then user errors,
+then expected faults. Among them it settles what `uncoded sync` says about files
+it skipped (#179), a configuration uncoded cannot accept, a root configured
+outside the project directory, `uvx` missing from `PATH`, a stale index, and how
+paths look on Windows, including the paths `uncoded refs` prints and the paths
+in `uncoded sync`'s messages. It also settles the questions that #260 recorded
+in the design, and renames `docs/ontology.md` to `docs/concepts.md`.
 
 Proof: the product owner accepts the stories, the strict build passes, and every
 place a story contradicts what uncoded does today is listed in the design as a
@@ -255,16 +254,16 @@ Needs stage 3 for the stories and the list, stage 6 for the changelog, and stage
 
 ## Stage 14: Words
 
-Delivers the consistency review against the ontology, and every rename it calls
-for: code identifiers, documents, skill prose and open issues. It renames no
-command, flag, configuration key or generated file path, unless stage 2 recorded
-the rename in the design and the product owner accepted it. It also replaces
-"you" in the documentation with the reader it means, the developer or the agent,
-as the design's Ontology section says. The skills are regenerated, and their
-rewording gets a **Fixed** entry in the changelog.
+Delivers the consistency review against the concepts page, and every rename it
+calls for: code identifiers, documents, skill prose and open issues. It renames
+no command, flag, configuration key or generated file path, unless stage 2
+recorded the rename in the design and the product owner accepted it. It also
+replaces "you" in the documentation with the reader it means, the developer or
+the agent, as the design's Concepts section says. The skills are regenerated,
+and their rewording gets a **Fixed** entry in the changelog.
 
-Proof: the consistency review reports nothing, and no word the ontology replaces
-remains outside the ontology's own list. Tests, hooks and the strict build pass.
+Proof: the consistency review reports nothing, and no word the concepts page
+replaces remains outside its own list. Tests, hooks and the strict build pass.
 
 Leaves the shape criteria to stage 15, and remeasuring the tracker to stage 17.
 
@@ -321,13 +320,13 @@ Delivers the definition of done in `AGENTS.md`, with its titled questions,
 asking every pull request to answer each under a "Definition of done" heading,
 title first and with its evidence. Delivers `docs/releasing.md`, a checklist run
 before each major or minor release: the consistency review; the triage of open
-issues, including the ontology's replaced words; measuring every criterion;
-adding new Python releases to the matrix; reading the repository settings back
-through `gh api`, including the `pypi` environment's tag rule, and the
-collaborators-only limit by eye; and moving the "Unreleased" entries under the
-new version. The Releasing section of `AGENTS.md` moves there. Then it runs the
-checklist once, triaging #226 and #162, and records the second measurement on
-`docs/measurement.md`.
+issues, including the words the concepts page replaces; measuring every
+criterion; adding new Python releases to the matrix; reading the repository
+settings back through `gh api`, including the `pypi` environment's tag rule, and
+the collaborators-only limit by eye; and moving the "Unreleased" entries under
+the new version. The Releasing section of `AGENTS.md` moves there. Then it runs
+the checklist once, triaging #226 and #162, and records the second measurement
+on `docs/measurement.md`.
 
 Proof: its own pull request answers the definition of done, the second
 measurement is recorded, and every shortfall is closed or is an issue.
