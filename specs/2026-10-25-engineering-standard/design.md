@@ -283,14 +283,11 @@ Settling the ontology in #260 also gave the stories these questions to answer:
   behaviour;
 - how a developer sets uncoded up without running `uncoded sync` or
   `uncoded check` themselves, where `docs/keeping-current.md` and
-  `docs/getting-started.md` now tell them to;
-- what happens when the search for the configuration file meets a
-  `pyproject.toml` without a `[tool.uncoded]` table, which today stops the
-  search, so a subproject's `pyproject.toml` hides the settings above it; and
+  `docs/getting-started.md` now tell them to; and
 - whether `uncoded body` should print a property's setter and deleter with its
   getter, which today it does not.
 
-Three behaviour changes are already settled, in #260.
+Four behaviour changes are already settled, in #260.
 
 Every command works inside a project. Each finds the project directory by
 walking up from the current directory to the nearest configuration file, as
@@ -309,8 +306,14 @@ defines it, so `uncoded refs` lists every location ty returns with
 `includeDeclaration` set, where today it lists only uses. The code navigation
 skill's rename and safe-delete guidance changes to match: a delete is safe when
 the symbol is unused, as the ontology defines it. The change is a **Fixed**
-entry. The stories record all three changes, and stage 13 of the roadmap builds
-them.
+entry.
+
+The search for the configuration file passes over a `pyproject.toml` without a
+`[tool.uncoded]` table, as ruff's passes over one without `[tool.ruff]`. Today
+it stops there, so a subproject's `pyproject.toml` hides the settings above it
+and `uncoded sync` finds nothing to index. The change is a **Fixed** entry.
+
+The stories record all four changes, and stage 13 of the roadmap builds them.
 
 ## Testing page
 
