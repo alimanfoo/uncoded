@@ -210,7 +210,9 @@ job, and fails unless each succeeded, since GitHub counts a skipped required
 check as passing. Branch protection requires that job and `dependency-review`,
 which runs only on pull requests in a workflow of its own, where the gate cannot
 need it. Both names are stable, so adding or renaming a job changes the
-workflow, where review sees it, and not the repository settings.
+workflow, where review sees it, and not the repository settings. Dependency
+review reads the repository's dependency graph, so the graph must be turned on
+in the repository settings.
 
 Branch protection leaves "require branches to be up to date" off, because
 campaigns merge stages without a merge queue, and leaves conversation resolution
