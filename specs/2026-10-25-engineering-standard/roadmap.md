@@ -167,9 +167,10 @@ Needs stage 1, because both edit `ci.yml`.
 Delivers every pre-commit hook revision frozen to a commit, with a
 `# frozen: vX` comment, and the rest of dreamcatcher's hooks that the design
 lists: fix-byte-order-marker, check-illegal-windows-names, check-merge-conflict,
-detect-private-key, the pygrep checks against blanket `noqa` and `type: ignore`,
-a `pygrep` hook against U+00A0 and the zero-width and bidirectional characters,
-and remark-validate-links over the Markdown outside `docs/`.
+detect-private-key, ruff's `PGH` checks against blanket `noqa` and
+`type: ignore`, a `pygrep` hook against U+00A0 and the zero-width and
+bidirectional characters, and remark-validate-links over the Markdown outside
+`docs/`.
 
 Proof: `pre-commit run --all-files` passes with every hook on, and each broken
 link it found is fixed in the same pull request.
