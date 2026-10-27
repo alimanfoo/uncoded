@@ -42,6 +42,7 @@ uncoded = "uncoded.cli:main"
 [project.urls]
 Homepage = "https://github.com/alimanfoo/uncoded"
 Repository = "https://github.com/alimanfoo/uncoded"
+Changelog = "https://alimanfoo.github.io/uncoded/changelog/"
 
 [tool.hatch.version]
 source = "vcs"
