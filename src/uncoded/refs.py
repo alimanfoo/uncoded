@@ -16,8 +16,9 @@ from uncoded.resolver import NamePath, resolve_name_position
 
 # Strict pin: ty is pre-1.0 with known textDocument/references edge cases.
 # This is the ty that `uncoded refs` runs through uvx, kept apart from the dev
-# dependency on ty. Raising it changes what `uncoded refs` reports, so run the
-# integration tests. See #111 before bumping.
+# dependency on ty. Raising it changes what `uncoded refs` reports. Before you
+# raise it, run the integration tests (`uv run pytest -m integration --no-cov`)
+# and check the ty issues on textDocument/references that #111 lists.
 TY_VERSION = "0.0.92"
 
 
