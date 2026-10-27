@@ -178,6 +178,10 @@ replace. That text is the symbol's whole definition exactly as it is in the
 file, so the edit lands where it should without the agent reading the file to
 work out line numbers.
 
+What `uncoded body` prints is always one unbroken stretch of the file. For a
+property, that is the getter. A property's setter or deleter can sit elsewhere
+in the class, so before changing a property the agent checks the class for them.
+
 The value is precision: one call gives exactly the text to change, and nothing
 around it.
 

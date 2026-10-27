@@ -84,11 +84,11 @@ Replaces: "module constant", which is an assignment at module level.
 
 A symbol's **definition** is the statement that defines it: a class or function
 definition, from its first decorator to the end of its body, or an assignment or
-`type` statement. A property's definition also includes its setter and deleter,
-which are not symbols of their own.
+`type` statement. A property's definition is its getter's definition. Its setter
+and deleter are neither symbols nor part of its definition.
 
-`uncoded body` prints a symbol's definition, except that for a property it
-prints only the getter.
+`uncoded body` prints a symbol's definition, which is always one unbroken
+stretch of the file, exactly as it is.
 
 Replaces: "body" and "source body" for a whole definition. In Python's grammar a
 body is only the suite after the definition's colon.
@@ -341,3 +341,7 @@ A symbol is unused when every reference to it lies within its own definition.
 References within the definition of a symbol that it redefines are not uses
 either. An unused overloaded function therefore has a reference in each
 `@overload` definition, and is still unused.
+
+Nor are references within a property's setter or deleter uses of the property.
+An unused property with a setter therefore has references in the setter, and is
+still unused.

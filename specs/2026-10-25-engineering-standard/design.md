@@ -282,8 +282,10 @@ uncoded has two users, and the stories cover both:
 - the **agent**, which reads the namespace map, stubs and docs map, and runs
   `uncoded body`, `uncoded refs` and `uncoded sync`.
 
-One question is still open for the product owner: whether `uncoded body` should
-print a property's setter and deleter with its getter, which today it does not.
+A property's definition is its getter's, so `uncoded body` keeps printing only
+the getter: a setter or deleter need not follow it in the file, and what
+`uncoded body` prints must be one unbroken stretch an agent can replace.
+Alternatives are recorded in #291.
 
 ### Behaviour changes
 
