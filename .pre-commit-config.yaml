@@ -13,6 +13,19 @@ repos:
       - id: check-toml
       - id: check-added-large-files
 
+  - repo: https://github.com/rhysd/actionlint
+    rev: 914e7df21a07ef503a81201c76d2b11c789d3fca # frozen: v1.7.12
+    hooks:
+      - id: actionlint
+
+  # actionlint checks that a workflow is well formed, and zizmor checks that it
+  # is secure. zizmor's online audits need a token, so it runs offline.
+  - repo: https://github.com/zizmorcore/zizmor-pre-commit
+    rev: c92afdf2c6ca336aaa8f39e2bd8d48f62dbd8e1f # frozen: v1.31.1
+    hooks:
+      - id: zizmor
+        args: [--offline]
+
   - repo: local
     hooks:
       - id: ruff-check
