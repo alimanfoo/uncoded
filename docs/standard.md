@@ -373,3 +373,12 @@ where the check will read it: a per-file ignore in `pyproject.toml`, with a
 comment that gives the reason, for a lint rule, and an entry on the ledger for
 [Rules not cases](#rules-not-cases). A waiver with no reason a reader can find
 is a violation.
+
+## Measurement
+
+Every criterion is measured again before each major or minor release, and the
+enduring documents are read against the code. [The measurement](measurement.md)
+holds the latest results and says how each was taken, so the next measurement
+can repeat it. Each shortfall is owned by an issue, and none holds a release
+back. Where a check that this page names is not yet in place, the measurement
+says so and names the issue that adds it.
