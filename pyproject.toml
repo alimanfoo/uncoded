@@ -83,7 +83,7 @@ select = [
     "W", # pycodestyle warnings
     "C4", # flake8-comprehensions
     "PIE", # flake8-pie (misc. lints)
-    "PGH", # pygrep-hooks (blanket noqa and type: ignore)
+    "PGH", # pygrep-hooks
     "FLY", # flynt (f-string conversion)
     "PERF", # perflint (performance anti-patterns)
     "RUF", # Ruff-specific rules
