@@ -45,7 +45,8 @@ uv run python -X warn_default_encoding -m pytest -q --tb=short tests/test_stubs.
 uv run pre-commit run --all-files
 ```
 
-The suite runs formatters, linters, type, complexity and workflow checks, the
+The suite runs formatters, linters, type, complexity and workflow checks, checks
+for invisible characters and for broken links in Markdown outside `docs/`, the
 strict documentation build, and `uncoded sync`. If a hook changes files, stage
 the changes and run the suite again. Never commit with `--no-verify`.
 
