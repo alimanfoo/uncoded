@@ -338,6 +338,16 @@ exits with status `1` and writes nothing.
 The user moves to the project directory and runs the command again, or sets
 uncoded up.
 
+### A configuration file that cannot be read
+
+The configuration file is not valid TOML, a setting has the wrong type, such as
+`source-roots = "src"` where a list belongs, or `required-version` is not one
+exact version. Every uncoded command that reads the configuration file stops.
+uncoded names the file and says what is wrong with it, in one line. It exits
+with status `1` and writes nothing.
+
+The developer corrects the configuration file.
+
 ### A configuration file that names no roots
 
 The configuration file lists no source roots and no doc roots. Usually a setting

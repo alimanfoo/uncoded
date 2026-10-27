@@ -349,6 +349,12 @@ Settled in #261:
   not carry the version: agents adapt from the message. A pre-commit hook's
   command names the version, as `uvx uncoded@<version> sync`, so upgrading means
   raising the version in the configuration file and in the hook.
+- **A configuration file that cannot be read gives one line** (**Fixed**). When
+  the configuration file is not valid TOML, a setting has the wrong type, or
+  `required-version` is not one exact version, uncoded names the file and the
+  problem, exits with status `1` and writes nothing. Today these give a Python
+  traceback, or a misleading message such as "source root s is not a directory"
+  for `source-roots = "src"`.
 - **Every root is checked before anything is written** (**Fixed**). Today a bad
   doc root is found only after the code index and all six installed skill files
   are written. The message also says whether a root is missing or the wrong
