@@ -65,6 +65,7 @@ nav:
   - Reference:
       - Configuration: configuration.md
       - Commands: commands.md
+      - Compatibility: compatibility.md
       - Upgrading: upgrading.md
   - Development:
       - Contributing: contributing.md

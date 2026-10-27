@@ -53,8 +53,7 @@ keeps.
   logic apart from input and output. Neither keeps its modules small.
 - **SQLite.** A versioned file format, a compatibility promise phrased as
   intent, and a published account of how the project is tested. It sets the bar
-  for the index formats and the agent-facing contract. We borrow its forms, not
-  its promises.
+  for the index formats and the contract. We borrow its forms, not its promises.
 - **urllib3.** Every action is pinned to a commit, every workflow sets read-only
   `permissions`, zizmor runs in pre-commit, CodeQL covers `actions`, Scorecard
   runs, Dependabot groups its updates with a cooldown, publishing goes through a
@@ -195,16 +194,14 @@ Documentation is organised by purpose.
 
 #### Versioned contract
 
-The agent-facing contract is versioned.
+The contract is versioned.
 
 - Measure: whether a compatibility statement gives the rules for what counts as
-  a breaking, minor or patch change to the agent-facing contract, and whether
-  every breaking change has a changelog entry saying what the user must do.
-- Bar: both hold. The agent-facing contract is the generated skills, the index
-  formats, and the commands, flags, configuration keys, standard output and exit
-  statuses of the command-line tool. The package version is the only version,
-  and any breaking change to the contract needs a major release. The changelog
-  uses the headings Breaking, Added, Changed and Fixed.
+  a breaking, minor or patch change to the contract, and whether every breaking
+  change has a changelog entry saying what the user must do.
+- Bar: both hold, for the contract and the rules that
+  [the compatibility page](compatibility.md) gives. The changelog uses the
+  headings Breaking, Added, Changed and Fixed.
 - Check: review, through the definition of done's
   [Changelog entry](#definition-of-done) question.
 
@@ -358,9 +355,9 @@ questions.
 6. **Replaced things removed.** It removes what it replaces.
 7. **Conditionals are rules.** Every conditional it adds applies a rule, or is
    on the ledger with its external cause.
-8. **Changelog entry.** Any change to the agent-facing contract has an entry
-   under **Unreleased**, under the heading that fits it. An entry does not state
-   a release type. The headings imply it: any **Breaking** entry makes the next
+8. **Changelog entry.** Any change to the contract has an entry under
+   **Unreleased**, under the heading that fits it. An entry does not state a
+   release type. The headings imply it: any **Breaking** entry makes the next
    release major, any **Added** or **Changed** entry minor, and **Fixed** alone
    a patch.
 

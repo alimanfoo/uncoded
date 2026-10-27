@@ -1,5 +1,9 @@
 # Upgrading
 
+Each major release has a section on this page, which says what to change in a
+project before it uses that release. [Compatibility](compatibility.md) says
+which releases are major.
+
 From version 2, follow the steps below. From version 1, complete
 [the version 1 to 2 steps](#from-version-1-to-version-2) first.
 
