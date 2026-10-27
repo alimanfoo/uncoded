@@ -185,9 +185,10 @@ The PyPI trusted publisher is configured for:
 - Workflow: `publish.yml`
 - Environment: `pypi`
 
-Create and publish a GitHub release from the release tag. The `published`
-release event builds the source distribution and wheel, then uploads them to
-PyPI.
+Create and publish a GitHub release from the release tag. Name the tag `v`
+followed by the version, such as `v3.0.1`. The `published` release event builds
+the source distribution and wheel, then uploads them to PyPI. The build fails
+before the upload if the tag did not build that version.
 
 ## Before you start
 
