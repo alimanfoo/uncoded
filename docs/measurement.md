@@ -38,7 +38,7 @@ measurement.
 | Reviewed changes           | 11 pull requests merged since v3.0.0, 10 linking an issue or spec, 0 answering the definition of done; 4 commits outside one     | not met | #275                                 |
 | Loud failures              | No `strict = true`, `pytest>=8.0`, no test timeout                                                                               | not met | #269                                 |
 | Rules not cases            | No ledger; 4 conditionals name a situation, each with a cause inside uncoded                                                     | not met | #273, #293, #296, #304               |
-| Invariants by construction | 0 branches that defend against a state the types could rule out; 5 class fields admit `None`                                     | met     |                                      |
+| Invariants by construction | 0 branches that defend against a state the types could rule out                                                                  | met     |                                      |
 | Few concepts               | 35 terms on the concepts page, settled with the product owner in #279 and #290; no other change has added one                    | met     |                                      |
 | Symmetry                   | 4 asymmetries between `uncoded body` and `uncoded refs`, and between the code and documentation index paths; skills are parallel | not met | #273, #296                           |
 
@@ -108,9 +108,7 @@ measurement.
   is removed; #281, where a name path with a slash reaches a class that a later
   definition redefines; and #292, where `uncoded body` changes CRLF line endings
   and drops a byte-order mark. The architecture contradicts nothing, but it does
-  not yet state the three layers, which stage 11 (#269) adds. The standard names
-  some checks that are not yet in place, and each is listed under its criterion
-  here with the stage that adds it.
+  not yet state the three layers, which stage 11 (#269) adds.
 - **Docs by purpose.** "Get started" is the tutorial, "Use uncoded" holds the
   how-to pages, and "Reference" holds the configuration, command and upgrading
   references. The README sends the reader to the site. `docs/contributing.md`
@@ -171,8 +169,6 @@ measurement.
   definition of done, which stage 17 (#275) starts asking for. Four commits
   reached `main` outside a pull request, the last on 2026-10-24. Branch
   protection now requires a pull request, enforced for admins.
-- **Loud failures.** Stage 11 (#269) adds `strict = true`, raises the floor to
-  `pytest>=9.0` and adds the timeouts.
 - **Rules not cases.** These conditionals name a situation, and the cause of
   each is a choice uncoded made: `config._config_file_at` passes over a
   directory named `.uncoded`, and stops the search at a `pyproject.toml` without
@@ -183,16 +179,9 @@ measurement.
   remain. The other conditionals apply rules from outside uncoded, such as
   CommonMark's headings and Python's parameter syntax, or rules the concepts
   page states, such as a property's setter and deleter not being symbols.
-- **Invariants by construction.** The class fields that admit `None` are
-  `resolver.NamePath.tail`, `stubs.StubParam.annotation`,
-  `stubs.StubFunction.return_annotation`, `stubs.StubAssignment.annotation` and
-  `stubs.StubAssignment.value_source`. Each `None` is a case the source can
-  produce, such as a name path with no slash or a parameter with no annotation.
-  `stubs.StubAssignment` also carries an `is_pep695_alias` flag, and its fields
-  allow an alias with an annotation, which no source produces, but no branch
-  defends against it.
-- **Few concepts.** The concepts page was written with the product owner in #279
-  and #290, and nothing else has changed it.
+- **Invariants by construction.** `stubs.StubAssignment` carries an
+  `is_pep695_alias` flag, and its fields allow an alias with an annotation,
+  which no source produces, but no branch defends against it.
 - **Symmetry.** `uncoded body` and `uncoded refs` each list the exceptions they
   report, and the lists can drift (#205). `uncoded refs` finds a project
   directory and `uncoded body` does not, which stage 13.4 (#296) settles. In
@@ -207,10 +196,10 @@ measurement.
 Each number above was taken this way, from the project directory of a checkout
 with the development dependencies installed.
 
-- **Line counts** come from `wc -l src/uncoded/*.py`. Function lengths, public
-  names that no other module imports, and class fields that admit `None` come
-  from the script below, run with `uv run python`. Its counts are prompts for
-  review, which judges each against the bar.
+- **Line counts** come from `wc -l src/uncoded/*.py`. Function lengths and
+  public names that no other module imports come from the script below, run with
+  `uv run python`. Its counts are prompts for review, which judges each against
+  the bar.
 
   ```python
   import ast
@@ -227,18 +216,12 @@ with the development dependencies installed.
       if isinstance(node, ast.ImportFrom) and node.module
       for alias in node.names
   }
-  functions, unimported, nullable = [], [], []
+  functions, unimported = [], []
   for module, tree in trees.items():
       for node in ast.walk(tree):
           if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
               start = min([node.lineno] + [d.lineno for d in node.decorator_list])
               functions.append((node.end_lineno - start + 1, f"{module}.{node.name}"))
-          if isinstance(node, ast.ClassDef):
-              for field in node.body:
-                  if isinstance(field, ast.AnnAssign) and "None" in ast.unparse(
-                      field.annotation
-                  ):
-                      nullable.append(f"{module}.{node.name}.{ast.unparse(field.target)}")
       for node in tree.body:
           names = [node.name] if isinstance(node, ast.FunctionDef | ast.ClassDef) else []
           if isinstance(node, ast.Assign | ast.AnnAssign):
@@ -251,7 +234,6 @@ with the development dependencies installed.
           ]
   print("Longest functions:", *sorted(functions, reverse=True)[:10], sep="\n  ")
   print("Public names no other module imports:", *sorted(unimported), sep="\n  ")
-  print("Class fields that admit None:", *sorted(nullable), sep="\n  ")
   ```
 
 - **Suppressions** come from

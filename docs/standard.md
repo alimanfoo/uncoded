@@ -316,8 +316,7 @@ Invariants are held by construction.
   could have made unrepresentable, such as a flag that says which of two
   optional fields is set.
 - Bar: zero. Where two facts must agree, one type carries both.
-- Check: review, and a count of class fields whose annotation admits `None`,
-  which each measurement records.
+- Check: review.
 
 #### Few concepts
 
@@ -335,13 +334,13 @@ Concept economy.
 
 Parallel concepts have parallel operations.
 
-- Measure: for concepts the concepts page treats as parallel, the operations
-  that exist for one and not the other, or exist twice. The parallel pairs are
-  `uncoded body` and `uncoded refs`, the code index and the documentation index,
-  and the two navigation skills.
-- Bar: parallel concepts have parallel operations with parallel names, and share
-  code where the concepts page says they are the same. An asymmetry stands only
-  where the concepts page names the difference.
+- Measure: the operations that exist for one of a parallel pair and not the
+  other, or exist twice. The parallel pairs are `uncoded body` and
+  `uncoded refs`, the code index and the documentation index, and the two
+  navigation skills.
+- Bar: each pair has parallel operations with parallel names, and shares code
+  where its two halves do the same thing. An asymmetry stands only where the
+  concepts page or the stories name the difference.
 - Check: review, reading the namespace map, which `uncoded sync` writes.
 
 ## Definition of done

@@ -145,7 +145,7 @@ measures.
     passes fixtures and parameters by name, so a test takes them after `*`, as
     `def test_sync(*, tmp_path)`. This settles #219.
 - **Fast readable tests.** The suite is fast and speaks the user's language.
-  Transfers, with the bar at 60 seconds. The suite takes about 3 seconds today.
+  Transfers, with the bar at 60 seconds.
 - **Current tracker.** The tracker is current. Transfers. The baseline found
   #162, #226, #229 and #278 to be candidates to close.
 - **Reviewed changes.** Every change is reviewed against this standard.
