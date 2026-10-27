@@ -4,7 +4,8 @@ uncoded's contract is the part of uncoded that a project can rely on from one
 release to the next. The version number of each release says whether it changes
 the contract in a way that can break a project. This page says what the contract
 covers and what each kind of release can change. [Upgrading](upgrading.md) says
-what to change in a project for each major release.
+what to change in a project for each major release, and
+[the changelog](changelog.md) lists the changes in each release.
 
 ## The contract
 
@@ -74,7 +75,9 @@ name the release wherever the project runs uncoded, such as
 
 To upgrade a project:
 
-1. If the new release is major, follow its section of [Upgrading](upgrading.md).
-2. If the project names its release, change the name to the new release.
-3. Run `uncoded sync` with the new release, and commit the installed skill files
+1. Read [the changelog](changelog.md) for every release after the one that the
+   project uses.
+2. If the new release is major, follow its section of [Upgrading](upgrading.md).
+3. If the project names its release, change the name to the new release.
+4. Run `uncoded sync` with the new release, and commit the installed skill files
    that it changes.
