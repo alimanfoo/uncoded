@@ -71,3 +71,5 @@ nav:
       - Concepts: concepts.md
       - Stories: stories.md
       - Architecture: architecture.md
+      - Standard: standard.md
+      - Measurement: measurement.md

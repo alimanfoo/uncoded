@@ -463,8 +463,8 @@ criterion; adding new Python releases to the matrix; reading the repository
 settings back through `gh api`, including the `pypi` environment's tag rule, and
 the collaborators-only limit by eye; and moving the "Unreleased" entries under
 the new version. The Releasing section of `AGENTS.md` moves there. Then it runs
-the checklist once, triaging #226 and #162, and records the second measurement
-on `docs/measurement.md`.
+the checklist once, triaging #162, #226, #229 and #278, and records the second
+measurement on `docs/measurement.md`.
 
 Proof: its own pull request answers the definition of done, the second
 measurement is recorded, and every shortfall is closed or is an issue.
