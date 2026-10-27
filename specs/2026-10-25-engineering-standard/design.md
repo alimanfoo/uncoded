@@ -146,8 +146,8 @@ measures.
     `def test_sync(*, tmp_path)`. This settles #219.
 - **Fast readable tests.** The suite is fast and speaks the user's language.
   Transfers, with the bar at 60 seconds. The suite takes about 3 seconds today.
-- **Current tracker.** The tracker is current. Transfers. #226 and #162 are
-  candidates to close.
+- **Current tracker.** The tracker is current. Transfers. The baseline found
+  #162, #226, #229 and #278 to be candidates to close.
 - **Reviewed changes.** Every change is reviewed against this standard.
   Transfers, including the exemption for Dependabot pull requests.
 - **Loud failures.** The suite fails loudly. New, after nox. pytest 9's single
