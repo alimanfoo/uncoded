@@ -291,8 +291,8 @@ Settling the ontology in #260 also gave the stories these questions to answer:
 - what happens when the search for the configuration file meets a
   `pyproject.toml` without a `[tool.uncoded]` table, which today stops the
   search, so a subproject's `pyproject.toml` hides the settings above it; and
-- what `uncoded body` prints for a symbol with more than one definition, which
-  today is only the last, or a property's getter.
+- whether `uncoded body` should print a property's setter and deleter with its
+  getter, which today it does not.
 
 Three behaviour changes are already settled, in #260.
 

@@ -50,37 +50,36 @@ level it is a class, a function, a `type` alias, or an assignment to a single
 name, such as `x = 1` or `x: int`. Directly in a class body it is a method, a
 property, or an assignment to a single name.
 
-Each symbol has a name and one or more definitions. Two symbols can share a
-name, such as two functions called `parse` in different modules. Directories and
-files are not symbols, and neither are names defined inside a function or inside
-a nested class.
+Each symbol has a name and one definition. Two symbols can share a name, such as
+two functions called `parse` in different modules. Directories and files are not
+symbols, and neither are names defined inside a function or inside a nested
+class.
 
 Replaces: "module constant", which is an assignment at module level.
 
 ### Definition
 
-A **definition** is a statement that defines a symbol: a class or function
+A symbol's **definition** is the statement that defines it: a class or function
 definition, from its first decorator to the end of its body, or an assignment or
-`type` statement.
+`type` statement. A property's definition also includes its setter and deleter,
+which are not symbols of their own.
 
-A symbol has more than one definition when its name is defined again in the same
-module or class body: a property's setter and deleter, the signatures of an
-overloaded function, or a name assigned twice. `uncoded body` prints one of
-them: the last, or for a property, its getter.
+`uncoded body` prints a symbol's definition. For a property, it prints only the
+getter.
 
 Replaces: "body" and "source body" for a whole definition. In Python's grammar a
 body is only the indented block.
 
-### Name path
+\1### Shadowing
 
-A **name path** identifies a symbol within one Python file. For a symbol at
-module level, it is the symbol's name, as `greet`. For a symbol in a class body,
-it is the class's name, a slash and the symbol's name, as `Greeter/greet`.
+A symbol **shadows** another when it has the same name and is defined later in
+the same module or class body. As in Python, where the later binding replaces
+the earlier, a name path refers to the later symbol, and the earlier one cannot
+be named.
 
-`uncoded body` and `uncoded refs` take a name path to say which symbol they
-mean. Serena, an LSP-based toolkit for agents, uses the same term.
-
-Replaces: "symbol path".
+Shadowing is rare, and usually a mistake. The signatures of an overloaded
+function are the common exception: each is shadowed by the next, and the last is
+the implementation.
 
 ### Reference
 
@@ -273,7 +272,9 @@ committed with the project.
 
 ### Symbols and references
 
-A symbol's references include each of its definitions, so every symbol has at
-least one. A symbol is unused when every reference to it lies within one of its
-own definitions. An unused property with a setter, or an unused overloaded
-function, has more than one such reference.
+A symbol's references include its definition, so every symbol has at least one.
+A symbol is unused when every reference to it lies within its own definition.
+
+A reference that lies within the definition of a symbol it shadows is not a use
+either. An unused overloaded function therefore has a reference in each of its
+signatures, and is still unused.
