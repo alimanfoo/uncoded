@@ -1,17 +1,21 @@
 repos:
   - repo: https://github.com/DavidAnson/markdownlint-cli2
-    rev: v0.22.1
+    rev: 996abf60411a8d954288ac9856aae7602b80cbda # frozen: v0.22.1
     hooks:
       - id: markdownlint-cli2
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: cef0300fd0fc4d2a87a85fa2093c6b283ea36f4b # frozen: v5.0.0
     hooks:
+      - id: fix-byte-order-marker
       - id: trailing-whitespace
       - id: end-of-file-fixer
+      - id: check-illegal-windows-names
+      - id: check-merge-conflict
       - id: check-yaml
       - id: check-toml
       - id: check-added-large-files
+      - id: detect-private-key
 
   - repo: https://github.com/rhysd/actionlint
     rev: 914e7df21a07ef503a81201c76d2b11c789d3fca # frozen: v1.7.12
@@ -28,6 +32,18 @@ repos:
 
   - repo: local
     hooks:
+      # Agents emit invisible characters by accident, and no reviewer spots
+      # them in a diff. pygrep matches bytes, so the pattern spells out the
+      # UTF-8 encoding of U+00A0 NO-BREAK SPACE, U+061C ARABIC LETTER MARK,
+      # U+200B to U+200F (the zero-width space, joiners and directional marks),
+      # U+202A to U+202E (the directional embeddings and overrides), U+2060
+      # WORD JOINER, U+2066 to U+2069 (the directional isolates), and U+FEFF
+      # ZERO WIDTH NO-BREAK SPACE.
+      - id: forbid-invisible-characters
+        name: forbid invisible characters
+        entry: '\xc2\xa0|\xd8\x9c|\xe2\x80[\x8b-\x8f\xaa-\xae]|\xe2\x81[\xa0\xa6-\xa9]|\xef\xbb\xbf'
+        language: pygrep
+        types: [text]
       - id: ruff-check
         name: ruff check
         entry: uv run ruff check --fix --exit-non-zero-on-fix --show-fixes
@@ -50,6 +66,19 @@ repos:
         entry: uv run complexipy src tests
         language: system
         pass_filenames: false
+      # The strict documentation build checks the links under docs/, so this
+      # hook checks the rest. .remarkrc.json loads the plugin and names the
+      # repository, so that a link to a file on GitHub's copy of the repository
+      # is checked against the local file.
+      - id: remark-validate-links
+        name: validate markdown links
+        entry: remark --frail --quiet --no-stdout
+        language: node
+        additional_dependencies:
+          - remark-cli@12.0.1
+          - remark-validate-links@13.1.0
+        files: \.md$
+        exclude: ^docs/
       # Runs before uncoded so the generated skill files are built from
       # already-formatted sources. The generated skill dirs are excluded
       # because uncoded sync owns those files.
