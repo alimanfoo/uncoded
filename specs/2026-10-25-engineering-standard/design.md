@@ -269,22 +269,30 @@ contradicts a story.
 
 uncoded has two users, and the stories cover both:
 
-- the **developer**, who configures uncoded, adds its pre-commit hook and
-  commits the installed skill files, while agents and pre-commit hooks run
-  `uncoded sync` and `uncoded check`; and
+- the **developer**, who writes the configuration file and commits the installed
+  skill files, while agents, or tools the developer sets up such as a pre-commit
+  hook of their own, run `uncoded sync` and `uncoded check`; and
 - the **agent**, which reads the namespace map, stubs and docs map, and runs
-  `body` and `refs`.
+  `uncoded body` and `uncoded refs`.
 
 The stories settle how uncoded handles errors, such as a file it cannot parse
 (#179), a configuration it cannot accept, a root configured outside the project
 directory, `uvx` missing from `PATH`, and an index that has gone stale.
 
 Settling the ontology in #260 also gave the stories these questions to answer:
-what happens when no root is configured, whether as a user error or as normal
-behaviour; how `sync` treats a part of the index whose roots are removed; and
-how `sync` and `check` treat stale generated files; and how a developer sets
-uncoded up without running `uncoded sync` or `uncoded check` themselves, where
-`docs/keeping-current.md` and `docs/getting-started.md` now tell them to.
+
+- what happens when no root is configured, whether as a user error or as normal
+  behaviour;
+- how `uncoded sync` treats a part of the index whose roots are removed;
+- how `uncoded sync` and `uncoded check` treat stale generated files;
+- how a developer sets uncoded up without running `uncoded sync` or
+  `uncoded check` themselves, where `docs/keeping-current.md` and
+  `docs/getting-started.md` now tell them to;
+- what happens when the search for the configuration file meets a
+  `pyproject.toml` without a `[tool.uncoded]` table, which today stops the
+  search, so a subproject's `pyproject.toml` hides the settings above it; and
+- what `uncoded body` prints for a symbol with more than one definition, which
+  today is only the last, or a property's getter.
 
 Three behaviour changes are already settled, in #260.
 
