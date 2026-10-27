@@ -18,7 +18,7 @@ from uncoded.resolver import NamePath, resolve_name_position
 # This is the ty that `uncoded refs` runs through uvx, kept apart from the dev
 # dependency on ty. Raising it changes what `uncoded refs` reports, so run the
 # integration tests. See #111 before bumping.
-TY_VERSION = "0.0.53"
+TY_VERSION = "0.0.92"
 
 
 @dataclass(frozen=True)
