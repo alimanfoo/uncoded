@@ -92,17 +92,21 @@ mean. Serena, an LSP-based toolkit for agents, uses the same term.
 
 Replaces: "symbol path".
 
-### Shadowing
+### Redefinition
 
-A symbol **shadows** another when it has the same name and is defined later in
+A symbol **redefines** another when it has the same name and is defined later in
 the same module body or class body. A name path refers to the later symbol, and
 the earlier one cannot be named, as in Python, where the later binding replaces
 the earlier. A bare annotation such as `x: int` binds nothing, but is treated
 the same way.
 
-Shadowing is rare, and usually a mistake. An overloaded function is the common
-exception: each `@overload` definition is shadowed by the next, and the last
-definition, usually the implementation, is the symbol.
+Redefinition is rare, and usually a mistake. An overloaded function is the
+common exception: each `@overload` definition is redefined by the next, and the
+last definition, usually the implementation, is the symbol.
+
+The word is the one mypy and pylint use for a name defined again in the same
+namespace. Shadowing is a different thing: a name in an inner scope hiding the
+same name in an outer one.
 
 ### Reference
 
@@ -300,6 +304,6 @@ committed with the project.
 A symbol's references include its definition, so every symbol has at least one.
 A symbol is unused when every reference to it lies within its own definition.
 
-References within the definition of a symbol that it shadows are not uses
+References within the definition of a symbol that it redefines are not uses
 either. An unused overloaded function therefore has a reference in each
 `@overload` definition, and is still unused.
