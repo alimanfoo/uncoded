@@ -39,6 +39,9 @@ and the developer rarely runs uncoded themselves. Agents decide when to run
 `uncoded sync`. The developer may also set up a pre-commit hook that runs
 `uncoded sync`, so that a commit never leaves the installed skill files stale.
 
+Every uncoded command works the same way when run from the project directory or
+from any directory beneath it.
+
 uncoded works the same way on Linux, macOS and Windows. Every path that uncoded
 prints, or writes into a generated file, uses `/` to separate directories, on
 every system.
@@ -84,7 +87,8 @@ installed skill files. It ends by doing three things:
 - it says which files to commit: the configuration file and the installed skill
   files;
 - it prints the lines to add to `AGENTS.md` or `CLAUDE.md`, which tell agents to
-  load the navigation skills at the start of every session;
+  load the navigation skills at the start of every session, one line for each
+  kind of root the project has;
 - it says that without those lines, agents load the uncoded skills only when
   they choose to.
 
@@ -128,8 +132,14 @@ installed skill files of `uncoded-doc-navigation`. A project must keep at least
 one root. Removing every root is a user error, told under
 [A configuration file that names no roots](#a-configuration-file-that-names-no-roots).
 
-The developer commits the configuration file, and any installed skill files that
-`uncoded sync` changed or removed.
+The lines in `AGENTS.md` or `CLAUDE.md` load one navigation skill for each kind
+of root. When the developer adds the first root of a kind, or removes the last,
+they update those lines. Running `uncoded init` again prints the lines for the
+roots the project now has.
+
+The developer commits the configuration file, the updated `AGENTS.md` or
+`CLAUDE.md`, and any installed skill files that `uncoded sync` changed or
+removed.
 
 The value to the developer is that the index follows the configuration file,
 with no other step.
@@ -139,9 +149,10 @@ with no other step.
 The developer wants a commit to fail when it would leave the installed skill
 files stale, for example when an agent forgot to run `uncoded sync`. They add a
 hook to their pre-commit configuration that runs `uvx uncoded@<version> sync`,
-naming the project's required version, since any other version is refused. When
-the hook changes an installed skill file, pre-commit fails the commit. Whoever
-made the commit, the developer or an agent, stages the changed file and commits
+naming the project's required version, since any other version is refused. The
+hook passes no file names to the command, and runs on every commit. When the
+hook changes an installed skill file, pre-commit fails the commit. Whoever made
+the commit, the developer or an agent, stages the changed file and commits
 again. A CI job that runs the same pre-commit hooks catches what a local commit
 missed.
 
@@ -160,10 +171,15 @@ committed without anyone noticing.
 A new release of uncoded is out, and the developer wants it. They raise the
 required version in the configuration file, and in the command of their
 pre-commit hook, if they have one. The next `uncoded sync`, run at the new
-version by an agent or by a pre-commit hook, rewrites any generated files that
-the new version writes differently. The developer commits the configuration file
-and the installed skill files together. Before upgrading to a new major version,
-they read `docs/upgrading.md`, which says what else to change.
+version by an agent or by a pre-commit hook, writes, rewrites or removes the
+generated files that the new version generates differently. The developer
+commits the configuration file and the installed skill files together. Before
+upgrading to a new major version, they read `docs/upgrading.md`, which says what
+else to change.
+
+A project set up before uncoded had a required version has no `required-version`
+setting, and runs at whatever version is cached. Its developer adds the setting
+by hand, as `docs/upgrading.md` says for that release.
 
 Until someone raises the required version, it holds. A new release never reaches
 the project unannounced. Every agent and tool that runs uncoded in the project,
@@ -197,23 +213,32 @@ The agent needs to understand part of the code. It has the namespace map, so it
 does not guess what to search for. It picks the symbols whose names look
 relevant, and reads the stubs of the Python files that hold them. A stub shows
 the file's imports, each class's bases, and each symbol's signature or
-annotation.
+annotation. It leaves out parameter defaults, decorators, docstrings and bodies,
+so when the agent needs those, it reads the definition.
 
 For a symbol it is confident it needs, the agent runs
 `uncoded body <name path> --in <file>` from the project directory, taking the
 name path and the file from the namespace map. It gets the symbol's definition,
 exactly as it is in the file, in one call, and the command exits with status
-`0`.
+`0`. `uncoded body` prints whole lines, so when another statement shares a line
+with the definition, as in `x = 1; y = 2`, it prints that statement too.
 
 The agent stops as soon as it knows enough, which is often after the namespace
 map or a stub.
 
-Two things are not in the namespace map, and the agent reads the file for them:
+Some things are not in the namespace map, and the agent reads the file for them:
 
 - a Python file that holds no symbols, which also has no stub;
-- a name that is not a symbol: one defined inside a function, a class defined
-  inside another class, or a name defined inside another statement, such as an
-  `if` or a `try`.
+- a name that is not a symbol: an import, an assignment to more than one target
+  or to something other than a bare name, such as `a, b = ...` or
+  `self.x = ...`, a name defined inside a function, a class defined inside
+  another class, or a name defined inside another statement, such as an `if` or
+  a `try`;
+- anything that only exists when the code runs, since uncoded reads the code
+  without running it.
+
+When the agent is searching for a pattern or a phrase, not for a symbol's name,
+it uses a text search such as `grep`, not the index.
 
 The value to the agent is recall from the complete namespace map, and precision
 from reading a stub before a definition, and a definition only when it is
@@ -230,6 +255,10 @@ file, and reads the section under it.
 Two headings with the same text under the same parent heading appear in the docs
 map as, for example, "Usage" and "Usage (2)". For "Usage (2)", the agent reads
 the section under the second heading called "Usage" under that parent.
+
+The docs map leaves out headings that are underlined, indented, empty, or inside
+a fenced code block, and lists a file with no headings without any. For those,
+the agent reads the file.
 
 uncoded has no command that prints a section. The agent's own tools find a
 heading and read the section under it just as well.
@@ -259,8 +288,10 @@ Before renaming a symbol, changing its signature or deleting it, the agent runs
 `uncoded refs <name path> --in <file>` from the project directory. The command
 prints every reference to the symbol anywhere in the project directory: its
 definition, each import of it, and each use of it. It prints one reference per
-line, as `path:line:column`, with the path relative to the current directory,
-sorted by path, then line, then column. It exits with status `0`.
+line, as `path:line:column`, sorted by path, then line, then column. A path is
+relative to the current directory when the reference is beneath it, and absolute
+otherwise, so it is relative throughout when the agent runs the command from the
+project directory. It exits with status `0`.
 
 The agent updates every reference that the change affects. It deletes a symbol
 only when the symbol is unused, as the concepts page defines it.
@@ -377,8 +408,9 @@ the problem. It exits with status `1`.
 The agent corrects the path. For a file that is not valid Python, it reads the
 file by other means.
 
-A Python file inside the project directory but outside the source roots is
-accepted.
+Any file inside the project directory that parses as Python is accepted, even
+one outside the source roots, or one whose name does not end in `.py`, such as a
+stub.
 
 ### A name path that is malformed or names no symbol
 
@@ -389,6 +421,13 @@ symbol in the file. uncoded says either that it accepts only `name` or
 with status `1`.
 
 The agent looks the symbol up in the namespace map and tries again.
+
+### A command used wrongly
+
+A user runs an uncoded command with a missing argument, an argument it does not
+take, or an unknown command or option. For example, a pre-commit hook passes
+file names to `uncoded sync`, which takes none. uncoded prints how to use the
+command, and exits with status `2`. The user corrects the command.
 
 ### Editing a generated file by hand
 
