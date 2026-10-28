@@ -26,12 +26,10 @@ doc-roots = ["README.md", "AGENTS.md", "docs"]
 required-version = "3.1.0"
 ```
 
-The source roots are whichever of `src` and `tests` exist, and `source-roots`
-indexes Python files. The doc roots are whichever of `README.md`, `AGENTS.md`
-and `docs` exist, and `doc-roots` indexes Markdown headings. The required
-version is the version of uncoded that ran. Every uncoded command in the project
-refuses to run at any other version, and gives the command that runs the
-required one, such as `uvx uncoded@3.1.0 sync`.
+`source-roots` indexes Python files, and `doc-roots` indexes Markdown headings.
+[`init`](commands.md#init) says which roots `uncoded init` looks for, and
+[Require one version](configuration.md#require-one-version) says what the
+required version does.
 
 `uncoded init` then builds the index and the skills, and prints the files it
 writes. With both kinds of root, you will find:
@@ -46,10 +44,6 @@ writes. With both kinds of root, you will find:
 Check the roots in `.uncoded.toml`. If your code or docs live elsewhere, edit
 the roots and run `uvx uncoded init` again. It leaves the configuration file as
 it is, and rebuilds the index from it.
-
-If none of those directories and files exist, `uncoded init` writes nothing and
-says so. Write `.uncoded.toml` by hand, as [Configuration](configuration.md)
-shows, and run `uvx uncoded init` again.
 
 <span id="tell-agents-to-use-the-skills"></span>
 

@@ -195,12 +195,13 @@ def _init() -> int:
 
     With no configuration file found from the current directory, writes one
     there naming the conventional roots. Leaves a configuration file it finds
-    as it is. After the sync, says what to commit and prints the lines that
-    tell agents to load the navigation skills. Returns 1 when there is no root
-    to name or the sync fails, and 0 otherwise.
+    as it is, and says where it is. After the sync, says what to commit and
+    prints the lines that tell agents to load the navigation skills. Returns 1
+    when there is no root to name or the sync fails, and 0 otherwise.
     """
     start = Path.cwd()
-    if find_config(start=start) is None:
+    config = find_config(start=start)
+    if config is None:
         try:
             content = render_conventional_config(
                 directory=start, required_version=__version__
@@ -210,7 +211,10 @@ def _init() -> int:
             return 1
         sync_file(path=Path(UNCODED_TOML), content=content, project_root=start)
     else:
-        print("Found a configuration file, and left it as it is.")
+        print(
+            f"Found the configuration file in {config.project_root.as_posix()}, "
+            "and left it as it is."
+        )
 
     if _sync(start=start) != 0:
         return 1

@@ -634,7 +634,10 @@ class TestInitCommand:
         assert not (tmp_path / "src" / ".uncoded.toml").exists()
         assert (tmp_path / ".uncoded" / "namespace.yaml").exists()
         out = capsys.readouterr().out
-        assert out.startswith("Found a configuration file, and left it as it is.\n")
+        assert out.startswith(
+            f"Found the configuration file in {tmp_path.as_posix()}, "
+            "and left it as it is.\n"
+        )
 
     def test_writes_nothing_when_no_conventional_root_exists(
         self, *, tmp_path, monkeypatch, capsys
@@ -665,7 +668,10 @@ class TestInitCommand:
         assert not (tmp_path / ".uncoded.toml").exists()
         assert (tmp_path / ".uncoded" / "namespace.yaml").exists()
         out = capsys.readouterr().out
-        assert out.startswith("Found a configuration file, and left it as it is.\n")
+        assert out.startswith(
+            f"Found the configuration file in {tmp_path.as_posix()}, "
+            "and left it as it is.\n"
+        )
         assert "uncoded-code-navigation" in out
         assert "uncoded-doc-navigation" not in out
 
@@ -681,7 +687,10 @@ class TestInitCommand:
 
         assert {p: p.read_bytes() for p in tmp_path.rglob("*") if p.is_file()} == files
         second = capsys.readouterr().out
-        assert second.startswith("Found a configuration file, and left it as it is.\n")
+        assert second.startswith(
+            f"Found the configuration file in {tmp_path.as_posix()}, "
+            "and left it as it is.\n"
+        )
         assert second.endswith(first[first.index("\nCommit") :])
 
     def test_stops_when_the_sync_fails(self, *, tmp_path, monkeypatch, capsys):

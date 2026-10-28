@@ -18,18 +18,14 @@ SKILL_ROOTS = [
 
 @dataclass(frozen=True)
 class Skill:
-    """Frozen record of one skill: name, content file, gate, and any legacy names.
-
-    A navigation skill names what it navigates, ``"code"`` or ``"docs"``, and
-    agents load it at the start of every session.
-    """
+    """Frozen record of one skill: name, content file, gate, and any legacy names."""
 
     name: str
     description: str
     body_file: str
     gate: Literal["source", "docs"]
     legacy_names: tuple[str, ...] = ()
-    navigates: Literal["code", "docs"] | None = None
+    is_navigation: bool = False
 
 
 SKILLS: list[Skill] = [
@@ -60,7 +56,7 @@ SKILLS: list[Skill] = [
         ),
         body_file="code_navigation.md",
         gate="source",
-        navigates="code",
+        is_navigation=True,
     ),
     Skill(
         name="uncoded-doc-navigation",
@@ -71,7 +67,7 @@ SKILLS: list[Skill] = [
         ),
         body_file="doc_navigation.md",
         gate="docs",
-        navigates="docs",
+        is_navigation=True,
     ),
 ]
 
@@ -172,9 +168,8 @@ def agent_instructions(*, source: bool, docs: bool) -> str:
     """
     lines = [
         f"- Load the `{skill.name}` skill once per session, before searching,"
-        f" reading or editing any {skill.navigates}."
+        f" reading or editing any {'code' if skill.gate == 'source' else 'docs'}."
         for skill in SKILLS
-        if skill.navigates is not None
-        and _is_built(skill=skill, source=source, docs=docs)
+        if skill.is_navigation and _is_built(skill=skill, source=source, docs=docs)
     ]
     return "\n".join(["## Before you start", "", *lines]) + "\n"
