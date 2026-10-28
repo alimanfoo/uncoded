@@ -93,7 +93,7 @@ includes it. Each entry links the pull request that made the change.
 - When a source root is removed from the configuration while another source root
   stays, `uncoded sync` removes the removed root's stubs, and `uncoded check`
   counts them as files that would change. Both left the stubs alone, so
-  `uncoded check` said that the index was up to date while an agent could still
+  `uncoded check` said that the index was current while an agent could still
   read the stub of a file that was no longer indexed.
   ([#339](https://github.com/alimanfoo/uncoded/pull/339))
 - `uncoded sync` and `uncoded check` end their warnings about the files they

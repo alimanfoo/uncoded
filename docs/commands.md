@@ -1,7 +1,7 @@
 # Commands
 
-Run uncoded with `uvx uncoded`. Contributors use `uv run uncoded` to run the
-code in their checkout.
+Run uncoded with `uvx uncoded`. In a checkout of uncoded itself,
+`uv run uncoded` runs the code in the checkout.
 
 | To…                                   | Use                                     |
 | ------------------------------------- | --------------------------------------- |
@@ -63,7 +63,7 @@ Runs the same pipeline as `sync` without changing files.
 
 | Status | Meaning                                                                                                         |
 | ------ | --------------------------------------------------------------------------------------------------------------- |
-| `0`    | All generated files match a fresh build.                                                                        |
+| `0`    | All generated files are current.                                                                                |
 | `1`    | A file would be created, updated, or removed, the configuration is invalid, or a generated file cannot be read. |
 
 The index is never committed, so in a fresh checkout `check` always reports it

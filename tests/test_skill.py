@@ -248,7 +248,7 @@ class TestSyncSkills:
         assert "before any other tool call" in " ".join(content.split())
 
 
-class TestSyncSkillsProjectRootAnchor:
+class TestSyncSkillsProjectDirectoryAnchor:
     def test_project_directory_anchors_writes_independent_of_cwd(
         self, *, tmp_path, monkeypatch
     ):

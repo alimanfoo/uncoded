@@ -19,6 +19,6 @@ to navigate to a specific section identified in the map.
 
 **Step 3: Refresh.** After every modification to indexed Markdown, run the
 repository's configured `uncoded sync` command before the next
-documentation-navigation operation. The modification can change the heading map.
+documentation-navigation operation. The modification can change the docs map.
 Run it too whenever you notice that something else has changed files, such as a
 pull, a checkout, or another agent working in the same project.

@@ -8,7 +8,7 @@ description: Load once per session, before the first search, read, or edit of Py
 # Code Navigation
 
 This codebase uses [uncoded](https://github.com/alimanfoo/uncoded) to maintain a
-symbol index over its source code, with two associated CLI tools: `uncoded body`
+code index over its source code, with two associated CLI tools: `uncoded body`
 for reading a symbol's definition and `uncoded refs` for finding references.
 
 ## The dispatch rule

@@ -16,12 +16,12 @@ configuration, validates roots, and coordinates extraction and file writes.
 | `skill.py`         | Writes navigation and consistency review skills to both agent directories.                                                              |
 | `sync.py`          | Writes and removes files only when needed; reports changes without writing in check mode.                                               |
 
-Code and documentation indexes are independent. Removing a root type removes its
-generated index and skills on the next sync.
+The code index and the documentation index are independent. Removing every root
+of one kind removes that part of the index, and its skills, on the next sync.
 
-The skill instructions ship as Markdown package resources. `skill.py` renders
-them into repository skill files. `markers.py` defines the provenance marker
-shared by every generated output.
+The skill sources ship as Markdown files in the package. `skill.py` renders them
+into installed skill files. `markers.py` defines the provenance marker shared by
+every generated output.
 
 ## Symbol tools
 

@@ -203,7 +203,7 @@ class TestReadConfig:
         assert config.source_roots == [Path("src")]
 
 
-class TestConfigFileThatCannotBeUsed:
+class TestConfigurationFileThatCannotBeUsed:
     def test_not_valid_toml(self, *, tmp_path):
         (tmp_path / ".uncoded.toml").write_text("source-roots\n", encoding="utf-8")
         with pytest.raises(ConfigError) as exc_info:

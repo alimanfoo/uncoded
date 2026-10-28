@@ -27,8 +27,8 @@ The index files, generated from the roots:
    imports, full signatures (parameter names, types, return types), module
    assignments, and class attributes.
 
-3. **Doc map** (`.uncoded/docs.yaml`). A heading outline of every Markdown file
-   in configured `doc-roots`. Each file nests its `#`-prefixed headings as keys.
+3. **Docs map** (`.uncoded/docs.yaml`). The headings of every Markdown file
+   under the doc roots. Each file nests its `#`-prefixed headings as keys.
    Agents load this to orient to the documentation, then navigate to a heading
    with `Read` or `grep`. uncoded generates it only when `doc-roots` is set.
    Outline only. No `uncoded body`, `uncoded refs`, or stubs for Markdown.

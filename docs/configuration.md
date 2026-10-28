@@ -75,6 +75,6 @@ such as `uvx uncoded@3.1.0 sync`. To upgrade, raise the version in both places.
 The index's generated `.gitignore` keeps `.uncoded/` out of Git. Skills are
 written to both `.agents/skills/` and `.claude/skills/`.
 
-When you remove a root type and run `sync`, uncoded removes that type's index
-and skills. Every generated file has a provenance marker. Change generated files
-by running `sync`, rather than editing them by hand.
+When every root of one kind is removed, `sync` removes that part of the index,
+and its skills. Every generated file has a provenance marker. Change generated
+files by running `sync`, rather than editing them by hand.

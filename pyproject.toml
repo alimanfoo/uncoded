@@ -7,7 +7,7 @@ build-backend = "hatchling.build"
 [project]
 name = "uncoded"
 dynamic = ["version"]
-description = "Symbol index with associated code reading tools for AI coding agent navigation"
+description = "An index of a codebase, and tools to read its code, for AI coding agents"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.12"

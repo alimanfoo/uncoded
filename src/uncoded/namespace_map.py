@@ -7,7 +7,7 @@ from uncoded.markers import GENERATED_MARKER
 from uncoded.yaml_tree import render_yaml_tree
 
 HEADER = f"""\
-# Symbol index of this codebase, for agent navigation.
+# Namespace map of this codebase, for agent navigation.
 # {GENERATED_MARKER}
 #
 # Pure key hierarchy (no lists, no values); indent to zoom in.

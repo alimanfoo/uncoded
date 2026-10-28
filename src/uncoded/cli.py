@@ -187,9 +187,9 @@ def _sync(*, config: Config, check: bool = False) -> int:
 
     if check:
         if changes:
-            print(f"Index out of date: {changes} file(s) would change.")
+            print(f"Generated files are stale: {changes} file(s) would change.")
             return 1
-        print("Index is up to date.")
+        print("Generated files are current.")
         return 0
     return 0
 
@@ -399,8 +399,8 @@ def main() -> int:
     check_parser = subparsers.add_parser(
         "check",
         help=(
-            "Verify the index is up to date without writing. Exits non-zero "
-            "if any file would change."
+            "Verify that the generated files are current, without writing. Exits "
+            "non-zero if any file would change."
         ),
     )
     check_parser.set_defaults(
@@ -414,7 +414,7 @@ def main() -> int:
     )
     body_parser.add_argument(
         "name_path",
-        help="Symbol path: one segment for top-level, two for Class/member.",
+        help="Name path: one segment for top-level, two for Class/member.",
     )
     body_parser.add_argument(
         "--in",
@@ -436,7 +436,7 @@ def main() -> int:
     )
     refs_parser.add_argument(
         "name_path",
-        help="Symbol path: one segment for top-level, two for Class/member.",
+        help="Name path: one segment for top-level, two for Class/member.",
     )
     refs_parser.add_argument(
         "--in",

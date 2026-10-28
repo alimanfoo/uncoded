@@ -46,8 +46,8 @@ uvx uncoded check
 ```
 
 `uncoded check` reports whether the generated files are current, without
-changing anything. Exit status `0` means they match a fresh build. Status `1`
-means files would change, or the configuration is invalid.
+changing anything. Exit status `0` means they are current. Status `1` means
+files would change, or the configuration is invalid.
 
 The index is never committed, so in a fresh checkout, such as CI's,
 `uncoded check` always reports it as stale. Use the pre-commit hook in CI

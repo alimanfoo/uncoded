@@ -45,7 +45,7 @@ def sync_file(
 
     Prints ``Wrote``/``Updated`` in apply mode, ``Would write``/``Would
     update`` in check mode. Returns ``True`` if a write was (or would be)
-    performed, ``False`` if the file was already up to date. Parent
+    performed, ``False`` if the file was already current. Parent
     directories are created as needed. Raises :class:`FileSyncError` when
     the file cannot be read or written.
 

@@ -7,8 +7,8 @@ hide:
 
 # Give your agent a map of your codebase
 
-uncoded indexes Python code and Markdown docs. It gives your coding agent
-progressively deeper views of Python code:
+uncoded indexes Python code and Markdown docs. It gives your agent progressively
+deeper views of Python code:
 
 1. A map shows the code symbols
 2. Stubs add parameters and types

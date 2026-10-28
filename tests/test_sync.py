@@ -180,7 +180,7 @@ class TestFileThatCannotBeUsed:
         assert capsys.readouterr().out == "Removed a/out.txt\n"
 
 
-class TestSyncFileProjectRootAnchor:
+class TestSyncFileProjectDirectoryAnchor:
     def test_project_directory_anchors_write_independent_of_cwd(
         self, *, tmp_path, monkeypatch
     ):
@@ -211,7 +211,7 @@ class TestSyncFileProjectRootAnchor:
         assert str(tmp_path) not in out
 
 
-class TestRemoveFileProjectRootAnchor:
+class TestRemoveFileProjectDirectoryAnchor:
     def test_project_directory_anchors_removal_independent_of_cwd(
         self, *, tmp_path, monkeypatch, capsys
     ):

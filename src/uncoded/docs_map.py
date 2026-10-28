@@ -1,4 +1,4 @@
-"""Build a YAML doc map from Markdown files for agent orientation."""
+"""Build the docs map, in YAML, from Markdown files for agent orientation."""
 
 from collections.abc import Iterable
 from pathlib import Path

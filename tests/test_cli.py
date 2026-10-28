@@ -222,7 +222,7 @@ class TestSyncApplyMode:
 
         captured = capsys.readouterr()
         assert captured.err.splitlines()[-1] == "warning: skipped 1 file(s)"
-        assert captured.out == "Index is up to date.\n"
+        assert captured.out == "Generated files are current.\n"
 
     def test_no_count_when_nothing_is_skipped(self, *, tmp_path, monkeypatch, capsys):
         _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
@@ -373,7 +373,9 @@ class TestSyncCheckMode:
         # No generated files written.
         assert not (tmp_path / ".uncoded").exists()
 
-    def test_returns_zero_when_index_is_up_to_date(self, *, tmp_path, monkeypatch):
+    def test_returns_zero_when_generated_files_are_current(
+        self, *, tmp_path, monkeypatch
+    ):
         _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "src" / "foo.py").write_text(
             "def hello(): pass\n", encoding="utf-8"
@@ -410,7 +412,7 @@ class TestSyncCheckMode:
             "Would update .uncoded/stubs/src/foo.pyi\n"
             "Would write .uncoded/stubs/src/new.pyi\n"
             "Would remove .uncoded/stubs/src/bar.pyi\n"
-            "Index out of date: 4 file(s) would change.\n"
+            "Generated files are stale: 4 file(s) would change.\n"
         )
 
     def test_returns_zero_from_a_subdirectory_when_current(
@@ -424,7 +426,7 @@ class TestSyncCheckMode:
 
         assert _run(monkeypatch=monkeypatch, arguments=["check"]) == 0
 
-        assert capsys.readouterr().out == "Index is up to date.\n"
+        assert capsys.readouterr().out == "Generated files are current.\n"
 
     def test_error_still_returns_one(self, *, tmp_path, monkeypatch, capsys):
         # Config error: check mode should report non-zero the same as apply mode.
@@ -657,7 +659,7 @@ _UNUSABLE_CONFIGS = [
 ]
 
 
-class TestConfigFileThatCannotBeUsed:
+class TestConfigurationFileThatCannotBeUsed:
     @pytest.mark.parametrize("command", _EVERY_COMMAND)
     @pytest.mark.parametrize("unusable_config", _UNUSABLE_CONFIGS)
     def test_stops_with_one_line(

@@ -855,7 +855,7 @@ class TestSyncStubsCheckMode:
         assert (out / "src" / "bar.pyi").exists()
 
 
-class TestSyncStubsProjectRootAnchor:
+class TestSyncStubsProjectDirectoryAnchor:
     def test_project_directory_anchors_writes_independent_of_cwd(
         self, *, tmp_path, monkeypatch
     ):
