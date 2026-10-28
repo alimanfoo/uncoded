@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from uncoded.extract import iter_source_files
+from uncoded.extract import read_source_files
 from uncoded.markers import GENERATED_MARKER
 from uncoded.stubs import (
     StubAssignment,
@@ -27,8 +27,9 @@ def _setup(*, tmp_path):
 
 
 def _build(*, source_root, out, tmp_path, check=False):
+    files, _skipped = read_source_files(source_root=source_root, project_root=tmp_path)
     return build_stubs(
-        files=list(iter_source_files(source_root=source_root, project_root=tmp_path)),
+        files=files,
         source_root=source_root,
         output_dir=out,
         project_root=tmp_path,

@@ -1,6 +1,7 @@
 import textwrap
 
-from uncoded.extract import extract_module, extract_modules, iter_source_files
+from uncoded.extract import extract_module, extract_modules, read_source_files
+from uncoded.read_helpers import SkippedFile
 
 
 class TestExtractModuleFromSource:
@@ -246,9 +247,8 @@ class TestIterAndExtract:
         (pkg / "_internal.py").write_text("def helper(): pass\n", encoding="utf-8")
         (pkg / "empty.py").write_text("# nothing here\n", encoding="utf-8")
 
-        modules = extract_modules(
-            files=iter_source_files(source_root=src, project_root=tmp_path)
-        )
+        files, _skipped = read_source_files(source_root=src, project_root=tmp_path)
+        modules = extract_modules(files=files)
 
         rel_paths = [m.rel_path for m in modules]
         assert "src/mypackage/core.py" in rel_paths
@@ -267,9 +267,8 @@ class TestIterAndExtract:
             "def format_output(): pass\n", encoding="utf-8"
         )
 
-        modules = extract_modules(
-            files=iter_source_files(source_root=src, project_root=tmp_path)
-        )
+        files, _skipped = read_source_files(source_root=src, project_root=tmp_path)
+        modules = extract_modules(files=files)
 
         rel_paths = [m.rel_path for m in modules]
         assert "src/mypackage/utils/formatting.py" in rel_paths
@@ -281,9 +280,8 @@ class TestIterAndExtract:
         (pkg / "__init__.py").write_text("def create(): pass\n", encoding="utf-8")
         (pkg / "core.py").write_text("def run(): pass\n", encoding="utf-8")
 
-        modules = extract_modules(
-            files=iter_source_files(source_root=src, project_root=tmp_path)
-        )
+        files, _skipped = read_source_files(source_root=src, project_root=tmp_path)
+        modules = extract_modules(files=files)
 
         rel_paths = [m.rel_path for m in modules]
         assert "src/mypackage/__init__.py" in rel_paths
@@ -296,14 +294,13 @@ class TestIterAndExtract:
         (pkg / "__init__.py").write_text("", encoding="utf-8")
         (pkg / "core.py").write_text("def run(): pass\n", encoding="utf-8")
 
-        modules = extract_modules(
-            files=iter_source_files(source_root=src, project_root=tmp_path)
-        )
+        files, _skipped = read_source_files(source_root=src, project_root=tmp_path)
+        modules = extract_modules(files=files)
 
         rel_paths = [m.rel_path for m in modules]
         assert not any("__init__.py" in p for p in rel_paths)
 
-    def test_skips_syntax_errors(self, *, tmp_path, capsys):
+    def test_skips_syntax_errors(self, *, tmp_path):
         src = tmp_path / "src"
         pkg = src / "mypackage"
         pkg.mkdir(parents=True)
@@ -311,50 +308,45 @@ class TestIterAndExtract:
         (pkg / "good.py").write_text("def works(): pass\n", encoding="utf-8")
         (pkg / "bad.py").write_text("def broken(:\n", encoding="utf-8")
 
-        modules = extract_modules(
-            files=iter_source_files(source_root=src, project_root=tmp_path)
-        )
+        files, skipped = read_source_files(source_root=src, project_root=tmp_path)
+        modules = extract_modules(files=files)
 
         rel_paths = [m.rel_path for m in modules]
         assert "src/mypackage/good.py" in rel_paths
         assert any("bad.py" in p for p in rel_paths) is False
 
-        # Skipping must be visible — a silent skip means a stale stub
-        # for the offending file would never get refreshed and the user
-        # would have no breadcrumb to investigate. The warning names the
-        # file so they can find it.
-        err = capsys.readouterr().err
-        assert "warning: skipping src/mypackage/bad.py" in err
-        assert "SyntaxError" in err
+        assert skipped == [
+            SkippedFile(
+                path="src/mypackage/bad.py",
+                reason="SyntaxError at line 1: invalid syntax",
+            )
+        ]
 
-    def test_skips_unreadable_file_with_reason(self, *, tmp_path, capsys):
+    def test_skips_unreadable_file_with_reason(self, *, tmp_path):
         # A directory whose name ends in .py cannot be read as a file. The
-        # warning gives the reason without the error's own copy of the path.
+        # reason leaves out the error's own copy of the path.
         (tmp_path / "src" / "pkg" / "notes.py").mkdir(parents=True)
-        assert (
-            list(iter_source_files(source_root=tmp_path / "src", project_root=tmp_path))
-            == []
+        files, skipped = read_source_files(
+            source_root=tmp_path / "src", project_root=tmp_path
         )
-        err = capsys.readouterr().err
-        assert err.startswith("warning: skipping src/pkg/notes.py: ")
-        assert str(tmp_path) not in err
+        assert files == []
+        assert [s.path for s in skipped] == ["src/pkg/notes.py"]
+        assert skipped[0].reason
+        assert str(tmp_path) not in skipped[0].reason
 
-    def test_skips_undecodable_file_with_warning(self, *, tmp_path, capsys):
+    def test_skips_undecodable_file(self, *, tmp_path):
         # A file that cannot be decoded under its declared encoding (UTF-8
-        # default) must be skipped with a warning; other files must still yield.
+        # default) must be skipped; other files must still be read.
         src = tmp_path / "src"
         pkg = src / "mypkg"
         pkg.mkdir(parents=True)
         (pkg / "good.py").write_text("def works(): pass\n", encoding="utf-8")
         (pkg / "binary.py").write_bytes(b"\xff\xfe not utf-8")
-        results = list(iter_source_files(source_root=src, project_root=tmp_path))
-        rel_paths = [rel for _, rel in results]
-        assert any("good.py" in p for p in rel_paths)
-        assert not any("binary.py" in p for p in rel_paths)
-        err = capsys.readouterr().err
-        assert "warning: skipping src/mypkg/binary.py" in err
+        files, skipped = read_source_files(source_root=src, project_root=tmp_path)
+        assert [rel for _, rel in files] == ["src/mypkg/good.py"]
+        assert [s.path for s in skipped] == ["src/mypkg/binary.py"]
 
-    def test_reads_latin1_declared_file(self, *, tmp_path, capsys):
+    def test_reads_latin1_declared_file(self, *, tmp_path):
         # A file that declares latin-1 encoding must be read and indexed,
         # not skipped; the declared encoding is honoured.
         src = tmp_path / "src"
@@ -363,10 +355,9 @@ class TestIterAndExtract:
         (pkg / "latin1.py").write_bytes(
             b"# -*- coding: latin-1 -*-\ndef caf\xe9(): pass\n"
         )
-        results = list(iter_source_files(source_root=src, project_root=tmp_path))
-        rel_paths = [rel for _, rel in results]
-        assert any("latin1.py" in p for p in rel_paths)
-        assert "warning" not in capsys.readouterr().err
+        files, skipped = read_source_files(source_root=src, project_root=tmp_path)
+        assert [rel for _, rel in files] == ["src/mypkg/latin1.py"]
+        assert skipped == []
 
 
 class TestExtractModulesFromFiles:

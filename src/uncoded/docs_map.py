@@ -1,10 +1,10 @@
 """Build a YAML doc map from Markdown files for agent orientation."""
 
-from collections.abc import Iterable, Iterator
+from collections.abc import Iterable
 from pathlib import Path
 
 from uncoded.markers import GENERATED_MARKER
-from uncoded.read_helpers import read_doc_text_or_warn
+from uncoded.read_helpers import SkippedFile, failure_reason
 from uncoded.yaml_tree import render_yaml_tree
 
 DOCS_HEADER = f"""\
@@ -98,30 +98,35 @@ def _collapse_empty(*, mapping: dict) -> dict | None:
     return {k: _collapse_empty(mapping=v) for k, v in mapping.items()}
 
 
-def iter_doc_files(*, doc_root: Path, project_root: Path) -> Iterator[tuple[str, Path]]:
-    """Yield (text, rel_path) for .md files under ``doc_root``.
+def read_doc_files(
+    *, doc_root: Path, project_root: Path
+) -> tuple[list[tuple[str, Path]], list[SkippedFile]]:
+    """Read the Markdown files of ``doc_root``, keeping those that read as UTF-8.
 
-    If ``doc_root`` is a directory, yields all ``*.md`` files found by
-    rglob in sorted order. If it is a single ``.md`` file, yields just
-    that file. ``rel_path`` is relative to ``project_root``.
+    If ``doc_root`` is a directory, reads every ``*.md`` file found by rglob,
+    in sorted order. If it is a single ``.md`` file, reads just that file.
+    Each file is read as UTF-8, and a leading UTF-8 BOM is stripped.
 
-    Files that fail to read (unreadable or non-UTF-8) are skipped with a
-    one-line warning to stderr and do not abort the iteration.
+    Returns the ``(text, rel_path)`` pair of every file that reads, and a
+    :class:`SkippedFile` for every file that is unreadable or not UTF-8.
+    ``rel_path`` is relative to ``project_root``.
     """
     doc_root = doc_root.resolve()
     project_root = project_root.resolve()
-    if doc_root.is_file():
-        rel = doc_root.relative_to(project_root)
-        text = read_doc_text_or_warn(path=doc_root, warning_path=rel.as_posix())
-        if text is not None:
-            yield text, rel
-    else:
-        for md_file in sorted(doc_root.rglob("*.md")):
-            rel = md_file.relative_to(project_root)
-            text = read_doc_text_or_warn(path=md_file, warning_path=rel.as_posix())
-            if text is None:
-                continue
-            yield text, rel
+    md_files = [doc_root] if doc_root.is_file() else sorted(doc_root.rglob("*.md"))
+
+    files: list[tuple[str, Path]] = []
+    skipped: list[SkippedFile] = []
+    for md_file in md_files:
+        rel = md_file.relative_to(project_root)
+        try:
+            text = md_file.read_text(encoding="utf-8-sig")
+        except (UnicodeDecodeError, OSError) as e:
+            reason = failure_reason(error=e)
+            skipped.append(SkippedFile(path=rel.as_posix(), reason=reason))
+            continue
+        files.append((text, rel))
+    return files, skipped
 
 
 def build_docs_map(*, files: Iterable[tuple[str, Path]]) -> dict:

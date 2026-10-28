@@ -324,7 +324,7 @@ def render_stub(*, module: StubModule) -> str:
 def _generate_stubs(*, files: Iterable[tuple[str, str]]) -> dict[Path, str]:
     """Return a mapping from stub relative paths to rendered stub content.
 
-    *files* is the output of :func:`iter_source_files` — an iterable of
+    *files* holds the readable files from :func:`read_source_files`, as
     ``(source, rel_path)`` pairs. Pure transformation: no IO, no
     warnings, no parsing decisions. Modules with no symbols are
     skipped.
@@ -413,17 +413,16 @@ def build_stubs(
 
     The single stubs pipeline path: shared by ``cli._sync`` and the
     test suite so both callers run the same ``_generate_stubs`` →
-    ``_write_stubs`` sequence. ``files`` is the materialised output of
-    :func:`iter_source_files` — pre-iterated so callers that also need
-    the files for other steps (the namespace map) do not walk source
-    twice.
+    ``_write_stubs`` sequence. ``files`` holds the readable files from
+    :func:`read_source_files`, read once so callers that also need the
+    files for other steps (the namespace map) do not walk source twice.
 
     ``project_root`` is the anchor for both ends of the pipeline:
     source paths in ``files`` are already relative to it (so each
-    stub's rendered ``rel_path`` header matches :func:`iter_source_files`
+    stub's rendered ``rel_path`` header matches :func:`read_source_files`
     and the namespace map), and each stub is written to
     ``project_root / output_dir / <rel>``. The same ``project_root``
-    must therefore be passed to :func:`iter_source_files` (for
+    must therefore be passed to :func:`read_source_files` (for
     relativising) and to ``build_stubs`` (for writing); mismatched
     anchors silently produce wrong-looking stub paths.
 

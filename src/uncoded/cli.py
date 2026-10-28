@@ -17,10 +17,11 @@ from uncoded.config import (
     render_conventional_config,
     validate_root,
 )
-from uncoded.docs_map import build_docs_map, iter_doc_files, render_docs_map
-from uncoded.extract import extract_modules, iter_source_files
+from uncoded.docs_map import build_docs_map, read_doc_files, render_docs_map
+from uncoded.extract import extract_modules, read_source_files
 from uncoded.markers import GENERATED_MARKER
 from uncoded.namespace_map import build_map, render_map
+from uncoded.read_helpers import SkippedFile
 from uncoded.refs import find_refs
 from uncoded.resolver import NamePath, SymbolNotFoundError, UnsupportedNamePathError
 from uncoded.skill import SKILL_ROOTS, agent_instructions, sync_skills
@@ -28,14 +29,33 @@ from uncoded.stubs import build_stubs, remove_all_stubs
 from uncoded.sync import remove_file, sync_file
 
 
+def _warn_skipped(*, skipped: list[SkippedFile]) -> None:
+    """Warn on standard error about each file that could not be indexed.
+
+    Ends with a line that counts the skipped files, so that a skip is seen
+    even when the warnings above it scroll by. Standard output is flushed
+    first, so that the warnings follow the lines that name the files
+    written, even when both streams go to one pipe, as in a pre-commit hook.
+    """
+    sys.stdout.flush()
+    for skipped_file in skipped:
+        print(
+            f"warning: skipping {skipped_file.path}: {skipped_file.reason}",
+            file=sys.stderr,
+        )
+    if skipped:
+        print(f"warning: skipped {len(skipped)} file(s)", file=sys.stderr)
+
+
 def _sync_code_artefacts(
     *, source_roots: list[Path], project_root: Path, check: bool
-) -> int:
+) -> tuple[int, list[SkippedFile]]:
     """Build or remove the code artefacts (namespace map and stubs).
 
     With no source roots, removes namespace.yaml and all stubs. Otherwise
     collects the source files beneath the resolved ``source_roots`` and writes
-    the namespace map and stub files. Returns the change count.
+    the namespace map and stub files. Returns the change count and the files
+    that could not be read or parsed.
     """
     if not source_roots:
         n = remove_file(
@@ -44,15 +64,16 @@ def _sync_code_artefacts(
         n += remove_all_stubs(
             output_dir=Path(".uncoded/stubs"), project_root=project_root, check=check
         )
-        return n
+        return n, []
 
-    roots_with_files = [
-        (
-            src_root,
-            list(iter_source_files(source_root=src_root, project_root=project_root)),
+    roots_with_files = []
+    all_skipped: list[SkippedFile] = []
+    for src_root in source_roots:
+        files, skipped = read_source_files(
+            source_root=src_root, project_root=project_root
         )
-        for src_root in source_roots
-    ]
+        roots_with_files.append((src_root, files))
+        all_skipped.extend(skipped)
     modules = [
         m for _root, files in roots_with_files for m in extract_modules(files=files)
     ]
@@ -71,34 +92,37 @@ def _sync_code_artefacts(
             project_root=project_root,
             check=check,
         )
-    return n
+    return n, all_skipped
 
 
 def _sync_doc_artefacts(
     *, doc_roots: list[Path], project_root: Path, check: bool
-) -> int:
+) -> tuple[int, list[SkippedFile]]:
     """Build or remove the doc artefact (docs.yaml).
 
     With no doc roots, removes docs.yaml. Otherwise collects the Markdown files
     in the resolved ``doc_roots`` and writes docs.yaml. Returns the change
-    count.
+    count and the files that could not be read.
     """
     if not doc_roots:
-        return remove_file(
+        removed = remove_file(
             path=Path(".uncoded/docs.yaml"), project_root=project_root, check=check
         )
-    all_doc_files = [
-        f
-        for dr in doc_roots
-        for f in iter_doc_files(doc_root=dr, project_root=project_root)
-    ]
+        return removed, []
+    all_doc_files = []
+    all_skipped: list[SkippedFile] = []
+    for doc_root in doc_roots:
+        files, skipped = read_doc_files(doc_root=doc_root, project_root=project_root)
+        all_doc_files.extend(files)
+        all_skipped.extend(skipped)
     docs_content = render_docs_map(mapping=build_docs_map(files=all_doc_files))
-    return sync_file(
+    changed = sync_file(
         path=Path(".uncoded/docs.yaml"),
         content=docs_content,
         project_root=project_root,
         check=check,
     )
+    return changed, all_skipped
 
 
 def _sync(*, config: Config, check: bool = False) -> int:
@@ -114,7 +138,8 @@ def _sync(*, config: Config, check: bool = False) -> int:
     a root type is absent its artefacts are removed. Every root is checked
     before anything is written. Before writing any index artefact, sync writes
     .uncoded/.gitignore so the index stays local by default. Raises ConfigError
-    when the configuration names no roots or a root cannot be used.
+    when the configuration names no roots or a root cannot be used. A file
+    that cannot be read or parsed is left out of the index and reported.
 
     When ``check=True``, the on-disk tree is not mutated; the function
     reports each prospective write or removal, returns 1 if anything
@@ -143,18 +168,21 @@ def _sync(*, config: Config, check: bool = False) -> int:
         check=check,
     )
 
-    changes += _sync_code_artefacts(
+    code_changes, code_skipped = _sync_code_artefacts(
         source_roots=source_roots, project_root=project_root, check=check
     )
+    changes += code_changes
     changes += sync_skills(
         source=bool(source_roots),
         docs=bool(doc_roots),
         project_root=project_root,
         check=check,
     )
-    changes += _sync_doc_artefacts(
+    doc_changes, doc_skipped = _sync_doc_artefacts(
         doc_roots=doc_roots, project_root=project_root, check=check
     )
+    changes += doc_changes
+    _warn_skipped(skipped=code_skipped + doc_skipped)
 
     if check:
         if changes:
