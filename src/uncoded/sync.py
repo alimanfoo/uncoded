@@ -7,9 +7,6 @@ Every generated file routes through :func:`sync_file` or
 ``check=True`` is what powers ``uncoded check``: the same pipeline runs, but
 the writers never change the tree, and the CLI exits non-zero if any helper
 reports a change. That gives a freshness check that changes nothing.
-
-A file that cannot be read, written or removed raises
-:class:`FileSyncError`, which names it.
 """
 
 from collections.abc import Generator, Sequence

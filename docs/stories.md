@@ -523,3 +523,7 @@ agents, can meet this fault, when one removes a file the other is about to
 remove. uncoded does not prevent it.
 
 The user fixes the cause, and runs `uncoded sync` again.
+
+`uncoded init` stops in the same way when it cannot write the configuration
+file. It has written nothing, so the developer fixes the cause and runs
+`uncoded init` again.

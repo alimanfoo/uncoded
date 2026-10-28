@@ -837,6 +837,22 @@ class TestInitCommand:
         )
         assert second.endswith(first[first.index("\nCommit") :])
 
+    def test_stops_with_one_line_when_the_configuration_file_cannot_be_written(
+        self, *, tmp_path, monkeypatch, capsys
+    ):
+        _init_project(tmp_path=tmp_path, monkeypatch=monkeypatch, roots=["src"])
+        failure = PermissionError(13, "Permission denied")
+
+        with mock.patch.object(Path, "write_text", side_effect=failure):
+            assert _run(monkeypatch=monkeypatch, arguments=["init"]) == 1
+
+        assert _tree(root=tmp_path) == [Path("src")]
+        captured = capsys.readouterr()
+        assert captured.out == ""
+        assert captured.err == (
+            "Error: cannot write .uncoded.toml: Permission denied\n"
+        )
+
     def test_stops_when_the_sync_fails(self, *, tmp_path, monkeypatch, capsys):
         _init_project(tmp_path=tmp_path, monkeypatch=monkeypatch, roots=["src"])
         (tmp_path / ".uncoded.toml").write_text("", encoding="utf-8")

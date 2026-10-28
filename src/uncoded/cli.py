@@ -203,8 +203,8 @@ def _init(*, config: Config | None) -> int:
     as it is, and says where it is. After the sync, says what to commit and
     prints the lines that tell agents to load the navigation skills. Returns 0.
     Raises ConfigError when there is no root to name or the sync fails, and
-    FileSyncError when the configuration file or a generated file cannot be
-    read, written or removed.
+    FileSyncError when the configuration file cannot be written or a generated
+    file cannot be read, written or removed.
     """
     if config is None:
         start = Path.cwd()
