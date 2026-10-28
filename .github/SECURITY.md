@@ -1,9 +1,5 @@
 # Security policy
 
-uncoded reads the files in a project, writes the index into the project, and
-runs ty through `uvx`. A vulnerability in uncoded can act with the permissions
-of whoever runs it.
-
 ## Report a vulnerability
 
 Report a vulnerability through GitHub's

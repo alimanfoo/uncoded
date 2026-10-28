@@ -38,7 +38,6 @@ dev = [
 [project.scripts]
 uncoded = "uncoded.cli:main"
 
-# Only collaborators can open an issue, so PyPI links no issue tracker.
 [project.urls]
 Homepage = "https://alimanfoo.github.io/uncoded/"
 Repository = "https://github.com/alimanfoo/uncoded"
