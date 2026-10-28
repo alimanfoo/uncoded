@@ -33,12 +33,17 @@ class ConfigError(Exception):
 
 @dataclass(frozen=True)
 class Config:
-    """Uncoded configuration loaded from a project's config file."""
+    """Uncoded configuration loaded from a project's configuration file."""
 
-    project_root: Path
+    config_file: Path
     source_roots: list[Path]
     doc_roots: list[Path]
     required_version: str | None
+
+    @property
+    def project_root(self) -> Path:
+        """The project directory, the directory of the configuration file."""
+        return self.config_file.parent
 
 
 def _pyproject_settings(*, pyproject_path: Path) -> dict | None:
@@ -139,7 +144,7 @@ def find_config(*, start: Path) -> Config | None:
         return None
     config_file, settings = found
     return Config(
-        project_root=config_file.parent,
+        config_file=config_file,
         source_roots=_roots(
             settings=settings, setting="source-roots", config_file=config_file
         ),
