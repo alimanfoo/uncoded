@@ -31,9 +31,16 @@ includes it. Each entry links the pull request that made the change.
 
 - `uncoded --version` prints the installed version.
   ([#312](https://github.com/alimanfoo/uncoded/pull/312))
+- The `required-version` setting names the one version of uncoded that a project
+  uses. At any other version, every command stops, writes nothing, and gives the
+  command that runs the required version.
+  ([#322](https://github.com/alimanfoo/uncoded/pull/322))
 
 ### Fixed
 
+- `uncoded body` and `uncoded refs` stop when two files in one directory both
+  configure uncoded, as the other commands already do.
+  ([#322](https://github.com/alimanfoo/uncoded/pull/322))
 - `uncoded refs` runs ty 0.0.92, in place of 0.0.53, and finds references that
   the older ty missed. ([#308](https://github.com/alimanfoo/uncoded/pull/308))
 - `uncoded refs` on Windows prints each reference's path relative to the current

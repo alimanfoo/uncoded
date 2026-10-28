@@ -6,7 +6,7 @@ from pathlib import Path
 
 
 class ConfigError(Exception):
-    """Raised by read_config when the configuration cannot be determined."""
+    """Raised when the project's configuration cannot be used."""
 
 
 @dataclass(frozen=True)
@@ -16,6 +16,7 @@ class Config:
     project_root: Path
     source_roots: list[Path]
     doc_roots: list[Path]
+    required_version: str | None
 
 
 def find_pyproject_toml(*, start: Path) -> Path | None:
@@ -90,21 +91,17 @@ def _find_config_file(*, start: Path) -> tuple[Path, dict] | None:
     return None
 
 
-def read_config(*, start: Path) -> Config:
+def find_config(*, start: Path) -> Config | None:
     """Locate the configuration file and read all uncoded settings from it.
 
     Walks up from ``start`` looking for ``.uncoded.toml`` or a
-    ``pyproject.toml`` with a ``[tool.uncoded]`` table. Raises
-    :exc:`ConfigError` when no configuration file is found, or when two
-    files in the same directory both configure uncoded.
+    ``pyproject.toml`` with a ``[tool.uncoded]`` table. Returns None when no
+    configuration file is found. Raises :exc:`ConfigError` when two files in
+    the same directory both configure uncoded.
     """
     found = _find_config_file(start=start)
     if found is None:
-        raise ConfigError(
-            "No configuration file found in this directory or above it. "
-            "Run the command from inside the project, or configure uncoded "
-            "in .uncoded.toml or in a [tool.uncoded] table in pyproject.toml."
-        )
+        return None
     config_file, settings = found
 
     source_roots = [Path(r) for r in settings.get("source-roots", [])]
@@ -114,4 +111,20 @@ def read_config(*, start: Path) -> Config:
         project_root=config_file.parent,
         source_roots=source_roots,
         doc_roots=doc_roots,
+        required_version=settings.get("required-version"),
     )
+
+
+def read_config(*, start: Path) -> Config:
+    """Return the configuration that :func:`find_config` finds from ``start``.
+
+    Raises :exc:`ConfigError` when no configuration file is found.
+    """
+    config = find_config(start=start)
+    if config is None:
+        raise ConfigError(
+            "No configuration file found in this directory or above it. "
+            "Run the command from inside the project, or configure uncoded "
+            "in .uncoded.toml or in a [tool.uncoded] table in pyproject.toml."
+        )
+    return config

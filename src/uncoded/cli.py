@@ -1,13 +1,14 @@
 """CLI entry point for uncoded."""
 
 import argparse
+import shlex
 import sys
 from pathlib import Path
 from typing import Literal
 
 from uncoded import __version__
 from uncoded.body import resolve_body
-from uncoded.config import ConfigError, read_config
+from uncoded.config import ConfigError, find_config, read_config
 from uncoded.docs_map import build_docs_map, iter_doc_files, render_docs_map
 from uncoded.extract import extract_modules, iter_source_files
 from uncoded.markers import GENERATED_MARKER
@@ -309,6 +310,29 @@ def _refs(*, name_path: str, in_path: str) -> int:
     return 0
 
 
+def _refusal(*, arguments: list[str]) -> str | None:
+    """Return why no command may run in the current project, or None.
+
+    A command may not run when two files in one directory both configure
+    uncoded, or when the project's required version is not the running
+    version. The refusal for a version gives ``arguments`` again, as the
+    command that runs the required version. Outside a project, or with no
+    required version set, every command may run.
+    """
+    try:
+        config = find_config(start=Path.cwd())
+    except ConfigError as e:
+        return str(e)
+    if config is None or config.required_version in (None, __version__):
+        return None
+    required = config.required_version
+    return (
+        f"the project requires uncoded {required}, and this is uncoded "
+        f"{__version__}. Run the command at the required version: "
+        f"uvx uncoded@{required} {shlex.join(arguments)}"
+    )
+
+
 def main() -> int:
     """Dispatch the uncoded CLI.
 
@@ -388,5 +412,10 @@ def main() -> int:
         action=lambda: _refs(name_path=args.name_path, in_path=args.in_path)
     )
 
-    args = parser.parse_args()
+    arguments = sys.argv[1:]
+    args = parser.parse_args(arguments)
+    refusal = _refusal(arguments=arguments)
+    if refusal is not None:
+        print(f"Error: {refusal}", file=sys.stderr)
+        return 1
     return args.action()
