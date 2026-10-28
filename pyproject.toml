@@ -30,7 +30,7 @@ dev = [
     "mkdocs==1.6.1",
     "mkdocs-material==9.7.7",
     "pre-commit>=3.0",
-    "pytest>=8.0",
+    "pytest>=9.0",
     "pytest-cov>=6.0",
     "ruff==0.15.19",
     "ty>=0.0.93",
@@ -78,6 +78,10 @@ testpaths = ["tests"]
 addopts = "--cov -m 'not integration'"
 filterwarnings = ["error::EncodingWarning"]
 markers = ["integration: spawns real ty subprocess (requires uvx)"]
+# Fails the run on an unknown setting or marker, an xfail test that passes, or
+# two parametrized cases with one ID. A misspelled marker would otherwise put a
+# test that spawns ty into the default run.
+strict = true
 
 [tool.coverage.run]
 source = ["src"]
