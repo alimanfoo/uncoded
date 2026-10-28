@@ -25,12 +25,13 @@ classifiers = [
 [dependency-groups]
 dev = [
     "complexipy==5.6.1",
-    "hypothesis>=6.0",
+    "import-linter==2.15",
     "mkdocs==1.6.1",
     "mkdocs-material==9.7.7",
     "pre-commit>=3.0",
-    "pytest>=8.0",
+    "pytest>=9.0",
     "pytest-cov>=6.0",
+    "pytest-timeout>=2.4",
     "ruff==0.15.19",
     "ty>=0.0.93",
 ]
@@ -57,11 +58,31 @@ only-include = ["src"]
 source-roots = ["src", "tests"]
 doc-roots = ["README.md", "AGENTS.md", "docs", "src/uncoded"]
 
+[tool.importlinter]
+root_package = "uncoded"
+
+[[tool.importlinter.contracts]]
+name = "Imports point down the three layers"
+type = "layers"
+containers = ["uncoded"]
+layers = [
+    "cli",
+    "namespace_map | stubs | docs_map | skill | body | refs",
+    "ast_helpers : config : extract : markers : read_helpers : resolver : sync : yaml_tree",
+]
+exhaustive = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "--cov -m 'not integration'"
 filterwarnings = ["error::EncodingWarning"]
 markers = ["integration: spawns real ty subprocess (requires uvx)"]
+# A misspelled marker would otherwise put a test that spawns ty into the
+# default run.
+strict = true
+# Fails a test that hangs, such as one waiting on ty, and prints the stack of
+# every thread. CI raises the limit on macOS and Windows, which run slower.
+timeout = 30
 
 [tool.coverage.run]
 source = ["src"]
@@ -131,3 +152,14 @@ convention = "pep257"
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["D", "ANN", "S101"]
+# refs.py is the one module that spawns a subprocess, to run the ty language
+# server. Its command is a fixed list, and it finds uvx on PATH by design.
+"src/uncoded/refs.py" = [
+    "S404", # suspicious-subprocess-import
+    "S603", # subprocess-without-shell-equals-true
+    "S607", # start-process-with-partial-path
+]
+# The tests of refs.py build mocks of the subprocess that it spawns.
+"tests/test_refs.py" = [
+    "S404", # suspicious-subprocess-import
+]

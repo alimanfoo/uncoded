@@ -195,6 +195,14 @@ Run tests locally as `PYTHONWARNDEFAULTENCODING=1 uv run pytest`. The sentinel
 in `tests/test_encoding_gate.py` fails loudly if either the env var is unset or
 the filterwarnings escalation is removed.
 
+**Writes in `sync.py`.** Only `src/uncoded/sync.py` writes or removes files or
+directories. The `writes-only-in-sync` hook in `.pre-commit-config.yaml` checks
+it.
+
+**Import layers.** Imports point down the three layers that
+`docs/architecture.md` describes. The import-linter contract in `pyproject.toml`
+checks them.
+
 **Complexity ceiling.** The enabled complexity checks and their thresholds are
 in `pyproject.toml`. See [Linting and formatting](#linting-and-formatting) for
 the response to a violation.

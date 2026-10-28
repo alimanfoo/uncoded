@@ -851,8 +851,7 @@ class TestWriteStubs:
 
         assert changes == 1
         assert not (out / "src" / "pkg" / "orphan.pyi").exists()
-        assert not (out / "src" / "pkg").exists()
-        assert (out / "src").exists()
+        assert not (out / "src").exists()
 
     def test_project_root_anchors_writes_independent_of_cwd(
         self, tmp_path, monkeypatch
@@ -907,23 +906,6 @@ class TestWriteStubs:
         assert not (tmp_path / out / "src" / "pkg" / "orphan.pyi").exists()
         assert not (tmp_path / out / "src" / "pkg").exists()
 
-    def test_source_root_outside_project_root_skips_cleanup(self, tmp_path):
-        project = tmp_path / "project"
-        project.mkdir()
-        outside = tmp_path / "outside"
-        outside.mkdir()
-        out = project / "stubs"
-
-        changes = _write_stubs(
-            stubs={},
-            source_root=outside,
-            output_dir=out,
-            project_root=project,
-            check=False,
-        )
-
-        assert changes == 0
-
 
 class TestRemoveAllStubs:
     def _make_stubs(self, tmp_path, rel_pyi="src/foo.pyi"):
@@ -955,16 +937,6 @@ class TestRemoveAllStubs:
             Path(".uncoded/stubs"), project_root=tmp_path, check=False
         )
         assert changes == 1
-        assert not stubs_dir.exists()
-
-    def test_empty_directory_removed(self, tmp_path):
-        # Stubs dir exists but has no .pyi files — directory still removed.
-        stubs_dir = tmp_path / ".uncoded" / "stubs"
-        stubs_dir.mkdir(parents=True)
-        changes = remove_all_stubs(
-            Path(".uncoded/stubs"), project_root=tmp_path, check=False
-        )
-        assert changes == 0
         assert not stubs_dir.exists()
 
     def test_check_mode_reports_without_removing(self, tmp_path):

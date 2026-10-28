@@ -60,6 +60,11 @@ jobs:
       # Fails the job if the environment is not on the matrix interpreter.
       - run: uv run python -c "import os, sys; assert sys.version.startswith(os.environ['UV_PYTHON'] + '.'), sys.version"
         shell: bash
+      # The timeout in pyproject.toml suits Linux. macOS and Windows runners are
+      # slower, so they get a longer limit.
+      - if: runner.os != 'Linux'
+        run: echo "PYTEST_TIMEOUT=120" >> "$GITHUB_ENV"
+        shell: bash
       # Each job keeps its coverage data for the coverage job, which checks the
       # combined total, so a branch that only one system takes still counts.
       - run: uv run pytest -v -m "integration or not integration" --cov-fail-under=0

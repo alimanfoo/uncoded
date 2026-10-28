@@ -49,6 +49,18 @@ repos:
         entry: '\xc2\xa0|\xd8\x9c|\xe2\x80[\x8b-\x8f\xaa-\xae]|\xe2\x81[\xa0\xa6-\xa9]|\xef\xbb\xbf'
         language: pygrep
         types: [text]
+      # Only sync.py writes or removes files or directories, because its
+      # functions honour check mode, so uncoded check changes nothing on disk.
+      # The pattern matches the pathlib, os and shutil calls that write or
+      # remove, and open() in a write mode. It leaves out Path.replace, which
+      # it cannot tell apart from str.replace.
+      - id: writes-only-in-sync
+        name: only sync.py writes or removes files
+        entry: '\.(write_text|write_bytes|touch|mkdir|rmdir|unlink|rename|symlink_to|hardlink_to)\(|\bshutil\b|\bos\.(open|remove|unlink|rmdir|removedirs|mkdir|makedirs|rename|renames|replace)\(|\bopen\([^)]*["''][rbt]*[wax+][rwxabt+]*["'']'
+        language: pygrep
+        types: [python]
+        files: ^src/
+        exclude: ^src/uncoded/sync\.py$
       - id: ruff-check
         name: ruff check
         entry: uv run ruff check --fix --exit-non-zero-on-fix --show-fixes
@@ -69,6 +81,11 @@ repos:
       - id: complexipy
         name: complexipy
         entry: uv run complexipy src tests
+        language: system
+        pass_filenames: false
+      - id: import-linter
+        name: import-linter
+        entry: uv run lint-imports
         language: system
         pass_filenames: false
       # The strict documentation build checks the links under docs/, so this

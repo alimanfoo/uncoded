@@ -33,6 +33,22 @@ source text.
 formats the returned references. `ty` resolves the references; uncoded provides
 the command and output format.
 
+## Layers
+
+The modules form three layers, and each module imports only from the layers
+below it.
+
+1. `cli.py` is the top layer. It reads the configuration and calls the layer
+   below for each command.
+2. The middle layer holds one module for each generated file or tool. None of
+   them imports another.
+3. The foundation holds every other module. These modules can import one
+   another.
+
+An import-linter contract in `pyproject.toml` lists the modules in each layer
+and checks the imports. A new module fails the check until the contract places
+it in a layer.
+
 ## Path boundary
 
 `sync` and `check` anchor all generated files at the configuration file's parent

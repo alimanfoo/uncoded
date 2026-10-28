@@ -1,12 +1,12 @@
 """Content-aware file writes with an optional check-only mode.
 
-Every generated navigation artefact routes through :func:`sync_file` or
+Every generated file routes through :func:`sync_file` or
 :func:`remove_file`. The helpers write only when content changes. When
 ``check=True``, they report the prospective action without touching disk.
 
-``check=True`` is what powers ``uncoded --check`` — the same pipeline runs,
-but the writers never mutate the tree, and the CLI exits non-zero if any
-helper reports a change. That gives CI a zero-mutation freshness gate.
+``check=True`` is what powers ``uncoded check``: the same pipeline runs, but
+the writers never change the tree, and the CLI exits non-zero if any helper
+reports a change. That gives CI a freshness check that changes nothing.
 """
 
 from pathlib import Path
@@ -51,20 +51,30 @@ def remove_file(
     project_root: Path,
     check: bool = False,
 ) -> bool:
-    """Remove ``path`` if it exists.
+    """Remove ``path`` if it exists, and each parent directory left empty.
 
     Prints ``Removed`` in apply mode, ``Would remove`` in check mode.
     Returns ``True`` if a removal was (or would be) performed, ``False``
     if the file was already absent.
+
+    As :func:`sync_file` creates each missing parent directory, the
+    removal removes each parent directory that it leaves empty, up to
+    but not including ``project_root``. It stops at a symbolic link.
 
     The file removed is ``project_root / path``. The log line still
     names ``path`` as given, so messages stay project-relative
     regardless of where the caller is running from.
     """
     target = project_root / path
+    parents = target.relative_to(project_root).parents[:-1]
     if not target.exists():
         return False
     if not check:
         target.unlink()
+        for parent in parents:
+            directory = project_root / parent
+            if directory.is_symlink() or any(directory.iterdir()):
+                break
+            directory.rmdir()
     print(f"{'Would remove' if check else 'Removed'} {path.as_posix()}")
     return True
