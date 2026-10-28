@@ -1,12 +1,14 @@
 """Content-aware file writes with an optional check-only mode.
 
-Every generated navigation artefact routes through :func:`sync_file` or
-:func:`remove_file`. The helpers write only when content changes. When
-``check=True``, they report the prospective action without touching disk.
+This is the only module that writes or removes files or directories, and a
+pre-commit hook holds that rule. Every generated file routes through
+:func:`sync_file` or :func:`remove_file`. The helpers write only when content
+changes. When ``check=True``, they report the prospective action without
+touching disk.
 
-``check=True`` is what powers ``uncoded --check`` — the same pipeline runs,
-but the writers never mutate the tree, and the CLI exits non-zero if any
-helper reports a change. That gives CI a zero-mutation freshness gate.
+``check=True`` is what powers ``uncoded check``: the same pipeline runs, but
+the writers never change the tree, and the CLI exits non-zero if any helper
+reports a change. That gives CI a freshness check that changes nothing.
 """
 
 from pathlib import Path
