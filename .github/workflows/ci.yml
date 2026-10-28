@@ -20,6 +20,14 @@ jobs:
       - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
       - run: uv sync --locked
       - run: uv run pre-commit run --all-files
+      # Check the stubs that the code under change writes. The uncoded hook
+      # writes them with the pinned release instead. .uncoded/.gitignore
+      # ignores the whole index, so ruff must not respect it, or it finds no
+      # files. A stub keeps the quotes that ast.unparse writes and one line for
+      # each signature, so the check preserves quotes and stops ruff from
+      # wrapping long lines.
+      - run: uv run uncoded sync
+      - run: uv run ruff format --check --no-respect-gitignore --line-length 320 --config 'format.quote-style="preserve"' .uncoded/stubs
 
   # The test job runs on every supported operating system, and on every
   # released Python from the requires-python floor up, because the standard
