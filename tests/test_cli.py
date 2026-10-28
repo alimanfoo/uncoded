@@ -114,6 +114,22 @@ class TestSyncApplyMode:
             (tmp_path / p).stat().st_mtime_ns for p in _SOURCE_SKILL_PATHS
         ] == skill_mtimes
 
+    def test_lists_each_file_that_it_writes_updates_or_removes(
+        self, *, tmp_path, monkeypatch, capsys
+    ):
+        _make_index_stale(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        capsys.readouterr()
+
+        assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 0
+
+        assert capsys.readouterr().out == (
+            "Updated .uncoded/namespace.yaml\n"
+            "Updated .uncoded/stubs/src/foo.pyi\n"
+            "Wrote .uncoded/stubs/src/new.pyi\n"
+            "Removed .uncoded/stubs/src/bar.pyi\n"
+        )
+        assert not (tmp_path / ".uncoded" / "stubs" / "src" / "bar.pyi").exists()
+
     def test_error_when_no_config_file_points_to_init(
         self, *, tmp_path, monkeypatch, capsys
     ):

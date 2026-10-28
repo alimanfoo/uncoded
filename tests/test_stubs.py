@@ -668,6 +668,40 @@ class TestRenderStub:
         output = render_stub(module=module)
         compile(output, "pkg/representative.pyi", "exec")
 
+    def test_leaves_out_decorators_docstrings_and_bodies(self):
+        source = textwrap.dedent("""\
+            import functools
+
+            @functools.cache
+            def area(width: int, height: int = 1) -> int:
+                '''Return the area.'''
+                return width * height
+
+            class Shape:
+                '''A shape.'''
+
+                @staticmethod
+                def unit() -> "Shape":
+                    '''Return the unit shape.'''
+                    return Shape()
+        """)
+
+        output = render_stub(module=extract_stub(source=source, rel_path="pkg/m.py"))
+
+        assert output == (
+            f"# {GENERATED_MARKER}\n"
+            "# pkg/m.py\n"
+            "\n"
+            "import functools\n"
+            "\n"
+            "def area(width: int, height: int) -> int:\n"
+            "    ...\n"
+            "\n"
+            "class Shape:\n"
+            "    def unit() -> 'Shape':\n"
+            "        ...\n"
+        )
+
 
 class TestBuildStubs:
     """build_stubs writes expected stubs and removes orphans for its source root."""
