@@ -142,43 +142,24 @@ class TestSyncApplyMode:
         assert "set uncoded up with uncoded init" in err
         assert str(tmp_path) not in err
 
-    def test_error_when_configuration_names_no_roots(
+    def test_writes_back_a_hand_edited_skill_file(
         self, *, tmp_path, monkeypatch, capsys
     ):
-        # An empty [tool.uncoded] table names no roots. The message must name
-        # both configurable keys and both configuration file options.
-        (tmp_path / "pyproject.toml").write_text("[tool.uncoded]\n", encoding="utf-8")
-        monkeypatch.chdir(tmp_path)
+        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        _run(monkeypatch=monkeypatch, arguments=["sync"])
+        skill_path = _SOURCE_SKILL_PATHS[0]
+        generated = (tmp_path / skill_path).read_text(encoding="utf-8")
+        (tmp_path / skill_path).write_text("Our own wording.\n", encoding="utf-8")
+        capsys.readouterr()
 
-        assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 1
-
-        err = capsys.readouterr().err
-        assert "nothing to index" in err
-        assert "source-roots" in err
-        assert "doc-roots" in err
-        assert ".uncoded.toml" in err
-
-    def test_error_when_both_config_files_configure_uncoded(
-        self, *, tmp_path, monkeypatch, capsys
-    ):
-        # pyproject.toml with [tool.uncoded] + sibling .uncoded.toml:
-        # ambiguous config — must produce a clear error naming both files.
-        (tmp_path / "pyproject.toml").write_text(
-            '[project]\nname = "demo"\n\n[tool.uncoded]\nsource-roots = ["src"]\n',
-            encoding="utf-8",
+        assert _run(monkeypatch=monkeypatch, arguments=["check"]) == 1
+        assert capsys.readouterr().out.startswith(
+            f"Would update {skill_path.as_posix()}\n"
         )
-        (tmp_path / ".uncoded.toml").write_text(
-            'doc-roots = ["docs"]\n', encoding="utf-8"
-        )
-        (tmp_path / "src").mkdir()
-        monkeypatch.chdir(tmp_path)
 
-        assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 1
-
-        err = capsys.readouterr().err
-        assert "configure uncoded" in err
-        assert "pyproject.toml" in err
-        assert ".uncoded.toml" in err
+        assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 0
+        assert capsys.readouterr().out == f"Updated {skill_path.as_posix()}\n"
+        assert (tmp_path / skill_path).read_text(encoding="utf-8") == generated
 
     def test_skipped_files_are_warned_about_and_counted(
         self, *, tmp_path, monkeypatch, capsys
@@ -461,15 +442,6 @@ class TestMainDispatch:
         monkeypatch.setattr(sys, "argv", ["uncoded", "check"])
         assert cli.main() == 0
 
-    def test_no_subcommand_is_an_error(self, *, tmp_path, monkeypatch):
-        # Argparse enforces subparsers.required=True and exits with code 2
-        # when no subcommand is given. This keeps the CLI honest: there is
-        # no silent default, so every invocation names its operation.
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
-        monkeypatch.setattr(sys, "argv", ["uncoded"])
-        with pytest.raises(SystemExit):
-            cli.main()
-
     def test_version_flag_prints_version(self, *, monkeypatch, capsys):
         monkeypatch.setattr(sys, "argv", ["uncoded", "--version"])
         with pytest.raises(SystemExit) as exc_info:
@@ -477,11 +449,31 @@ class TestMainDispatch:
         assert exc_info.value.code == 0
         assert capsys.readouterr().out == f"uncoded {__version__}\n"
 
-    def test_unknown_subcommand_is_an_error(self, *, tmp_path, monkeypatch):
+
+class TestCommandUsedWrongly:
+    @pytest.mark.parametrize(
+        "arguments",
+        [
+            pytest.param([], id="no command"),
+            pytest.param(["nonsense"], id="unknown command"),
+            pytest.param(["check", "--bogus"], id="unknown option"),
+            pytest.param(["sync", "src/foo.py"], id="argument it does not take"),
+            pytest.param(["body", "fn"], id="body without --in"),
+            pytest.param(["refs", "fn"], id="refs without --in"),
+        ],
+    )
+    def test_prints_usage_and_exits_two(
+        self, *, tmp_path, monkeypatch, capsys, arguments
+    ):
         _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
-        monkeypatch.setattr(sys, "argv", ["uncoded", "nonsense"])
-        with pytest.raises(SystemExit):
-            cli.main()
+
+        with pytest.raises(SystemExit) as exc_info:
+            _run(monkeypatch=monkeypatch, arguments=arguments)
+
+        assert exc_info.value.code == 2
+        captured = capsys.readouterr()
+        assert captured.out == ""
+        assert captured.err.startswith("usage: uncoded")
 
 
 _BODY = ["body", "fn", "--in", "src/foo.py"]
@@ -520,7 +512,7 @@ def _contents(*, root):
 
 
 class TestRequiredVersion:
-    @pytest.mark.parametrize("command", _COMMANDS)
+    @pytest.mark.parametrize("command", [["init"], *_COMMANDS])
     def test_refuses_at_another_version(
         self, *, tmp_path, monkeypatch, capsys, command
     ):
@@ -562,18 +554,23 @@ class TestRequiredVersion:
         assert find_refs.called == (command[0] == "refs")
         assert capsys.readouterr().err == ""
 
-    def test_two_configuration_files_refuse_body(
-        self, *, tmp_path, monkeypatch, capsys
-    ):
+
+class TestTwoConfigurationFiles:
+    @pytest.mark.parametrize("command", [["init"], *_COMMANDS])
+    def test_every_command_refuses(self, *, tmp_path, monkeypatch, capsys, command):
         _init_versioned_repo(
             tmp_path=tmp_path, monkeypatch=monkeypatch, required_version=None
         )
         (tmp_path / "pyproject.toml").write_text(
             '[tool.uncoded]\nsource-roots = ["src"]\n', encoding="utf-8"
         )
-        monkeypatch.setattr(sys, "argv", ["uncoded", *_BODY])
+        before = _tree(root=tmp_path)
 
-        assert cli.main() == 1
+        with mock.patch.object(cli, "find_refs") as find_refs:
+            assert _run(monkeypatch=monkeypatch, arguments=command) == 1
+
+        find_refs.assert_not_called()
+        assert _tree(root=tmp_path) == before
         captured = capsys.readouterr()
         assert captured.out == ""
         assert captured.err == (
@@ -581,6 +578,40 @@ class TestRequiredVersion:
             f"{(tmp_path / '.uncoded.toml').resolve().as_posix()} configure uncoded. "
             "Configure uncoded in one file only.\n"
         )
+
+
+class TestConfigurationThatNamesNoRoots:
+    @pytest.mark.parametrize("command", [["init"], ["sync"], ["check"]])
+    def test_stops_before_writing(self, *, tmp_path, monkeypatch, capsys, command):
+        (tmp_path / ".uncoded.toml").write_text("", encoding="utf-8")
+        (tmp_path / "src").mkdir()
+        monkeypatch.chdir(tmp_path)
+        before = _tree(root=tmp_path)
+
+        assert _run(monkeypatch=monkeypatch, arguments=command) == 1
+
+        assert _tree(root=tmp_path) == before
+        captured = capsys.readouterr()
+        assert "Commit" not in captured.out
+        assert captured.err == (
+            "Error: nothing to index. Add source-roots or doc-roots to "
+            "[tool.uncoded] in pyproject.toml, or as top-level keys in "
+            ".uncoded.toml.\n"
+        )
+
+    @pytest.mark.parametrize("command", ["body", "refs"])
+    def test_body_and_refs_still_work(self, *, tmp_path, monkeypatch, capsys, command):
+        (tmp_path / ".uncoded.toml").write_text("", encoding="utf-8")
+        (tmp_path / "m.py").write_text("def fn():\n    pass\n", encoding="utf-8")
+        monkeypatch.chdir(tmp_path)
+
+        with mock.patch.object(cli, "find_refs", return_value=[]):
+            status = _run(
+                monkeypatch=monkeypatch, arguments=[command, "fn", "--in", "m.py"]
+            )
+
+        assert status == 0
+        assert capsys.readouterr().err == ""
 
 
 # One configuration file of each kind that cannot be used, with its problem.
@@ -924,16 +955,6 @@ class TestInitCommand:
             "Error: cannot write .uncoded.toml: Permission denied\n"
         )
 
-    def test_stops_when_the_sync_fails(self, *, tmp_path, monkeypatch, capsys):
-        _init_project(tmp_path=tmp_path, monkeypatch=monkeypatch, roots=["src"])
-        (tmp_path / ".uncoded.toml").write_text("", encoding="utf-8")
-
-        assert _run(monkeypatch=monkeypatch, arguments=["init"]) == 1
-
-        captured = capsys.readouterr()
-        assert "nothing to index" in captured.err
-        assert "Commit" not in captured.out
-
 
 class TestOutsideAProject:
     @pytest.mark.parametrize("command", _COMMANDS)
@@ -1113,6 +1134,31 @@ class TestBodyCommand:
         )
         assert capsys.readouterr().out == "def fn():\n    pass\n"
 
+    @pytest.mark.parametrize(
+        ("in_path", "body"),
+        [
+            pytest.param("m.py", "def fn():\n    pass\n", id="outside the roots"),
+            pytest.param(
+                ".uncoded/stubs/src/foo.pyi",
+                "def fn(x: int) -> int:\n    ...\n",
+                id="stub",
+            ),
+        ],
+    )
+    def test_reads_any_python_file_in_the_project(
+        self, *, tmp_path, monkeypatch, capsys, in_path, body
+    ):
+        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        (tmp_path / "src" / "foo.py").write_text(
+            "def fn(x: int) -> int:\n    return x\n", encoding="utf-8"
+        )
+        (tmp_path / "m.py").write_text("def fn():\n    pass\n", encoding="utf-8")
+        _run(monkeypatch=monkeypatch, arguments=["sync"])
+        capsys.readouterr()
+
+        assert _body(monkeypatch=monkeypatch, name_path="fn", in_path=in_path) == 0
+        assert capsys.readouterr().out == body
+
     def test_stdout_is_exact_body(self, *, tmp_path, monkeypatch, capsys):
         _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
         body = "def compute(x: int) -> int:\n    return x * 2\n"
@@ -1140,15 +1186,6 @@ class TestBodyCommand:
         assert "Error:" in err
         assert "'name'" in err
         assert "'Class/member'" in err
-
-    def test_missing_in_flag_exits_with_two(self, *, tmp_path, monkeypatch, capsys):
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
-
-        with pytest.raises(SystemExit) as exc:
-            _run(monkeypatch=monkeypatch, arguments=["body", "fn"])
-
-        assert exc.value.code == 2
-        assert capsys.readouterr().err != ""
 
 
 class TestRefsCommand:
@@ -1253,15 +1290,6 @@ class TestRefsCommand:
         assert "Error:" in err
         assert "'name'" in err
         assert "'Class/member'" in err
-
-    def test_missing_in_flag_exits_with_two(self, *, tmp_path, monkeypatch, capsys):
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
-
-        with pytest.raises(SystemExit) as exc:
-            _run(monkeypatch=monkeypatch, arguments=["refs", "fn"])
-
-        assert exc.value.code == 2
-        assert capsys.readouterr().err != ""
 
     def test_unused_symbol_prints_only_its_definition(
         self, *, tmp_path, monkeypatch, capsys
