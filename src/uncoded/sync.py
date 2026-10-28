@@ -12,7 +12,7 @@ A file that cannot be read, written or removed raises
 :class:`FileSyncError`, which names it.
 """
 
-from collections.abc import Generator
+from collections.abc import Generator, Sequence
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -83,7 +83,8 @@ def remove_file(
     Prints ``Removed`` in apply mode, ``Would remove`` in check mode.
     Returns ``True`` if a removal was (or would be) performed, ``False``
     if the file was already absent. Raises :class:`FileSyncError` when the
-    file or a parent directory cannot be removed.
+    file or a parent directory cannot be removed, naming the one that
+    could not.
 
     As :func:`sync_file` creates each missing parent directory, the
     removal removes each parent directory that it leaves empty, up to
@@ -100,10 +101,21 @@ def remove_file(
             return False
         if not check:
             target.unlink()
-            for parent in parents:
-                directory = project_root / parent
-                if directory.is_symlink() or any(directory.iterdir()):
-                    break
-                directory.rmdir()
     print(f"{'Would remove' if check else 'Removed'} {path.as_posix()}")
+    if not check:
+        _remove_empty_parents(parents=parents, project_root=project_root)
     return True
+
+
+def _remove_empty_parents(*, parents: Sequence[Path], project_root: Path) -> None:
+    """Remove each of ``parents``, nearest first, until one is not empty.
+
+    Stops at a symbolic link. A directory that cannot be removed raises
+    :class:`FileSyncError`, which names it.
+    """
+    for parent in parents:
+        directory = project_root / parent
+        with _naming_failure(action="remove", path=parent):
+            if directory.is_symlink() or any(directory.iterdir()):
+                return
+            directory.rmdir()

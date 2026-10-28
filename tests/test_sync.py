@@ -1,4 +1,5 @@
 from pathlib import Path
+from unittest import mock
 
 import pytest
 
@@ -162,6 +163,19 @@ class TestFileThatCannotBeUsed:
         message = str(exc_info.value)
         assert message.startswith("cannot remove out.txt: ")
         assert "Errno" not in message
+
+    def test_parent_that_cannot_be_removed_names_it(self, *, tmp_path, capsys):
+        path = Path("a") / "out.txt"
+        (tmp_path / "a").mkdir()
+        (tmp_path / path).write_text("data", encoding="utf-8")
+        failure = PermissionError(13, "Permission denied")
+        with (
+            mock.patch.object(Path, "rmdir", side_effect=failure),
+            pytest.raises(FileSyncError) as exc_info,
+        ):
+            remove_file(path=path, project_root=tmp_path)
+        assert str(exc_info.value) == "cannot remove a: Permission denied"
+        assert capsys.readouterr().out == "Removed a/out.txt\n"
 
 
 class TestSyncFileProjectRootAnchor:
