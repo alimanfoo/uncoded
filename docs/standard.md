@@ -236,7 +236,8 @@ A structural rule that review keeps missing is checked by a machine.
   - Imports point down three layers, which the architecture states. An
     import-linter `layers` contract in `pyproject.toml` checks it.
   - Every generated file carries the provenance marker. `tests/test_markers.py`
-    checks it.
+    checks the maps, the stubs and the skills, and `tests/test_cli.py` checks
+    `.uncoded/.gitignore`.
   - Every text read and write names its encoding. Ruff's PLW1514 and the runtime
     gate in the tests check it.
   - Every parameter is keyword-only. Ruff's `too-many-positional-arguments`
