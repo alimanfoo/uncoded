@@ -166,7 +166,6 @@ class TestResolveBodyTopLevel:
         assert result == "def café(): pass\n"
 
     def test_prints_whole_lines(self, *, tmp_path):
-        # A statement that shares the definition's line is printed with it.
         path = tmp_path / "m.py"
         path.write_text("x = 1; y = 2\n", encoding="utf-8")
 

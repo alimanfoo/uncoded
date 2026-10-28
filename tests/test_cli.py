@@ -491,6 +491,8 @@ _RUNS = [
     (["refs", "fn", "--in", "src/foo.py"], 0),
 ]
 _COMMANDS = [command for command, _status in _RUNS]
+# Every command, uncoded init included.
+_EVERY_COMMAND = [["init"], *_COMMANDS]
 
 
 def _init_versioned_repo(*, tmp_path, monkeypatch, required_version):
@@ -515,7 +517,7 @@ def _contents(*, root):
 
 
 class TestRequiredVersion:
-    @pytest.mark.parametrize("command", [["init"], *_COMMANDS])
+    @pytest.mark.parametrize("command", _EVERY_COMMAND)
     def test_refuses_at_another_version(
         self, *, tmp_path, monkeypatch, capsys, command
     ):
@@ -559,7 +561,7 @@ class TestRequiredVersion:
 
 
 class TestTwoConfigurationFiles:
-    @pytest.mark.parametrize("command", [["init"], *_COMMANDS])
+    @pytest.mark.parametrize("command", _EVERY_COMMAND)
     def test_every_command_refuses(self, *, tmp_path, monkeypatch, capsys, command):
         _init_versioned_repo(
             tmp_path=tmp_path, monkeypatch=monkeypatch, required_version=None
@@ -586,7 +588,10 @@ class TestTwoConfigurationFiles:
 class TestConfigurationThatNamesNoRoots:
     @pytest.mark.parametrize("command", [["init"], ["sync"], ["check"]])
     def test_stops_before_writing(self, *, tmp_path, monkeypatch, capsys, command):
-        (tmp_path / ".uncoded.toml").write_text("", encoding="utf-8")
+        # A misspelt setting is ignored, so it names no root.
+        (tmp_path / ".uncoded.toml").write_text(
+            'source_roots = ["src"]\n', encoding="utf-8"
+        )
         (tmp_path / "src").mkdir()
         monkeypatch.chdir(tmp_path)
         before = _contents(root=tmp_path)
@@ -604,7 +609,9 @@ class TestConfigurationThatNamesNoRoots:
 
     @pytest.mark.parametrize("command", ["body", "refs"])
     def test_body_and_refs_still_work(self, *, tmp_path, monkeypatch, capsys, command):
-        (tmp_path / ".uncoded.toml").write_text("", encoding="utf-8")
+        (tmp_path / ".uncoded.toml").write_text(
+            'source_roots = ["src"]\n', encoding="utf-8"
+        )
         (tmp_path / "m.py").write_text("def fn():\n    pass\n", encoding="utf-8")
         monkeypatch.chdir(tmp_path)
 
@@ -629,7 +636,7 @@ _UNUSABLE_CONFIGS = [
 
 
 class TestConfigFileThatCannotBeUsed:
-    @pytest.mark.parametrize("command", [["init"], *_COMMANDS])
+    @pytest.mark.parametrize("command", _EVERY_COMMAND)
     @pytest.mark.parametrize("unusable_config", _UNUSABLE_CONFIGS)
     def test_stops_with_one_line(
         self, *, tmp_path, monkeypatch, capsys, command, unusable_config
@@ -1501,7 +1508,6 @@ class TestSyncDocRoots:
 
     def test_doc_root_removal_cleans_doc_artefacts(self, *, tmp_path, monkeypatch):
         # First sync with doc-roots; then drop them.
-        # docs.yaml must be removed.
         (tmp_path / "pyproject.toml").write_text(
             textwrap.dedent(
                 """\
