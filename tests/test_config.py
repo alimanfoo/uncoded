@@ -106,6 +106,16 @@ class TestReadConfig:
         config = read_config(start=tmp_path)
         assert isinstance(config, Config)
 
+    def test_required_version_read_from_pyproject(self, *, tmp_path):
+        (tmp_path / "pyproject.toml").write_text(
+            '[tool.uncoded]\nrequired-version = "3.1.0"\n', encoding="utf-8"
+        )
+        assert read_config(start=tmp_path).required_version == "3.1.0"
+
+    def test_required_version_is_none_when_unset(self, *, tmp_path):
+        (tmp_path / "pyproject.toml").write_text("[tool.uncoded]\n", encoding="utf-8")
+        assert read_config(start=tmp_path).required_version is None
+
     # --- .uncoded.toml ---
 
     def test_finds_uncoded_toml_when_no_pyproject(self, *, tmp_path):
@@ -125,6 +135,12 @@ class TestReadConfig:
         config = read_config(start=tmp_path)
         assert config.source_roots == [Path("src")]
         assert config.doc_roots == [Path("docs")]
+
+    def test_required_version_read_from_uncoded_toml(self, *, tmp_path):
+        (tmp_path / ".uncoded.toml").write_text(
+            'required-version = "3.1.0"\n', encoding="utf-8"
+        )
+        assert read_config(start=tmp_path).required_version == "3.1.0"
 
     def test_error_when_both_configure_uncoded_in_same_directory(self, *, tmp_path):
         # pyproject.toml with [tool.uncoded] AND .uncoded.toml → ConfigError.

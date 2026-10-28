@@ -16,6 +16,7 @@ class Config:
     project_root: Path
     source_roots: list[Path]
     doc_roots: list[Path]
+    required_version: str | None
 
 
 def find_pyproject_toml(*, start: Path) -> Path | None:
@@ -110,6 +111,7 @@ def find_config(*, start: Path) -> Config | None:
         project_root=config_file.parent,
         source_roots=source_roots,
         doc_roots=doc_roots,
+        required_version=settings.get("required-version"),
     )
 
 

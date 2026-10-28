@@ -31,6 +31,10 @@ includes it. Each entry links the pull request that made the change.
 
 - `uncoded --version` prints the installed version.
   ([#312](https://github.com/alimanfoo/uncoded/pull/312))
+- The `required-version` setting names the one version of uncoded that a project
+  uses. At any other version, every command stops, writes nothing, and gives the
+  command that runs the required version.
+  ([#322](https://github.com/alimanfoo/uncoded/pull/322))
 
 ### Fixed
 

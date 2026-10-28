@@ -39,6 +39,22 @@ configuration file. A `pyproject.toml` without `[tool.uncoded]` is not a
 configuration file, so the search passes over it. If both files in one directory
 configure uncoded, the command fails. Keep the settings in one file.
 
+## Require one version
+
+To make every machine run the same version of uncoded in the project, set
+`required-version` to one exact version:
+
+```toml title=".uncoded.toml"
+required-version = "3.1.0"
+```
+
+At any other version, every command stops before it changes anything. It says
+which version the project requires, and gives the command that runs it, such as
+`uvx uncoded@3.1.0 sync`. Without `required-version`, every version runs.
+
+If a pre-commit hook runs uncoded, name the same version in its command, such as
+`uvx uncoded@3.1.0 sync`. To upgrade, raise the version in both places.
+
 ## Generated files
 
 | Output                                        | When generated         | Commit it? |

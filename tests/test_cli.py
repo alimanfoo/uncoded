@@ -6,6 +6,7 @@ tests; this suite covers the orchestration and the ``check`` exit-code
 contract.
 """
 
+import shlex
 import sys
 import textwrap
 from pathlib import Path
@@ -443,6 +444,91 @@ class TestMainDispatch:
         monkeypatch.setattr(sys, "argv", ["uncoded", "nonsense"])
         with pytest.raises(SystemExit):
             cli.main()
+
+
+_COMMANDS = [
+    ["sync"],
+    ["check"],
+    ["body", "fn", "--in", "src/foo.py"],
+    ["refs", "fn", "--in", "src/foo.py"],
+]
+
+
+def _init_versioned_repo(*, tmp_path, monkeypatch, required_version):
+    """Set up a repo whose configuration sets ``required_version``, if given."""
+    setting = (
+        "" if required_version is None else f'required-version = "{required_version}"\n'
+    )
+    (tmp_path / ".uncoded.toml").write_text(
+        f'source-roots = ["src"]\n{setting}', encoding="utf-8"
+    )
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src" / "foo.py").write_text("def fn():\n    pass\n", encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+
+
+def _tree(*, root):
+    return sorted(p.relative_to(root) for p in root.rglob("*"))
+
+
+class TestRequiredVersion:
+    @pytest.mark.parametrize("command", _COMMANDS)
+    def test_refuses_at_another_version(
+        self, *, tmp_path, monkeypatch, capsys, command
+    ):
+        _init_versioned_repo(
+            tmp_path=tmp_path, monkeypatch=monkeypatch, required_version="0.0.0"
+        )
+        before = _tree(root=tmp_path)
+        monkeypatch.setattr(sys, "argv", ["uncoded", *command])
+
+        with mock.patch.object(cli, "find_refs") as find_refs:
+            assert cli.main() == 1
+
+        find_refs.assert_not_called()
+        assert _tree(root=tmp_path) == before
+        captured = capsys.readouterr()
+        assert captured.out == ""
+        assert captured.err == (
+            f"Error: the project requires uncoded 0.0.0, and this is uncoded "
+            f"{__version__}. Run the command at the required version: "
+            f"uvx uncoded@0.0.0 {shlex.join(command)}\n"
+        )
+
+    @pytest.mark.parametrize("required_version", [__version__, None])
+    @pytest.mark.parametrize("run", zip(_COMMANDS, [0, 1, 0, 0], strict=True))
+    def test_runs_at_required_version_or_with_none_set(
+        self, *, tmp_path, monkeypatch, capsys, required_version, run
+    ):
+        command, status = run
+        _init_versioned_repo(
+            tmp_path=tmp_path,
+            monkeypatch=monkeypatch,
+            required_version=required_version,
+        )
+        monkeypatch.setattr(sys, "argv", ["uncoded", *command])
+
+        with mock.patch.object(cli, "find_refs", return_value=[]) as find_refs:
+            assert cli.main() == status
+
+        assert find_refs.called == (command[0] == "refs")
+        assert capsys.readouterr().err == ""
+
+    def test_two_configuration_files_refuse_body(
+        self, *, tmp_path, monkeypatch, capsys
+    ):
+        _init_versioned_repo(
+            tmp_path=tmp_path, monkeypatch=monkeypatch, required_version=None
+        )
+        (tmp_path / "pyproject.toml").write_text(
+            '[tool.uncoded]\nsource-roots = ["src"]\n', encoding="utf-8"
+        )
+        monkeypatch.setattr(sys, "argv", ["uncoded", *_COMMANDS[2]])
+
+        assert cli.main() == 1
+        captured = capsys.readouterr()
+        assert captured.out == ""
+        assert captured.err.startswith("Error: Ambiguous config")
 
 
 class TestBodyCommand:
