@@ -10,9 +10,7 @@ time, after the fixes that the checklist calls quick. The first measurement, the
 baseline, was taken on 2026-10-27 at `0071673`, before the roadmap for the
 engineering standard (#257) closed any gap.
 
-An open issue owns each shortfall below, apart from reviewed changes. That
-shortfall counts pull requests already merged, and #355 settles it for the pull
-requests to come, by asking each one to answer the definition of done.
+An open issue owns each shortfall below.
 
 ## Results
 
@@ -31,7 +29,7 @@ requests to come, by asking each one to answer the definition of done.
 | Machine-checked rules      | 6 of the 6 rules checked; no rule found that review missed more than once                                         | met     |                                    |
 | Fast readable tests        | 491 tests, the default 483 in 1.71 seconds at 100% branch coverage; 17 test names fall short of the bar           | not met | #359, #340                         |
 | Accurate tracker           | 0 of 26 open issues use a replaced word or ask for work done or ruled out                                         | met     |                                    |
-| Reviewed changes           | 41 pull requests merged since v3.0.0, 40 linking an issue or spec, 8 answering the definition of done             | not met | #355                               |
+| Reviewed changes           | 41 pull requests merged since v3.0.0, 40 linking an issue or spec, 8 answering the definition of done             | not met | #360                               |
 | Loud failures              | `strict = true`, `pytest>=9.0`, a 30-second test timeout, raised to 120 seconds on macOS and Windows in CI        | met     |                                    |
 | Rules not cases            | 11 entries on the ledger, each with an external cause; 0 conditionals that name a situation off the ledger        | met     |                                    |
 | Invariants by construction | 0 branches that defend against a state the types could rule out                                                   | met     |                                    |
@@ -84,12 +82,12 @@ requests to come, by asking each one to answer the definition of done.
 - **No suppressions.** The subprocess waivers are per-file ignores in
   `pyproject.toml`, each with its reason, and ruff's `PGH` checks reject a
   blanket `noqa` or `type: ignore`.
-- **One vocabulary.** The consistency review reported 6 disagreements. This pull
-  request fixed 4: `AGENTS.md` promised "full signatures" in a stub, the
-  docstring of `cli.main` said `uncoded init` syncs only the index, `cli.main`
-  bound the function that finds the configuration as `find_project`, and the
-  code navigation skill, `docs/commands.md` and a docstring in `resolver.py`
-  said "`type` alias" for a `type` statement. The other 2 are in
+- **One vocabulary.** The consistency review reported 6 disagreements. #355
+  fixed 4: `AGENTS.md` promised "full signatures" in a stub, the docstring of
+  `cli.main` said `uncoded init` syncs only the index, `cli.main` bound the
+  function that finds the configuration as `find_project`, and the code
+  navigation skill, `docs/commands.md` and a docstring in `resolver.py` said
+  "`type` alias" for a `type` statement. The other 2 are in
   `src/uncoded/extract.py`, and #347 owns both: a property is modelled as an
   `AssignmentSymbol` in a class's `attributes`, a word the concepts page does
   not use, and `PythonFile.assignments` also holds the `type` statements. No
@@ -108,25 +106,24 @@ requests to come, by asking each one to answer the definition of done.
   a code block that a shorter fence seems to close. The message for a
   configuration file that names no roots does not name the file, as its story
   says (#330). #345, a traceback when standard output cannot encode a
-  definition, contradicts no story, since no story covers that fault. This pull
-  request corrected the standard, which said that only `refs.py` imports
-  `subprocess`, when the tests of `refs.py` do too. The architecture contradicts
-  nothing.
+  definition, contradicts no story, since no story covers that fault. #355
+  corrected the standard, which said that only `refs.py` imports `subprocess`,
+  when `tests/conftest.py` and `tests/test_refs.py` do too. The architecture
+  contradicts nothing.
 - **Docs by purpose.** "Get started" is the tutorial, "Use uncoded" holds the
   how-to pages, "Reference" holds the configuration, command, compatibility,
   upgrading and changelog pages, and "Development" holds the rest. The changelog
-  linked the concepts page three times, and this pull request removed those
-  links.
+  linked the concepts page three times, and #355 removed those links.
 - **Versioned contract.** `docs/compatibility.md` gives the rules, and
   `docs/changelog.md` uses the headings Breaking, Added, Changed and Fixed. The
   two **Breaking** entries under "Unreleased" each say what now happens, and the
   release that takes them will add an upgrading section, as the release
   checklist says.
 - **Accurate references.** `cog --check` passes on `docs/commands.md`, and every
-  exit status it gives matched the commands' behaviour. This pull request fixed
-  two descriptions that differed from the code: the documentation navigation
-  skill and the docs map's header said that a " (N)" suffix marks a heading with
-  the same text and level, when the level does not count, and
+  exit status it gives matched the commands' behaviour. #355 fixed two
+  descriptions that differed from the code: the documentation navigation skill
+  and the docs map's header said that a " (N)" suffix marks a heading with the
+  same text and level, when the level does not count, and
   `docs/configuration.md` said that a file is generated when a setting is set,
   when the setting must name a root. The code navigation skill gives
   `uvx uncoded body` and `uvx uncoded refs` as the commands. In a project with a
@@ -151,13 +148,13 @@ requests to come, by asking each one to answer the definition of done.
 - **Reviewed changes.** v3.0.0 is the previous major or minor release. Of the 41
   pull requests merged since, #252 links no issue or spec, and 8 answer the
   definition of done. Four commits reached `main` outside a pull request, the
-  last on 2026-10-24, before branch protection required one. `AGENTS.md` now
-  asks every pull request to answer the definition of done, from #355, so the
-  count starts again at the next major or minor release.
+  last on 2026-10-24, before branch protection required one. `AGENTS.md` asks
+  every pull request to answer the definition of done from #355 on, and #360
+  owns the shortfall until a measurement counts only those pull requests.
 - **Rules not cases.** Every entry on [the ledger](special-cases.md) is where it
   says, with a cause outside uncoded, and review found no other conditional that
-  names a situation. This pull request removed an override in `yaml_tree.py`
-  that indented lists, since neither map holds a list.
+  names a situation. #355 removed an override in `yaml_tree.py` that indented
+  lists, since neither map holds a list.
 - **Invariants by construction.** No branch, raise or assert defends against a
   state the types could rule out. `sync.remove_file` takes a path relative to
   the project directory as a `Path`, and a path outside it raises the
