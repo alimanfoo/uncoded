@@ -32,7 +32,7 @@ review, and makes navigation skills load once per session.
    `uncoded sync` removes only the skills that the current version generates:
 
    ```sh
-   git rm -r .agents/skills/uncoded-coherence-review .claude/skills/uncoded-coherence-review
+   rm -rf .agents/skills/uncoded-coherence-review .claude/skills/uncoded-coherence-review
    ```
 
 4. Replace any always-on navigation instructions in `AGENTS.md` or `CLAUDE.md`
@@ -48,6 +48,9 @@ Version 2 replaces instruction injection with generated skills.
    ```sh
    uvx uncoded@2.1.1 sync
    ```
+
+   It also removes the version 1 skills, `coherence-review` and
+   `uncoded-review`. Later releases leave them in place.
 
 2. Remove the old marker blocks from `AGENTS.md` or `CLAUDE.md`:
 

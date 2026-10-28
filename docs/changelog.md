@@ -58,7 +58,7 @@ includes it. Each entry links the pull request that made the change.
   `uncoded-review`. It removed them on every run, so it deleted a skill of the
   user's own with one of those names. It removes only the skills that the
   current version generates, when the roots they belong with are gone. A project
-  that still has a skill under an old name deletes it by hand, as
+  that still has a skill under an old name removes it as
   [Upgrading](upgrading.md) says.
   ([#337](https://github.com/alimanfoo/uncoded/pull/337))
 
