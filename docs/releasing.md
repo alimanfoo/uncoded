@@ -34,7 +34,7 @@ Do this before a major or minor release too.
 
    ```sh
    R=repos/alimanfoo/uncoded
-   gh api $R --jq '{has_discussions, security_and_analysis}'
+   gh api $R --jq '{has_discussions, security_and_analysis, pull_request_creation_policy}'
    gh api $R/private-vulnerability-reporting
    gh api $R/code-scanning/default-setup --jq '{state, languages}'
    gh api $R/dependency-graph/sbom --jq '.sbom.name'
@@ -44,14 +44,15 @@ Do this before a major or minor release too.
    ```
 
    Check that Discussions, private vulnerability reporting, secret scanning and
-   push protection are on, and that CodeQL default setup covers `actions` and
-   `python`. Check that `main` requires a pull request and the "Required checks
-   pass" and `dependency-review` checks, enforced for admins, with "require
-   branches to be up to date" and conversation resolution off. Check that the
-   `pypi` environment allows only tags that match `v*`, and has no required
-   reviewer. Then check by eye, in the repository's settings on GitHub, that
-   only collaborators can open issues and pull requests. Correct any setting
-   that differs.
+   push protection are on, that CodeQL default setup covers `actions` and
+   `python`, and that only collaborators can open pull requests. Check that
+   `main` requires a pull request and the "Required checks pass" and
+   `dependency-review` checks, enforced for admins, with "require branches to be
+   up to date" and conversation resolution off. Check that the `pypi`
+   environment allows only tags that match `v*`, and has no required reviewer.
+   Then check by eye, in the repository's settings on GitHub, that only
+   collaborators can open issues, since the API does not report it. Correct any
+   setting that differs.
 
 ## Prepare the release
 
