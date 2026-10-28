@@ -19,7 +19,7 @@ DOCS_HEADER = f"""\
 """
 
 
-def _parse_atx_heading(line: str) -> tuple[int, str] | None:
+def _parse_atx_heading(*, line: str) -> tuple[int, str] | None:
     if not line.startswith("#"):
         return None
     # Count consecutive leading #.
@@ -39,7 +39,7 @@ def _parse_atx_heading(line: str) -> tuple[int, str] | None:
     return (level, title) if title else None
 
 
-def extract_headings(text: str) -> list[tuple[int, str]]:
+def extract_headings(*, text: str) -> list[tuple[int, str]]:
     """Return the ATX headings in ``text`` as ordered (level, title) pairs.
 
     Recognises ATX headings only: 1-6 ``#`` followed by a space and a
@@ -74,7 +74,7 @@ def extract_headings(text: str) -> list[tuple[int, str]]:
             fence_marker = line[:3]
             continue
 
-        result = _parse_atx_heading(line)
+        result = _parse_atx_heading(line=line)
         if result is not None:
             headings.append(result)
 
@@ -98,7 +98,7 @@ def _collapse_empty(*, mapping: dict) -> dict | None:
     return {k: _collapse_empty(mapping=v) for k, v in mapping.items()}
 
 
-def iter_doc_files(doc_root: Path, project_root: Path) -> Iterator[tuple[str, Path]]:
+def iter_doc_files(*, doc_root: Path, project_root: Path) -> Iterator[tuple[str, Path]]:
     """Yield (text, rel_path) for .md files under ``doc_root``.
 
     If ``doc_root`` is a directory, yields all ``*.md`` files found by
@@ -112,19 +112,19 @@ def iter_doc_files(doc_root: Path, project_root: Path) -> Iterator[tuple[str, Pa
     project_root = project_root.resolve()
     if doc_root.is_file():
         rel = doc_root.relative_to(project_root)
-        text = read_doc_text_or_warn(doc_root, warning_path=rel.as_posix())
+        text = read_doc_text_or_warn(path=doc_root, warning_path=rel.as_posix())
         if text is not None:
             yield text, rel
     else:
         for md_file in sorted(doc_root.rglob("*.md")):
             rel = md_file.relative_to(project_root)
-            text = read_doc_text_or_warn(md_file, warning_path=rel.as_posix())
+            text = read_doc_text_or_warn(path=md_file, warning_path=rel.as_posix())
             if text is None:
                 continue
             yield text, rel
 
 
-def build_docs_map(files: Iterable[tuple[str, Path]]) -> dict:
+def build_docs_map(*, files: Iterable[tuple[str, Path]]) -> dict:
     """Build a nested dict from ``(text, rel_path)`` doc-file pairs.
 
     Top-level keys are directory names (trailing "/") and file names.
@@ -149,7 +149,7 @@ def build_docs_map(files: Iterable[tuple[str, Path]]) -> dict:
         # Stack of (level, children_dict) — the active path from file root.
         stack: list[tuple[int, dict]] = [(0, file_dict)]
 
-        for level, title in extract_headings(text):
+        for level, title in extract_headings(text=text):
             while stack[-1][0] >= level:
                 stack.pop()
             parent_dict = stack[-1][1]
@@ -163,6 +163,6 @@ def build_docs_map(files: Iterable[tuple[str, Path]]) -> dict:
     return root
 
 
-def render_docs_map(mapping: dict) -> str:
+def render_docs_map(*, mapping: dict) -> str:
     """Render a docs map dict as a YAML string with an explanatory header."""
-    return render_yaml_tree(DOCS_HEADER, mapping)
+    return render_yaml_tree(header=DOCS_HEADER, mapping=mapping)

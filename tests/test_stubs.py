@@ -19,16 +19,16 @@ from uncoded.stubs import (
 )
 
 
-def _setup(tmp_path):
+def _setup(*, tmp_path):
     src = tmp_path / "src"
     src.mkdir()
     out = tmp_path / "stubs"
     return src, out
 
 
-def _build(source_root, out, tmp_path, *, check=False):
+def _build(*, source_root, out, tmp_path, check=False):
     return build_stubs(
-        files=list(iter_source_files(source_root, project_root=tmp_path)),
+        files=list(iter_source_files(source_root=source_root, project_root=tmp_path)),
         source_root=source_root,
         output_dir=out,
         project_root=tmp_path,
@@ -43,7 +43,7 @@ class TestExtractStub:
                 '''Say hello.'''
                 return f"Hello, {name}"
         """)
-        module = extract_stub(source, "pkg/greet.py")
+        module = extract_stub(source=source, rel_path="pkg/greet.py")
         assert len(module.functions) == 1
         f = module.functions[0]
         assert f.name == "greet"
@@ -55,7 +55,7 @@ class TestExtractStub:
             def run(x, y):
                 pass
         """)
-        module = extract_stub(source, "pkg/run.py")
+        module = extract_stub(source=source, rel_path="pkg/run.py")
         f = module.functions[0]
         assert f.params == [StubParam("x"), StubParam("y")]
         assert f.return_annotation is None
@@ -65,7 +65,7 @@ class TestExtractStub:
             async def fetch(url: str) -> bytes:
                 pass
         """)
-        module = extract_stub(source, "pkg/net.py")
+        module = extract_stub(source=source, rel_path="pkg/net.py")
         f = module.functions[0]
         assert f.is_async is True
         assert f.name == "fetch"
@@ -75,7 +75,7 @@ class TestExtractStub:
             def public(): pass
             def _private(): pass
         """)
-        module = extract_stub(source, "pkg/mod.py")
+        module = extract_stub(source=source, rel_path="pkg/mod.py")
         assert len(module.functions) == 2
         assert module.functions[0].name == "public"
         assert module.functions[1].name == "_private"
@@ -95,7 +95,7 @@ class TestExtractStub:
                 def _validate(self) -> bool:
                     pass
         """)
-        module = extract_stub(source, "pkg/models.py")
+        module = extract_stub(source=source, rel_path="pkg/models.py")
         assert len(module.classes) == 1
         cls = module.classes[0]
         assert cls.name == "Record"
@@ -111,7 +111,7 @@ class TestExtractStub:
             class Dog(Animal, Domestic):
                 pass
         """)
-        module = extract_stub(source, "pkg/animals.py")
+        module = extract_stub(source=source, rel_path="pkg/animals.py")
         assert module.classes[0].bases == ["Animal", "Domestic"]
 
     def test_class_no_bases(self):
@@ -119,7 +119,7 @@ class TestExtractStub:
             class Plain:
                 pass
         """)
-        module = extract_stub(source, "pkg/plain.py")
+        module = extract_stub(source=source, rel_path="pkg/plain.py")
         assert module.classes[0].bases == []
 
     @pytest.mark.parametrize(
@@ -197,8 +197,8 @@ class TestExtractStub:
             ),
         ],
     )
-    def test_extract_params_covers_input_kind(self, source, expected):
-        module = extract_stub(source, "pkg/f.py")
+    def test_extract_params_covers_input_kind(self, *, source, expected):
+        module = extract_stub(source=source, rel_path="pkg/f.py")
         f = module.functions[0]
         assert f.params == expected
 
@@ -211,7 +211,7 @@ class TestExtractStub:
             def run(p: Path) -> Optional[str]:
                 pass
         """)
-        module = extract_stub(source, "pkg/run.py")
+        module = extract_stub(source=source, rel_path="pkg/run.py")
         assert module.imports == [
             "import os",
             "from pathlib import Path",
@@ -220,7 +220,7 @@ class TestExtractStub:
 
     def test_syntax_error_raises(self):
         with pytest.raises(SyntaxError):
-            extract_stub("def broken(:\n", "pkg/bad.py")
+            extract_stub(source="def broken(:\n", rel_path="pkg/bad.py")
 
     def test_source_order_preserved(self):
         source = textwrap.dedent("""\
@@ -228,7 +228,7 @@ class TestExtractStub:
             class Alpha: pass
             def apple(): pass
         """)
-        module = extract_stub(source, "pkg/mixed.py")
+        module = extract_stub(source=source, rel_path="pkg/mixed.py")
         assert module.functions[0].name == "zebra"
         assert module.functions[1].name == "apple"
         assert module.classes[0].name == "Alpha"
@@ -237,7 +237,7 @@ class TestExtractStub:
         source = textwrap.dedent("""\
             MAX_RETRIES: int = 3
         """)
-        module = extract_stub(source, "pkg/mod.py")
+        module = extract_stub(source=source, rel_path="pkg/mod.py")
         c = module.constants[0]
         assert c.name == "MAX_RETRIES"
         assert c.annotation == "int"
@@ -248,7 +248,7 @@ class TestExtractStub:
         source = textwrap.dedent("""\
             TIMEOUT = 30
         """)
-        module = extract_stub(source, "pkg/mod.py")
+        module = extract_stub(source=source, rel_path="pkg/mod.py")
         c = module.constants[0]
         assert c.name == "TIMEOUT"
         assert c.annotation is None
@@ -258,7 +258,7 @@ class TestExtractStub:
         source = textwrap.dedent("""\
             FOO: int
         """)
-        module = extract_stub(source, "pkg/mod.py")
+        module = extract_stub(source=source, rel_path="pkg/mod.py")
         c = module.constants[0]
         assert c.annotation == "int"
         assert c.value_source is None
@@ -266,7 +266,7 @@ class TestExtractStub:
     def test_constant_value_too_long_elided(self):
         long_list = "[" + ", ".join(f'"item{i}"' for i in range(50)) + "]"
         source = f"BIG = {long_list}\n"
-        module = extract_stub(source, "pkg/mod.py")
+        module = extract_stub(source=source, rel_path="pkg/mod.py")
         c = module.constants[0]
         assert c.name == "BIG"
         assert c.value_source == "..."
@@ -275,7 +275,7 @@ class TestExtractStub:
         source = textwrap.dedent("""\
             _INTERNAL = 42
         """)
-        module = extract_stub(source, "pkg/mod.py")
+        module = extract_stub(source=source, rel_path="pkg/mod.py")
         assert module.constants[0].name == "_INTERNAL"
 
     def test_type_alias_classic(self):
@@ -283,7 +283,7 @@ class TestExtractStub:
             from typing import TypeAlias
             UserId: TypeAlias = int
         """)
-        module = extract_stub(source, "pkg/mod.py")
+        module = extract_stub(source=source, rel_path="pkg/mod.py")
         c = module.constants[0]
         assert c.name == "UserId"
         assert c.annotation == "TypeAlias"
@@ -294,7 +294,7 @@ class TestExtractStub:
         source = textwrap.dedent("""\
             type UserId = int
         """)
-        module = extract_stub(source, "pkg/mod.py")
+        module = extract_stub(source=source, rel_path="pkg/mod.py")
         c = module.constants[0]
         assert c.name == "UserId"
         assert c.is_pep695_alias is True
@@ -304,12 +304,12 @@ class TestExtractStub:
         source = textwrap.dedent("""\
             X, Y = 1, 2
         """)
-        module = extract_stub(source, "pkg/mod.py")
+        module = extract_stub(source=source, rel_path="pkg/mod.py")
         assert module.constants == []
 
     def test_ann_assign_non_name_target_skipped(self):
         source = "obj.x: int = 1\n"
-        module = extract_stub(source, "pkg/mod.py")
+        module = extract_stub(source=source, rel_path="pkg/mod.py")
         assert module.constants == []
 
     def test_class_tuple_unpacking_skipped(self):
@@ -317,7 +317,7 @@ class TestExtractStub:
             class C:
                 a, b = 1, 2
         """)
-        module = extract_stub(source, "pkg/mod.py")
+        module = extract_stub(source=source, rel_path="pkg/mod.py")
         assert module.classes[0].attributes == []
 
     def test_class_with_unannotated_attribute(self):
@@ -326,7 +326,7 @@ class TestExtractStub:
                 items = []
                 count: int = 0
         """)
-        module = extract_stub(source, "pkg/mod.py")
+        module = extract_stub(source=source, rel_path="pkg/mod.py")
         cls = module.classes[0]
         names = [(a.name, a.annotation, a.value_source) for a in cls.attributes]
         assert names == [
@@ -342,7 +342,7 @@ class TestExtractStub:
                     '''Return the config file path.'''
                     return self._path
         """)
-        module = extract_stub(source, "pkg/cfg.py")
+        module = extract_stub(source=source, rel_path="pkg/cfg.py")
         cls = module.classes[0]
         assert cls.methods == []
         assert len(cls.attributes) == 1
@@ -358,7 +358,7 @@ class TestExtractStub:
                 def path(self):
                     return self._path
         """)
-        module = extract_stub(source, "pkg/cfg.py")
+        module = extract_stub(source=source, rel_path="pkg/cfg.py")
         cls = module.classes[0]
         assert cls.attributes[0].name == "path"
         assert cls.attributes[0].annotation is None
@@ -378,7 +378,7 @@ class TestExtractStub:
                 def path(self) -> None:
                     del self._path
         """)
-        module = extract_stub(source, "pkg/cfg.py")
+        module = extract_stub(source=source, rel_path="pkg/cfg.py")
         cls = module.classes[0]
         assert [a.name for a in cls.attributes] == ["path"]
         assert cls.methods == []
@@ -387,7 +387,7 @@ class TestExtractStub:
 class TestRenderStub:
     def test_header_contains_path(self):
         module = StubModule(rel_path="src/pkg/mod.py")
-        lines = render_stub(module).splitlines()
+        lines = render_stub(module=module).splitlines()
         assert lines[0] == f"# {GENERATED_MARKER}"
         assert lines[1] == "# src/pkg/mod.py"
 
@@ -396,7 +396,7 @@ class TestRenderStub:
             rel_path="pkg/mod.py",
             imports=["import os", "from pathlib import Path"],
         )
-        output = render_stub(module)
+        output = render_stub(module=module)
         assert "import os\nfrom pathlib import Path\n" in output
 
     def test_rendered_stub_has_no_line_range_comments(self):
@@ -416,7 +416,7 @@ class TestRenderStub:
                 )
             ],
         )
-        output = render_stub(module)
+        output = render_stub(module=module)
         assert "VALUE = 1\n" in output
         assert "def run():\n    ...\n" in output
         assert "class Worker:\n    def work(self):\n        ...\n" in output
@@ -427,7 +427,7 @@ class TestRenderStub:
             rel_path="pkg/mod.py",
             functions=[StubFunction(name="fetch", is_async=True)],
         )
-        assert "async def fetch():\n    ...\n" in render_stub(module)
+        assert "async def fetch():\n    ...\n" in render_stub(module=module)
 
     @pytest.mark.parametrize(
         ("params", "expected"),
@@ -474,26 +474,26 @@ class TestRenderStub:
             ),
         ],
     )
-    def test_render_param_covers_input_kind(self, params, expected):
+    def test_render_param_covers_input_kind(self, *, params, expected):
         module = StubModule(
             rel_path="pkg/mod.py",
             functions=[StubFunction(name="f", params=params)],
         )
-        assert expected in render_stub(module)
+        assert expected in render_stub(module=module)
 
     def test_return_annotation_rendered(self):
         module = StubModule(
             rel_path="pkg/mod.py",
             functions=[StubFunction(name="f", return_annotation="str")],
         )
-        assert "def f() -> str:" in render_stub(module)
+        assert "def f() -> str:" in render_stub(module=module)
 
     def test_class_with_bases(self):
         module = StubModule(
             rel_path="pkg/mod.py",
             classes=[StubClass(name="Dog", bases=["Animal"])],
         )
-        assert "class Dog(Animal):\n    ...\n" in render_stub(module)
+        assert "class Dog(Animal):\n    ...\n" in render_stub(module=module)
 
     def test_class_with_no_members_renders_body(self):
         # A class with no attributes and no methods needs an explicit
@@ -502,7 +502,7 @@ class TestRenderStub:
             rel_path="pkg/mod.py",
             classes=[StubClass(name="Sentinel")],
         )
-        output = render_stub(module)
+        output = render_stub(module=module)
         assert "class Sentinel:\n    ...\n" in output
         compile(output, "pkg/mod.pyi", "exec")
 
@@ -516,7 +516,7 @@ class TestRenderStub:
                 )
             ],
         )
-        assert "class Record:\n    name: str\n" in render_stub(module)
+        assert "class Record:\n    name: str\n" in render_stub(module=module)
 
     def test_method_indented(self):
         module = StubModule(
@@ -533,12 +533,12 @@ class TestRenderStub:
                 )
             ],
         )
-        output = render_stub(module)
+        output = render_stub(module=module)
         assert "class Foo:\n    def bar(self):\n        ...\n" in output
 
     def test_ends_with_newline(self):
         module = StubModule(rel_path="pkg/mod.py")
-        assert render_stub(module).endswith("\n")
+        assert render_stub(module=module).endswith("\n")
 
     def test_property_rendered_as_class_attribute(self):
         source = textwrap.dedent("""\
@@ -551,8 +551,8 @@ class TestRenderStub:
                 def path(self, value: Path) -> None:
                     self._path = value
         """)
-        module = extract_stub(source, "pkg/cfg.py")
-        output = render_stub(module)
+        module = extract_stub(source=source, rel_path="pkg/cfg.py")
+        output = render_stub(module=module)
         assert "class Config:\n    path: Path\n" in output
         assert "def path" not in output
 
@@ -561,7 +561,7 @@ class TestRenderStub:
             rel_path="pkg/mod.py",
             constants=[StubAssignment(name="TIMEOUT", value_source="30")],
         )
-        assert "TIMEOUT = 30\n" in render_stub(module)
+        assert "TIMEOUT = 30\n" in render_stub(module=module)
 
     def test_constant_annotated_with_value_rendered(self):
         module = StubModule(
@@ -574,21 +574,21 @@ class TestRenderStub:
                 )
             ],
         )
-        assert "MAX: int = 3\n" in render_stub(module)
+        assert "MAX: int = 3\n" in render_stub(module=module)
 
     def test_constant_elided_rendered(self):
         module = StubModule(
             rel_path="pkg/mod.py",
             constants=[StubAssignment(name="BIG", value_source="...")],
         )
-        assert "BIG = ...\n" in render_stub(module)
+        assert "BIG = ...\n" in render_stub(module=module)
 
     def test_constant_bare_annotation_rendered(self):
         module = StubModule(
             rel_path="pkg/mod.py",
             constants=[StubAssignment(name="FOO", annotation="int")],
         )
-        output = render_stub(module)
+        output = render_stub(module=module)
         assert "FOO: int\n" in output
         assert "FOO: int = " not in output
 
@@ -603,7 +603,7 @@ class TestRenderStub:
                 )
             ],
         )
-        assert "type UserId = int\n" in render_stub(module)
+        assert "type UserId = int\n" in render_stub(module=module)
 
     def test_unannotated_class_attribute_rendered(self):
         module = StubModule(
@@ -615,7 +615,7 @@ class TestRenderStub:
                 )
             ],
         )
-        output = render_stub(module)
+        output = render_stub(module=module)
         assert "class Registry:\n    items = []\n" in output
         assert "# L" not in output
 
@@ -663,101 +663,101 @@ class TestRenderStub:
             class Dog(Animal):
                 pass
         """)
-        module = extract_stub(source, "pkg/representative.py")
-        output = render_stub(module)
+        module = extract_stub(source=source, rel_path="pkg/representative.py")
+        output = render_stub(module=module)
         compile(output, "pkg/representative.pyi", "exec")
 
 
 class TestBuildStubs:
     """build_stubs writes expected stubs and removes orphans for its source root."""
 
-    def test_writes_expected_stubs(self, tmp_path):
-        src, out = _setup(tmp_path)
+    def test_writes_expected_stubs(self, *, tmp_path):
+        src, out = _setup(tmp_path=tmp_path)
         (src / "foo.py").write_text("def hello(): pass\n", encoding="utf-8")
-        _build(src, out, tmp_path)
+        _build(source_root=src, out=out, tmp_path=tmp_path)
         assert (out / "src" / "foo.pyi").exists()
 
-    def test_removes_orphan_stub_when_source_deleted(self, tmp_path):
-        src, out = _setup(tmp_path)
+    def test_removes_orphan_stub_when_source_deleted(self, *, tmp_path):
+        src, out = _setup(tmp_path=tmp_path)
         (src / "foo.py").write_text("def hello(): pass\n", encoding="utf-8")
         (src / "bar.py").write_text("def goodbye(): pass\n", encoding="utf-8")
-        _build(src, out, tmp_path)
+        _build(source_root=src, out=out, tmp_path=tmp_path)
         assert (out / "src" / "bar.pyi").exists()
 
         (src / "bar.py").unlink()
-        _build(src, out, tmp_path)
+        _build(source_root=src, out=out, tmp_path=tmp_path)
         assert (out / "src" / "foo.pyi").exists()
         assert not (out / "src" / "bar.pyi").exists()
 
-    def test_removes_orphan_stub_when_source_renamed(self, tmp_path):
-        src, out = _setup(tmp_path)
+    def test_removes_orphan_stub_when_source_renamed(self, *, tmp_path):
+        src, out = _setup(tmp_path=tmp_path)
         (src / "old_name.py").write_text("def hello(): pass\n", encoding="utf-8")
-        _build(src, out, tmp_path)
+        _build(source_root=src, out=out, tmp_path=tmp_path)
         assert (out / "src" / "old_name.pyi").exists()
 
         (src / "old_name.py").rename(src / "new_name.py")
-        _build(src, out, tmp_path)
+        _build(source_root=src, out=out, tmp_path=tmp_path)
         assert (out / "src" / "new_name.pyi").exists()
         assert not (out / "src" / "old_name.pyi").exists()
 
-    def test_prunes_empty_directories(self, tmp_path):
-        src, out = _setup(tmp_path)
+    def test_prunes_empty_directories(self, *, tmp_path):
+        src, out = _setup(tmp_path=tmp_path)
         pkg = src / "pkg"
         pkg.mkdir()
         (pkg / "mod.py").write_text("def hello(): pass\n", encoding="utf-8")
-        _build(src, out, tmp_path)
+        _build(source_root=src, out=out, tmp_path=tmp_path)
         assert (out / "src" / "pkg" / "mod.pyi").exists()
 
         # Remove the whole subpackage; the stub directory should be pruned.
         (pkg / "mod.py").unlink()
         pkg.rmdir()
-        _build(src, out, tmp_path)
+        _build(source_root=src, out=out, tmp_path=tmp_path)
         assert not (out / "src" / "pkg").exists()
 
-    def test_does_not_touch_other_source_root(self, tmp_path):
-        src, out = _setup(tmp_path)
+    def test_does_not_touch_other_source_root(self, *, tmp_path):
+        src, out = _setup(tmp_path=tmp_path)
         tests = tmp_path / "tests"
         tests.mkdir()
         (src / "foo.py").write_text("def hello(): pass\n", encoding="utf-8")
         (tests / "test_foo.py").write_text("def test_hello(): pass\n", encoding="utf-8")
 
-        _build(src, out, tmp_path)
-        _build(tests, out, tmp_path)
+        _build(source_root=src, out=out, tmp_path=tmp_path)
+        _build(source_root=tests, out=out, tmp_path=tmp_path)
         assert (out / "src" / "foo.pyi").exists()
         assert (out / "tests" / "test_foo.pyi").exists()
 
         # Rebuilding only `src` must leave the `tests` stub alone.
-        _build(src, out, tmp_path)
+        _build(source_root=src, out=out, tmp_path=tmp_path)
         assert (out / "tests" / "test_foo.pyi").exists()
 
-    def test_no_op_when_clean(self, tmp_path):
-        src, out = _setup(tmp_path)
+    def test_no_op_when_clean(self, *, tmp_path):
+        src, out = _setup(tmp_path=tmp_path)
         (src / "foo.py").write_text("def hello(): pass\n", encoding="utf-8")
-        _build(src, out, tmp_path)
+        _build(source_root=src, out=out, tmp_path=tmp_path)
         # Second build with no source changes should not error and should
         # leave the stub in place.
-        _build(src, out, tmp_path)
+        _build(source_root=src, out=out, tmp_path=tmp_path)
         assert (out / "src" / "foo.pyi").exists()
 
-    def test_reports_count_on_first_build(self, tmp_path):
-        src, out = _setup(tmp_path)
+    def test_reports_count_on_first_build(self, *, tmp_path):
+        src, out = _setup(tmp_path=tmp_path)
         (src / "foo.py").write_text("def hello(): pass\n", encoding="utf-8")
         (src / "bar.py").write_text("def goodbye(): pass\n", encoding="utf-8")
-        assert _build(src, out, tmp_path) == 2
+        assert _build(source_root=src, out=out, tmp_path=tmp_path) == 2
 
-    def test_reports_zero_when_clean(self, tmp_path):
-        src, out = _setup(tmp_path)
+    def test_reports_zero_when_clean(self, *, tmp_path):
+        src, out = _setup(tmp_path=tmp_path)
         (src / "foo.py").write_text("def hello(): pass\n", encoding="utf-8")
-        _build(src, out, tmp_path)
-        assert _build(src, out, tmp_path) == 0
+        _build(source_root=src, out=out, tmp_path=tmp_path)
+        assert _build(source_root=src, out=out, tmp_path=tmp_path) == 0
 
-    def test_skips_module_with_no_symbols(self, tmp_path):
-        src, out = _setup(tmp_path)
+    def test_skips_module_with_no_symbols(self, *, tmp_path):
+        src, out = _setup(tmp_path=tmp_path)
         (src / "empty.py").write_text(
             '"""Only a module docstring."""\n', encoding="utf-8"
         )
         (src / "foo.py").write_text("def hello(): pass\n", encoding="utf-8")
-        _build(src, out, tmp_path)
+        _build(source_root=src, out=out, tmp_path=tmp_path)
         assert not (out / "src" / "empty.pyi").exists()
         assert (out / "src" / "foo.pyi").exists()
 
@@ -765,42 +765,42 @@ class TestBuildStubs:
 class TestBuildStubsCheckMode:
     """build_stubs with check=True must report changes without mutating the tree."""
 
-    def test_does_not_write_stub_in_check_mode(self, tmp_path):
-        src, out = _setup(tmp_path)
+    def test_does_not_write_stub_in_check_mode(self, *, tmp_path):
+        src, out = _setup(tmp_path=tmp_path)
         (src / "foo.py").write_text("def hello(): pass\n", encoding="utf-8")
-        changes = _build(src, out, tmp_path, check=True)
+        changes = _build(source_root=src, out=out, tmp_path=tmp_path, check=True)
         assert changes == 1
         assert not (out / "src" / "foo.pyi").exists()
 
-    def test_zero_changes_when_clean(self, tmp_path):
-        src, out = _setup(tmp_path)
+    def test_zero_changes_when_clean(self, *, tmp_path):
+        src, out = _setup(tmp_path=tmp_path)
         (src / "foo.py").write_text("def hello(): pass\n", encoding="utf-8")
-        _build(src, out, tmp_path)
-        assert _build(src, out, tmp_path, check=True) == 0
+        _build(source_root=src, out=out, tmp_path=tmp_path)
+        assert _build(source_root=src, out=out, tmp_path=tmp_path, check=True) == 0
 
-    def test_detects_stale_stub_content(self, tmp_path):
-        src, out = _setup(tmp_path)
+    def test_detects_stale_stub_content(self, *, tmp_path):
+        src, out = _setup(tmp_path=tmp_path)
         (src / "foo.py").write_text("def hello(): pass\n", encoding="utf-8")
-        _build(src, out, tmp_path)
+        _build(source_root=src, out=out, tmp_path=tmp_path)
         # Simulate a source edit that would change the stub.
         (src / "foo.py").write_text(
             "def hello(name: str) -> str: pass\n", encoding="utf-8"
         )
-        assert _build(src, out, tmp_path, check=True) == 1
+        assert _build(source_root=src, out=out, tmp_path=tmp_path, check=True) == 1
 
-    def test_detects_orphan_stub_without_removing_it(self, tmp_path):
-        src, out = _setup(tmp_path)
+    def test_detects_orphan_stub_without_removing_it(self, *, tmp_path):
+        src, out = _setup(tmp_path=tmp_path)
         (src / "foo.py").write_text("def hello(): pass\n", encoding="utf-8")
         (src / "bar.py").write_text("def goodbye(): pass\n", encoding="utf-8")
-        _build(src, out, tmp_path)
+        _build(source_root=src, out=out, tmp_path=tmp_path)
         (src / "bar.py").unlink()
-        assert _build(src, out, tmp_path, check=True) == 1
+        assert _build(source_root=src, out=out, tmp_path=tmp_path, check=True) == 1
         # Check mode must not mutate the tree — orphan is still there.
         assert (out / "src" / "bar.pyi").exists()
 
 
 class TestWriteStubs:
-    def test_writes_stubs(self, tmp_path):
+    def test_writes_stubs(self, *, tmp_path):
         src = tmp_path / "src"
         src.mkdir()
         out = tmp_path / "stubs"
@@ -817,7 +817,7 @@ class TestWriteStubs:
         assert changes == 1
         assert (out / "src" / "foo.pyi").read_text(encoding="utf-8") == "# stub\n"
 
-    def test_check_mode_does_not_write(self, tmp_path):
+    def test_check_mode_does_not_write(self, *, tmp_path):
         src = tmp_path / "src"
         src.mkdir()
         out = tmp_path / "stubs"
@@ -834,7 +834,7 @@ class TestWriteStubs:
         assert changes == 1
         assert not (out / "src" / "foo.pyi").exists()
 
-    def test_prunes_orphan_stubs(self, tmp_path):
+    def test_prunes_orphan_stubs(self, *, tmp_path):
         src = tmp_path / "src"
         src.mkdir()
         out = tmp_path / "stubs"
@@ -854,7 +854,7 @@ class TestWriteStubs:
         assert not (out / "src").exists()
 
     def test_project_root_anchors_writes_independent_of_cwd(
-        self, tmp_path, monkeypatch
+        self, *, tmp_path, monkeypatch
     ):
         # output_dir is project-relative; project_root anchors the actual
         # writes under tmp_path even when cwd is elsewhere.
@@ -881,7 +881,7 @@ class TestWriteStubs:
         assert not (sub / out / "src" / "foo.pyi").exists()
 
     def test_project_root_anchors_orphan_pruning_independent_of_cwd(
-        self, tmp_path, monkeypatch
+        self, *, tmp_path, monkeypatch
     ):
         sub = tmp_path / "subdir"
         sub.mkdir()
@@ -908,7 +908,7 @@ class TestWriteStubs:
 
 
 class TestRemoveAllStubs:
-    def _make_stubs(self, tmp_path, rel_pyi="src/foo.pyi"):
+    def _make_stubs(self, *, tmp_path, rel_pyi="src/foo.pyi"):
         """Create a stubs directory with one .pyi file; return (stubs_dir, pyi)."""
         stubs_dir = tmp_path / ".uncoded" / "stubs"
         pyi = stubs_dir / rel_pyi
@@ -916,61 +916,61 @@ class TestRemoveAllStubs:
         pyi.write_text("# stub\n", encoding="utf-8")
         return stubs_dir, pyi
 
-    def test_noop_when_output_dir_absent(self, tmp_path):
+    def test_noop_when_output_dir_absent(self, *, tmp_path):
         changes = remove_all_stubs(
-            Path(".uncoded/stubs"), project_root=tmp_path, check=False
+            output_dir=Path(".uncoded/stubs"), project_root=tmp_path, check=False
         )
         assert changes == 0
 
-    def test_removes_pyi_file_and_directory(self, tmp_path):
-        stubs_dir, pyi = self._make_stubs(tmp_path)
+    def test_removes_pyi_file_and_directory(self, *, tmp_path):
+        stubs_dir, pyi = self._make_stubs(tmp_path=tmp_path)
         changes = remove_all_stubs(
-            Path(".uncoded/stubs"), project_root=tmp_path, check=False
+            output_dir=Path(".uncoded/stubs"), project_root=tmp_path, check=False
         )
         assert changes == 1
         assert not pyi.exists()
         assert not stubs_dir.exists()
 
-    def test_removes_nested_structure(self, tmp_path):
-        stubs_dir, _pyi = self._make_stubs(tmp_path, "src/pkg/bar.pyi")
+    def test_removes_nested_structure(self, *, tmp_path):
+        stubs_dir, _pyi = self._make_stubs(tmp_path=tmp_path, rel_pyi="src/pkg/bar.pyi")
         changes = remove_all_stubs(
-            Path(".uncoded/stubs"), project_root=tmp_path, check=False
+            output_dir=Path(".uncoded/stubs"), project_root=tmp_path, check=False
         )
         assert changes == 1
         assert not stubs_dir.exists()
 
-    def test_check_mode_reports_without_removing(self, tmp_path):
-        stubs_dir, pyi = self._make_stubs(tmp_path)
+    def test_check_mode_reports_without_removing(self, *, tmp_path):
+        stubs_dir, pyi = self._make_stubs(tmp_path=tmp_path)
         changes = remove_all_stubs(
-            Path(".uncoded/stubs"), project_root=tmp_path, check=True
+            output_dir=Path(".uncoded/stubs"), project_root=tmp_path, check=True
         )
         assert changes == 1
         assert pyi.exists()
         assert stubs_dir.exists()
 
-    def test_check_mode_noop_when_absent(self, tmp_path):
+    def test_check_mode_noop_when_absent(self, *, tmp_path):
         changes = remove_all_stubs(
-            Path(".uncoded/stubs"), project_root=tmp_path, check=True
+            output_dir=Path(".uncoded/stubs"), project_root=tmp_path, check=True
         )
         assert changes == 0
 
-    def test_returns_count_of_pyi_files(self, tmp_path):
+    def test_returns_count_of_pyi_files(self, *, tmp_path):
         stubs_dir = tmp_path / ".uncoded" / "stubs"
         (stubs_dir / "src").mkdir(parents=True)
         (stubs_dir / "src" / "a.pyi").write_text("# a\n", encoding="utf-8")
         (stubs_dir / "src" / "b.pyi").write_text("# b\n", encoding="utf-8")
         changes = remove_all_stubs(
-            Path(".uncoded/stubs"), project_root=tmp_path, check=False
+            output_dir=Path(".uncoded/stubs"), project_root=tmp_path, check=False
         )
         assert changes == 2
         assert not stubs_dir.exists()
 
-    def test_stray_non_pyi_file_not_removed(self, tmp_path):
-        stubs_dir, pyi = self._make_stubs(tmp_path)
+    def test_stray_non_pyi_file_not_removed(self, *, tmp_path):
+        stubs_dir, pyi = self._make_stubs(tmp_path=tmp_path)
         stray = pyi.parent / "stray.txt"
         stray.write_text("keep me\n", encoding="utf-8")
         changes = remove_all_stubs(
-            Path(".uncoded/stubs"), project_root=tmp_path, check=False
+            output_dir=Path(".uncoded/stubs"), project_root=tmp_path, check=False
         )
         assert changes == 1
         assert not pyi.exists()

@@ -81,7 +81,7 @@ def _args_to_params(*, arg_nodes: list[ast.arg]) -> list[StubParam]:
     ]
 
 
-def _extract_params(args: ast.arguments) -> list[StubParam]:
+def _extract_params(*, args: ast.arguments) -> list[StubParam]:
     """Extract parameters from a function argument node, without defaults."""
     params: list[StubParam] = []
 
@@ -114,7 +114,7 @@ def _extract_params(args: ast.arguments) -> list[StubParam]:
     return params
 
 
-def _render_value(value: ast.expr) -> str:
+def _render_value(*, value: ast.expr) -> str:
     """Render an expression as source, eliding to '...' if too long or multi-line."""
     source = ast.unparse(value)
     if len(source) > VALUE_WIDTH_CAP or "\n" in source:
@@ -123,6 +123,7 @@ def _render_value(value: ast.expr) -> str:
 
 
 def _extract_assignment(
+    *,
     node: ast.Assign | ast.AnnAssign | ast.TypeAlias,
 ) -> StubAssignment | None:
     """Build a StubAssignment from an assignment-style AST node.
@@ -133,7 +134,7 @@ def _extract_assignment(
     if isinstance(node, ast.TypeAlias):
         return StubAssignment(
             name=node.name.id,
-            value_source=_render_value(node.value),
+            value_source=_render_value(value=node.value),
             is_pep695_alias=True,
         )
 
@@ -141,7 +142,9 @@ def _extract_assignment(
         if not isinstance(node.target, ast.Name):
             return None
         annotation = ast.unparse(node.annotation)
-        value_source = _render_value(node.value) if node.value is not None else None
+        value_source = (
+            _render_value(value=node.value) if node.value is not None else None
+        )
         return StubAssignment(
             name=node.target.id,
             annotation=annotation,
@@ -153,23 +156,25 @@ def _extract_assignment(
         return None
     return StubAssignment(
         name=node.targets[0].id,
-        value_source=_render_value(node.value),
+        value_source=_render_value(value=node.value),
     )
 
 
 def _extract_function(
+    *,
     node: ast.FunctionDef | ast.AsyncFunctionDef,
 ) -> StubFunction:
     """Build a StubFunction from a function or method AST node."""
     return StubFunction(
         name=node.name,
-        params=_extract_params(node.args),
+        params=_extract_params(args=node.args),
         return_annotation=_unparse_or_none(node=node.returns),
         is_async=isinstance(node, ast.AsyncFunctionDef),
     )
 
 
 def _property_attribute(
+    *,
     node: ast.FunctionDef | ast.AsyncFunctionDef,
 ) -> StubAssignment:
     """Build a StubAssignment representing a @property as a class attribute."""
@@ -179,7 +184,7 @@ def _property_attribute(
     )
 
 
-def _extract_class(node: ast.ClassDef) -> StubClass:
+def _extract_class(*, node: ast.ClassDef) -> StubClass:
     """Build a StubClass from a class AST node."""
     bases = [ast.unparse(b) for b in node.bases]
 
@@ -188,17 +193,17 @@ def _extract_class(node: ast.ClassDef) -> StubClass:
 
     for child in ast.iter_child_nodes(node):
         if isinstance(child, (ast.AnnAssign, ast.Assign)):
-            assignment = _extract_assignment(child)
+            assignment = _extract_assignment(node=child)
             if assignment is not None:
                 attributes.append(assignment)
         elif isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            kind = property_kind(child)
+            kind = property_kind(node=child)
             if kind in {"setter", "deleter"}:
                 continue
             if kind == "property":
-                attributes.append(_property_attribute(child))
+                attributes.append(_property_attribute(node=child))
             else:
-                methods.append(_extract_function(child))
+                methods.append(_extract_function(node=child))
 
     return StubClass(
         name=node.name,
@@ -208,7 +213,7 @@ def _extract_class(node: ast.ClassDef) -> StubClass:
     )
 
 
-def extract_stub(source: str, rel_path: str) -> StubModule:
+def extract_stub(*, source: str, rel_path: str) -> StubModule:
     """Parse Python source and extract imports, constants, classes, and functions."""
     tree = ast.parse(source)
     imports: list[str] = []
@@ -220,11 +225,11 @@ def extract_stub(source: str, rel_path: str) -> StubModule:
         if isinstance(node, (ast.Import, ast.ImportFrom)):
             imports.append(ast.unparse(node))
         elif isinstance(node, ast.ClassDef):
-            classes.append(_extract_class(node))
+            classes.append(_extract_class(node=node))
         elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            functions.append(_extract_function(node))
+            functions.append(_extract_function(node=node))
         elif isinstance(node, (ast.Assign, ast.AnnAssign, ast.TypeAlias)):
-            assignment = _extract_assignment(node)
+            assignment = _extract_assignment(node=node)
             if assignment is not None:
                 constants.append(assignment)
 
@@ -237,18 +242,18 @@ def extract_stub(source: str, rel_path: str) -> StubModule:
     )
 
 
-def _render_param(p: StubParam) -> str:
+def _render_param(*, param: StubParam) -> str:
     """Render a single parameter as a string for a function signature."""
-    if p.name in ("/", "*"):
-        return p.name
-    if p.annotation:
-        return f"{p.name}: {p.annotation}"
-    return p.name
+    if param.name in ("/", "*"):
+        return param.name
+    if param.annotation:
+        return f"{param.name}: {param.annotation}"
+    return param.name
 
 
-def _render_function(func: StubFunction, indent: str = "") -> list[str]:
+def _render_function(*, func: StubFunction, indent: str = "") -> list[str]:
     """Render a function or method as stub lines, indented for methods."""
-    params_str = ", ".join(_render_param(p) for p in func.params)
+    params_str = ", ".join(_render_param(param=param) for param in func.params)
     ret = f" -> {func.return_annotation}" if func.return_annotation else ""
     prefix = "async def" if func.is_async else "def"
     lines = [f"{indent}{prefix} {func.name}({params_str}){ret}:"]
@@ -256,39 +261,45 @@ def _render_function(func: StubFunction, indent: str = "") -> list[str]:
     return lines
 
 
-def _format_assignment_body(a: StubAssignment) -> str:
+def _format_assignment_body(*, assignment: StubAssignment) -> str:
     """Render the 'name [: type] [= value]' portion of an assignment."""
-    if a.is_pep695_alias:
-        return f"type {a.name} = {a.value_source}"
-    head = f"{a.name}: {a.annotation}" if a.annotation else a.name
-    if a.value_source is None:
+    if assignment.is_pep695_alias:
+        return f"type {assignment.name} = {assignment.value_source}"
+    head = (
+        f"{assignment.name}: {assignment.annotation}"
+        if assignment.annotation
+        else assignment.name
+    )
+    if assignment.value_source is None:
         return head
-    return f"{head} = {a.value_source}"
+    return f"{head} = {assignment.value_source}"
 
 
-def _render_assignment(a: StubAssignment, indent: str = "") -> str:
+def _render_assignment(*, assignment: StubAssignment, indent: str = "") -> str:
     """Render a module-level assignment as a stub line."""
-    body = _format_assignment_body(a)
+    body = _format_assignment_body(assignment=assignment)
     return f"{indent}{body}"
 
 
-def _render_class(cls: StubClass) -> list[str]:
+def _render_class(*, cls: StubClass) -> list[str]:
     bases_str = f"({', '.join(cls.bases)})" if cls.bases else ""
     lines = [f"class {cls.name}{bases_str}:"]
     if not cls.attributes and not cls.methods:
         lines.append("    ...")
         lines.append("")
         return lines
-    lines.extend(_render_assignment(attr, indent="    ") for attr in cls.attributes)
+    lines.extend(
+        _render_assignment(assignment=attr, indent="    ") for attr in cls.attributes
+    )
     if cls.attributes:
         lines.append("")
     for method in cls.methods:
-        lines.extend(_render_function(method, indent="    "))
+        lines.extend(_render_function(func=method, indent="    "))
         lines.append("")
     return lines
 
 
-def render_stub(module: StubModule) -> str:
+def render_stub(*, module: StubModule) -> str:
     """Render a StubModule as a .pyi file string."""
     lines: list[str] = [f"# {GENERATED_MARKER}", f"# {module.rel_path}", ""]
 
@@ -296,21 +307,21 @@ def render_stub(module: StubModule) -> str:
         lines.extend(module.imports)
         lines.append("")
 
-    lines.extend(_render_assignment(const) for const in module.constants)
+    lines.extend(_render_assignment(assignment=const) for const in module.constants)
     if module.constants:
         lines.append("")
 
     for func in module.functions:
-        lines.extend(_render_function(func))
+        lines.extend(_render_function(func=func))
         lines.append("")
 
     for cls in module.classes:
-        lines.extend(_render_class(cls))
+        lines.extend(_render_class(cls=cls))
 
     return "\n".join(lines).rstrip() + "\n"
 
 
-def _generate_stubs(files: Iterable[tuple[str, str]]) -> dict[Path, str]:
+def _generate_stubs(*, files: Iterable[tuple[str, str]]) -> dict[Path, str]:
     """Return a mapping from stub relative paths to rendered stub content.
 
     *files* is the output of :func:`iter_source_files` — an iterable of
@@ -320,10 +331,10 @@ def _generate_stubs(files: Iterable[tuple[str, str]]) -> dict[Path, str]:
     """
     result: dict[Path, str] = {}
     for source, rel_path in files:
-        module = extract_stub(source, rel_path)
+        module = extract_stub(source=source, rel_path=rel_path)
         if not module.classes and not module.functions and not module.constants:
             continue
-        result[Path(rel_path).with_suffix(".pyi")] = render_stub(module)
+        result[Path(rel_path).with_suffix(".pyi")] = render_stub(module=module)
     return result
 
 
@@ -341,7 +352,7 @@ def _remove_orphan_stubs(
         if existing.resolve() in expected:
             continue
         display = existing.relative_to(project_root)
-        changes += remove_file(display, project_root=project_root, check=check)
+        changes += remove_file(path=display, project_root=project_root, check=check)
     return changes
 
 
@@ -358,7 +369,9 @@ def _write_stubs(
     expected: set[Path] = set()
     for rel_stub_path, content in stubs.items():
         stub_path = output_dir / rel_stub_path
-        if sync_file(stub_path, content, project_root=project_root, check=check):
+        if sync_file(
+            path=stub_path, content=content, project_root=project_root, check=check
+        ):
             changes += 1
         expected.add((project_root / stub_path).resolve())
     source_rel = source_root.resolve().relative_to(project_root)
@@ -371,7 +384,7 @@ def _write_stubs(
     return changes
 
 
-def remove_all_stubs(output_dir: Path, *, project_root: Path, check: bool) -> int:
+def remove_all_stubs(*, output_dir: Path, project_root: Path, check: bool) -> int:
     """Remove all .pyi stubs under output_dir.
 
     Removes every .pyi file under ``output_dir``, reporting each as
@@ -383,7 +396,7 @@ def remove_all_stubs(output_dir: Path, *, project_root: Path, check: bool) -> in
     changes = 0
     for pyi_file in sorted((project_root / output_dir).rglob("*.pyi")):
         display = pyi_file.relative_to(project_root)
-        changes += remove_file(display, project_root=project_root, check=check)
+        changes += remove_file(path=display, project_root=project_root, check=check)
 
     return changes
 
@@ -419,7 +432,7 @@ def build_stubs(
     the number of changes (or prospective changes).
     """
     project_root = project_root.resolve()
-    stubs = _generate_stubs(files)
+    stubs = _generate_stubs(files=files)
     return _write_stubs(
         stubs=stubs,
         source_root=source_root,

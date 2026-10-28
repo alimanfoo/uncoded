@@ -1,11 +1,14 @@
 """Shared YAML renderer for pure-key-hierarchy tree maps."""
 
+from typing import override
+
 import yaml
 
 
 class _CleanDumper(yaml.SafeDumper):
     """YAML dumper that indents list items and suppresses 'null' values."""
 
+    @override
     def increase_indent(self, flow: bool = False, indentless: bool = False) -> None:
         """Force list items to be indented relative to their parent key."""
         return super().increase_indent(flow, False)
@@ -18,7 +21,7 @@ _CleanDumper.add_representer(
 )
 
 
-def render_yaml_tree(header: str, mapping: dict) -> str:
+def render_yaml_tree(*, header: str, mapping: dict) -> str:
     """Render a nested dict as a YAML string with a leading comment header."""
     body = yaml.dump(
         mapping,

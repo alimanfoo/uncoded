@@ -19,7 +19,7 @@ from pathlib import Path
 import pytest
 
 
-def test_encoding_warning_gate(tmp_path: Path) -> None:
+def test_encoding_warning_gate(*, tmp_path: Path) -> None:
     """Fail if PYTHONWARNDEFAULTENCODING is unset or the error filter is absent."""
     with pytest.raises(EncodingWarning):
         (tmp_path / "sentinel.txt").write_text("x")

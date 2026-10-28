@@ -29,16 +29,16 @@ class ModuleInfo:
     functions: list[str] = field(default_factory=list)
 
 
-def _extract_class_members(node: ast.ClassDef) -> ClassInfo:
+def _extract_class_members(*, node: ast.ClassDef) -> ClassInfo:
     attributes: list[str] = []
     methods: list[str] = []
     for n in ast.iter_child_nodes(node):
         if isinstance(n, (ast.AnnAssign, ast.Assign)):
-            name = assign_target_name(n)
+            name = assign_target_name(node=n)
             if name:
                 attributes.append(name)
         elif isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            kind = property_kind(n)
+            kind = property_kind(node=n)
             if kind in {"setter", "deleter"}:
                 continue
             if kind == "property":
@@ -48,7 +48,7 @@ def _extract_class_members(node: ast.ClassDef) -> ClassInfo:
     return ClassInfo(name=node.name, attributes=attributes, methods=methods)
 
 
-def extract_module(source: str, rel_path: str) -> ModuleInfo:
+def extract_module(*, source: str, rel_path: str) -> ModuleInfo:
     """Parse Python source and extract classes, functions, and constants."""
     tree = ast.parse(source)
 
@@ -58,11 +58,11 @@ def extract_module(source: str, rel_path: str) -> ModuleInfo:
 
     for node in ast.iter_child_nodes(tree):
         if isinstance(node, ast.ClassDef):
-            classes.append(_extract_class_members(node))
+            classes.append(_extract_class_members(node=node))
         elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             functions.append(node.name)
         elif isinstance(node, (ast.Assign, ast.AnnAssign)):
-            name = assign_target_name(node)
+            name = assign_target_name(node=node)
             if name:
                 constants.append(name)
         elif isinstance(node, ast.TypeAlias):
@@ -77,7 +77,7 @@ def extract_module(source: str, rel_path: str) -> ModuleInfo:
 
 
 def iter_source_files(
-    source_root: Path, project_root: Path
+    *, source_root: Path, project_root: Path
 ) -> Iterator[tuple[str, str]]:
     """Yield (source_text, rel_path) for every readable, parseable Python file.
 
@@ -97,7 +97,7 @@ def iter_source_files(
 
     for py_file in sorted(source_root.rglob("*.py")):
         rel_path = py_file.relative_to(project_root).as_posix()
-        source = read_source_text_or_warn(py_file, warning_path=rel_path)
+        source = read_source_text_or_warn(path=py_file, warning_path=rel_path)
         if source is None:
             continue
         try:
@@ -112,7 +112,7 @@ def iter_source_files(
         yield source, rel_path
 
 
-def extract_modules(files: Iterable[tuple[str, str]]) -> list[ModuleInfo]:
+def extract_modules(*, files: Iterable[tuple[str, str]]) -> list[ModuleInfo]:
     """Extract a :class:`ModuleInfo` for each file in *files*.
 
     *files* is the output of :func:`iter_source_files` — an iterable of
@@ -122,7 +122,7 @@ def extract_modules(files: Iterable[tuple[str, str]]) -> list[ModuleInfo]:
     """
     modules: list[ModuleInfo] = []
     for source, rel_path in files:
-        module = extract_module(source, rel_path)
+        module = extract_module(source=source, rel_path=rel_path)
         if module.classes or module.functions or module.constants:
             modules.append(module)
     return modules

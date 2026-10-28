@@ -13,9 +13,9 @@ from pathlib import Path
 
 
 def sync_file(
+    *,
     path: Path,
     content: str,
-    *,
     project_root: Path,
     check: bool = False,
 ) -> bool:
@@ -46,8 +46,8 @@ def sync_file(
 
 
 def remove_file(
-    path: Path,
     *,
+    path: Path,
     project_root: Path,
     check: bool = False,
 ) -> bool:

@@ -69,7 +69,7 @@ SKILLS: list[Skill] = [
 ]
 
 
-def _skill_path(root: Path, name: str) -> Path:
+def _skill_path(*, root: Path, name: str) -> Path:
     """Return the SKILL.md path for a skill name under a given root."""
     return root / name / "SKILL.md"
 
@@ -105,22 +105,22 @@ def _sync_one_skill(
         content = _render_content(skill=skill)
         for root in SKILL_ROOTS:
             changes += sync_file(
-                _skill_path(root, skill.name),
-                content,
+                path=_skill_path(root=root, name=skill.name),
+                content=content,
                 project_root=project_root,
                 check=check,
             )
     else:
         for root in SKILL_ROOTS:
             changes += remove_file(
-                _skill_path(root, skill.name),
+                path=_skill_path(root=root, name=skill.name),
                 project_root=project_root,
                 check=check,
             )
     for legacy_name in skill.legacy_names:
         for root in SKILL_ROOTS:
             changes += remove_file(
-                _skill_path(root, legacy_name),
+                path=_skill_path(root=root, name=legacy_name),
                 project_root=project_root,
                 check=check,
             )

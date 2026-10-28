@@ -31,7 +31,7 @@ class Reference:
     col: int
 
 
-def find_refs(name_path: NamePath, in_path: Path) -> list[Reference]:
+def find_refs(*, name_path: NamePath, in_path: Path) -> list[Reference]:
     """Return all references to the symbol named by name_path in in_path.
 
     Resolves the symbol's name-token position, queries ty's LSP server for
@@ -42,7 +42,7 @@ def find_refs(name_path: NamePath, in_path: Path) -> list[Reference]:
     UnicodeDecodeError, and SyntaxError propagate from resolve_name_position
     and from read_source_text in the LSP exchange.
     """
-    position = resolve_name_position(name_path, in_path)
+    position = resolve_name_position(name_path=name_path, in_path=in_path)
     raw_refs = _query_references(in_path=in_path, position=position)
     result = [
         Reference(
@@ -65,7 +65,7 @@ def _query_references(
     initialize/didOpen/references/shutdown exchange.
     position follows LSP convention: (line, character), both 0-indexed.
     """
-    root = _find_root(in_path)
+    root = _find_root(in_path=in_path)
     try:
         proc = subprocess.Popen(
             ["uvx", "--from", f"ty=={TY_VERSION}", "ty", "server"],
@@ -98,11 +98,11 @@ class _LSPLocation:
     character: int
 
 
-def _find_root(in_path: Path) -> Path:
+def _find_root(*, in_path: Path) -> Path:
     try:
-        return read_config(in_path.parent).project_root
+        return read_config(start=in_path.parent).project_root
     except ConfigError:
-        pyproject = find_pyproject_toml(in_path.parent)
+        pyproject = find_pyproject_toml(start=in_path.parent)
         return pyproject.parent if pyproject is not None else in_path.parent
 
 
@@ -167,7 +167,7 @@ def _run_exchange(
                     "uri": file_uri,
                     "languageId": "python",
                     "version": 1,
-                    "text": read_source_text(in_path),
+                    "text": read_source_text(path=in_path),
                 }
             },
         },
@@ -205,7 +205,7 @@ def _run_exchange(
         return []
     return [
         _LSPLocation(
-            path=_uri_to_path(loc["uri"]),
+            path=_uri_to_path(uri=loc["uri"]),
             line=loc["range"]["start"]["line"],
             character=loc["range"]["start"]["character"],
         )
@@ -237,7 +237,7 @@ def _read_response(*, stream: IO[bytes], request_id: int) -> dict:
             return msg
 
 
-def _uri_to_path(uri: str) -> Path:
+def _uri_to_path(*, uri: str) -> Path:
     # url2pathname decodes the percent escapes and, on Windows, turns a URI path
     # such as /C:/src/m.py into C:\src\m.py.
     return Path(url2pathname(urlparse(uri).path))

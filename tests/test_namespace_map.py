@@ -14,7 +14,7 @@ class TestBuildMap:
             ),
         ]
 
-        result = build_map(modules)
+        result = build_map(modules=modules)
 
         assert "src/" in result
         assert "mypackage/" in result["src/"]
@@ -34,7 +34,7 @@ class TestBuildMap:
             ),
         ]
 
-        result = build_map(modules)
+        result = build_map(modules=modules)
 
         pkg = result["src/"]["mypackage/"]
         assert "utils/" in pkg
@@ -50,7 +50,7 @@ class TestBuildMap:
             ),
         ]
 
-        result = build_map(modules)
+        result = build_map(modules=modules)
 
         assert result["src/"]["pkg/"]["models.py"]["User"] == {
             "save": None,
@@ -72,7 +72,7 @@ class TestBuildMap:
             ),
         ]
 
-        result = build_map(modules)
+        result = build_map(modules=modules)
 
         members = result["src/"]["pkg/"]["models.py"]["User"]
         assert members == {"name": None, "email": None, "save": None}
@@ -82,7 +82,7 @@ class TestBuildMap:
             ModuleInfo(rel_path="src/pkg/utils.py", classes=[], functions=["compute"]),
         ]
 
-        result = build_map(modules)
+        result = build_map(modules=modules)
 
         assert result["src/"]["pkg/"]["utils.py"]["compute"] is None
 
@@ -95,7 +95,7 @@ class TestBuildMap:
             ),
         ]
 
-        result = build_map(modules)
+        result = build_map(modules=modules)
 
         assert result["src/"]["pkg/"]["types.py"]["Marker"] is None
 
@@ -109,7 +109,7 @@ class TestBuildMap:
             ),
         ]
 
-        result = build_map(modules)
+        result = build_map(modules=modules)
         file_entry = result["src/"]["pkg/"]["settings.py"]
 
         assert file_entry == {"TIMEOUT": None, "MAX_RETRIES": None}
@@ -125,8 +125,8 @@ class TestRenderMap:
             ),
         ]
 
-        namespace = build_map(modules)
-        output = render_map(namespace)
+        namespace = build_map(modules=modules)
+        output = render_map(namespace=namespace)
 
         parsed = yaml.safe_load(output)
         assert parsed == namespace
@@ -137,8 +137,8 @@ class TestRenderMap:
             ModuleInfo(rel_path="src/pkg/alpha.py", classes=[], functions=["a_func"]),
         ]
 
-        namespace = build_map(modules)
-        output = render_map(namespace)
+        namespace = build_map(modules=modules)
+        output = render_map(namespace=namespace)
 
         assert output.index("zebra.py") < output.index("alpha.py")
 
@@ -147,8 +147,8 @@ class TestRenderMap:
             ModuleInfo(rel_path="src/pkg/utils.py", classes=[], functions=["compute"]),
         ]
 
-        namespace = build_map(modules)
-        output = render_map(namespace)
+        namespace = build_map(modules=modules)
+        output = render_map(namespace=namespace)
 
         assert "compute:" in output
         assert "null" not in output
@@ -157,7 +157,7 @@ class TestRenderMap:
         modules = [
             ModuleInfo(rel_path="src/pkg/utils.py", classes=[], functions=["compute"]),
         ]
-        output = render_map(build_map(modules))
+        output = render_map(namespace=build_map(modules=modules))
         assert output.startswith(HEADER)
         # Header must precede any non-comment YAML content.
         assert output.index(HEADER) < output.index("src/")
@@ -165,7 +165,7 @@ class TestRenderMap:
     def test_header_mentions_stub_pointer(self):
         # The header's job is partly to tell a cold-start agent where to find
         # signatures and types. Lock in that pointer.
-        output = render_map(build_map([]))
+        output = render_map(namespace=build_map(modules=[]))
         assert ".uncoded/stubs/" in output
 
     def test_header_does_not_break_yaml_parse(self):
@@ -176,7 +176,7 @@ class TestRenderMap:
                 functions=["start"],
             ),
         ]
-        namespace = build_map(modules)
-        output = render_map(namespace)
+        namespace = build_map(modules=modules)
+        output = render_map(namespace=namespace)
         # Parser should ignore the comment header and load the body.
         assert yaml.safe_load(output) == namespace

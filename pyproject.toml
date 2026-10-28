@@ -130,6 +130,7 @@ select = [
     "PLR0912", # Pylint: too many branches
     "PLR0913", # Pylint: too many arguments
     "PLR0915", # Pylint: too many statements
+    "PLR0917", # Pylint: too many positional arguments
     "PLR1702", # Pylint: too many nested blocks (preview)
     "ANN", # flake8-annotations
     "S", # flake8-bandit (security)
@@ -143,6 +144,9 @@ ignore = [
 
 [tool.ruff.lint.mccabe]
 max-complexity = 8
+
+[tool.ruff.lint.pylint]
+max-positional-args = 0
 
 [tool.complexipy]
 max-complexity-allowed = 15

@@ -18,7 +18,7 @@ class Config:
     doc_roots: list[Path]
 
 
-def find_pyproject_toml(start: Path) -> Path | None:
+def find_pyproject_toml(*, start: Path) -> Path | None:
     """Walk up from ``start`` looking for ``pyproject.toml``."""
     current = start.resolve()
     while True:
@@ -94,7 +94,7 @@ def _find_config_file(*, start: Path) -> Path | None:
     return None
 
 
-def read_config(start: Path) -> Config:
+def read_config(*, start: Path) -> Config:
     """Locate the config file and read all uncoded settings from it.
 
     Walks up from ``start`` looking for ``pyproject.toml`` or
