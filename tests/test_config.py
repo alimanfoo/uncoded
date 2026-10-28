@@ -252,19 +252,19 @@ class TestConfigFileThatCannotBeUsed:
     @pytest.mark.parametrize(
         ("toml", "problem"),
         [
-            ('tool = "x"\n', "tool is not a table."),
-            ("[tool]\nuncoded = 5\n", "tool.uncoded is not a table."),
+            ('tool = "x"\n', "tool is not a table"),
+            ("[tool]\nuncoded = 5\n", "tool.uncoded is not a table"),
             (
                 '[tool.uncoded]\nsource-roots = "src"\n',
-                "source-roots is not a list of strings.",
+                "source-roots is not a list of strings",
             ),
             (
                 "[tool.uncoded]\ndoc-roots = [1]\n",
-                "doc-roots is not a list of strings.",
+                "doc-roots is not a list of strings",
             ),
             (
                 "[tool.uncoded]\nrequired-version = 3.1\n",
-                'required-version is not one exact version, such as "3.1.0".',
+                'required-version is not one exact version, such as "3.1.0"',
             ),
         ],
     )
@@ -284,7 +284,7 @@ class TestConfigFileThatCannotBeUsed:
             read_config(start=tmp_path)
         assert str(exc_info.value) == (
             f"{(tmp_path / '.uncoded.toml').resolve().as_posix()}: "
-            "source-roots is not a list of strings."
+            "source-roots is not a list of strings"
         )
 
     @pytest.mark.parametrize(
@@ -298,7 +298,7 @@ class TestConfigFileThatCannotBeUsed:
             read_config(start=tmp_path)
         assert str(exc_info.value) == (
             f"{(tmp_path / '.uncoded.toml').resolve().as_posix()}: "
-            'required-version is not one exact version, such as "3.1.0".'
+            'required-version is not one exact version, such as "3.1.0"'
         )
 
     def test_required_version_that_is_a_list(self, *, tmp_path):

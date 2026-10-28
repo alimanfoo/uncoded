@@ -202,7 +202,7 @@ class TestSyncApplyMode:
         assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 1
 
         err = capsys.readouterr().err
-        assert "Ambiguous" in err
+        assert "configure uncoded" in err
         assert "pyproject.toml" in err
         assert ".uncoded.toml" in err
 
@@ -537,16 +537,20 @@ class TestRequiredVersion:
         assert cli.main() == 1
         captured = capsys.readouterr()
         assert captured.out == ""
-        assert captured.err.startswith("Error: Ambiguous config")
+        assert captured.err == (
+            f"Error: both {(tmp_path / 'pyproject.toml').resolve().as_posix()} and "
+            f"{(tmp_path / '.uncoded.toml').resolve().as_posix()} configure uncoded. "
+            "Configure uncoded in one file only.\n"
+        )
 
 
 # One configuration file of each kind that cannot be used, with its problem.
 _UNUSABLE_CONFIGS = [
     ('source-roots = ["src"\n', "not valid TOML: Unclosed array (at end of document)"),
-    ('source-roots = "src"\n', "source-roots is not a list of strings."),
+    ('source-roots = "src"\n', "source-roots is not a list of strings"),
     (
         'source-roots = ["src"]\nrequired-version = "3.1"\n',
-        'required-version is not one exact version, such as "3.1.0".',
+        'required-version is not one exact version, such as "3.1.0"',
     ),
 ]
 

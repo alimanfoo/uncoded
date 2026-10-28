@@ -53,11 +53,11 @@ def _pyproject_settings(*, pyproject_path: Path) -> dict | None:
         return None
     tool = data.get("tool", {})
     if not isinstance(tool, dict):
-        raise _config_file_error(path=pyproject_path, problem="tool is not a table.")
+        raise _config_file_error(path=pyproject_path, problem="tool is not a table")
     settings = tool.get("uncoded")
     if settings is not None and not isinstance(settings, dict):
         raise _config_file_error(
-            path=pyproject_path, problem="tool.uncoded is not a table."
+            path=pyproject_path, problem="tool.uncoded is not a table"
         )
     return settings
 
@@ -101,9 +101,8 @@ def _config_file_at(*, directory: Path) -> tuple[Path, dict] | None:
     if uncoded_toml_settings is not None:
         if pyproject_settings is not None:
             raise ConfigError(
-                "Ambiguous config: both pyproject.toml and .uncoded.toml "
-                "configure uncoded in the same directory. "
-                "Configure uncoded in one file only."
+                f"both {pyproject.as_posix()} and {uncoded_toml.as_posix()} "
+                "configure uncoded. Configure uncoded in one file only."
             )
         return uncoded_toml, uncoded_toml_settings
     if pyproject_settings is not None:
@@ -160,7 +159,7 @@ def _roots(*, settings: dict, setting: str, config_file: Path) -> list[Path]:
     roots = settings.get(setting, [])
     if not isinstance(roots, list) or not all(isinstance(r, str) for r in roots):
         raise _config_file_error(
-            path=config_file, problem=f"{setting} is not a list of strings."
+            path=config_file, problem=f"{setting} is not a list of strings"
         )
     return [Path(r) for r in roots]
 
@@ -178,7 +177,7 @@ def _required_version(*, settings: dict, config_file: Path) -> str | None:
         return version
     raise _config_file_error(
         path=config_file,
-        problem='required-version is not one exact version, such as "3.1.0".',
+        problem='required-version is not one exact version, such as "3.1.0"',
     )
 
 
