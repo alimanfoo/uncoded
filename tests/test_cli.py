@@ -1241,6 +1241,7 @@ class TestRefsCommand:
             read_message()
             os.close(0)
             send(INITIALIZE_RESPONSE)
+            sys.stderr.write("ty panicked\\n")
             """
         )
 
@@ -1248,7 +1249,11 @@ class TestRefsCommand:
 
         captured = capsys.readouterr()
         assert captured.out == ""
-        assert captured.err == "Error: ty failed: it stopped before it answered.\n"
+        assert captured.err == (
+            "Error: ty failed: it stopped before it answered.\n"
+            "Output from uvx and ty:\n"
+            "  ty panicked\n"
+        )
 
 
 def _init_doc_repo(*, tmp_path, monkeypatch, doc_roots=("docs",)):

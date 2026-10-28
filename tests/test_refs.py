@@ -270,7 +270,7 @@ class TestQueryReferences:
             ["uvx", "--from", f"ty=={TY_VERSION}", "ty", "server"],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL,
+            stderr=mock.ANY,
         )
         mock_proc.wait.assert_called()
 
@@ -359,6 +359,25 @@ class TestTyFailures:
             TyError, match=r"^ty failed: it stopped before it answered\.$"
         ):
             self._query(tmp_path=tmp_path)
+
+    def test_passes_on_what_uvx_and_ty_wrote(self, *, tmp_path, stand_in_for_ty):
+        stand_in_for_ty(
+            script="""
+            sys.stderr.write("Resolved 1 package\\n")
+            sys.stderr.write("error: Failed to fetch: https://pypi.org/simple/ty/\\n")
+            sys.exit(2)
+            """
+        )
+
+        with pytest.raises(TyError) as exc_info:
+            self._query(tmp_path=tmp_path)
+
+        assert str(exc_info.value) == (
+            "ty failed: it stopped before it answered.\n"
+            "Output from uvx and ty:\n"
+            "  Resolved 1 package\n"
+            "  error: Failed to fetch: https://pypi.org/simple/ty/"
+        )
 
     # Closing ty's input when the exchange ends must not leave a failed flush
     # for the garbage collector to report.

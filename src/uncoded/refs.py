@@ -6,6 +6,8 @@ import contextlib
 import json
 import os
 import subprocess
+import tempfile
+import textwrap
 from dataclasses import dataclass
 from pathlib import Path
 from typing import IO, cast
@@ -75,13 +77,37 @@ def _query_references(
     Spawns ty as a one-shot LSP subprocess and performs the full
     initialize/didOpen/references/shutdown exchange.
     position follows LSP convention: (line, character), both 0-indexed.
+    When ty fails, the TyError carries what ty and uvx wrote to standard error.
     """
+    # A file rather than a pipe takes ty's error output, because a pipe that
+    # nothing reads during the exchange would fill and block ty.
+    with tempfile.TemporaryFile() as ty_stderr:
+        try:
+            return _run_ty(
+                in_path=in_path,
+                position=position,
+                project_root=project_root,
+                stderr=ty_stderr,
+            )
+        except TyError as exc:
+            ty_stderr.seek(0)
+            output = ty_stderr.read().decode("utf-8", errors="replace").strip()
+            if not output:
+                raise
+            raise TyError(
+                f"{exc}\nOutput from uvx and ty:\n{textwrap.indent(output, '  ')}"
+            ) from exc
+
+
+def _run_ty(
+    *, in_path: Path, position: tuple[int, int], project_root: Path, stderr: IO[bytes]
+) -> list[_LSPLocation]:
     try:
         proc = subprocess.Popen(
             ["uvx", "--from", f"ty=={TY_VERSION}", "ty", "server"],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL,
+            stderr=stderr,
         )
     except FileNotFoundError as exc:
         raise TyError(
