@@ -1,6 +1,7 @@
 """AST helper functions shared across multiple uncoded modules."""
 
 import ast
+from collections.abc import Iterator
 
 
 def property_kind(
@@ -20,7 +21,7 @@ def property_kind(
     return None
 
 
-def assign_target_name(*, node: ast.Assign | ast.AnnAssign) -> str | None:
+def _assign_target_name(*, node: ast.Assign | ast.AnnAssign) -> str | None:
     """Return the single-name target of an assignment, or None if not a simple name."""
     if isinstance(node, ast.AnnAssign):
         target = node.target
@@ -40,17 +41,36 @@ type SymbolNode = (
     | ast.TypeAlias
 )
 
+type MemberNode = ast.FunctionDef | ast.AsyncFunctionDef | ast.AnnAssign | ast.Assign
 
-def top_level_definitions(*, tree: ast.Module) -> dict[str, SymbolNode]:
-    """Map each name that the module body defines to its later definition."""
-    definitions: dict[str, SymbolNode] = {}
+
+def module_symbols(*, tree: ast.Module) -> Iterator[tuple[str, SymbolNode]]:
+    """Yield the name and definition of each symbol in the module body, in order.
+
+    A name defined more than once is yielded once for each definition.
+    """
     for node in tree.body:
         if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
-            definitions[node.name] = node
-        elif isinstance(node, (ast.Assign, ast.AnnAssign)):
-            name = assign_target_name(node=node)
-            if name:
-                definitions[name] = node
+            yield node.name, node
         elif isinstance(node, ast.TypeAlias):
-            definitions[node.name.id] = node
-    return definitions
+            yield node.name.id, node
+        elif isinstance(node, (ast.Assign, ast.AnnAssign)):
+            name = _assign_target_name(node=node)
+            if name:
+                yield name, node
+
+
+def class_symbols(*, node: ast.ClassDef) -> Iterator[tuple[str, MemberNode]]:
+    """Yield the name and definition of each symbol in the class body, in order.
+
+    A property's setter and deleter are not symbols. A name defined more than
+    once is yielded once for each definition.
+    """
+    for child in node.body:
+        if isinstance(child, (ast.Assign, ast.AnnAssign)):
+            name = _assign_target_name(node=child)
+            if name:
+                yield name, child
+        elif isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            if property_kind(node=child) not in ("setter", "deleter"):
+                yield child.name, child

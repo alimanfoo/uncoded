@@ -5,7 +5,12 @@ from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from uncoded.ast_helpers import property_kind
+from uncoded.ast_helpers import (
+    SymbolNode,
+    class_symbols,
+    module_symbols,
+    property_kind,
+)
 from uncoded.read_helpers import SkippedFile, failure_reason, read_source_text
 
 
@@ -142,25 +147,17 @@ def _extract_params(*, args: ast.arguments) -> list[Parameter]:
     return params
 
 
-def _extract_assignment(*, node: ast.Assign | ast.AnnAssign) -> AssignmentSymbol | None:
-    """Build an AssignmentSymbol from an assignment or annotation.
-
-    Returns None if the node's target is not a single simple name (e.g. tuple
-    unpacking or attribute assignment), which is not a symbol.
-    """
+def _extract_assignment(
+    *, name: str, node: ast.Assign | ast.AnnAssign
+) -> AssignmentSymbol:
+    """Build the AssignmentSymbol that ``node`` defines as ``name``."""
     if isinstance(node, ast.AnnAssign):
-        if not isinstance(node.target, ast.Name):
-            return None
         return AssignmentSymbol(
-            name=node.target.id,
+            name=name,
             annotation=ast.unparse(node.annotation),
             value=_unparse_or_none(node=node.value),
         )
-
-    # ast.Assign
-    if len(node.targets) != 1 or not isinstance(node.targets[0], ast.Name):
-        return None
-    return AssignmentSymbol(name=node.targets[0].id, value=ast.unparse(node.value))
+    return AssignmentSymbol(name=name, value=ast.unparse(node.value))
 
 
 def _extract_function(
@@ -189,56 +186,51 @@ def _property_attribute(
 
 def _extract_class(*, node: ast.ClassDef) -> ClassSymbol:
     """Build a ClassSymbol from a class AST node."""
-    bases = [ast.unparse(b) for b in node.bases]
-
     attributes: list[AssignmentSymbol] = []
     methods: list[FunctionSymbol] = []
 
-    for child in ast.iter_child_nodes(node):
+    for name, child in class_symbols(node=node):
         if isinstance(child, (ast.AnnAssign, ast.Assign)):
-            assignment = _extract_assignment(node=child)
-            if assignment is not None:
-                attributes.append(assignment)
-        elif isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            kind = property_kind(node=child)
-            if kind in {"setter", "deleter"}:
-                continue
-            if kind == "property":
-                attributes.append(_property_attribute(node=child))
-            else:
-                methods.append(_extract_function(node=child))
+            attributes.append(_extract_assignment(name=name, node=child))
+        elif property_kind(node=child) == "property":
+            attributes.append(_property_attribute(node=child))
+        else:
+            methods.append(_extract_function(node=child))
 
     return ClassSymbol(
         name=node.name,
-        bases=bases,
+        bases=[ast.unparse(b) for b in node.bases],
         attributes=attributes,
         methods=methods,
     )
 
 
+def _extract_symbol(*, name: str, node: SymbolNode) -> Symbol:
+    """Build the Symbol that ``node`` defines as ``name`` in a module body."""
+    if isinstance(node, ast.ClassDef):
+        return _extract_class(node=node)
+    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+        return _extract_function(node=node)
+    if isinstance(node, ast.TypeAlias):
+        return TypeAliasSymbol(name=name, value=ast.unparse(node.value))
+    return _extract_assignment(name=name, node=node)
+
+
 def extract_python_file(*, source: str, rel_path: str) -> PythonFile:
     """Parse Python source and extract its imports and its symbols."""
     tree = ast.parse(source)
-    imports: list[str] = []
-    symbols: list[Symbol] = []
-
-    for node in ast.iter_child_nodes(tree):
-        if isinstance(node, (ast.Import, ast.ImportFrom)):
-            imports.append(ast.unparse(node))
-        elif isinstance(node, ast.ClassDef):
-            symbols.append(_extract_class(node=node))
-        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            symbols.append(_extract_function(node=node))
-        elif isinstance(node, ast.TypeAlias):
-            symbols.append(
-                TypeAliasSymbol(name=node.name.id, value=ast.unparse(node.value))
-            )
-        elif isinstance(node, (ast.Assign, ast.AnnAssign)):
-            assignment = _extract_assignment(node=node)
-            if assignment is not None:
-                symbols.append(assignment)
-
-    return PythonFile(rel_path=rel_path, imports=imports, symbols=symbols)
+    return PythonFile(
+        rel_path=rel_path,
+        imports=[
+            ast.unparse(node)
+            for node in tree.body
+            if isinstance(node, (ast.Import, ast.ImportFrom))
+        ],
+        symbols=[
+            _extract_symbol(name=name, node=node)
+            for name, node in module_symbols(tree=tree)
+        ],
+    )
 
 
 def read_source_files(

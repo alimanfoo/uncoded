@@ -4,12 +4,7 @@ import ast
 from pathlib import Path
 from typing import NamedTuple
 
-from uncoded.ast_helpers import (
-    SymbolNode,
-    assign_target_name,
-    property_kind,
-    top_level_definitions,
-)
+from uncoded.ast_helpers import SymbolNode, class_symbols, module_symbols
 from uncoded.read_helpers import read_source_text
 
 
@@ -103,7 +98,7 @@ def resolve_ast_node_from_source(
     """
     tree = ast.parse(source, filename=in_path.as_posix())
     tail = name_path.tail
-    top_match = top_level_definitions(tree=tree).get(name_path.head)
+    top_match = dict(module_symbols(tree=tree)).get(name_path.head)
 
     if tail is not None and isinstance(top_match, ast.ClassDef):
         return _resolve_class_member(
@@ -126,21 +121,7 @@ def _resolve_class_member(
     class_node: ast.ClassDef,
     member_name: str,
 ) -> SymbolNode:
-    match: SymbolNode | None = None
-
-    for node in ast.iter_child_nodes(class_node):
-        if isinstance(node, (ast.Assign, ast.AnnAssign)):
-            name = assign_target_name(node=node)
-            if name == member_name:
-                match = node
-        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            kind = property_kind(node=node)
-            if kind in ("setter", "deleter"):
-                continue
-            if node.name == member_name:
-                match = node
-
+    match = dict(class_symbols(node=class_node)).get(member_name)
     if match is None:
         raise SymbolNotFoundError(f"{str(name_path)!r} not found in {in_path}")
-
     return match
