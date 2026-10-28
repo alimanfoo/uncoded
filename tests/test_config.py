@@ -199,3 +199,51 @@ class TestReadConfig:
         config = read_config(start=uncoded_dir)
         assert config.project_root == tmp_path
         assert config.source_roots == [Path("src")]
+
+
+class TestConfigFileThatCannotBeUsed:
+    def test_not_valid_toml(self, *, tmp_path):
+        (tmp_path / ".uncoded.toml").write_text("source-roots\n", encoding="utf-8")
+        with pytest.raises(ConfigError) as exc_info:
+            read_config(start=tmp_path)
+        assert str(exc_info.value) == (
+            f"{(tmp_path / '.uncoded.toml').resolve().as_posix()}: not valid TOML: "
+            "Expected '=' after a key in a key/value pair (at line 1, column 13)"
+        )
+
+    def test_not_valid_toml_without_uncoded_settings_on_the_way_up(self, *, tmp_path):
+        # The search cannot tell whether the file configures uncoded, so it
+        # stops there rather than pass over it.
+        (tmp_path / ".uncoded.toml").write_text(
+            'source-roots = ["pkg"]\n', encoding="utf-8"
+        )
+        subproject = tmp_path / "pkg"
+        subproject.mkdir()
+        (subproject / "pyproject.toml").write_text("[project\n", encoding="utf-8")
+        with pytest.raises(ConfigError) as exc_info:
+            read_config(start=subproject)
+        assert str(exc_info.value).startswith(
+            f"{(subproject / 'pyproject.toml').resolve().as_posix()}: not valid TOML: "
+        )
+
+    def test_not_utf8(self, *, tmp_path):
+        (tmp_path / ".uncoded.toml").write_bytes(b"\xff\n")
+        with pytest.raises(ConfigError) as exc_info:
+            read_config(start=tmp_path)
+        assert str(exc_info.value) == (
+            f"{(tmp_path / '.uncoded.toml').resolve().as_posix()}: not valid TOML: "
+            "'utf-8' codec can't decode byte 0xff in position 0: invalid start byte"
+        )
+
+    def test_cannot_be_read(self, *, tmp_path):
+        # Opening a directory fails on every system, with a reason that
+        # differs between them.
+        (tmp_path / "pyproject.toml").mkdir()
+        with pytest.raises(ConfigError) as exc_info:
+            read_config(start=tmp_path)
+        message = str(exc_info.value)
+        assert message.startswith(
+            f"{(tmp_path / 'pyproject.toml').resolve().as_posix()}: "
+        )
+        assert "\n" not in message
+        assert "Errno" not in message

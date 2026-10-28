@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
+from uncoded.read_helpers import failure_reason
+
 UNCODED_TOML = ".uncoded.toml"
 
 # The roots that uncoded init names, by kind, in the order it names them.
@@ -39,11 +41,25 @@ def _pyproject_settings(*, pyproject_path: Path) -> dict | None:
 
 
 def _load_toml(*, path: Path) -> dict | None:
-    """Parse the TOML file at ``path``, or return None when it is absent."""
-    if not path.exists():
+    """Parse the TOML file at ``path``, or return None when it is absent.
+
+    Raises :exc:`ConfigError`, naming the file, when the file cannot be read or
+    is not valid TOML.
+    """
+    try:
+        with path.open("rb") as f:
+            return tomllib.load(f)
+    except FileNotFoundError:
         return None
-    with path.open("rb") as f:
-        return tomllib.load(f)
+    except OSError as e:
+        raise _config_file_error(path=path, problem=failure_reason(error=e)) from e
+    except (tomllib.TOMLDecodeError, UnicodeDecodeError) as e:
+        raise _config_file_error(path=path, problem=f"not valid TOML: {e}") from e
+
+
+def _config_file_error(*, path: Path, problem: str) -> ConfigError:
+    """Return the error for the configuration file at ``path`` and its problem."""
+    return ConfigError(f"{path.as_posix()}: {problem}")
 
 
 def _config_file_at(*, directory: Path) -> tuple[Path, dict] | None:
@@ -52,7 +68,7 @@ def _config_file_at(*, directory: Path) -> tuple[Path, dict] | None:
     A ``pyproject.toml`` without a ``[tool.uncoded]`` table is not a
     configuration file, so the search passes over it. Skips directories named
     ``.uncoded``. Raises :exc:`ConfigError` when ``pyproject.toml`` and
-    ``.uncoded.toml`` both configure uncoded.
+    ``.uncoded.toml`` both configure uncoded, or when either cannot be used.
     """
     if directory.name == ".uncoded":
         return None
@@ -94,7 +110,8 @@ def find_config(*, start: Path) -> Config | None:
     Walks up from ``start`` looking for ``.uncoded.toml`` or a
     ``pyproject.toml`` with a ``[tool.uncoded]`` table. Returns None when no
     configuration file is found. Raises :exc:`ConfigError` when two files in
-    the same directory both configure uncoded.
+    the same directory both configure uncoded, or when a file that the search
+    reads cannot be used.
     """
     found = _find_config_file(start=start)
     if found is None:
