@@ -290,7 +290,7 @@ class TestExtractModuleFromSource:
 
 
 class TestIterAndExtract:
-    def test_basic_walk(self, *, tmp_path):
+    def test_keeps_each_python_file_that_has_symbols(self, *, tmp_path):
         # Simulate project structure: src/mypackage/...
         src = tmp_path / "src"
         pkg = src / "mypackage"
@@ -424,7 +424,7 @@ class TestIterAndExtract:
 
 
 class TestExtractModulesFromFiles:
-    def test_returns_module_info_per_parseable_file(self):
+    def test_extracts_the_symbols_of_each_file(self):
         files = [
             ("def foo(): pass\n", "src/a.py"),
             ("class Bar: pass\n", "src/b.py"),

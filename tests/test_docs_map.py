@@ -290,7 +290,7 @@ class TestRenderDocsMap:
         parsed = yaml.safe_load(output)
         assert parsed == m
 
-    def test_null_renders_clean(self):
+    def test_headingless_file_renders_without_null(self):
         # Null leaves must render as "key:" not "key: null".
         files = [("no headings", Path("notes.md"))]
         output = render_docs_map(mapping=build_docs_map(files=files))

@@ -197,7 +197,7 @@ class TestExtractStub:
             ),
         ],
     )
-    def test_extract_params_covers_input_kind(self, *, source, expected):
+    def test_extracts_each_kind_of_parameter(self, *, source, expected):
         module = extract_stub(source=source, rel_path="pkg/f.py")
         f = module.functions[0]
         assert f.params == expected
@@ -307,7 +307,7 @@ class TestExtractStub:
         module = extract_stub(source=source, rel_path="pkg/mod.py")
         assert module.assignments == []
 
-    def test_ann_assign_non_name_target_skipped(self):
+    def test_annotation_whose_target_is_not_a_bare_name_skipped(self):
         source = "obj.x: int = 1\n"
         module = extract_stub(source=source, rel_path="pkg/mod.py")
         assert module.assignments == []
@@ -474,7 +474,7 @@ class TestRenderStub:
             ),
         ],
     )
-    def test_render_param_covers_input_kind(self, *, params, expected):
+    def test_renders_each_kind_of_parameter(self, *, params, expected):
         module = StubModule(
             rel_path="pkg/mod.py",
             functions=[StubFunction(name="f", params=params)],

@@ -510,7 +510,7 @@ class TestResolveNamePosition:
             5,
         )
 
-    def test_class_method(self, *, tmp_path):
+    def test_method(self, *, tmp_path):
         source = textwrap.dedent("""\
             class Dog:
                 def bark(self):

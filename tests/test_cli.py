@@ -1067,7 +1067,7 @@ def _init_package_project(*, tmp_path, monkeypatch):
 
 
 class TestBodyCommand:
-    def test_class_method_form(self, *, tmp_path, monkeypatch, capsys):
+    def test_prints_a_methods_definition(self, *, tmp_path, monkeypatch, capsys):
         _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "src" / "foo.py").write_text(
             "class Dog:\n    def bark(self):\n        pass\n",
@@ -1260,7 +1260,7 @@ class TestBodyCommand:
 
 
 class TestRefsCommand:
-    def test_class_method_form(self, *, tmp_path, monkeypatch, capsys):
+    def test_prints_each_reference_to_a_method(self, *, tmp_path, monkeypatch, capsys):
         pkg = _init_package_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (pkg / "a.py").write_text(
             textwrap.dedent("""\
@@ -1459,7 +1459,7 @@ class TestSyncDocRoots:
         assert (tmp_path / ".uncoded" / ".gitignore").exists()
         assert (tmp_path / ".uncoded" / "docs.yaml").exists()
 
-    def test_doc_only_does_not_write_namespace_yaml(self, *, tmp_path, monkeypatch):
+    def test_doc_only_does_not_write_namespace_map(self, *, tmp_path, monkeypatch):
         _init_doc_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 0
         assert not (tmp_path / ".uncoded" / "namespace.yaml").exists()
@@ -1469,7 +1469,7 @@ class TestSyncDocRoots:
         assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 0
         assert not (tmp_path / ".uncoded" / "stubs").exists()
 
-    def test_doc_root_single_md_file(self, *, tmp_path, monkeypatch):
+    def test_doc_root_that_is_a_markdown_file(self, *, tmp_path, monkeypatch):
         readme = tmp_path / "README.md"
         readme.write_text("# Overview\n## Usage\n", encoding="utf-8")
         (tmp_path / "pyproject.toml").write_text(
@@ -1604,7 +1604,7 @@ class TestSyncDocRoots:
         for path in _DOC_SKILL_PATHS:
             assert not (tmp_path / path).exists()
 
-    def test_check_returns_one_when_docs_yaml_stale(self, *, tmp_path, monkeypatch):
+    def test_check_returns_one_when_docs_map_stale(self, *, tmp_path, monkeypatch):
         _init_doc_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         _run(monkeypatch=monkeypatch, arguments=["sync"])
         # Modify the doc source.
@@ -1653,7 +1653,7 @@ class TestSyncDocRoots:
         )
         assert _run(monkeypatch=monkeypatch, arguments=["check"]) == 1
 
-    def test_check_returns_one_when_docs_yaml_should_be_removed(
+    def test_check_returns_one_when_docs_map_should_be_removed(
         self, *, tmp_path, monkeypatch
     ):
         # docs.yaml exists but doc_roots is now absent — check must report.
