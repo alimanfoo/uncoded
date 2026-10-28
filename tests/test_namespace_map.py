@@ -62,7 +62,7 @@ class TestBuildMap:
         )
 
         members = result["src/"]["pkg/"]["models.py"]["User"]
-        assert list(members) == ["name", "email", "save"]
+        assert list(members) == ["save", "name", "email"]
         assert all(value is None for value in members.values())
 
     def test_class_with_no_members(self):
@@ -70,7 +70,7 @@ class TestBuildMap:
 
         assert result["src/"]["pkg/"]["types.py"]["Marker"] is None
 
-    def test_lists_assignments_then_classes_then_functions(self):
+    def test_lists_symbols_in_file_order(self):
         result = _map(
             sources={
                 "src/pkg/settings.py": """\
@@ -84,7 +84,7 @@ class TestBuildMap:
         )
 
         file_entry = result["src/"]["pkg/"]["settings.py"]
-        assert list(file_entry) == ["TIMEOUT", "Ids", "MAX_RETRIES", "Settings", "load"]
+        assert list(file_entry) == ["load", "Settings", "TIMEOUT", "Ids", "MAX_RETRIES"]
 
     def test_name_defined_twice_is_listed_once(self):
         result = _map(

@@ -69,16 +69,6 @@ class ClassSymbol:
     bases: list[str] = field(default_factory=list)
     members: list[AssignmentSymbol | FunctionSymbol] = field(default_factory=list)
 
-    @property
-    def attributes(self) -> list[AssignmentSymbol]:
-        """The attributes and properties, in order."""
-        return [m for m in self.members if isinstance(m, AssignmentSymbol)]
-
-    @property
-    def methods(self) -> list[FunctionSymbol]:
-        """The methods, in order."""
-        return [m for m in self.members if isinstance(m, FunctionSymbol)]
-
 
 type Symbol = AssignmentSymbol | TypeAliasSymbol | ClassSymbol | FunctionSymbol
 
@@ -93,25 +83,6 @@ class PythonFile:
     rel_path: str
     imports: list[str] = field(default_factory=list)
     symbols: list[Symbol] = field(default_factory=list)
-
-    @property
-    def assignments(self) -> list[AssignmentSymbol | TypeAliasSymbol]:
-        """The assignments, annotations and ``type`` statements, in order."""
-        return [
-            s
-            for s in self.symbols
-            if isinstance(s, (AssignmentSymbol, TypeAliasSymbol))
-        ]
-
-    @property
-    def classes(self) -> list[ClassSymbol]:
-        """The classes, in order."""
-        return [s for s in self.symbols if isinstance(s, ClassSymbol)]
-
-    @property
-    def functions(self) -> list[FunctionSymbol]:
-        """The functions, in order."""
-        return [s for s in self.symbols if isinstance(s, FunctionSymbol)]
 
 
 def _unparse_or_none(*, node: ast.expr | None) -> str | None:

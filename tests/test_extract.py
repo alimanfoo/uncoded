@@ -4,6 +4,8 @@ import pytest
 
 from uncoded.extract import (
     AssignmentSymbol,
+    ClassSymbol,
+    FunctionSymbol,
     Parameter,
     TypeAliasSymbol,
     _extract_python_file,
@@ -14,6 +16,18 @@ from uncoded.read_helpers import SkippedFile
 
 def _names(*, symbols):
     return [symbol.name for symbol in symbols]
+
+
+def _class(*, python_file, index=0):
+    symbol = python_file.symbols[index]
+    assert isinstance(symbol, ClassSymbol)
+    return symbol
+
+
+def _function(*, python_file, index=0):
+    symbol = python_file.symbols[index]
+    assert isinstance(symbol, FunctionSymbol)
+    return symbol
 
 
 class TestWhichStatementsAreSymbols:
@@ -40,15 +54,16 @@ class TestWhichStatementsAreSymbols:
         result = _extract_python_file(source=source, rel_path="module.py")
 
         assert result.rel_path == "module.py"
-        assert len(result.classes) == 2
-        assert result.classes[0].name == "MyClass"
-        assert _names(symbols=result.classes[0].methods) == [
+        my_class = _class(python_file=result, index=0)
+        private_class = _class(python_file=result, index=1)
+        assert my_class.name == "MyClass"
+        assert _names(symbols=my_class.members) == [
             "public_method",
             "_private_method",
         ]
-        assert result.classes[1].name == "_PrivateClass"
-        assert _names(symbols=result.classes[1].methods) == ["method"]
-        assert _names(symbols=result.functions) == [
+        assert private_class.name == "_PrivateClass"
+        assert _names(symbols=private_class.members) == ["method"]
+        assert _names(symbols=result.symbols[2:]) == [
             "public_function",
             "_private_function",
         ]
@@ -68,15 +83,15 @@ class TestWhichStatementsAreSymbols:
 
         result = _extract_python_file(source=source, rel_path="async_module.py")
 
-        assert _names(symbols=result.functions) == ["fetch_data"]
-        assert result.classes[0].name == "Client"
-        assert _names(symbols=result.classes[0].methods) == ["connect", "disconnect"]
+        cls = _class(python_file=result, index=1)
+        assert result.symbols[0].name == "fetch_data"
+        assert cls.name == "Client"
+        assert _names(symbols=cls.members) == ["connect", "disconnect"]
 
     def test_empty_module(self):
         result = _extract_python_file(source="", rel_path="empty.py")
 
-        assert result.classes == []
-        assert _names(symbols=result.functions) == []
+        assert result.symbols == []
 
     def test_module_level_assignments(self):
         source = textwrap.dedent("""\
@@ -87,7 +102,7 @@ class TestWhichStatementsAreSymbols:
 
         result = _extract_python_file(source=source, rel_path="const.py")
 
-        assert _names(symbols=result.assignments) == [
+        assert _names(symbols=result.symbols) == [
             "TIMEOUT",
             "MAX_RETRIES",
             "__version__",
@@ -98,7 +113,7 @@ class TestWhichStatementsAreSymbols:
 
         result = _extract_python_file(source=source, rel_path="chain.py")
 
-        assert _names(symbols=result.assignments) == []
+        assert result.symbols == []
 
     def test_non_property_decorator_classified_as_method(self):
         source = textwrap.dedent("""\
@@ -110,9 +125,9 @@ class TestWhichStatementsAreSymbols:
 
         result = _extract_python_file(source=source, rel_path="util.py")
 
-        cls = result.classes[0]
-        assert _names(symbols=cls.methods) == ["helper"]
-        assert _names(symbols=cls.attributes) == []
+        cls = _class(python_file=result)
+        assert [type(m) for m in cls.members] == [FunctionSymbol]
+        assert _names(symbols=cls.members) == ["helper"]
 
     def test_preserves_source_order(self):
         source = textwrap.dedent("""\
@@ -137,7 +152,11 @@ class TestWhichStatementsAreSymbols:
         result = _extract_python_file(source=source, rel_path="ordering.py")
 
         assert _names(symbols=result.symbols) == ["zebra", "Alpha", "ZETA", "apple"]
-        assert _names(symbols=result.classes[0].members) == ["omega", "beta", "alpha"]
+        assert _names(symbols=_class(python_file=result, index=1).members) == [
+            "omega",
+            "beta",
+            "alpha",
+        ]
 
     def test_leaves_out_names_that_are_not_symbols(self):
         source = textwrap.dedent("""\
@@ -165,11 +184,10 @@ class TestWhichStatementsAreSymbols:
 
         result = _extract_python_file(source=source, rel_path="names.py")
 
-        assert _names(symbols=result.assignments) == []
-        assert _names(symbols=result.classes) == ["Registry"]
-        assert _names(symbols=result.classes[0].attributes) == []
-        assert _names(symbols=result.classes[0].methods) == ["__init__"]
-        assert _names(symbols=result.functions) == ["run"]
+        assert _names(symbols=result.symbols) == ["Registry", "run"]
+        assert _names(symbols=_class(python_file=result, index=0).members) == [
+            "__init__"
+        ]
 
 
 class TestReadAndExtract:
@@ -334,7 +352,7 @@ class TestReadPythonFilesKeepsFilesWithSymbols:
         )
 
         assert [m.rel_path for m in modules] == ["src/a.py", "src/b.py", "src/c.py"]
-        assert _names(symbols=modules[0].functions) == ["a"]
+        assert _names(symbols=modules[0].symbols) == ["a"]
 
 
 class TestExtractPythonFile:
@@ -345,8 +363,7 @@ class TestExtractPythonFile:
                 return f"Hello, {name}"
         """)
         module = _extract_python_file(source=source, rel_path="pkg/greet.py")
-        assert len(module.functions) == 1
-        f = module.functions[0]
+        f = _function(python_file=module)
         assert f.name == "greet"
         assert f.params == [Parameter("name", "str")]
         assert f.return_annotation == "str"
@@ -357,7 +374,7 @@ class TestExtractPythonFile:
                 pass
         """)
         module = _extract_python_file(source=source, rel_path="pkg/run.py")
-        f = module.functions[0]
+        f = _function(python_file=module)
         assert f.params == [Parameter("x"), Parameter("y")]
         assert f.return_annotation is None
 
@@ -367,7 +384,7 @@ class TestExtractPythonFile:
                 pass
         """)
         module = _extract_python_file(source=source, rel_path="pkg/net.py")
-        f = module.functions[0]
+        f = _function(python_file=module)
         assert f.is_async is True
         assert f.name == "fetch"
 
@@ -377,9 +394,7 @@ class TestExtractPythonFile:
             def _private(): pass
         """)
         module = _extract_python_file(source=source, rel_path="pkg/mod.py")
-        assert len(module.functions) == 2
-        assert module.functions[0].name == "public"
-        assert module.functions[1].name == "_private"
+        assert _names(symbols=module.symbols) == ["public", "_private"]
 
     def test_class_with_attributes_and_methods(self):
         source = textwrap.dedent("""\
@@ -397,15 +412,15 @@ class TestExtractPythonFile:
                     pass
         """)
         module = _extract_python_file(source=source, rel_path="pkg/models.py")
-        assert len(module.classes) == 1
-        cls = module.classes[0]
+        cls = _class(python_file=module)
         assert cls.name == "Record"
-        assert [(a.name, a.annotation) for a in cls.attributes] == [
+        attributes = [m for m in cls.members if isinstance(m, AssignmentSymbol)]
+        assert [(a.name, a.annotation) for a in attributes] == [
             ("name", "str"),
             ("value", "int"),
             ("_internal", "float"),
         ]
-        assert [m.name for m in cls.methods] == ["save", "_validate"]
+        assert _names(symbols=cls.members[3:]) == ["save", "_validate"]
 
     def test_class_with_bases(self):
         source = textwrap.dedent("""\
@@ -413,7 +428,7 @@ class TestExtractPythonFile:
                 pass
         """)
         module = _extract_python_file(source=source, rel_path="pkg/animals.py")
-        assert module.classes[0].bases == ["Animal", "Domestic"]
+        assert _class(python_file=module).bases == ["Animal", "Domestic"]
 
     def test_class_no_bases(self):
         source = textwrap.dedent("""\
@@ -421,7 +436,7 @@ class TestExtractPythonFile:
                 pass
         """)
         module = _extract_python_file(source=source, rel_path="pkg/plain.py")
-        assert module.classes[0].bases == []
+        assert _class(python_file=module).bases == []
 
     @pytest.mark.parametrize(
         ("source", "expected"),
@@ -500,7 +515,7 @@ class TestExtractPythonFile:
     )
     def test_extracts_each_kind_of_parameter(self, *, source, expected):
         module = _extract_python_file(source=source, rel_path="pkg/f.py")
-        f = module.functions[0]
+        f = _function(python_file=module)
         assert f.params == expected
 
     def test_imports_collected(self):
@@ -528,7 +543,7 @@ class TestExtractPythonFile:
             MAX_RETRIES: int = 3
         """)
         module = _extract_python_file(source=source, rel_path="pkg/mod.py")
-        assert module.assignments == [
+        assert module.symbols == [
             AssignmentSymbol(name="MAX_RETRIES", annotation="int", value="3")
         ]
 
@@ -537,21 +552,21 @@ class TestExtractPythonFile:
             TIMEOUT = 30
         """)
         module = _extract_python_file(source=source, rel_path="pkg/mod.py")
-        assert module.assignments == [AssignmentSymbol(name="TIMEOUT", value="30")]
+        assert module.symbols == [AssignmentSymbol(name="TIMEOUT", value="30")]
 
     def test_assignment_bare_annotation(self):
         source = textwrap.dedent("""\
             FOO: int
         """)
         module = _extract_python_file(source=source, rel_path="pkg/mod.py")
-        assert module.assignments == [AssignmentSymbol(name="FOO", annotation="int")]
+        assert module.symbols == [AssignmentSymbol(name="FOO", annotation="int")]
 
     def test_assignment_private_included(self):
         source = textwrap.dedent("""\
             _INTERNAL = 42
         """)
         module = _extract_python_file(source=source, rel_path="pkg/mod.py")
-        assert module.assignments[0].name == "_INTERNAL"
+        assert module.symbols[0].name == "_INTERNAL"
 
     def test_type_alias_classic(self):
         source = textwrap.dedent("""\
@@ -559,7 +574,7 @@ class TestExtractPythonFile:
             UserId: TypeAlias = int
         """)
         module = _extract_python_file(source=source, rel_path="pkg/mod.py")
-        assert module.assignments == [
+        assert module.symbols == [
             AssignmentSymbol(name="UserId", annotation="TypeAlias", value="int")
         ]
 
@@ -568,19 +583,19 @@ class TestExtractPythonFile:
             type UserId = int
         """)
         module = _extract_python_file(source=source, rel_path="pkg/mod.py")
-        assert module.assignments == [TypeAliasSymbol(name="UserId", value="int")]
+        assert module.symbols == [TypeAliasSymbol(name="UserId", value="int")]
 
     def test_tuple_unpacking_skipped(self):
         source = textwrap.dedent("""\
             X, Y = 1, 2
         """)
         module = _extract_python_file(source=source, rel_path="pkg/mod.py")
-        assert module.assignments == []
+        assert module.symbols == []
 
     def test_annotation_whose_target_is_not_a_bare_name_skipped(self):
         source = "obj.x: int = 1\n"
         module = _extract_python_file(source=source, rel_path="pkg/mod.py")
-        assert module.assignments == []
+        assert module.symbols == []
 
     def test_class_tuple_unpacking_skipped(self):
         source = textwrap.dedent("""\
@@ -588,7 +603,7 @@ class TestExtractPythonFile:
                 a, b = 1, 2
         """)
         module = _extract_python_file(source=source, rel_path="pkg/mod.py")
-        assert module.classes[0].attributes == []
+        assert _class(python_file=module).members == []
 
     def test_class_with_unannotated_attribute(self):
         source = textwrap.dedent("""\
@@ -597,8 +612,8 @@ class TestExtractPythonFile:
                 count: int = 0
         """)
         module = _extract_python_file(source=source, rel_path="pkg/mod.py")
-        cls = module.classes[0]
-        names = [(a.name, a.annotation, a.value) for a in cls.attributes]
+        cls = _class(python_file=module)
+        names = [(a.name, a.annotation, a.value) for a in cls.members]
         assert names == [
             ("items", None, "[]"),
             ("count", "int", "0"),
@@ -613,13 +628,8 @@ class TestExtractPythonFile:
                     return self._path
         """)
         module = _extract_python_file(source=source, rel_path="pkg/cfg.py")
-        cls = module.classes[0]
-        assert cls.methods == []
-        assert len(cls.attributes) == 1
-        attr = cls.attributes[0]
-        assert attr.name == "path"
-        assert attr.annotation == "Path"
-        assert attr.value is None
+        cls = _class(python_file=module)
+        assert cls.members == [AssignmentSymbol(name="path", annotation="Path")]
 
     def test_property_without_return_annotation(self):
         source = textwrap.dedent("""\
@@ -629,9 +639,8 @@ class TestExtractPythonFile:
                     return self._path
         """)
         module = _extract_python_file(source=source, rel_path="pkg/cfg.py")
-        cls = module.classes[0]
-        assert cls.attributes[0].name == "path"
-        assert cls.attributes[0].annotation is None
+        cls = _class(python_file=module)
+        assert cls.members == [AssignmentSymbol(name="path")]
 
     def test_property_setter_and_deleter_suppressed(self):
         source = textwrap.dedent("""\
@@ -649,6 +658,5 @@ class TestExtractPythonFile:
                     del self._path
         """)
         module = _extract_python_file(source=source, rel_path="pkg/cfg.py")
-        cls = module.classes[0]
-        assert [a.name for a in cls.attributes] == ["path"]
-        assert cls.methods == []
+        cls = _class(python_file=module)
+        assert cls.members == [AssignmentSymbol(name="path", annotation="Path")]
