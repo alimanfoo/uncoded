@@ -1375,13 +1375,7 @@ class TestRefsCommand:
         _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "m.py").write_text("def foo(): pass\n", encoding="utf-8")
 
-        with mock.patch.object(
-            cli,
-            "find_refs",
-            side_effect=cli.TyError(
-                "uvx not found on PATH — install uv (https://docs.astral.sh/uv/)"
-            ),
-        ):
+        with mock.patch("uncoded.refs.subprocess.Popen", side_effect=FileNotFoundError):
             assert _refs(monkeypatch=monkeypatch, name_path="foo", in_path="m.py") == 1
 
         captured = capsys.readouterr()
@@ -1391,21 +1385,22 @@ class TestRefsCommand:
         )
 
     def test_ty_failure_is_not_blamed_on_the_file(
-        self, *, tmp_path, monkeypatch, capsys
+        self, *, tmp_path, monkeypatch, capsys, stand_in_for_ty
     ):
         _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "m.py").write_text("def foo(): pass\n", encoding="utf-8")
+        # A write to the input of a ty that has stopped reading fails with an
+        # OSError, the kind of error that a file which cannot be read raises.
+        stand_in_for_ty(
+            script="""
+            read_message()
+            os.close(0)
+            send(INITIALIZE_RESPONSE)
+            sys.stderr.write("ty panicked\\n")
+            """
+        )
 
-        with mock.patch.object(
-            cli,
-            "find_refs",
-            side_effect=cli.TyError(
-                "ty failed: it stopped before it answered.\n"
-                "Output from uvx and ty:\n"
-                "  ty panicked"
-            ),
-        ):
-            assert _refs(monkeypatch=monkeypatch, name_path="foo", in_path="m.py") == 1
+        assert _refs(monkeypatch=monkeypatch, name_path="foo", in_path="m.py") == 1
 
         captured = capsys.readouterr()
         assert captured.out == ""
