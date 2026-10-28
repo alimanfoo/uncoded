@@ -24,7 +24,12 @@ class TestReadConfig:
     # --- pyproject.toml ---
 
     def test_raises_when_no_config_file(self, *, tmp_path):
-        with pytest.raises(ConfigError, match=r"No pyproject\.toml"):
+        with pytest.raises(ConfigError, match=r"No configuration file found"):
+            read_config(start=tmp_path)
+
+    def test_raises_when_pyproject_has_no_uncoded_table(self, *, tmp_path):
+        (tmp_path / "pyproject.toml").write_text("[tool.ruff]\n", encoding="utf-8")
+        with pytest.raises(ConfigError, match=r"No configuration file found"):
             read_config(start=tmp_path)
 
     def test_source_roots_read_from_pyproject(self, *, tmp_path):
@@ -41,13 +46,24 @@ class TestReadConfig:
         config = read_config(start=tmp_path)
         assert config.doc_roots == [Path("docs")]
 
-    def test_both_roots_empty_when_section_absent(self, *, tmp_path):
-        # Bare pyproject (no [tool.uncoded]) with no sibling .uncoded.toml is
-        # still a config home; roots default to empty → "nothing to index".
-        (tmp_path / "pyproject.toml").write_text("[tool.ruff]\n", encoding="utf-8")
+    def test_both_roots_empty_when_uncoded_table_is_empty(self, *, tmp_path):
+        (tmp_path / "pyproject.toml").write_text("[tool.uncoded]\n", encoding="utf-8")
         config = read_config(start=tmp_path)
         assert config.source_roots == []
         assert config.doc_roots == []
+
+    def test_passes_over_subproject_pyproject_without_uncoded_table(self, *, tmp_path):
+        (tmp_path / "pyproject.toml").write_text(
+            '[tool.uncoded]\nsource-roots = ["pkg"]\n', encoding="utf-8"
+        )
+        subproject = tmp_path / "pkg"
+        subproject.mkdir()
+        (subproject / "pyproject.toml").write_text(
+            '[project]\nname = "pkg"\n', encoding="utf-8"
+        )
+        config = read_config(start=subproject)
+        assert config.project_root == tmp_path
+        assert config.source_roots == [Path("pkg")]
 
     def test_project_root_is_config_file_parent(self, *, tmp_path):
         toml = '[tool.uncoded]\nsource-roots = ["src"]\n'

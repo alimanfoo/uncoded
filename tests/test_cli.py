@@ -163,11 +163,12 @@ class TestSyncApplyMode:
         assert "config" in err
         assert str(tmp_path) not in err
 
-    def test_error_when_uncoded_section_missing(self, *, tmp_path, monkeypatch, capsys):
-        # User has pyproject.toml but no [tool.uncoded] section, so both
-        # root lists are empty. The message must name both configurable
-        # keys and both config file options.
-        (tmp_path / "pyproject.toml").write_text("[tool.ruff]\n", encoding="utf-8")
+    def test_error_when_configuration_names_no_roots(
+        self, *, tmp_path, monkeypatch, capsys
+    ):
+        # An empty [tool.uncoded] table names no roots. The message must name
+        # both configurable keys and both config file options.
+        (tmp_path / "pyproject.toml").write_text("[tool.uncoded]\n", encoding="utf-8")
         monkeypatch.chdir(tmp_path)
 
         assert cli._sync() == 1

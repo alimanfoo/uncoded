@@ -39,6 +39,10 @@ includes it. Each entry links the pull request that made the change.
 - `uncoded refs` on Windows prints each reference's path relative to the current
   directory, in place of a path that names no file.
   ([#312](https://github.com/alimanfoo/uncoded/pull/312))
+- The search for the configuration file passes over a `pyproject.toml` without a
+  `[tool.uncoded]` table, so a Python package's own `pyproject.toml` inside the
+  project no longer hides the configuration file above it.
+  ([#321](https://github.com/alimanfoo/uncoded/pull/321))
 
 ## [3.0.1](https://github.com/alimanfoo/uncoded/releases/tag/v3.0.1) — 2026-10-09
 

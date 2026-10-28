@@ -32,7 +32,12 @@ def find_pyproject_toml(*, start: Path) -> Path | None:
 
 
 def _pyproject_settings(*, pyproject_path: Path) -> dict | None:
-    """Return the ``[tool.uncoded]`` table of ``pyproject_path``, or None."""
+    """Return the ``[tool.uncoded]`` table of ``pyproject_path``, or None.
+
+    Returns None when the file or the table is absent.
+    """
+    if not pyproject_path.exists():
+        return None
     with pyproject_path.open("rb") as f:
         data = tomllib.load(f)
     return data.get("tool", {}).get("uncoded")
@@ -47,38 +52,26 @@ def _uncoded_toml_settings(*, uncoded_toml_path: Path) -> dict:
 def _config_file_at(*, directory: Path) -> tuple[Path, dict] | None:
     """Return the config file in ``directory`` and its settings, or None.
 
-    Skips directories named ``.uncoded``. Per-directory resolution rules:
-
-    - ``pyproject.toml`` with ``[tool.uncoded]`` AND ``.uncoded.toml`` both
-      present → raises :exc:`ConfigError` (configure uncoded in one file only).
-    - Only ``pyproject.toml`` with ``[tool.uncoded]`` → home is the pyproject.
-    - Only ``.uncoded.toml`` → home is the ``.uncoded.toml``.
-    - ``pyproject.toml`` without ``[tool.uncoded]``, no ``.uncoded.toml``
-      → home is the pyproject (bare Python project; roots default to empty).
-    - ``pyproject.toml`` without ``[tool.uncoded]`` AND ``.uncoded.toml``
-      → home is the ``.uncoded.toml`` (bare pyproject does not shadow it).
-    - Neither file → returns None.
+    A ``pyproject.toml`` without a ``[tool.uncoded]`` table is not a config
+    file, so the search passes over it. Skips directories named ``.uncoded``.
+    Raises :exc:`ConfigError` when ``pyproject.toml`` and ``.uncoded.toml``
+    both configure uncoded.
     """
     if directory.name == ".uncoded":
         return None
     pyproject = directory / "pyproject.toml"
     uncoded_toml = directory / ".uncoded.toml"
-    has_uncoded_toml = uncoded_toml.exists()
-    if pyproject.exists():
-        settings = _pyproject_settings(pyproject_path=pyproject)
-        has_section = settings is not None
-        if has_section and has_uncoded_toml:
+    pyproject_settings = _pyproject_settings(pyproject_path=pyproject)
+    if uncoded_toml.exists():
+        if pyproject_settings is not None:
             raise ConfigError(
                 "Ambiguous config: both pyproject.toml and .uncoded.toml "
                 "configure uncoded in the same directory. "
                 "Configure uncoded in one file only."
             )
-        if not has_section and has_uncoded_toml:
-            # Bare pyproject does not shadow a sibling .uncoded.toml.
-            return uncoded_toml, _uncoded_toml_settings(uncoded_toml_path=uncoded_toml)
-        return pyproject, settings or {}
-    if has_uncoded_toml:
         return uncoded_toml, _uncoded_toml_settings(uncoded_toml_path=uncoded_toml)
+    if pyproject_settings is not None:
+        return pyproject, pyproject_settings
     return None
 
 
@@ -100,16 +93,17 @@ def _find_config_file(*, start: Path) -> tuple[Path, dict] | None:
 def read_config(*, start: Path) -> Config:
     """Locate the config file and read all uncoded settings from it.
 
-    Walks up from ``start`` looking for ``pyproject.toml`` or
-    ``.uncoded.toml``. Raises :exc:`ConfigError` when no config file is
-    found, or when two config files in the same directory both configure
-    uncoded. A found config file with no uncoded settings returns a Config
-    with empty root lists.
+    Walks up from ``start`` looking for ``.uncoded.toml`` or a
+    ``pyproject.toml`` with a ``[tool.uncoded]`` table. Raises
+    :exc:`ConfigError` when no config file is found, or when two config files
+    in the same directory both configure uncoded.
     """
     found = _find_config_file(start=start)
     if found is None:
         raise ConfigError(
-            "No pyproject.toml or .uncoded.toml found. Create one to configure uncoded."
+            "No configuration file found in this directory or above it. "
+            "Configure uncoded in .uncoded.toml, "
+            "or in a [tool.uncoded] table in pyproject.toml."
         )
     config_file, settings = found
 
