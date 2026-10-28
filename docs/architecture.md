@@ -5,16 +5,16 @@ configuration, validates roots, and coordinates extraction and file writes.
 
 ## Sync pipeline
 
-| Module             | Responsibility                                                                                  |
-| ------------------ | ----------------------------------------------------------------------------------------------- |
-| `config.py`        | Finds the nearest configuration, resolves the project root, and renders the file `init` writes. |
-| `cli.py`           | Checks the required version, validates roots and dispatches the configured work.                |
-| `extract.py`       | Extracts symbols from parseable Python files.                                                   |
-| `namespace_map.py` | Renders the Python hierarchy as YAML.                                                           |
-| `stubs.py`         | Extracts imports, signatures, and assignments into a mirrored `.pyi` tree.                      |
-| `docs_map.py`      | Extracts Markdown headings and renders their hierarchy as YAML.                                 |
-| `skill.py`         | Writes navigation and consistency review skills to both agent directories.                      |
-| `sync.py`          | Writes and removes files only when needed; reports changes without writing in check mode.       |
+| Module             | Responsibility                                                                                                |
+| ------------------ | ------------------------------------------------------------------------------------------------------------- |
+| `config.py`        | Finds the nearest configuration, resolves the project root, checks roots, and renders the file `init` writes. |
+| `cli.py`           | Checks the required version and dispatches the configured work.                                               |
+| `extract.py`       | Extracts symbols from parseable Python files.                                                                 |
+| `namespace_map.py` | Renders the Python hierarchy as YAML.                                                                         |
+| `stubs.py`         | Extracts imports, signatures, and assignments into a mirrored `.pyi` tree.                                    |
+| `docs_map.py`      | Extracts Markdown headings and renders their hierarchy as YAML.                                               |
+| `skill.py`         | Writes navigation and consistency review skills to both agent directories.                                    |
+| `sync.py`          | Writes and removes files only when needed; reports changes without writing in check mode.                     |
 
 Code and documentation indexes are independent. Removing a root type removes its
 generated index and skills on the next sync.

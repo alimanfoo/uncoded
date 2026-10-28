@@ -595,6 +595,47 @@ class TestInitCommand:
         assert "uncoded-doc-navigation" in out
         assert "uncoded-code-navigation" not in out
 
+    def test_names_no_root_of_the_wrong_kind(self, *, tmp_path, monkeypatch):
+        (tmp_path / "outside").mkdir()
+        project = tmp_path / "project"
+        project.mkdir()
+        _init_project(tmp_path=project, monkeypatch=monkeypatch, roots=[])
+        (project / "README.md").write_text("# T\n", encoding="utf-8")
+        (project / "src").write_text("", encoding="utf-8")
+        (project / "tests").symlink_to(tmp_path / "outside", target_is_directory=True)
+
+        assert _run_init(monkeypatch=monkeypatch) == 0
+
+        assert (project / ".uncoded.toml").read_text(encoding="utf-8") == (
+            f'doc-roots = ["README.md"]\nrequired-version = "{__version__}"\n'
+        )
+
+    def test_passes_over_pyproject_without_uncoded_table(
+        self, *, tmp_path, monkeypatch
+    ):
+        _init_project(tmp_path=tmp_path, monkeypatch=monkeypatch, roots=["src"])
+        (tmp_path / "pyproject.toml").write_text(
+            '[project]\nname = "demo"\n', encoding="utf-8"
+        )
+
+        assert _run_init(monkeypatch=monkeypatch) == 0
+
+        assert (tmp_path / ".uncoded.toml").exists()
+
+    def test_uses_the_configuration_file_above_a_subdirectory(
+        self, *, tmp_path, monkeypatch, capsys
+    ):
+        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        (tmp_path / "src" / "docs").mkdir()
+        monkeypatch.chdir(tmp_path / "src")
+
+        assert _run_init(monkeypatch=monkeypatch) == 0
+
+        assert not (tmp_path / "src" / ".uncoded.toml").exists()
+        assert (tmp_path / ".uncoded" / "namespace.yaml").exists()
+        out = capsys.readouterr().out
+        assert out.startswith("Found a configuration file, and left it as it is.\n")
+
     def test_writes_nothing_when_no_conventional_root_exists(
         self, *, tmp_path, monkeypatch, capsys
     ):
@@ -606,7 +647,8 @@ class TestInitCommand:
         captured = capsys.readouterr()
         assert captured.out == ""
         assert captured.err.startswith(
-            "Error: none of src, tests, README.md, AGENTS.md, docs is in this directory"
+            "Error: found none of the source roots src, tests or the doc roots "
+            "README.md, AGENTS.md, docs in this directory"
         )
         assert "Write .uncoded.toml by hand" in captured.err
 

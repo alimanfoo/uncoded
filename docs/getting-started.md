@@ -10,13 +10,14 @@ uncoded on demand; there is no separate install step.
 
 ## 1. Set uncoded up
 
-Run from your repository root:
+Run from the directory that is to be the project directory, usually the root of
+your repository:
 
 ```sh
 uvx uncoded init
 ```
 
-`uncoded init` writes `.uncoded.toml`, the configuration file, in that
+`uncoded init` writes `.uncoded.toml`, the configuration file, in the project
 directory. For a repository that has all the roots it looks for, the file is:
 
 ```toml title=".uncoded.toml"
@@ -28,8 +29,9 @@ required-version = "3.1.0"
 The source roots are whichever of `src` and `tests` exist, and `source-roots`
 indexes Python files. The doc roots are whichever of `README.md`, `AGENTS.md`
 and `docs` exist, and `doc-roots` indexes Markdown headings. The required
-version is the version of uncoded that ran, so every machine runs that version
-in this repository.
+version is the version of uncoded that ran. Every uncoded command in the project
+refuses to run at any other version, and gives the command that runs the
+required one, such as `uvx uncoded@3.1.0 sync`.
 
 `uncoded init` then builds the index and the skills, and prints the files it
 writes. With both kinds of root, you will find:

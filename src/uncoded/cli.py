@@ -4,7 +4,6 @@ import argparse
 import shlex
 import sys
 from pathlib import Path
-from typing import Literal
 
 from uncoded import __version__
 from uncoded.body import resolve_body
@@ -14,6 +13,7 @@ from uncoded.config import (
     find_config,
     read_config,
     render_conventional_config,
+    validate_root,
 )
 from uncoded.docs_map import build_docs_map, iter_doc_files, render_docs_map
 from uncoded.extract import extract_modules, iter_source_files
@@ -26,49 +26,11 @@ from uncoded.stubs import build_stubs, remove_all_stubs
 from uncoded.sync import remove_file, sync_file
 
 
-def _validate_root(
-    *,
-    configured: Path,
-    kind: Literal["source", "doc"],
-    project_root: Path,
-    resolved_project_root: Path,
-    accepts_md_file: bool,
-) -> Path:
-    """Resolve configured against project_root and validate the result.
-
-    Raises ConfigError if the resolved path falls outside the project root or
-    is not a valid target. When accepts_md_file is True, a lone .md file is
-    also valid. kind selects the noun used in the error messages.
-    """
-    root_label = f"{kind} root {configured.as_posix()}"
-    resolved = (project_root / configured).resolve()
-    if not resolved.is_relative_to(resolved_project_root):
-        raise ConfigError(
-            f"{root_label} is outside the project root. "
-            f"Check {kind}-roots in your uncoded config file."
-        )
-    is_valid = resolved.is_dir() or (
-        accepts_md_file and resolved.is_file() and resolved.suffix == ".md"
-    )
-    if not is_valid:
-        if accepts_md_file:
-            raise ConfigError(
-                f"{root_label} is not a directory or .md file. "
-                f"Check {kind}-roots in your uncoded config file."
-            )
-        raise ConfigError(
-            f"{root_label} is not a directory. "
-            f"Check {kind}-roots in your uncoded config file."
-        )
-    return resolved
-
-
 def _sync_code_artefacts(
     *,
     build: bool,
     configured_source_roots: list[Path],
     project_root: Path,
-    resolved_project_root: Path,
     check: bool,
 ) -> int:
     """Build or remove the code artefacts (namespace map and stubs).
@@ -88,13 +50,7 @@ def _sync_code_artefacts(
         return n
 
     source_roots = [
-        _validate_root(
-            configured=configured,
-            kind="source",
-            project_root=project_root,
-            resolved_project_root=resolved_project_root,
-            accepts_md_file=False,
-        )
+        validate_root(configured=configured, kind="source", project_root=project_root)
         for configured in configured_source_roots
     ]
 
@@ -131,7 +87,6 @@ def _sync_doc_artefacts(
     build: bool,
     configured_doc_roots: list[Path],
     project_root: Path,
-    resolved_project_root: Path,
     check: bool,
 ) -> int:
     """Build or remove the doc artefact (docs.yaml).
@@ -145,13 +100,7 @@ def _sync_doc_artefacts(
             path=Path(".uncoded/docs.yaml"), project_root=project_root, check=check
         )
     doc_roots = [
-        _validate_root(
-            configured=configured,
-            kind="doc",
-            project_root=project_root,
-            resolved_project_root=resolved_project_root,
-            accepts_md_file=True,
-        )
+        validate_root(configured=configured, kind="doc", project_root=project_root)
         for configured in configured_doc_roots
     ]
     all_doc_files = [
@@ -201,7 +150,6 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
             )
 
         project_root = config.project_root
-        resolved_project_root = project_root.resolve()
         changes = sync_file(
             path=Path(".uncoded/.gitignore"),
             content=f"# {GENERATED_MARKER}\n*\n",
@@ -214,7 +162,6 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
             build=bool(config.source_roots),
             configured_source_roots=config.source_roots,
             project_root=project_root,
-            resolved_project_root=resolved_project_root,
             check=check,
         )
         changes += sync_skills(
@@ -228,7 +175,6 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
             build=bool(config.doc_roots),
             configured_doc_roots=config.doc_roots,
             project_root=project_root,
-            resolved_project_root=resolved_project_root,
             check=check,
         )
     except ConfigError as e:
