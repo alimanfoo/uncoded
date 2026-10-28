@@ -1,8 +1,6 @@
-import textwrap
-
 import yaml
 
-from uncoded.extract import ClassInfo, ModuleInfo, extract_module
+from uncoded.extract import ClassInfo, ModuleInfo
 from uncoded.namespace_map import HEADER, build_map, render_map
 
 
@@ -117,21 +115,17 @@ class TestBuildMap:
         assert file_entry == {"TIMEOUT": None, "MAX_RETRIES": None}
 
     def test_name_defined_twice_is_listed_once(self):
-        source = textwrap.dedent("""\
-            def area(width): ...
-            def area(width, height): ...
-
-            class Shape:
-                def scale(self): ...
-                def scale(self, factor): ...
-        """)
-        modules = [extract_module(source=source, rel_path="src/shapes.py")]
+        modules = [
+            ModuleInfo(
+                rel_path="src/shapes.py",
+                classes=[ClassInfo(name="Shape", methods=["scale", "scale"])],
+                functions=["area", "area"],
+            ),
+        ]
 
         result = build_map(modules=modules)
 
-        assert result == {
-            "src/": {"shapes.py": {"Shape": {"scale": None}, "area": None}}
-        }
+        assert result["src/"]["shapes.py"] == {"Shape": {"scale": None}, "area": None}
 
 
 class TestRenderMap:

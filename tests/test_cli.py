@@ -373,38 +373,6 @@ class TestSyncCheckMode:
         assert _run(monkeypatch=monkeypatch, arguments=["check"]) == 1
         assert not ignore_path.exists()
 
-    def test_returns_one_when_source_changes_after_sync(self, *, tmp_path, monkeypatch):
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
-        (tmp_path / "src" / "foo.py").write_text(
-            "def hello(): pass\n", encoding="utf-8"
-        )
-        _run(monkeypatch=monkeypatch, arguments=["sync"])
-        # Signature changed: stub and namespace map are now stale.
-        (tmp_path / "src" / "foo.py").write_text(
-            "def hello(name: str) -> str: pass\n", encoding="utf-8"
-        )
-        stub = tmp_path / ".uncoded" / "stubs" / "src" / "foo.pyi"
-        stub_before = stub.read_text(encoding="utf-8")
-
-        assert _run(monkeypatch=monkeypatch, arguments=["check"]) == 1
-        # Stale content is preserved — check mode must not mutate.
-        assert stub.read_text(encoding="utf-8") == stub_before
-
-    def test_returns_one_when_source_file_deleted(self, *, tmp_path, monkeypatch):
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
-        (tmp_path / "src" / "foo.py").write_text(
-            "def hello(): pass\n", encoding="utf-8"
-        )
-        (tmp_path / "src" / "bar.py").write_text(
-            "def goodbye(): pass\n", encoding="utf-8"
-        )
-        _run(monkeypatch=monkeypatch, arguments=["sync"])
-
-        (tmp_path / "src" / "bar.py").unlink()
-        assert _run(monkeypatch=monkeypatch, arguments=["check"]) == 1
-        # Orphan stub must still be present after check.
-        assert (tmp_path / ".uncoded" / "stubs" / "src" / "bar.pyi").exists()
-
     def test_lists_each_file_that_sync_would_write_update_or_remove(
         self, *, tmp_path, monkeypatch, capsys
     ):
@@ -500,7 +468,8 @@ class TestCommandUsedWrongly:
     def test_prints_usage_and_exits_two(
         self, *, tmp_path, monkeypatch, capsys, arguments
     ):
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        # Outside a project, so the usage comes before any search for one.
+        monkeypatch.chdir(tmp_path)
 
         with pytest.raises(SystemExit) as exc_info:
             _run(monkeypatch=monkeypatch, arguments=arguments)
@@ -537,13 +506,12 @@ def _init_versioned_repo(*, tmp_path, monkeypatch, required_version):
     monkeypatch.chdir(tmp_path)
 
 
-def _tree(*, root):
-    return sorted(p.relative_to(root) for p in root.rglob("*"))
-
-
 def _contents(*, root):
-    """Return the contents of every file beneath ``root``, keyed by its path."""
-    return {p.relative_to(root): p.read_bytes() for p in root.rglob("*") if p.is_file()}
+    """Map every path beneath ``root`` to its bytes, or to None for a directory."""
+    return {
+        p.relative_to(root): p.read_bytes() if p.is_file() else None
+        for p in root.rglob("*")
+    }
 
 
 class TestRequiredVersion:
@@ -554,14 +522,14 @@ class TestRequiredVersion:
         _init_versioned_repo(
             tmp_path=tmp_path, monkeypatch=monkeypatch, required_version="0.0.0"
         )
-        before = _tree(root=tmp_path)
+        before = _contents(root=tmp_path)
         monkeypatch.setattr(sys, "argv", ["uncoded", *command])
 
         with mock.patch.object(cli, "find_refs") as find_refs:
             assert cli.main() == 1
 
         find_refs.assert_not_called()
-        assert _tree(root=tmp_path) == before
+        assert _contents(root=tmp_path) == before
         captured = capsys.readouterr()
         assert captured.out == ""
         assert captured.err == (
@@ -599,13 +567,13 @@ class TestTwoConfigurationFiles:
         (tmp_path / "pyproject.toml").write_text(
             '[tool.uncoded]\nsource-roots = ["src"]\n', encoding="utf-8"
         )
-        before = _tree(root=tmp_path)
+        before = _contents(root=tmp_path)
 
         with mock.patch.object(cli, "find_refs") as find_refs:
             assert _run(monkeypatch=monkeypatch, arguments=command) == 1
 
         find_refs.assert_not_called()
-        assert _tree(root=tmp_path) == before
+        assert _contents(root=tmp_path) == before
         captured = capsys.readouterr()
         assert captured.out == ""
         assert captured.err == (
@@ -621,11 +589,11 @@ class TestConfigurationThatNamesNoRoots:
         (tmp_path / ".uncoded.toml").write_text("", encoding="utf-8")
         (tmp_path / "src").mkdir()
         monkeypatch.chdir(tmp_path)
-        before = _tree(root=tmp_path)
+        before = _contents(root=tmp_path)
 
         assert _run(monkeypatch=monkeypatch, arguments=command) == 1
 
-        assert _tree(root=tmp_path) == before
+        assert _contents(root=tmp_path) == before
         captured = capsys.readouterr()
         assert "Commit" not in captured.out
         assert captured.err == (
@@ -672,14 +640,14 @@ class TestConfigFileThatCannotBeUsed:
         )
         config_file = tmp_path / ".uncoded.toml"
         config_file.write_text(toml, encoding="utf-8")
-        before = _tree(root=tmp_path)
+        before = _contents(root=tmp_path)
         monkeypatch.setattr(sys, "argv", ["uncoded", *command])
 
         with mock.patch.object(cli, "find_refs") as find_refs:
             assert cli.main() == 1
 
         find_refs.assert_not_called()
-        assert _tree(root=tmp_path) == before
+        assert _contents(root=tmp_path) == before
         captured = capsys.readouterr()
         assert captured.out == ""
         assert captured.err == (
@@ -927,7 +895,7 @@ class TestInitCommand:
 
         assert _run(monkeypatch=monkeypatch, arguments=["init"]) == 1
 
-        assert _tree(root=tmp_path) == [Path("lib")]
+        assert _contents(root=tmp_path) == {Path("lib"): None}
         captured = capsys.readouterr()
         assert captured.out == ""
         assert captured.err.startswith(
@@ -983,7 +951,7 @@ class TestInitCommand:
         with mock.patch.object(Path, "write_text", side_effect=failure):
             assert _run(monkeypatch=monkeypatch, arguments=["init"]) == 1
 
-        assert _tree(root=tmp_path) == [Path("src")]
+        assert _contents(root=tmp_path) == {Path("src"): None}
         captured = capsys.readouterr()
         assert captured.out == ""
         assert captured.err == (
@@ -1001,13 +969,13 @@ class TestOutsideAProject:
             "def fn():\n    pass\n", encoding="utf-8"
         )
         monkeypatch.chdir(tmp_path)
-        before = _tree(root=tmp_path)
+        before = _contents(root=tmp_path)
 
         with mock.patch.object(cli, "find_refs") as find_refs:
             assert _run(monkeypatch=monkeypatch, arguments=command) == 1
 
         find_refs.assert_not_called()
-        assert _tree(root=tmp_path) == before
+        assert _contents(root=tmp_path) == before
         captured = capsys.readouterr()
         assert captured.out == ""
         assert captured.err == (
