@@ -5,6 +5,7 @@ import io
 import shlex
 import sys
 from pathlib import Path
+from typing import cast
 
 from uncoded import __version__
 from uncoded.body import resolve_definition
@@ -364,6 +365,10 @@ def main() -> int:
     Each subparser binds how it finds the configuration and the action it
     runs on it.
     """
+    # uncoded owns all its output, so it writes UTF-8 on every system, as
+    # Python 3.15 does by default (PEP 686), whatever the system's encoding.
+    cast("io.TextIOWrapper", sys.stdout).reconfigure(encoding="utf-8")
+    cast("io.TextIOWrapper", sys.stderr).reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(
         prog="uncoded",
         description="Build an index of a codebase for AI coding agents.",

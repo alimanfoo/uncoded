@@ -229,9 +229,9 @@ A structural rule that review keeps missing is checked by a machine.
 - Measure: structural rules that have failed review more than once, that a small
   and exact check could enforce, and that no machine checks.
 - Bar: zero. These rules are checked:
-  - Only `refs.py`, `tests/conftest.py` and `tests/test_refs.py` import
-    `subprocess`. Ruff's subprocess rules check it, with a per-file waiver for
-    each.
+  - Only `refs.py`, `tests/conftest.py`, `tests/test_cli.py` and
+    `tests/test_refs.py` import `subprocess`. Ruff's subprocess rules check it,
+    with a per-file waiver for each.
   - Only `sync.py` writes or removes files or directories. A `pygrep` hook over
     `src`, excluding `sync.py`, checks it.
   - Imports point down three layers, which the architecture states. An

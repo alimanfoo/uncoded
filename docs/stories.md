@@ -224,7 +224,10 @@ For a symbol it is confident it needs, the agent runs
 name path and the file from the namespace map. It gets the symbol's definition,
 exactly as it is in the file, in one call, and the command exits with status
 `0`. `uncoded body` prints whole lines, so when another statement shares a line
-with the definition, as in `x = 1; y = 2`, it prints that statement too.
+with the definition, as in `x = 1; y = 2`, it prints that statement too. What
+uncoded prints is UTF-8 on every system, whatever encoding the system uses for
+its output, so a definition that holds `é` comes out exactly as it is in the
+file.
 
 The agent stops as soon as it knows enough, which is often after the namespace
 map or a stub.
