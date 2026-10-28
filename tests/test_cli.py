@@ -98,17 +98,16 @@ class TestSyncApplyMode:
             (tmp_path / p).stat().st_mtime_ns for p in _SOURCE_SKILL_PATHS
         ] == skill_mtimes
 
-    def test_error_when_no_config_file(self, *, tmp_path, monkeypatch, capsys):
-        # Pins the problem statement (names both supported config files)
-        # and the absence of any absolute path leak.
+    def test_error_when_no_config_file_points_to_init(
+        self, *, tmp_path, monkeypatch, capsys
+    ):
         monkeypatch.chdir(tmp_path)
 
         assert cli._sync() == 1
 
         err = capsys.readouterr().err
-        assert "Error:" in err
-        assert "pyproject.toml" in err
-        assert ".uncoded.toml" in err
+        assert err.startswith("Error: No configuration file found")
+        assert "set uncoded up with uncoded init" in err
         assert str(tmp_path) not in err
 
     def test_error_when_source_root_outside_project_root(

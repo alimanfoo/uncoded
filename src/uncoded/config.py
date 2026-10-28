@@ -133,8 +133,8 @@ def read_config(*, start: Path) -> Config:
     if config is None:
         raise ConfigError(
             "No configuration file found in this directory or above it. "
-            "Run the command from inside the project, or configure uncoded "
-            "in .uncoded.toml or in a [tool.uncoded] table in pyproject.toml."
+            "Run the command from inside the project, or set uncoded up with "
+            "uncoded init."
         )
     return config
 
