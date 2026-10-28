@@ -163,7 +163,8 @@ convention = "pep257"
     "S603", # subprocess-without-shell-equals-true
     "S607", # start-process-with-partial-path
 ]
-# The tests of refs.py build mocks of the subprocess that it spawns.
-"tests/test_refs.py" = [
+# The tests of refs.py build mocks of, and stand-ins for, the subprocess that it
+# spawns.
+"tests/{conftest,test_refs}.py" = [
     "S404", # suspicious-subprocess-import
 ]

@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import subprocess
+import tempfile
+import textwrap
 from dataclasses import dataclass
 from pathlib import Path
 from typing import IO, cast
@@ -19,6 +22,12 @@ from uncoded.resolver import NamePath, resolve_name_position
 # `uncoded refs` reports. Before you raise it, compare `uncoded refs` output on
 # this repository under the old and the new version.
 TY_VERSION = "0.0.92"
+
+_TY_STOPPED = "ty failed: it stopped before it answered."
+
+
+class TyError(Exception):
+    """ty could not be started, or it failed before it answered."""
 
 
 @dataclass(frozen=True)
@@ -39,6 +48,7 @@ def find_refs(
     references, with project_root as its workspace, and returns results with
     1-indexed line/col sorted by (path, line, col). path is relative to the
     current working directory when possible; otherwise absolute.
+    Raises TyError when ty cannot be started or fails before it answers.
     Propagates SymbolNotFoundError from resolve_name_position. OSError,
     UnicodeDecodeError, and SyntaxError propagate from resolve_name_position
     and from read_source_text in the LSP exchange.
@@ -67,18 +77,46 @@ def _query_references(
     Spawns ty as a one-shot LSP subprocess and performs the full
     initialize/didOpen/references/shutdown exchange.
     position follows LSP convention: (line, character), both 0-indexed.
+    When ty fails, the TyError carries what ty and uvx wrote to standard error.
     """
+    # A file rather than a pipe takes ty's error output, because a pipe that
+    # nothing reads during the exchange would fill and block ty.
+    with tempfile.TemporaryFile() as ty_stderr:
+        try:
+            return _run_ty(
+                in_path=in_path,
+                position=position,
+                project_root=project_root,
+                stderr=ty_stderr,
+            )
+        except TyError as exc:
+            ty_stderr.seek(0)
+            # splitlines drops the carriage returns of Windows line endings.
+            text = ty_stderr.read().decode("utf-8", errors="replace").strip()
+            output = "\n".join(text.splitlines())
+            if not output:
+                raise
+            raise TyError(
+                f"{exc}\nOutput from uvx and ty:\n{textwrap.indent(output, '  ')}"
+            ) from exc
+
+
+def _run_ty(
+    *, in_path: Path, position: tuple[int, int], project_root: Path, stderr: IO[bytes]
+) -> list[_LSPLocation]:
     try:
         proc = subprocess.Popen(
             ["uvx", "--from", f"ty=={TY_VERSION}", "ty", "server"],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL,
+            stderr=stderr,
         )
     except FileNotFoundError as exc:
-        raise RuntimeError(
+        raise TyError(
             "uvx not found on PATH — install uv (https://docs.astral.sh/uv/)"
         ) from exc
+    except OSError as exc:
+        raise TyError(f"uvx could not start: {exc}") from exc
     try:
         return _run_exchange(
             stdin=cast("IO[bytes]", proc.stdin),
@@ -101,6 +139,10 @@ class _LSPLocation:
 
 
 def _terminate(*, proc: subprocess.Popen[bytes]) -> None:
+    # Closing ty's input flushes any message that ty never read, and the flush
+    # fails once ty has stopped.
+    with contextlib.suppress(OSError):
+        cast("IO[bytes]", proc.stdin).close()
     try:
         proc.wait(timeout=5)
     except subprocess.TimeoutExpired:
@@ -190,10 +232,6 @@ def _run_exchange(
     _read_response(stream=stdout, request_id=3)
     _write_message(stream=stdin, msg={"jsonrpc": "2.0", "method": "exit"})
 
-    if "error" in response:
-        error = response["error"]
-        raise RuntimeError(f"ty LSP error: {error.get('message', error)}")
-
     return [
         _LSPLocation(
             path=_uri_to_path(uri=loc["uri"]),
@@ -206,8 +244,11 @@ def _run_exchange(
 
 def _write_message(*, stream: IO[bytes], msg: dict) -> None:
     data = json.dumps(msg).encode("utf-8")
-    stream.write(f"Content-Length: {len(data)}\r\n\r\n".encode("ascii") + data)
-    stream.flush()
+    try:
+        stream.write(f"Content-Length: {len(data)}\r\n\r\n".encode("ascii") + data)
+        stream.flush()
+    except OSError as exc:
+        raise TyError(_TY_STOPPED) from exc
 
 
 def _read_message(*, stream: IO[bytes]) -> dict:
@@ -215,17 +256,26 @@ def _read_message(*, stream: IO[bytes]) -> dict:
     while not headers.endswith(b"\r\n\r\n"):
         ch = stream.read(1)
         if not ch:
-            raise RuntimeError("ty closed stdout unexpectedly")
+            raise TyError(_TY_STOPPED)
         headers += ch
-    length = int(headers.split(b"\r\n")[0].split(b":", 1)[1].strip())
-    return json.loads(stream.read(length).decode("utf-8"))
+    try:
+        length = int(headers.split(b"\r\n")[0].split(b":", 1)[1].strip())
+        return json.loads(stream.read(length).decode("utf-8"))
+    except (IndexError, ValueError) as exc:
+        raise TyError("ty failed: it sent a message that is not valid LSP.") from exc
 
 
 def _read_response(*, stream: IO[bytes], request_id: int) -> dict:
     while True:
         msg = _read_message(stream=stream)
-        if msg.get("id") == request_id:
-            return msg
+        if msg.get("id") != request_id:
+            continue
+        if "error" in msg:
+            error = msg["error"]
+            raise TyError(
+                f"ty failed: it answered with an error: {error.get('message', error)}"
+            )
+        return msg
 
 
 def _uri_to_path(*, uri: str) -> Path:
