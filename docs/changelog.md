@@ -53,6 +53,12 @@ includes it. Each entry links the pull request that made the change.
 
 ### Fixed
 
+- `uncoded refs` prints the symbol's definition and each import of it, as well
+  as each use of it. It printed only the uses, so a symbol whose only reference
+  was an import looked unused. The code navigation skill tells the agent to
+  delete a symbol only when it is unused, as
+  [Concepts](concepts.md#symbols-and-references) defines it.
+  ([#334](https://github.com/alimanfoo/uncoded/pull/334))
 - `uncoded sync` and `uncoded check` end their warnings about the files they
   skipped with a line that says how many files they skipped. A skip was easy to
   miss among the other lines, such as in the output of a pre-commit hook. The

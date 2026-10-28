@@ -33,7 +33,7 @@ class Reference:
 def find_refs(
     *, name_path: NamePath, in_path: Path, project_root: Path
 ) -> list[Reference]:
-    """Return all references to the symbol named by name_path in in_path.
+    """Return every reference to the symbol named by name_path in in_path.
 
     Resolves the symbol's name-token position, queries ty's LSP server for
     references, with project_root as its workspace, and returns results with
@@ -177,7 +177,7 @@ def _run_exchange(
             "params": {
                 "textDocument": {"uri": file_uri},
                 "position": {"line": line, "character": character},
-                "context": {"includeDeclaration": False},
+                "context": {"includeDeclaration": True},
             },
         },
     )
@@ -194,16 +194,13 @@ def _run_exchange(
         error = response["error"]
         raise RuntimeError(f"ty LSP error: {error.get('message', error)}")
 
-    result = response["result"]
-    if result is None:
-        return []
     return [
         _LSPLocation(
             path=_uri_to_path(uri=loc["uri"]),
             line=loc["range"]["start"]["line"],
             character=loc["range"]["start"]["character"],
         )
-        for loc in result
+        for loc in response["result"] or []
     ]
 
 

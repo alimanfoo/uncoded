@@ -97,8 +97,9 @@ uvx uncoded refs greet --in src/greetings.py
 uvx uncoded refs Greeter/greet --in src/greetings.py
 ```
 
-Finds references to the symbol. Names and `--in` paths follow the same rules as
-`body`. Each result is printed as:
+Finds every reference to the symbol: its definition, each import of it, and each
+use of it. Names and `--in` paths follow the same rules as `body`. Each result
+is printed as:
 
 ```text
 path:line:column
@@ -106,8 +107,7 @@ path:line:column
 
 Positions are one-based. Results are sorted by path and position. Paths within
 the current directory are relative; other paths are absolute. Every path uses
-`/` to separate directories, on Windows too. Empty output with exit status `0`
-means no references were found.
+`/` to separate directories, on Windows too.
 
 Reference resolution uses the pinned `ty` language server through `uvx`. The
 first call may download it. `uvx` must be on `PATH`.

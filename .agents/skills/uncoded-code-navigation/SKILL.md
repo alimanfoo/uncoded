@@ -22,8 +22,8 @@ first in the session. The pretrained reflex for "find X" is grep, and that
 reflex is wrong here. Reaching for `grep -rn 'def parse_config'` to read a
 function's body is a case for `uncoded body`. Reaching for
 `grep -rn 'validate_input'` to check callers before a refactor is a case for
-`uncoded refs`. Reaching for `grep` then `Edit` to delete dead code is a case
-for `uncoded refs` to confirm the code is dead, then `Edit`. The grep version of
+`uncoded refs`. Reaching for `grep` then `Edit` to delete a symbol is a case for
+`uncoded refs` to confirm the symbol is unused, then `Edit`. The grep version of
 any of these is noisier and less reliable. Grep matches comments, strings, and
 unrelated attributes. Grep misses re-exports, so caller and delete checks come
 back incomplete. Grep forces offset arithmetic to slice a body. The indexed
@@ -77,7 +77,8 @@ method and `function_name` for a top-level function. Per task:
   for partial edits. Stay on stubs for a wider sweep.
 
 - **Find every reference to a symbol.**
-  `uvx uncoded refs <name_path> --in <relative_path>`. Prints one reference per
+  `uvx uncoded refs <name_path> --in <relative_path>`. Prints the symbol's
+  definition, each import of it, and each use of it. Prints one reference per
   line as `<path>:<line>:<col>`, sorted by path, then line, then column. Each
   path is relative to the current working directory when possible and otherwise
   absolute. Grep on the name misses re-exports and adds false positives from
@@ -90,8 +91,13 @@ method and `function_name` for a top-level function. Per task:
 - **Rename.** `uvx uncoded refs <name_path> --in <relative_path>` enumerates
   every site; then `Edit` at each.
 
-- **Safely delete.** `uvx uncoded refs <name_path> --in <relative_path>` must
-  return empty; then `Edit` to remove.
+- **Safely delete.** `uvx uncoded refs <name_path> --in <relative_path>` lists
+  every reference. Read the source at each reference's line to see which
+  definition it lies in. A definition runs from its first decorator to the end
+  of its body. The symbol is unused when every reference lies within its own
+  definition, within a definition that it redefines, such as an `@overload`
+  definition, or, for a property, within its setter or deleter. If the symbol is
+  unused, `Edit` to remove it.
 
 **Step 4: Refresh.** After every modification to indexed Python source, run the
 repository's configured `uncoded sync` command before the next code-navigation
