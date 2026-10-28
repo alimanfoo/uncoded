@@ -315,8 +315,6 @@ class TestIterAndExtract:
         assert "src/mypackage/good.py" in rel_paths
         assert any("bad.py" in p for p in rel_paths) is False
 
-        # The skipped file is returned with its reason, so the command can
-        # warn about it by name and count it.
         assert skipped == [
             SkippedFile(
                 path="src/mypackage/bad.py",

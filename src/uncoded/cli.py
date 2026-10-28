@@ -33,10 +33,9 @@ def _warn_skipped(*, skipped: list[SkippedFile]) -> None:
     """Warn on standard error about each file that could not be indexed.
 
     Ends with a line that counts the skipped files, so that a skip is seen
-    even when the warnings above it scroll by. Prints nothing when no file
-    was skipped. Standard output is flushed first, so that the warnings
-    follow the lines that name the files written, even when both streams
-    go to one pipe, as in a pre-commit hook.
+    even when the warnings above it scroll by. Standard output is flushed
+    first, so that the warnings follow the lines that name the files
+    written, even when both streams go to one pipe, as in a pre-commit hook.
     """
     sys.stdout.flush()
     for skipped_file in skipped:
@@ -140,8 +139,7 @@ def _sync(*, config: Config, check: bool = False) -> int:
     before anything is written. Before writing any index artefact, sync writes
     .uncoded/.gitignore so the index stays local by default. Raises ConfigError
     when the configuration names no roots or a root cannot be used. A file
-    that cannot be read or parsed is left out of the index, and sync warns
-    about it after the writes, then counts the skipped files.
+    that cannot be read or parsed is left out of the index and reported.
 
     When ``check=True``, the on-disk tree is not mutated; the function
     reports each prospective write or removal, returns 1 if anything
