@@ -6,26 +6,26 @@ from uncoded.sync import remove_file, sync_file
 
 
 class TestSyncFile:
-    def test_creates_missing_file(self, tmp_path):
+    def test_creates_missing_file(self, *, tmp_path):
         path = tmp_path / "out.txt"
         changed = sync_file(path=path, content="hello", project_root=tmp_path)
         assert changed is True
         assert path.read_text(encoding="utf-8") == "hello"
 
-    def test_creates_parent_directories(self, tmp_path):
+    def test_creates_parent_directories(self, *, tmp_path):
         path = tmp_path / "nested" / "deep" / "out.txt"
         changed = sync_file(path=path, content="hello", project_root=tmp_path)
         assert changed is True
         assert path.read_text(encoding="utf-8") == "hello"
 
-    def test_updates_when_content_differs(self, tmp_path):
+    def test_updates_when_content_differs(self, *, tmp_path):
         path = tmp_path / "out.txt"
         path.write_text("old", encoding="utf-8")
         changed = sync_file(path=path, content="new", project_root=tmp_path)
         assert changed is True
         assert path.read_text(encoding="utf-8") == "new"
 
-    def test_noop_when_content_matches(self, tmp_path):
+    def test_noop_when_content_matches(self, *, tmp_path):
         path = tmp_path / "out.txt"
         path.write_text("same", encoding="utf-8")
         mtime_before = path.stat().st_mtime_ns
@@ -34,7 +34,7 @@ class TestSyncFile:
         # No write happened — mtime should not have been bumped.
         assert path.stat().st_mtime_ns == mtime_before
 
-    def test_check_mode_does_not_create_file(self, tmp_path):
+    def test_check_mode_does_not_create_file(self, *, tmp_path):
         path = tmp_path / "out.txt"
         changed = sync_file(
             path=path, content="hello", project_root=tmp_path, check=True
@@ -42,14 +42,14 @@ class TestSyncFile:
         assert changed is True
         assert not path.exists()
 
-    def test_check_mode_does_not_update_file(self, tmp_path):
+    def test_check_mode_does_not_update_file(self, *, tmp_path):
         path = tmp_path / "out.txt"
         path.write_text("old", encoding="utf-8")
         changed = sync_file(path=path, content="new", project_root=tmp_path, check=True)
         assert changed is True
         assert path.read_text(encoding="utf-8") == "old"
 
-    def test_check_mode_reports_noop_when_clean(self, tmp_path):
+    def test_check_mode_reports_noop_when_clean(self, *, tmp_path):
         path = tmp_path / "out.txt"
         path.write_text("same", encoding="utf-8")
         changed = sync_file(
@@ -57,7 +57,7 @@ class TestSyncFile:
         )
         assert changed is False
 
-    def test_check_mode_does_not_create_parent_directories(self, tmp_path):
+    def test_check_mode_does_not_create_parent_directories(self, *, tmp_path):
         path = tmp_path / "nested" / "out.txt"
         changed = sync_file(
             path=path, content="hello", project_root=tmp_path, check=True
@@ -67,31 +67,31 @@ class TestSyncFile:
 
 
 class TestRemoveFile:
-    def test_removes_existing_file(self, tmp_path):
+    def test_removes_existing_file(self, *, tmp_path):
         path = tmp_path / "out.txt"
         path.write_text("data", encoding="utf-8")
         changed = remove_file(path=path, project_root=tmp_path)
         assert changed is True
         assert not path.exists()
 
-    def test_noop_when_absent(self, tmp_path):
+    def test_noop_when_absent(self, *, tmp_path):
         path = tmp_path / "missing.txt"
         changed = remove_file(path=path, project_root=tmp_path)
         assert changed is False
 
-    def test_check_mode_does_not_remove(self, tmp_path):
+    def test_check_mode_does_not_remove(self, *, tmp_path):
         path = tmp_path / "out.txt"
         path.write_text("data", encoding="utf-8")
         changed = remove_file(path=path, project_root=tmp_path, check=True)
         assert changed is True
         assert path.exists()
 
-    def test_check_mode_reports_noop_when_absent(self, tmp_path):
+    def test_check_mode_reports_noop_when_absent(self, *, tmp_path):
         path = tmp_path / "missing.txt"
         changed = remove_file(path=path, project_root=tmp_path, check=True)
         assert changed is False
 
-    def test_removes_each_parent_left_empty_up_to_project_root(self, tmp_path):
+    def test_removes_each_parent_left_empty_up_to_project_root(self, *, tmp_path):
         path = tmp_path / "a" / "b" / "out.txt"
         path.parent.mkdir(parents=True)
         path.write_text("data", encoding="utf-8")
@@ -99,7 +99,7 @@ class TestRemoveFile:
         assert not (tmp_path / "a").exists()
         assert tmp_path.is_dir()
 
-    def test_keeps_parent_that_holds_other_files(self, tmp_path):
+    def test_keeps_parent_that_holds_other_files(self, *, tmp_path):
         path = tmp_path / "a" / "b" / "out.txt"
         path.parent.mkdir(parents=True)
         path.write_text("data", encoding="utf-8")
@@ -108,7 +108,7 @@ class TestRemoveFile:
         assert not (tmp_path / "a" / "b").exists()
         assert (tmp_path / "a" / "keep.txt").exists()
 
-    def test_keeps_parent_that_is_a_symbolic_link(self, tmp_path):
+    def test_keeps_parent_that_is_a_symbolic_link(self, *, tmp_path):
         (tmp_path / "real").mkdir()
         (tmp_path / "link").symlink_to(tmp_path / "real", target_is_directory=True)
         path = tmp_path / "link" / "out.txt"
@@ -117,14 +117,14 @@ class TestRemoveFile:
         assert not path.exists()
         assert (tmp_path / "link").is_symlink()
 
-    def test_rejects_path_outside_project_root_before_removing(self, tmp_path):
+    def test_rejects_path_outside_project_root_before_removing(self, *, tmp_path):
         path = tmp_path / "out.txt"
         path.write_text("data", encoding="utf-8")
         with pytest.raises(ValueError, match="is not in the subpath"):
             remove_file(path=path, project_root=tmp_path / "project")
         assert path.exists()
 
-    def test_check_mode_keeps_parent_directories(self, tmp_path):
+    def test_check_mode_keeps_parent_directories(self, *, tmp_path):
         path = tmp_path / "a" / "out.txt"
         path.parent.mkdir()
         path.write_text("data", encoding="utf-8")
@@ -133,7 +133,9 @@ class TestRemoveFile:
 
 
 class TestSyncFileProjectRootAnchor:
-    def test_project_root_anchors_write_independent_of_cwd(self, tmp_path, monkeypatch):
+    def test_project_root_anchors_write_independent_of_cwd(
+        self, *, tmp_path, monkeypatch
+    ):
         # path is project-relative; project_root anchors I/O at tmp_path
         # even when cwd is elsewhere.
         sub = tmp_path / "subdir"
@@ -149,7 +151,7 @@ class TestSyncFileProjectRootAnchor:
         assert not (sub / rel).exists()
 
     def test_project_root_preserves_relative_path_in_message(
-        self, tmp_path, monkeypatch, capsys
+        self, *, tmp_path, monkeypatch, capsys
     ):
         monkeypatch.chdir(tmp_path)
         rel = Path("nested/out.txt")
@@ -163,7 +165,7 @@ class TestSyncFileProjectRootAnchor:
 
 class TestRemoveFileProjectRootAnchor:
     def test_project_root_anchors_removal_independent_of_cwd(
-        self, tmp_path, monkeypatch, capsys
+        self, *, tmp_path, monkeypatch, capsys
     ):
         sub = tmp_path / "subdir"
         sub.mkdir()

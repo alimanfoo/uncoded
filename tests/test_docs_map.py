@@ -104,7 +104,7 @@ class TestExtractHeadings:
 
 
 class TestIterDocFiles:
-    def test_single_file_root(self, tmp_path):
+    def test_single_file_root(self, *, tmp_path):
         md = tmp_path / "README.md"
         md.write_text("# Hello\n", encoding="utf-8")
         results = list(iter_doc_files(doc_root=md, project_root=tmp_path))
@@ -113,27 +113,27 @@ class TestIterDocFiles:
         assert text == "# Hello\n"
         assert rel == Path("README.md")
 
-    def test_directory_walk_yields_md_files(self, tmp_path):
+    def test_directory_walk_yields_md_files(self, *, tmp_path):
         (tmp_path / "a.md").write_text("# A\n", encoding="utf-8")
         (tmp_path / "b.md").write_text("# B\n", encoding="utf-8")
         results = list(iter_doc_files(doc_root=tmp_path, project_root=tmp_path))
         assert len(results) == 2
 
-    def test_directory_walk_sorted(self, tmp_path):
+    def test_directory_walk_sorted(self, *, tmp_path):
         (tmp_path / "z.md").write_text("z", encoding="utf-8")
         (tmp_path / "a.md").write_text("a", encoding="utf-8")
         results = list(iter_doc_files(doc_root=tmp_path, project_root=tmp_path))
         names = [r[1].name for r in results]
         assert names == ["a.md", "z.md"]
 
-    def test_directory_excludes_non_md(self, tmp_path):
+    def test_directory_excludes_non_md(self, *, tmp_path):
         (tmp_path / "guide.md").write_text("# Guide\n", encoding="utf-8")
         (tmp_path / "notes.txt").write_text("some text", encoding="utf-8")
         results = list(iter_doc_files(doc_root=tmp_path, project_root=tmp_path))
         assert len(results) == 1
         assert results[0][1] == Path("guide.md")
 
-    def test_directory_nested_subdir(self, tmp_path):
+    def test_directory_nested_subdir(self, *, tmp_path):
         sub = tmp_path / "docs"
         sub.mkdir()
         (sub / "guide.md").write_text("# Guide\n", encoding="utf-8")
@@ -141,18 +141,18 @@ class TestIterDocFiles:
         assert len(results) == 1
         assert results[0][1] == Path("docs/guide.md")
 
-    def test_empty_directory_yields_nothing(self, tmp_path):
+    def test_empty_directory_yields_nothing(self, *, tmp_path):
         results = list(iter_doc_files(doc_root=tmp_path, project_root=tmp_path))
         assert results == []
 
-    def test_rel_path_is_relative_to_project_root(self, tmp_path):
+    def test_rel_path_is_relative_to_project_root(self, *, tmp_path):
         docs = tmp_path / "docs"
         docs.mkdir()
         (docs / "a.md").write_text("", encoding="utf-8")
         results = list(iter_doc_files(doc_root=docs, project_root=tmp_path))
         assert results[0][1] == Path("docs/a.md")
 
-    def test_skips_non_utf8_file_with_warning(self, tmp_path, capsys):
+    def test_skips_non_utf8_file_with_warning(self, *, tmp_path, capsys):
         # A file with invalid UTF-8 bytes must be skipped with a warning;
         # other files in the same directory must still yield.
         guide = tmp_path / "docs" / "guide"
@@ -167,7 +167,7 @@ class TestIterDocFiles:
         err = capsys.readouterr().err
         assert "warning: skipping docs/guide/bad.md" in err
 
-    def test_skips_unreadable_file_with_reason(self, tmp_path, capsys):
+    def test_skips_unreadable_file_with_reason(self, *, tmp_path, capsys):
         # A directory whose name ends in .md cannot be read as a file. The
         # warning gives the reason without the error's own copy of the path,
         # which would use the system's separator.
@@ -180,7 +180,7 @@ class TestIterDocFiles:
         assert err.startswith("warning: skipping docs/notes.md: ")
         assert str(tmp_path) not in err
 
-    def test_single_file_root_unreadable_yields_nothing(self, tmp_path, capsys):
+    def test_single_file_root_unreadable_yields_nothing(self, *, tmp_path, capsys):
         # When the single-file root itself is unreadable, the iterator yields
         # nothing and emits a warning with the project-relative path.
         (tmp_path / "docs").mkdir()
@@ -191,7 +191,7 @@ class TestIterDocFiles:
         err = capsys.readouterr().err
         assert "warning: skipping docs/bad.md" in err
 
-    def test_bom_prefixed_file_heading_appears(self, tmp_path):
+    def test_bom_prefixed_file_heading_appears(self, *, tmp_path):
         # A UTF-8 BOM before the first heading must not suppress it.
         bom = b"\xef\xbb\xbf"
         (tmp_path / "guide.md").write_bytes(bom + b"# Guide\n")
@@ -205,7 +205,7 @@ class TestBuildDocsMap:
     def test_empty_files(self):
         assert build_docs_map(files=[]) == {}
 
-    def test_headingless_file_maps_to_null(self, tmp_path):
+    def test_headingless_file_maps_to_null(self, *, tmp_path):
         result = build_docs_map(files=[("no headings here", Path("notes.md"))])
         assert result == {"notes.md": None}
 

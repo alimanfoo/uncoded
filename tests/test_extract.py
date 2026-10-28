@@ -226,7 +226,7 @@ class TestExtractModuleFromSource:
 
 
 class TestIterAndExtract:
-    def test_basic_walk(self, tmp_path):
+    def test_basic_walk(self, *, tmp_path):
         # Simulate repo structure: src/mypackage/...
         src = tmp_path / "src"
         pkg = src / "mypackage"
@@ -256,7 +256,7 @@ class TestIterAndExtract:
         assert any("__init__.py" in p for p in rel_paths) is False
         assert any("empty.py" in p for p in rel_paths) is False
 
-    def test_nested_subpackage(self, tmp_path):
+    def test_nested_subpackage(self, *, tmp_path):
         src = tmp_path / "src"
         pkg = src / "mypackage"
         sub = pkg / "utils"
@@ -274,7 +274,7 @@ class TestIterAndExtract:
         rel_paths = [m.rel_path for m in modules]
         assert "src/mypackage/utils/formatting.py" in rel_paths
 
-    def test_includes_init_with_symbols(self, tmp_path):
+    def test_includes_init_with_symbols(self, *, tmp_path):
         src = tmp_path / "src"
         pkg = src / "mypackage"
         pkg.mkdir(parents=True)
@@ -289,7 +289,7 @@ class TestIterAndExtract:
         assert "src/mypackage/__init__.py" in rel_paths
         assert "src/mypackage/core.py" in rel_paths
 
-    def test_skips_empty_init(self, tmp_path):
+    def test_skips_empty_init(self, *, tmp_path):
         src = tmp_path / "src"
         pkg = src / "mypackage"
         pkg.mkdir(parents=True)
@@ -303,7 +303,7 @@ class TestIterAndExtract:
         rel_paths = [m.rel_path for m in modules]
         assert not any("__init__.py" in p for p in rel_paths)
 
-    def test_skips_syntax_errors(self, tmp_path, capsys):
+    def test_skips_syntax_errors(self, *, tmp_path, capsys):
         src = tmp_path / "src"
         pkg = src / "mypackage"
         pkg.mkdir(parents=True)
@@ -327,7 +327,7 @@ class TestIterAndExtract:
         assert "warning: skipping src/mypackage/bad.py" in err
         assert "SyntaxError" in err
 
-    def test_skips_unreadable_file_with_reason(self, tmp_path, capsys):
+    def test_skips_unreadable_file_with_reason(self, *, tmp_path, capsys):
         # A directory whose name ends in .py cannot be read as a file. The
         # warning gives the reason without the error's own copy of the path.
         (tmp_path / "src" / "pkg" / "notes.py").mkdir(parents=True)
@@ -339,7 +339,7 @@ class TestIterAndExtract:
         assert err.startswith("warning: skipping src/pkg/notes.py: ")
         assert str(tmp_path) not in err
 
-    def test_skips_undecodable_file_with_warning(self, tmp_path, capsys):
+    def test_skips_undecodable_file_with_warning(self, *, tmp_path, capsys):
         # A file that cannot be decoded under its declared encoding (UTF-8
         # default) must be skipped with a warning; other files must still yield.
         src = tmp_path / "src"
@@ -354,7 +354,7 @@ class TestIterAndExtract:
         err = capsys.readouterr().err
         assert "warning: skipping src/mypkg/binary.py" in err
 
-    def test_reads_latin1_declared_file(self, tmp_path, capsys):
+    def test_reads_latin1_declared_file(self, *, tmp_path, capsys):
         # A file that declares latin-1 encoding must be read and indexed,
         # not skipped; the declared encoding is honoured.
         src = tmp_path / "src"

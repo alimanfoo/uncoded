@@ -36,17 +36,17 @@ class TestSyncSkills:
             Path(".agents/skills"),
         ] == SKILL_ROOTS
 
-    def test_writes_skill_files(self, tmp_path):
+    def test_writes_skill_files(self, *, tmp_path):
         sync_skills(source=True, docs=False, project_root=tmp_path, check=False)
         for root in SKILL_ROOTS:
             assert (tmp_path / root / _REVIEW_SKILL_FILE).exists()
 
-    def test_creates_parent_directories(self, tmp_path):
+    def test_creates_parent_directories(self, *, tmp_path):
         sync_skills(source=True, docs=False, project_root=tmp_path, check=False)
         for root in SKILL_ROOTS:
             assert (tmp_path / root / _REVIEW_SKILL_FILE.parent).is_dir()
 
-    def test_content_has_frontmatter_and_body(self, tmp_path):
+    def test_content_has_frontmatter_and_body(self, *, tmp_path):
         sync_skills(source=True, docs=False, project_root=tmp_path, check=False)
         skill = _REVIEW_SKILL
         content = (tmp_path / SKILL_ROOTS[0] / skill.name / "SKILL.md").read_text(
@@ -63,18 +63,12 @@ class TestSyncSkills:
         assert content.endswith("\n\n" + body)
 
     def test_renderer_supplies_separator_for_body_without_leading_newline(
-        self, monkeypatch
+        self, *, monkeypatch, tmp_path
     ):
         # The renderer must insert exactly one blank line even when the body
         # file has no leading newline.
-        class _FakeResource:
-            def __truediv__(self, name: str) -> "_FakeResource":
-                return self
-
-            def read_text(self, encoding: str) -> str:
-                return "# Body\n"
-
-        monkeypatch.setattr(skill_module, "files", lambda pkg: _FakeResource())
+        (tmp_path / "test.md").write_text("# Body\n", encoding="utf-8")
+        monkeypatch.setattr(skill_module, "files", lambda pkg: tmp_path)
         test_skill = Skill(
             name="test", description="A test.", body_file="test.md", gate="source"
         )
@@ -82,7 +76,7 @@ class TestSyncSkills:
         assert f"<!-- {GENERATED_MARKER} -->" in content
         assert content.endswith("\n\n# Body\n")
 
-    def test_content_has_provenance_marker(self, tmp_path):
+    def test_content_has_provenance_marker(self, *, tmp_path):
         sync_skills(source=True, docs=False, project_root=tmp_path, check=False)
         skill = _REVIEW_SKILL
         content = (tmp_path / SKILL_ROOTS[0] / skill.name / "SKILL.md").read_text(
@@ -94,20 +88,20 @@ class TestSyncSkills:
         frontmatter_close = content.index("\n---\n", 4) + 5
         assert f"<!-- {GENERATED_MARKER} -->" in content[frontmatter_close:]
 
-    def test_returns_change_count_on_first_write(self, tmp_path):
+    def test_returns_change_count_on_first_write(self, *, tmp_path):
         result = sync_skills(
             source=True, docs=False, project_root=tmp_path, check=False
         )
         assert result == 4
 
-    def test_returns_zero_when_already_in_sync(self, tmp_path):
+    def test_returns_zero_when_already_in_sync(self, *, tmp_path):
         sync_skills(source=True, docs=False, project_root=tmp_path, check=False)
         assert (
             sync_skills(source=True, docs=False, project_root=tmp_path, check=False)
             == 0
         )
 
-    def test_idempotent(self, tmp_path):
+    def test_idempotent(self, *, tmp_path):
         sync_skills(source=True, docs=False, project_root=tmp_path, check=False)
         mtimes = [
             (tmp_path / root / _REVIEW_SKILL_FILE).stat().st_mtime_ns
@@ -119,23 +113,23 @@ class TestSyncSkills:
             for root in SKILL_ROOTS
         ] == mtimes
 
-    def test_check_mode_does_not_write(self, tmp_path):
+    def test_check_mode_does_not_write(self, *, tmp_path):
         sync_skills(source=True, docs=False, project_root=tmp_path, check=True)
         for root in SKILL_ROOTS:
             assert not (tmp_path / root / _REVIEW_SKILL_FILE).exists()
 
-    def test_check_mode_reports_change_when_missing(self, tmp_path):
+    def test_check_mode_reports_change_when_missing(self, *, tmp_path):
         assert (
             sync_skills(source=True, docs=False, project_root=tmp_path, check=True) > 0
         )
 
-    def test_check_mode_reports_no_change_when_in_sync(self, tmp_path):
+    def test_check_mode_reports_no_change_when_in_sync(self, *, tmp_path):
         sync_skills(source=True, docs=False, project_root=tmp_path, check=False)
         assert (
             sync_skills(source=True, docs=False, project_root=tmp_path, check=True) == 0
         )
 
-    def test_removes_legacy_skill_files(self, tmp_path):
+    def test_removes_legacy_skill_files(self, *, tmp_path):
         # All former names are removed when the current skill is written.
         legacy_paths = [
             tmp_path / root / legacy_file
@@ -152,7 +146,7 @@ class TestSyncSkills:
         for path in legacy_paths:
             assert not path.parent.exists()
 
-    def test_check_mode_reports_legacy_files_without_removing(self, tmp_path):
+    def test_check_mode_reports_legacy_files_without_removing(self, *, tmp_path):
         sync_skills(source=True, docs=False, project_root=tmp_path, check=False)
         legacy_paths = [
             tmp_path / root / legacy_file
@@ -169,7 +163,7 @@ class TestSyncSkills:
         for path in legacy_paths:
             assert path.exists()
 
-    def test_source_false_removes_current_and_legacy_skill_files(self, tmp_path):
+    def test_source_false_removes_current_and_legacy_skill_files(self, *, tmp_path):
         sync_skills(source=True, docs=False, project_root=tmp_path, check=False)
         legacy_paths = [
             tmp_path / root / legacy_file
@@ -190,13 +184,13 @@ class TestSyncSkills:
         for path in legacy_paths:
             assert not path.parent.exists()
 
-    def test_source_false_returns_zero_when_already_absent(self, tmp_path):
+    def test_source_false_returns_zero_when_already_absent(self, *, tmp_path):
         assert (
             sync_skills(source=False, docs=False, project_root=tmp_path, check=False)
             == 0
         )
 
-    def test_source_false_check_mode_reports_without_removing(self, tmp_path):
+    def test_source_false_check_mode_reports_without_removing(self, *, tmp_path):
         sync_skills(source=True, docs=False, project_root=tmp_path, check=False)
         assert (
             sync_skills(source=False, docs=False, project_root=tmp_path, check=True) > 0
@@ -204,14 +198,14 @@ class TestSyncSkills:
         for root in SKILL_ROOTS:
             assert (tmp_path / root / _REVIEW_SKILL_FILE).exists()
 
-    def test_gate_unmet_removal_prunes_empty_directory(self, tmp_path):
+    def test_gate_unmet_removal_prunes_empty_directory(self, *, tmp_path):
         # After gate-not-met removal, the skill directory itself must be gone.
         sync_skills(source=True, docs=False, project_root=tmp_path, check=False)
         sync_skills(source=False, docs=False, project_root=tmp_path, check=False)
         for root in SKILL_ROOTS:
             assert not (tmp_path / root / _REVIEW_SKILL_FILE.parent).exists()
 
-    def test_pruning_skipped_when_directory_has_other_files(self, tmp_path):
+    def test_pruning_skipped_when_directory_has_other_files(self, *, tmp_path):
         # If extra files remain after SKILL.md removal, leave the directory.
         sync_skills(source=True, docs=False, project_root=tmp_path, check=False)
         for root in SKILL_ROOTS:
@@ -222,7 +216,7 @@ class TestSyncSkills:
             assert (tmp_path / root / _REVIEW_SKILL_FILE.parent).is_dir()
             assert not (tmp_path / root / _REVIEW_SKILL_FILE).exists()
 
-    def test_docs_gate_builds_when_docs_true(self, tmp_path, monkeypatch):
+    def test_docs_gate_builds_when_docs_true(self, *, tmp_path, monkeypatch):
         docs_skill = Skill(
             name="test-docs",
             description="Test docs skill.",
@@ -234,7 +228,7 @@ class TestSyncSkills:
         for root in SKILL_ROOTS:
             assert (tmp_path / root / "test-docs" / "SKILL.md").exists()
 
-    def test_docs_gate_skips_when_docs_false(self, tmp_path, monkeypatch):
+    def test_docs_gate_skips_when_docs_false(self, *, tmp_path, monkeypatch):
         docs_skill = Skill(
             name="test-docs",
             description="Test docs skill.",
@@ -246,7 +240,7 @@ class TestSyncSkills:
         for root in SKILL_ROOTS:
             assert not (tmp_path / root / "test-docs" / "SKILL.md").exists()
 
-    def test_no_legacy_names_skips_legacy_removal(self, tmp_path, monkeypatch):
+    def test_no_legacy_names_skips_legacy_removal(self, *, tmp_path, monkeypatch):
         # A skill with empty legacy_names should generate exactly 2 writes.
         no_legacy_skill = Skill(
             name="no-legacy",
@@ -260,31 +254,31 @@ class TestSyncSkills:
         )
         assert result == 2
 
-    def test_code_navigation_written_when_source_set(self, tmp_path):
+    def test_code_navigation_written_when_source_set(self, *, tmp_path):
         sync_skills(source=True, docs=False, project_root=tmp_path, check=False)
         for root in SKILL_ROOTS:
             assert (tmp_path / root / "uncoded-code-navigation" / "SKILL.md").exists()
 
-    def test_code_navigation_not_written_when_source_absent(self, tmp_path):
+    def test_code_navigation_not_written_when_source_absent(self, *, tmp_path):
         sync_skills(source=False, docs=False, project_root=tmp_path, check=False)
         for root in SKILL_ROOTS:
             assert not (
                 tmp_path / root / "uncoded-code-navigation" / "SKILL.md"
             ).exists()
 
-    def test_doc_navigation_written_when_docs_set(self, tmp_path):
+    def test_doc_navigation_written_when_docs_set(self, *, tmp_path):
         sync_skills(source=False, docs=True, project_root=tmp_path, check=False)
         for root in SKILL_ROOTS:
             assert (tmp_path / root / "uncoded-doc-navigation" / "SKILL.md").exists()
 
-    def test_doc_navigation_not_written_when_docs_absent(self, tmp_path):
+    def test_doc_navigation_not_written_when_docs_absent(self, *, tmp_path):
         sync_skills(source=True, docs=False, project_root=tmp_path, check=False)
         for root in SKILL_ROOTS:
             assert not (
                 tmp_path / root / "uncoded-doc-navigation" / "SKILL.md"
             ).exists()
 
-    def test_doc_navigation_content_includes_orient_step(self, tmp_path):
+    def test_doc_navigation_content_includes_orient_step(self, *, tmp_path):
         sync_skills(source=False, docs=True, project_root=tmp_path, check=False)
         content = (
             tmp_path / SKILL_ROOTS[0] / "uncoded-doc-navigation" / "SKILL.md"
@@ -297,7 +291,7 @@ class TestSyncSkills:
 
 class TestSyncSkillsProjectRootAnchor:
     def test_project_root_anchors_writes_independent_of_cwd(
-        self, tmp_path, monkeypatch
+        self, *, tmp_path, monkeypatch
     ):
         sub = tmp_path / "subdir"
         sub.mkdir()
@@ -310,7 +304,7 @@ class TestSyncSkillsProjectRootAnchor:
             assert not (sub / root / _REVIEW_SKILL_FILE).exists()
 
     def test_project_root_anchors_legacy_removal_independent_of_cwd(
-        self, tmp_path, monkeypatch
+        self, *, tmp_path, monkeypatch
     ):
         sub = tmp_path / "subdir"
         sub.mkdir()
