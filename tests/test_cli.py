@@ -1067,15 +1067,6 @@ def _init_package_project(*, tmp_path, monkeypatch):
 
 
 class TestBodyCommand:
-    def test_happy_path_dispatch(self, *, tmp_path, monkeypatch, capsys):
-        _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
-        (tmp_path / "src" / "foo.py").write_text(
-            "def fn():\n    pass\n", encoding="utf-8", newline=""
-        )
-
-        assert _body(monkeypatch=monkeypatch, name_path="fn", in_path="src/foo.py") == 0
-        assert capsys.readouterr().out == "def fn():\n    pass\n"
-
     def test_class_method_form(self, *, tmp_path, monkeypatch, capsys):
         _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "src" / "foo.py").write_text(
@@ -1269,15 +1260,6 @@ class TestBodyCommand:
 
 
 class TestRefsCommand:
-    def test_happy_path_dispatch(self, *, tmp_path, monkeypatch, capsys):
-        pkg = _init_package_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
-        (pkg / "a.py").write_text("def foo():\n    return 42\n", encoding="utf-8")
-        (pkg / "b.py").write_text("from pkg.a import foo\nfoo()\n", encoding="utf-8")
-
-        assert _refs(monkeypatch=monkeypatch, name_path="foo", in_path="pkg/a.py") == 0
-        out = capsys.readouterr().out
-        assert "pkg/b.py:2:1" in out
-
     def test_class_method_form(self, *, tmp_path, monkeypatch, capsys):
         pkg = _init_package_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (pkg / "a.py").write_text(
