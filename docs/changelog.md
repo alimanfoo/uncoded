@@ -72,6 +72,10 @@ includes it. Each entry links the pull request that made the change.
 - The code navigation skill calls a `type` statement by that name, which the
   rest of the documentation uses. It called it a `type` alias.
   ([#355](https://github.com/alimanfoo/uncoded/pull/355))
+- The documentation navigation skill and the docs map's header say that a " (N)"
+  suffix marks the Nth heading with the same text under one parent, whatever its
+  level. They said that the headings also had the same level.
+  ([#355](https://github.com/alimanfoo/uncoded/pull/355))
 - The uncoded skills use one word for each concept, such as "code index",
   "definition" and "project". They also stop listing directories and files among
   the symbols in the namespace map.

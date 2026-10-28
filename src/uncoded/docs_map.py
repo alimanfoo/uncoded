@@ -14,7 +14,7 @@ _DOCS_HEADER = f"""\
 # Pure key hierarchy (no lists, no values); indent to zoom in.
 # Directory keys end with "/". Leaf headings map to null.
 #
-# A " (N)" suffix marks the Nth heading with the same text and level under one
+# A " (N)" suffix marks the Nth heading with the same text under one
 # parent. The suffix is not in the file: read the parent's section to find it.
 """
 
