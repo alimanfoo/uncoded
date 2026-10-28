@@ -82,11 +82,10 @@ is to be the project directory.
 
 If no configuration file is found in that directory or above it, `init` writes
 `.uncoded.toml` there. Its source roots are whichever of `src` and `tests`
-exist, its doc roots are whichever of `README.md`, `AGENTS.md` and `docs` exist,
-and its required version is the version of uncoded that is running. If none of
-them exist, `init` writes nothing and exits with status `1`. If `init` cannot
-write the configuration file, it says why and exits with status `1`. A
-configuration file that `init` finds is left as it is.
+exist, and its doc roots are whichever of `README.md`, `AGENTS.md` and `docs`
+exist. If none of them exist, `init` writes nothing and exits with status `1`.
+If `init` cannot write the configuration file, it says why and exits with status
+`1`. A configuration file that `init` finds is left as it is.
 
 If `sync` fails, `init` stops there with exit status `1`. After `sync`, `init`
 says which files to commit, and prints the lines to add to `AGENTS.md` or

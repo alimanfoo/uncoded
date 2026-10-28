@@ -12,15 +12,15 @@ and fails the commit when it changes an installed skill file. Stale installed
 skill files then cannot be committed without anyone noticing.
 
 Add this entry to the `repos` list in `.pre-commit-config.yaml`, after any
-formatters that change indexed files. Replace `4.0.0` with the required version
-in the configuration file, since uncoded refuses to run at any other version:
+formatters that change indexed files. Replace `<version>` with the release of
+uncoded that the project uses, as `uvx uncoded --version` prints it:
 
 ```yaml title=".pre-commit-config.yaml"
 - repo: local
   hooks:
     - id: uncoded
       name: uncoded
-      entry: uvx uncoded@4.0.0 sync
+      entry: uvx uncoded@<version> sync
       language: system
       always_run: true
       pass_filenames: false
@@ -36,8 +36,9 @@ uvx pre-commit install
 hook updates installed skill files, stage those files and commit again. A CI job
 that runs the same pre-commit hooks catches what a local commit missed.
 
-To upgrade uncoded, raise the version in the hook's `entry` and in the
-configuration file together.
+The hook's `entry` pins the version of uncoded that writes the committed skill
+files, so that every machine commits the same files. To upgrade uncoded, raise
+the version in the hook's `entry`.
 
 ## Check without writing
 
