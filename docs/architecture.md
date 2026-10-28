@@ -55,5 +55,6 @@ it in a layer.
 directory. Every configured root must remain inside that directory after
 resolving symbolic links.
 
-`body` and `refs` resolve their `--in` paths from the current working directory.
-They can operate without a project configuration.
+`body` and `refs` find the project directory in the same way, and resolve their
+`--in` paths from the current working directory. `refs` gives ty the project
+directory as its workspace.

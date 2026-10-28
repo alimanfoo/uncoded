@@ -6,24 +6,8 @@ from uncoded.config import (
     Config,
     ConfigError,
     find_config,
-    find_pyproject_toml,
     read_config,
 )
-
-
-class TestFindPyprojectToml:
-    def test_finds_at_start(self, *, tmp_path):
-        (tmp_path / "pyproject.toml").write_text("", encoding="utf-8")
-        assert find_pyproject_toml(start=tmp_path) == tmp_path / "pyproject.toml"
-
-    def test_finds_in_parent_of_start(self, *, tmp_path):
-        (tmp_path / "pyproject.toml").write_text("", encoding="utf-8")
-        subdir = tmp_path / "sub"
-        subdir.mkdir()
-        assert find_pyproject_toml(start=subdir) == tmp_path / "pyproject.toml"
-
-    def test_returns_none_if_not_found(self, *, tmp_path):
-        assert find_pyproject_toml(start=tmp_path) is None
 
 
 class TestFindConfig:

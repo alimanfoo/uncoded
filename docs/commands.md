@@ -12,6 +12,10 @@ code in their checkout.
 | Find references to a Python symbol    | `uvx uncoded refs <symbol> --in <file>` |
 | Print the installed version           | `uvx uncoded --version`                 |
 
+Every command but `init` runs inside a project. It finds the configuration file
+in the current directory or the nearest directory above it. If there is none, it
+exits with status `1`.
+
 ## `init`
 
 ```sh
@@ -79,7 +83,7 @@ Use one name for a top-level function, class, module assignment, or Python 3.12
 and empty segments are unsupported.
 
 The `--in` path is relative to your current directory, not the configuration
-file. No project configuration is required.
+file.
 
 ## `refs`
 

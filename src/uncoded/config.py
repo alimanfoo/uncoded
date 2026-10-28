@@ -29,19 +29,6 @@ class Config:
     required_version: str | None
 
 
-def find_pyproject_toml(*, start: Path) -> Path | None:
-    """Walk up from ``start`` looking for ``pyproject.toml``."""
-    current = start.resolve()
-    while True:
-        candidate = current / "pyproject.toml"
-        if candidate.exists():
-            return candidate
-        parent = current.parent
-        if parent == current:
-            return None
-        current = parent
-
-
 def _pyproject_settings(*, pyproject_path: Path) -> dict | None:
     """Return the ``[tool.uncoded]`` table of ``pyproject_path``, or None.
 

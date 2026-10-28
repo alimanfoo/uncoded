@@ -11,7 +11,6 @@ from typing import IO, cast
 from urllib.parse import urlparse
 from urllib.request import url2pathname
 
-from uncoded.config import ConfigError, find_pyproject_toml, read_config
 from uncoded.read_helpers import read_source_text
 from uncoded.resolver import NamePath, resolve_name_position
 
@@ -31,19 +30,23 @@ class Reference:
     col: int
 
 
-def find_refs(*, name_path: NamePath, in_path: Path) -> list[Reference]:
+def find_refs(
+    *, name_path: NamePath, in_path: Path, project_root: Path
+) -> list[Reference]:
     """Return all references to the symbol named by name_path in in_path.
 
     Resolves the symbol's name-token position, queries ty's LSP server for
-    references, and returns results with 1-indexed line/col sorted by
-    (path, line, col). path is relative to the current working
-    directory when possible; otherwise absolute.
+    references, with project_root as its workspace, and returns results with
+    1-indexed line/col sorted by (path, line, col). path is relative to the
+    current working directory when possible; otherwise absolute.
     Propagates SymbolNotFoundError from resolve_name_position. OSError,
     UnicodeDecodeError, and SyntaxError propagate from resolve_name_position
     and from read_source_text in the LSP exchange.
     """
     position = resolve_name_position(name_path=name_path, in_path=in_path)
-    raw_refs = _query_references(in_path=in_path, position=position)
+    raw_refs = _query_references(
+        in_path=in_path, position=position, project_root=project_root
+    )
     result = [
         Reference(
             path=_path_for_display(path=ref.path),
@@ -57,7 +60,7 @@ def find_refs(*, name_path: NamePath, in_path: Path) -> list[Reference]:
 
 
 def _query_references(
-    *, in_path: Path, position: tuple[int, int]
+    *, in_path: Path, position: tuple[int, int], project_root: Path
 ) -> list[_LSPLocation]:
     """Return raw LSP reference locations for the symbol at position in in_path.
 
@@ -65,7 +68,6 @@ def _query_references(
     initialize/didOpen/references/shutdown exchange.
     position follows LSP convention: (line, character), both 0-indexed.
     """
-    root = _find_root(in_path=in_path)
     try:
         proc = subprocess.Popen(
             ["uvx", "--from", f"ty=={TY_VERSION}", "ty", "server"],
@@ -83,7 +85,7 @@ def _query_references(
             stdout=cast("IO[bytes]", proc.stdout),
             in_path=in_path,
             position=position,
-            root=root,
+            project_root=project_root,
         )
     finally:
         _terminate(proc=proc)
@@ -96,14 +98,6 @@ class _LSPLocation:
     path: Path
     line: int
     character: int
-
-
-def _find_root(*, in_path: Path) -> Path:
-    try:
-        return read_config(start=in_path.parent).project_root
-    except ConfigError:
-        pyproject = find_pyproject_toml(start=in_path.parent)
-        return pyproject.parent if pyproject is not None else in_path.parent
 
 
 def _terminate(*, proc: subprocess.Popen[bytes]) -> None:
@@ -129,11 +123,11 @@ def _run_exchange(
     stdout: IO[bytes],
     in_path: Path,
     position: tuple[int, int],
-    root: Path,
+    project_root: Path,
 ) -> list[_LSPLocation]:
     in_path = in_path.resolve()
-    root = root.resolve()
-    root_uri = root.as_uri()
+    project_root = project_root.resolve()
+    root_uri = project_root.as_uri()
     file_uri = in_path.as_uri()
 
     _write_message(
@@ -145,7 +139,7 @@ def _run_exchange(
             "params": {
                 "processId": os.getpid(),
                 "rootUri": root_uri,
-                "workspaceFolders": [{"uri": root_uri, "name": root.name}],
+                "workspaceFolders": [{"uri": root_uri, "name": project_root.name}],
                 "capabilities": {},
             },
         },
