@@ -7,7 +7,6 @@ have their own unit tests; this suite covers the orchestration and the
 
 import io
 import os
-import shlex
 import subprocess
 import sys
 import textwrap
@@ -509,26 +508,17 @@ class TestCommandUsedWrongly:
 
 _BODY = ["body", "fn", "--in", "src/foo.py"]
 
-# Each command, with the exit status it gives when it runs in a fresh project.
-_RUNS = [
-    (["sync"], 0),
-    # The fresh project has no index, so check reports it as stale.
-    (["check"], 1),
-    (_BODY, 0),
-    (["refs", "fn", "--in", "src/foo.py"], 0),
-]
-_COMMANDS = [command for command, _status in _RUNS]
+# Each command that runs in a project. body and refs look up the function that
+# _init_uncoded_toml_project writes.
+_COMMANDS = [["sync"], ["check"], _BODY, ["refs", "fn", "--in", "src/foo.py"]]
 # Every command, uncoded init included.
 _EVERY_COMMAND = [["init"], *_COMMANDS]
 
 
-def _init_versioned_project(*, tmp_path, monkeypatch, required_version):
-    """Set up a project whose configuration sets ``required_version``, if given."""
-    setting = (
-        "" if required_version is None else f'required-version = "{required_version}"\n'
-    )
+def _init_uncoded_toml_project(*, tmp_path, monkeypatch):
+    """Set up a project that .uncoded.toml configures, with ``fn`` in src/foo.py."""
     (tmp_path / ".uncoded.toml").write_text(
-        f'source-roots = ["src"]\n{setting}', encoding="utf-8"
+        'source-roots = ["src"]\n', encoding="utf-8"
     )
     (tmp_path / "src").mkdir()
     (tmp_path / "src" / "foo.py").write_text("def fn():\n    pass\n", encoding="utf-8")
@@ -543,56 +533,10 @@ def _contents(*, project_directory):
     }
 
 
-class TestRequiredVersion:
-    @pytest.mark.parametrize("command", _EVERY_COMMAND)
-    def test_refuses_at_another_version(
-        self, *, tmp_path, monkeypatch, capsys, command
-    ):
-        _init_versioned_project(
-            tmp_path=tmp_path, monkeypatch=monkeypatch, required_version="0.0.0"
-        )
-        before = _contents(project_directory=tmp_path)
-        monkeypatch.setattr(sys, "argv", ["uncoded", *command])
-
-        with mock.patch.object(cli, "find_refs") as find_refs:
-            assert cli.main() == 1
-
-        find_refs.assert_not_called()
-        assert _contents(project_directory=tmp_path) == before
-        captured = capsys.readouterr()
-        assert captured.out == ""
-        assert captured.err == (
-            f"Error: the project requires uncoded 0.0.0, and this is uncoded "
-            f"{__version__}. Run the command at the required version: "
-            f"uvx uncoded@0.0.0 {shlex.join(command)}\n"
-        )
-
-    @pytest.mark.parametrize("required_version", [__version__, None])
-    @pytest.mark.parametrize("run", _RUNS)
-    def test_runs_at_required_version_or_with_none_set(
-        self, *, tmp_path, monkeypatch, capsys, required_version, run
-    ):
-        command, status = run
-        _init_versioned_project(
-            tmp_path=tmp_path,
-            monkeypatch=monkeypatch,
-            required_version=required_version,
-        )
-        monkeypatch.setattr(sys, "argv", ["uncoded", *command])
-
-        with mock.patch.object(cli, "find_refs", return_value=[]) as find_refs:
-            assert cli.main() == status
-
-        assert find_refs.called == (command[0] == "refs")
-        assert capsys.readouterr().err == ""
-
-
 class TestTwoConfigurationFiles:
     @pytest.mark.parametrize("command", _EVERY_COMMAND)
     def test_every_command_refuses(self, *, tmp_path, monkeypatch, capsys, command):
-        _init_versioned_project(
-            tmp_path=tmp_path, monkeypatch=monkeypatch, required_version=None
-        )
+        _init_uncoded_toml_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "pyproject.toml").write_text(
             '[tool.uncoded]\nsource-roots = ["src"]\n', encoding="utf-8"
         )
@@ -655,10 +599,6 @@ class TestConfigurationThatNamesNoRoots:
 _UNUSABLE_CONFIGS = [
     ('source-roots = ["src"\n', "not valid TOML: Unclosed array (at end of document)"),
     ('source-roots = "src"\n', "source-roots is not a list of strings"),
-    (
-        'source-roots = ["src"]\nrequired-version = "3.1"\n',
-        'required-version is not one exact version, such as "3.1.0"',
-    ),
 ]
 
 
@@ -669,9 +609,7 @@ class TestConfigurationFileThatCannotBeUsed:
         self, *, tmp_path, monkeypatch, capsys, command, unusable_config
     ):
         toml, problem = unusable_config
-        _init_versioned_project(
-            tmp_path=tmp_path, monkeypatch=monkeypatch, required_version=None
-        )
+        _init_uncoded_toml_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         configuration_file = tmp_path / ".uncoded.toml"
         configuration_file.write_text(toml, encoding="utf-8")
         before = _contents(project_directory=tmp_path)
@@ -844,7 +782,6 @@ class TestInitCommand:
         assert (tmp_path / ".uncoded.toml").read_text(encoding="utf-8") == (
             'source-roots = ["src", "tests"]\n'
             'doc-roots = ["README.md", "AGENTS.md", "docs"]\n'
-            f'required-version = "{__version__}"\n'
         )
         assert (tmp_path / ".uncoded" / "namespace.yaml").exists()
         assert (tmp_path / ".uncoded" / "docs.yaml").exists()
@@ -870,7 +807,7 @@ class TestInitCommand:
         assert _run(monkeypatch=monkeypatch, arguments=["init"]) == 0
 
         assert (tmp_path / ".uncoded.toml").read_text(encoding="utf-8") == (
-            f'doc-roots = ["docs"]\nrequired-version = "{__version__}"\n'
+            'doc-roots = ["docs"]\n'
         )
         for skill_path in _SOURCE_SKILL_PATHS:
             assert not (tmp_path / skill_path).exists()
@@ -890,7 +827,7 @@ class TestInitCommand:
         assert _run(monkeypatch=monkeypatch, arguments=["init"]) == 0
 
         assert (project / ".uncoded.toml").read_text(encoding="utf-8") == (
-            f'doc-roots = ["README.md"]\nrequired-version = "{__version__}"\n'
+            'doc-roots = ["README.md"]\n'
         )
 
     def test_passes_over_pyproject_without_uncoded_table(

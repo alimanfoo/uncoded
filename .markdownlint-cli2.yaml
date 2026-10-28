@@ -1,5 +1,8 @@
 config:
   # Line length (MD013) is disabled; prettier owns prose wrapping.
   MD013: false
+  # The changelog repeats the same headings under each release.
+  MD024:
+    siblings_only: true
   MD033: false
   MD041: false

@@ -20,6 +20,13 @@ includes it. Each entry links the pull request that made the change.
 
 ## Unreleased
 
+### Breaking
+
+- uncoded no longer reads the `required-version` setting, and `uncoded init` no
+  longer writes it. uncoded runs at any version, and a project pins its version
+  in the `entry` of its pre-commit hook.
+  ([#380](https://github.com/alimanfoo/uncoded/pull/380))
+
 ## [4.0.0](https://github.com/alimanfoo/uncoded/releases/tag/v4.0.0) — 2026-10-28
 
 Before upgrading, follow

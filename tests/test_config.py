@@ -2,7 +2,6 @@ from pathlib import Path
 
 import pytest
 
-from uncoded import __version__
 from uncoded.config import (
     ConfigError,
     find_config,
@@ -75,15 +74,13 @@ class TestReadConfig:
         config = read_config(start=subdir)
         assert config.project_directory == tmp_path
 
-    def test_required_version_read_from_pyproject(self, *, tmp_path):
+    def test_ignores_a_setting_that_it_does_not_know(self, *, tmp_path):
+        # Such as a setting that another version of uncoded reads.
         (tmp_path / "pyproject.toml").write_text(
-            '[tool.uncoded]\nrequired-version = "3.1.0"\n', encoding="utf-8"
+            '[tool.uncoded]\nsource-roots = ["src"]\nunknown-setting = "x"\n',
+            encoding="utf-8",
         )
-        assert read_config(start=tmp_path).required_version == "3.1.0"
-
-    def test_required_version_is_none_when_unset(self, *, tmp_path):
-        (tmp_path / "pyproject.toml").write_text("[tool.uncoded]\n", encoding="utf-8")
-        assert read_config(start=tmp_path).required_version is None
+        assert read_config(start=tmp_path).source_roots == [Path("src")]
 
     # --- .uncoded.toml ---
 
@@ -104,12 +101,6 @@ class TestReadConfig:
         config = read_config(start=tmp_path)
         assert config.source_roots == [Path("src")]
         assert config.doc_roots == [Path("docs")]
-
-    def test_required_version_read_from_uncoded_toml(self, *, tmp_path):
-        (tmp_path / ".uncoded.toml").write_text(
-            'required-version = "3.1.0"\n', encoding="utf-8"
-        )
-        assert read_config(start=tmp_path).required_version == "3.1.0"
 
     def test_error_when_both_configure_uncoded_in_same_directory(self, *, tmp_path):
         # pyproject.toml with [tool.uncoded] AND .uncoded.toml → ConfigError.
@@ -240,10 +231,6 @@ class TestConfigurationFileThatCannotBeUsed:
                 "[tool.uncoded]\ndoc-roots = [1]\n",
                 "doc-roots is not a list of strings",
             ),
-            (
-                "[tool.uncoded]\nrequired-version = 3.1\n",
-                'required-version is not one exact version, such as "3.1.0"',
-            ),
         ],
     )
     def test_setting_of_the_wrong_type_in_pyproject(self, *, tmp_path, toml, problem):
@@ -264,42 +251,3 @@ class TestConfigurationFileThatCannotBeUsed:
             f"{(tmp_path / '.uncoded.toml').resolve().as_posix()}: "
             "source-roots is not a list of strings"
         )
-
-    @pytest.mark.parametrize(
-        "version", ["3.1", "3", "~=3.1.0", "==3.1.0", "3.1.0, <4", "v3.1.0", ""]
-    )
-    def test_required_version_that_is_not_one_exact_version(self, *, tmp_path, version):
-        (tmp_path / ".uncoded.toml").write_text(
-            f'required-version = "{version}"\n', encoding="utf-8"
-        )
-        with pytest.raises(ConfigError) as exc_info:
-            read_config(start=tmp_path)
-        assert str(exc_info.value) == (
-            f"{(tmp_path / '.uncoded.toml').resolve().as_posix()}: "
-            'required-version is not one exact version, such as "3.1.0"'
-        )
-
-    def test_required_version_that_is_a_list(self, *, tmp_path):
-        (tmp_path / ".uncoded.toml").write_text(
-            'required-version = ["3.1.0"]\n', encoding="utf-8"
-        )
-        with pytest.raises(ConfigError, match="required-version is not one exact"):
-            read_config(start=tmp_path)
-
-    @pytest.mark.parametrize(
-        "version",
-        [
-            "3.1.0",
-            "10.20.30",
-            "3.1.0rc1",
-            "3.1.0.post1",
-            "3.1.0.dev5+g1a2b3c4",
-            "3.1.0.dev5+g1a2b3c4.d20261028",
-            __version__,
-        ],
-    )
-    def test_required_version_that_is_one_exact_version(self, *, tmp_path, version):
-        (tmp_path / ".uncoded.toml").write_text(
-            f'required-version = "{version}"\n', encoding="utf-8"
-        )
-        assert read_config(start=tmp_path).required_version == version
