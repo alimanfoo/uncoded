@@ -41,7 +41,7 @@ help_block()
 ```text
 usage: uncoded [-h] [--version] {init,sync,check,body,refs} ...
 
-Build an index of a codebase for agents.
+Build an index of a codebase for AI coding agents.
 
 positional arguments:
   {init,sync,check,body,refs}

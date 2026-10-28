@@ -366,7 +366,7 @@ def main() -> int:
     """
     parser = argparse.ArgumentParser(
         prog="uncoded",
-        description="Build an index of a codebase for agents.",
+        description="Build an index of a codebase for AI coding agents.",
     )
     parser.add_argument(
         "--version", action="version", version=f"%(prog)s {__version__}"

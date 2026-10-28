@@ -94,8 +94,9 @@ requests to come, by asking each one to answer the definition of done.
   `AssignmentSymbol` in a class's `attributes`, a word the concepts page does
   not use, and `PythonFile.assignments` also holds the `type` statements. No
   word that the concepts page replaces is in use outside this page, which quotes
-  the baseline's words. The `--help` text said "AI coding agents", and now says
-  "agents".
+  the baseline's words. The `--help` text and the package's description say "AI
+  coding agents", which the concepts page allows, since each introduces the
+  term.
 - **True documents.** Every behaviour change that the design's
   [Stories](https://github.com/alimanfoo/uncoded/blob/main/specs/2026-10-25-engineering-standard/design.md#behaviour-changes)
   section lists is built. Five open bugs contradict a story or the concepts
