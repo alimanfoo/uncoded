@@ -12,9 +12,9 @@ code in their checkout.
 | Find references to a Python symbol    | `uvx uncoded refs <symbol> --in <file>` |
 | Print the installed version           | `uvx uncoded --version`                 |
 
-Every command but `init` runs inside a project. It finds the configuration file
-in the current directory or the nearest directory above it. If there is none, it
-exits with status `1`.
+Every command but `init` and `--version` runs inside a project. It finds the
+configuration file in the current directory or the nearest directory above it.
+If there is none, it exits with status `1`.
 
 ## `init`
 
