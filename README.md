@@ -12,7 +12,7 @@ symbol bodies that they need. Each view adds detail without making the agent
 read whole source files.
 
 Read the [documentation](https://alimanfoo.github.io/uncoded/) for installation,
-configuration, command reference, upgrades, and contributor guidance.
+configuration, command reference, and upgrades.
 
 If you have an idea, suggestion or question about uncoded, please start a
 [discussion](https://github.com/alimanfoo/uncoded/discussions).

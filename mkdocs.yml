@@ -69,7 +69,6 @@ nav:
       - Upgrading: upgrading.md
       - Changelog: changelog.md
   - Development:
-      - Contributing: contributing.md
       - Concepts: concepts.md
       - Stories: stories.md
       - Architecture: architecture.md
