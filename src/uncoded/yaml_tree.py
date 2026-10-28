@@ -1,5 +1,6 @@
-"""Shared YAML renderer for pure-key-hierarchy tree maps."""
+"""Shared nesting and YAML rendering for pure-key-hierarchy tree maps."""
 
+from collections.abc import Iterable
 from typing import override
 
 import yaml
@@ -30,3 +31,19 @@ def render_yaml_tree(*, header: str, mapping: dict) -> str:
         sort_keys=False,
     )
     return header + "\n" + body
+
+
+def nest_by_path(*, entries: Iterable[tuple[str, dict | None]]) -> dict:
+    """Nest each file's entry under keys for the directories that hold it.
+
+    ``entries`` pairs each file's path relative to the project directory, with
+    ``/`` separators, with its entry. Directory keys end with "/".
+    """
+    root: dict = {}
+    for rel_path, entry in entries:
+        *directories, file_name = rel_path.split("/")
+        node = root
+        for directory in directories:
+            node = node.setdefault(f"{directory}/", {})
+        node[file_name] = entry
+    return root

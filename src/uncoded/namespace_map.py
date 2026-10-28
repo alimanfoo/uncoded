@@ -1,7 +1,5 @@
 """Generate a YAML namespace map from extracted symbols."""
 
-from pathlib import Path
-
 from uncoded.extract import (
     AssignmentSymbol,
     ClassSymbol,
@@ -11,7 +9,7 @@ from uncoded.extract import (
     TypeAliasSymbol,
 )
 from uncoded.markers import GENERATED_MARKER
-from uncoded.yaml_tree import render_yaml_tree
+from uncoded.yaml_tree import nest_by_path, render_yaml_tree
 
 HEADER = f"""\
 # Namespace map of this codebase, for agent navigation.
@@ -41,37 +39,34 @@ def _members(*, symbol: Symbol) -> dict | None:
     return dict.fromkeys(members) or None
 
 
+def _file_entry(*, python_file: PythonFile) -> dict:
+    """Return the map entry of ``python_file``: its symbols, by kind.
+
+    Lists assignments first, then classes, then functions. A name defined more
+    than once in the module body is listed once, where it is first defined, as
+    the kind of its later definition.
+    """
+    symbols = {symbol.name: symbol for symbol in python_file.symbols}.values()
+    return {
+        symbol.name: _members(symbol=symbol)
+        for kind in _KIND_ORDER
+        for symbol in symbols
+        if isinstance(symbol, kind)
+    }
+
+
 def build_map(*, python_files: list[PythonFile]) -> dict:
     """Build a nested dict representing the namespace.
 
     Keys are paths relative to the project directory. Directory keys have a
-    trailing slash. Symbols sit directly under their file key, assignments
-    first, then classes, then functions. A name defined more than once in the
-    module body is listed once, where it is first defined, as the kind of its
-    later definition.
+    trailing slash. Symbols sit directly under their file key.
     """
-    root: dict = {}
-
-    for python_file in python_files:
-        parts = Path(python_file.rel_path).parts
-        node = root
-
-        # Create intermediate directory entries
-        for dir_part in parts[:-1]:
-            key = dir_part + "/"
-            if key not in node:
-                node[key] = {}
-            node = node[key]
-
-        symbols = {symbol.name: symbol for symbol in python_file.symbols}.values()
-        node[parts[-1]] = {
-            symbol.name: _members(symbol=symbol)
-            for kind in _KIND_ORDER
-            for symbol in symbols
-            if isinstance(symbol, kind)
-        }
-
-    return root
+    return nest_by_path(
+        entries=(
+            (python_file.rel_path, _file_entry(python_file=python_file))
+            for python_file in python_files
+        )
+    )
 
 
 def render_map(*, namespace: dict) -> str:

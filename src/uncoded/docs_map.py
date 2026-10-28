@@ -5,7 +5,7 @@ from pathlib import Path
 
 from uncoded.markers import GENERATED_MARKER
 from uncoded.read_helpers import SkippedFile, failure_reason
-from uncoded.yaml_tree import render_yaml_tree
+from uncoded.yaml_tree import nest_by_path, render_yaml_tree
 
 DOCS_HEADER = f"""\
 # Documentation index of this codebase, for agent orientation.
@@ -129,43 +129,39 @@ def read_doc_files(
     return files, skipped
 
 
-def build_docs_map(*, files: Iterable[tuple[str, str]]) -> dict:
-    """Build a nested dict from ``(text, rel_path)`` doc-file pairs.
+def _file_headings(*, text: str) -> dict | None:
+    """Return the docs map entry of a Markdown file's ``text``: its headings.
 
-    Top-level keys are directory names (trailing "/") and file names.
     Headings nest under the nearest preceding heading of a smaller level;
     level skips attach to the nearest shallower heading. Duplicate sibling
     headings are disambiguated with " (2)", " (3)", … A file with no
-    headings maps to null.
+    headings maps to None.
     """
-    root: dict = {}
+    file_dict: dict = {}
+    # Stack of (level, children_dict) — the active path from file root.
+    stack: list[tuple[int, dict]] = [(0, file_dict)]
 
-    for text, rel_path in files:
-        parts = Path(rel_path).parts
-        node = root
+    for level, title in extract_headings(text=text):
+        while stack[-1][0] >= level:
+            stack.pop()
+        parent_dict = stack[-1][1]
+        key = _unique_key(parent=parent_dict, title=title)
+        heading_dict: dict = {}
+        parent_dict[key] = heading_dict
+        stack.append((level, heading_dict))
 
-        for dir_part in parts[:-1]:
-            dir_key = dir_part + "/"
-            if dir_key not in node:
-                node[dir_key] = {}
-            node = node[dir_key]
+    return _collapse_empty(mapping=file_dict)
 
-        file_dict: dict = {}
-        # Stack of (level, children_dict) — the active path from file root.
-        stack: list[tuple[int, dict]] = [(0, file_dict)]
 
-        for level, title in extract_headings(text=text):
-            while stack[-1][0] >= level:
-                stack.pop()
-            parent_dict = stack[-1][1]
-            key = _unique_key(parent=parent_dict, title=title)
-            heading_dict: dict = {}
-            parent_dict[key] = heading_dict
-            stack.append((level, heading_dict))
+def build_docs_map(*, files: Iterable[tuple[str, str]]) -> dict:
+    """Build a nested dict from ``(text, rel_path)`` doc-file pairs.
 
-        node[parts[-1]] = _collapse_empty(mapping=file_dict)
-
-    return root
+    Top-level keys are directory names (trailing "/") and file names, and each
+    file maps to its headings.
+    """
+    return nest_by_path(
+        entries=((rel_path, _file_headings(text=text)) for text, rel_path in files)
+    )
 
 
 def render_docs_map(*, mapping: dict) -> str:
