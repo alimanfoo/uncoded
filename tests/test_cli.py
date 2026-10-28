@@ -508,8 +508,7 @@ class TestCommandUsedWrongly:
 
 _BODY = ["body", "fn", "--in", "src/foo.py"]
 
-# Each command that runs in a project. body and refs look up the function that
-# _init_uncoded_toml_project writes.
+# Each command that runs in a project.
 _COMMANDS = [["sync"], ["check"], _BODY, ["refs", "fn", "--in", "src/foo.py"]]
 # Every command, uncoded init included.
 _EVERY_COMMAND = [["init"], *_COMMANDS]
