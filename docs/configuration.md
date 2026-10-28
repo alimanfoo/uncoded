@@ -51,6 +51,10 @@ To make every machine run the same version of uncoded in the project, set
 required-version = "3.1.0"
 ```
 
+Write all three numbers of the version, as `uncoded --version` prints them.
+uncoded compares the setting with its own version as text, so it refuses a value
+such as `"3.1"` or `"~=3.1"`, which no version of uncoded would equal.
+
 At any other version, every command stops before it changes anything. It says
 which version the project requires, and gives the command that runs it, such as
 `uvx uncoded@3.1.0 sync`. Without `required-version`, every version runs.

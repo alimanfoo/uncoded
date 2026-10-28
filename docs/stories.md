@@ -350,6 +350,11 @@ exact version. Every uncoded command that reads the configuration file stops.
 uncoded names the file and says what is wrong with it, in one line. It exits
 with status `1` and writes nothing.
 
+A `pyproject.toml` on the way up to the configuration file stops every command
+in the same way when it is not valid TOML or cannot be read, even when it has no
+`[tool.uncoded]` table. uncoded cannot tell whether a file that it cannot read
+configures uncoded.
+
 The developer corrects the configuration file.
 
 ### A configuration file that names no roots

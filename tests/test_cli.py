@@ -202,7 +202,7 @@ class TestSyncApplyMode:
         assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 1
 
         err = capsys.readouterr().err
-        assert "Ambiguous" in err
+        assert "configure uncoded" in err
         assert "pyproject.toml" in err
         assert ".uncoded.toml" in err
 
@@ -537,7 +537,49 @@ class TestRequiredVersion:
         assert cli.main() == 1
         captured = capsys.readouterr()
         assert captured.out == ""
-        assert captured.err.startswith("Error: Ambiguous config")
+        assert captured.err == (
+            f"Error: both {(tmp_path / 'pyproject.toml').resolve().as_posix()} and "
+            f"{(tmp_path / '.uncoded.toml').resolve().as_posix()} configure uncoded. "
+            "Configure uncoded in one file only.\n"
+        )
+
+
+# One configuration file of each kind that cannot be used, with its problem.
+_UNUSABLE_CONFIGS = [
+    ('source-roots = ["src"\n', "not valid TOML: Unclosed array (at end of document)"),
+    ('source-roots = "src"\n', "source-roots is not a list of strings"),
+    (
+        'source-roots = ["src"]\nrequired-version = "3.1"\n',
+        'required-version is not one exact version, such as "3.1.0"',
+    ),
+]
+
+
+class TestConfigFileThatCannotBeUsed:
+    @pytest.mark.parametrize("command", [["init"], *_COMMANDS])
+    @pytest.mark.parametrize("unusable_config", _UNUSABLE_CONFIGS)
+    def test_stops_with_one_line(
+        self, *, tmp_path, monkeypatch, capsys, command, unusable_config
+    ):
+        toml, problem = unusable_config
+        _init_versioned_repo(
+            tmp_path=tmp_path, monkeypatch=monkeypatch, required_version=None
+        )
+        config_file = tmp_path / ".uncoded.toml"
+        config_file.write_text(toml, encoding="utf-8")
+        before = _tree(root=tmp_path)
+        monkeypatch.setattr(sys, "argv", ["uncoded", *command])
+
+        with mock.patch.object(cli, "find_refs") as find_refs:
+            assert cli.main() == 1
+
+        find_refs.assert_not_called()
+        assert _tree(root=tmp_path) == before
+        captured = capsys.readouterr()
+        assert captured.out == ""
+        assert captured.err == (
+            f"Error: {config_file.resolve().as_posix()}: {problem}\n"
+        )
 
 
 def _init_project(*, tmp_path, monkeypatch, roots):

@@ -2,6 +2,7 @@ from pathlib import Path
 
 import pytest
 
+from uncoded import __version__
 from uncoded.config import (
     Config,
     ConfigError,
@@ -199,3 +200,128 @@ class TestReadConfig:
         config = read_config(start=uncoded_dir)
         assert config.project_root == tmp_path
         assert config.source_roots == [Path("src")]
+
+
+class TestConfigFileThatCannotBeUsed:
+    def test_not_valid_toml(self, *, tmp_path):
+        (tmp_path / ".uncoded.toml").write_text("source-roots\n", encoding="utf-8")
+        with pytest.raises(ConfigError) as exc_info:
+            read_config(start=tmp_path)
+        assert str(exc_info.value) == (
+            f"{(tmp_path / '.uncoded.toml').resolve().as_posix()}: not valid TOML: "
+            "Expected '=' after a key in a key/value pair (at line 1, column 13)"
+        )
+
+    def test_not_valid_toml_without_uncoded_settings_on_the_way_up(self, *, tmp_path):
+        # The search cannot tell whether the file configures uncoded, so it
+        # stops there rather than pass over it.
+        (tmp_path / ".uncoded.toml").write_text(
+            'source-roots = ["pkg"]\n', encoding="utf-8"
+        )
+        subproject = tmp_path / "pkg"
+        subproject.mkdir()
+        (subproject / "pyproject.toml").write_text("[project\n", encoding="utf-8")
+        with pytest.raises(ConfigError) as exc_info:
+            read_config(start=subproject)
+        assert str(exc_info.value).startswith(
+            f"{(subproject / 'pyproject.toml').resolve().as_posix()}: not valid TOML: "
+        )
+
+    def test_not_utf8(self, *, tmp_path):
+        (tmp_path / ".uncoded.toml").write_bytes(b"\xff\n")
+        with pytest.raises(ConfigError) as exc_info:
+            read_config(start=tmp_path)
+        assert str(exc_info.value) == (
+            f"{(tmp_path / '.uncoded.toml').resolve().as_posix()}: not valid TOML: "
+            "'utf-8' codec can't decode byte 0xff in position 0: invalid start byte"
+        )
+
+    def test_cannot_be_read(self, *, tmp_path):
+        # Opening a directory fails on every system, with a reason that
+        # differs between them.
+        (tmp_path / "pyproject.toml").mkdir()
+        with pytest.raises(ConfigError) as exc_info:
+            read_config(start=tmp_path)
+        message = str(exc_info.value)
+        assert message.startswith(
+            f"{(tmp_path / 'pyproject.toml').resolve().as_posix()}: "
+        )
+        assert "\n" not in message
+        assert "Errno" not in message
+
+    @pytest.mark.parametrize(
+        ("toml", "problem"),
+        [
+            ('tool = "x"\n', "tool is not a table"),
+            ("[tool]\nuncoded = 5\n", "tool.uncoded is not a table"),
+            (
+                '[tool.uncoded]\nsource-roots = "src"\n',
+                "source-roots is not a list of strings",
+            ),
+            (
+                "[tool.uncoded]\ndoc-roots = [1]\n",
+                "doc-roots is not a list of strings",
+            ),
+            (
+                "[tool.uncoded]\nrequired-version = 3.1\n",
+                'required-version is not one exact version, such as "3.1.0"',
+            ),
+        ],
+    )
+    def test_setting_of_the_wrong_type_in_pyproject(self, *, tmp_path, toml, problem):
+        (tmp_path / "pyproject.toml").write_text(toml, encoding="utf-8")
+        with pytest.raises(ConfigError) as exc_info:
+            read_config(start=tmp_path)
+        assert str(exc_info.value) == (
+            f"{(tmp_path / 'pyproject.toml').resolve().as_posix()}: {problem}"
+        )
+
+    def test_setting_of_the_wrong_type_in_uncoded_toml(self, *, tmp_path):
+        (tmp_path / ".uncoded.toml").write_text(
+            'source-roots = ["src", ["tests"]]\n', encoding="utf-8"
+        )
+        with pytest.raises(ConfigError) as exc_info:
+            read_config(start=tmp_path)
+        assert str(exc_info.value) == (
+            f"{(tmp_path / '.uncoded.toml').resolve().as_posix()}: "
+            "source-roots is not a list of strings"
+        )
+
+    @pytest.mark.parametrize(
+        "version", ["3.1", "3", "~=3.1.0", "==3.1.0", "3.1.0, <4", "v3.1.0", ""]
+    )
+    def test_required_version_that_is_not_one_exact_version(self, *, tmp_path, version):
+        (tmp_path / ".uncoded.toml").write_text(
+            f'required-version = "{version}"\n', encoding="utf-8"
+        )
+        with pytest.raises(ConfigError) as exc_info:
+            read_config(start=tmp_path)
+        assert str(exc_info.value) == (
+            f"{(tmp_path / '.uncoded.toml').resolve().as_posix()}: "
+            'required-version is not one exact version, such as "3.1.0"'
+        )
+
+    def test_required_version_that_is_a_list(self, *, tmp_path):
+        (tmp_path / ".uncoded.toml").write_text(
+            'required-version = ["3.1.0"]\n', encoding="utf-8"
+        )
+        with pytest.raises(ConfigError, match="required-version is not one exact"):
+            read_config(start=tmp_path)
+
+    @pytest.mark.parametrize(
+        "version",
+        [
+            "3.1.0",
+            "10.20.30",
+            "3.1.0rc1",
+            "3.1.0.post1",
+            "3.1.0.dev5+g1a2b3c4",
+            "3.1.0.dev5+g1a2b3c4.d20261028",
+            __version__,
+        ],
+    )
+    def test_required_version_that_is_one_exact_version(self, *, tmp_path, version):
+        (tmp_path / ".uncoded.toml").write_text(
+            f'required-version = "{version}"\n', encoding="utf-8"
+        )
+        assert read_config(start=tmp_path).required_version == version

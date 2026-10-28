@@ -1,12 +1,24 @@
 """Read uncoded configuration from pyproject.toml or .uncoded.toml."""
 
 import json
+import re
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
+from uncoded.read_helpers import failure_reason
+
 UNCODED_TOML = ".uncoded.toml"
+
+# One exact version, written as uncoded writes its own, since the required
+# version is compared with uncoded's own as a string: three release numbers and
+# any pre-release, post-release, development or local part, as in "3.1.0",
+# "3.1.0rc1" or "3.1.0.dev2+g1a2b3c4".
+_EXACT_VERSION = re.compile(
+    r"\d+\.\d+\.\d+(?:(?:a|b|rc)\d+)?(?:\.post\d+)?(?:\.dev\d+)?"
+    r"(?:\+[a-z0-9]+(?:\.[a-z0-9]+)*)?"
+)
 
 # The roots that uncoded init names, by kind, in the order it names them.
 _CONVENTIONAL_ROOTS: dict[Literal["source", "doc"], tuple[str, ...]] = {
@@ -32,18 +44,44 @@ class Config:
 def _pyproject_settings(*, pyproject_path: Path) -> dict | None:
     """Return the ``[tool.uncoded]`` table of ``pyproject_path``, or None.
 
-    Returns None when the file or the table is absent.
+    Returns None when the file or the table is absent. Raises
+    :exc:`ConfigError`, naming the file, when ``tool`` or ``tool.uncoded`` is
+    not a table.
     """
     data = _load_toml(path=pyproject_path)
-    return None if data is None else data.get("tool", {}).get("uncoded")
+    if data is None:
+        return None
+    tool = data.get("tool", {})
+    if not isinstance(tool, dict):
+        raise _config_file_error(path=pyproject_path, problem="tool is not a table")
+    settings = tool.get("uncoded")
+    if settings is not None and not isinstance(settings, dict):
+        raise _config_file_error(
+            path=pyproject_path, problem="tool.uncoded is not a table"
+        )
+    return settings
 
 
 def _load_toml(*, path: Path) -> dict | None:
-    """Parse the TOML file at ``path``, or return None when it is absent."""
-    if not path.exists():
+    """Parse the TOML file at ``path``, or return None when it is absent.
+
+    Raises :exc:`ConfigError`, naming the file, when the file cannot be read or
+    is not valid TOML.
+    """
+    try:
+        with path.open("rb") as f:
+            return tomllib.load(f)
+    except FileNotFoundError:
         return None
-    with path.open("rb") as f:
-        return tomllib.load(f)
+    except OSError as e:
+        raise _config_file_error(path=path, problem=failure_reason(error=e)) from e
+    except (tomllib.TOMLDecodeError, UnicodeDecodeError) as e:
+        raise _config_file_error(path=path, problem=f"not valid TOML: {e}") from e
+
+
+def _config_file_error(*, path: Path, problem: str) -> ConfigError:
+    """Return the error for the configuration file at ``path`` and its problem."""
+    return ConfigError(f"{path.as_posix()}: {problem}")
 
 
 def _config_file_at(*, directory: Path) -> tuple[Path, dict] | None:
@@ -52,7 +90,7 @@ def _config_file_at(*, directory: Path) -> tuple[Path, dict] | None:
     A ``pyproject.toml`` without a ``[tool.uncoded]`` table is not a
     configuration file, so the search passes over it. Skips directories named
     ``.uncoded``. Raises :exc:`ConfigError` when ``pyproject.toml`` and
-    ``.uncoded.toml`` both configure uncoded.
+    ``.uncoded.toml`` both configure uncoded, or when either cannot be used.
     """
     if directory.name == ".uncoded":
         return None
@@ -63,9 +101,8 @@ def _config_file_at(*, directory: Path) -> tuple[Path, dict] | None:
     if uncoded_toml_settings is not None:
         if pyproject_settings is not None:
             raise ConfigError(
-                "Ambiguous config: both pyproject.toml and .uncoded.toml "
-                "configure uncoded in the same directory. "
-                "Configure uncoded in one file only."
+                f"both {pyproject.as_posix()} and {uncoded_toml.as_posix()} "
+                "configure uncoded. Configure uncoded in one file only."
             )
         return uncoded_toml, uncoded_toml_settings
     if pyproject_settings is not None:
@@ -94,21 +131,53 @@ def find_config(*, start: Path) -> Config | None:
     Walks up from ``start`` looking for ``.uncoded.toml`` or a
     ``pyproject.toml`` with a ``[tool.uncoded]`` table. Returns None when no
     configuration file is found. Raises :exc:`ConfigError` when two files in
-    the same directory both configure uncoded.
+    the same directory both configure uncoded, or when a file that the search
+    reads cannot be used.
     """
     found = _find_config_file(start=start)
     if found is None:
         return None
     config_file, settings = found
-
-    source_roots = [Path(r) for r in settings.get("source-roots", [])]
-    doc_roots = [Path(r) for r in settings.get("doc-roots", [])]
-
     return Config(
         project_root=config_file.parent,
-        source_roots=source_roots,
-        doc_roots=doc_roots,
-        required_version=settings.get("required-version"),
+        source_roots=_roots(
+            settings=settings, setting="source-roots", config_file=config_file
+        ),
+        doc_roots=_roots(
+            settings=settings, setting="doc-roots", config_file=config_file
+        ),
+        required_version=_required_version(settings=settings, config_file=config_file),
+    )
+
+
+def _roots(*, settings: dict, setting: str, config_file: Path) -> list[Path]:
+    """Return the roots that ``setting`` lists, or no roots when it is unset.
+
+    Raises :exc:`ConfigError`, naming ``config_file``, when the setting is not
+    a list of strings.
+    """
+    roots = settings.get(setting, [])
+    if not isinstance(roots, list) or not all(isinstance(r, str) for r in roots):
+        raise _config_file_error(
+            path=config_file, problem=f"{setting} is not a list of strings"
+        )
+    return [Path(r) for r in roots]
+
+
+def _required_version(*, settings: dict, config_file: Path) -> str | None:
+    """Return the ``required-version`` setting, or None when it is unset.
+
+    Raises :exc:`ConfigError`, naming ``config_file``, when the setting is not
+    one exact version.
+    """
+    version = settings.get("required-version")
+    if version is None or (
+        isinstance(version, str) and _EXACT_VERSION.fullmatch(version)
+    ):
+        return version
+    raise _config_file_error(
+        path=config_file,
+        problem='required-version is not one exact version, such as "3.1.0"',
     )
 
 
