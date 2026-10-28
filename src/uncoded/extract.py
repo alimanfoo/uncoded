@@ -5,7 +5,11 @@ from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from uncoded.ast_helpers import assign_target_name, property_kind
+from uncoded.ast_helpers import (
+    assign_target_name,
+    property_kind,
+    top_level_definitions,
+)
 from uncoded.read_helpers import SkippedFile, failure_reason, read_source_text
 
 
@@ -47,20 +51,6 @@ def _extract_class_members(*, node: ast.ClassDef) -> ClassInfo:
     return ClassInfo(name=node.name, attributes=attributes, methods=methods)
 
 
-def _later_definitions(*, tree: ast.Module) -> dict[str, ast.stmt]:
-    definitions: dict[str, ast.stmt] = {}
-    for node in tree.body:
-        if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
-            definitions[node.name] = node
-        elif isinstance(node, (ast.Assign, ast.AnnAssign)):
-            name = assign_target_name(node=node)
-            if name:
-                definitions[name] = node
-        elif isinstance(node, ast.TypeAlias):
-            definitions[node.name.id] = node
-    return definitions
-
-
 def extract_module(*, source: str, rel_path: str) -> ModuleInfo:
     """Parse Python source and extract classes, functions, and constants.
 
@@ -72,7 +62,7 @@ def extract_module(*, source: str, rel_path: str) -> ModuleInfo:
     classes: list[ClassInfo] = []
     functions: list[str] = []
 
-    for name, node in _later_definitions(tree=tree).items():
+    for name, node in top_level_definitions(tree=tree).items():
         if isinstance(node, ast.ClassDef):
             classes.append(_extract_class_members(node=node))
         elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
