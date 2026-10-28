@@ -237,7 +237,7 @@ class TestQueryReferences:
             ),
             pytest.raises(
                 TyError,
-                match=r"^ty failed: uvx could not start: .*Permission denied$",
+                match=r"^uvx could not start: .*Permission denied$",
             ),
         ):
             _query_references(in_path=in_path, position=(0, 4), project_root=tmp_path)

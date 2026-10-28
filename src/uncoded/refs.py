@@ -114,7 +114,7 @@ def _run_ty(
             "uvx not found on PATH — install uv (https://docs.astral.sh/uv/)"
         ) from exc
     except OSError as exc:
-        raise TyError(f"ty failed: uvx could not start: {exc}") from exc
+        raise TyError(f"uvx could not start: {exc}") from exc
     try:
         return _run_exchange(
             stdin=cast("IO[bytes]", proc.stdin),
