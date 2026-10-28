@@ -189,6 +189,10 @@ in place.
 **Provenance marker.** Every generated file carries `GENERATED_MARKER`, defined
 in `src/uncoded/markers.py`. The tests verify that every output kind carries it.
 
+**Stub style.** Every stub is laid out in the standard stub style that ruff
+writes for `.pyi` files. The `stub-style` hook in `.pre-commit-config.yaml`
+checks the stubs of uncoded's own source.
+
 **Explicit encoding.** Every text read/write in the repository must pass
 `encoding=`. Configuration lives in `pyproject.toml` and
 `.github/workflows/ci.yml`.
