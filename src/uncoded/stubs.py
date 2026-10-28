@@ -96,25 +96,26 @@ def _render_symbol(*, symbol: Symbol) -> list[str]:
     return [_render_line(symbol=symbol)]
 
 
-def _block_kind(*, symbol: Symbol) -> str | None:
-    """Return the kind of a one-line definition, or None for a class with members.
-
-    Consecutive one-line definitions of one kind share a block.
-    """
+def _block_kind(*, symbol: Symbol) -> str:
+    """Return the kind of a symbol, for consecutive one-line definitions to share."""
     if isinstance(symbol, ClassSymbol):
-        return None if symbol.members else "class"
+        return "class"
     if isinstance(symbol, FunctionSymbol):
         return "function"
     return "assignment"
 
 
 def _symbol_blocks(*, symbols: list[Symbol]) -> list[list[str]]:
-    """Render symbols in order as blocks of stub lines."""
+    """Render symbols in order as blocks of stub lines.
+
+    Consecutive one-line definitions of one kind share a block. Each class with
+    members is a block of its own.
+    """
     blocks: list[list[str]] = []
     previous_kind = None
     for symbol in symbols:
-        kind = _block_kind(symbol=symbol)
         lines = _render_symbol(symbol=symbol)
+        kind = _block_kind(symbol=symbol) if len(lines) == 1 else None
         if kind is not None and kind == previous_kind:
             blocks[-1].extend(lines)
         else:
