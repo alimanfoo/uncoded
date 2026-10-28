@@ -397,7 +397,7 @@ class TestExtractPythonFile:
         module = _extract_python_file(source=source, rel_path="pkg/mod.py")
         assert _names(symbols=module.symbols) == ["public", "_private"]
 
-    def test_class_with_attributes_and_methods(self):
+    def test_class_with_assignments_and_methods(self):
         source = textwrap.dedent("""\
             class Record:
                 '''Stores a named value.'''
@@ -415,8 +415,8 @@ class TestExtractPythonFile:
         module = _extract_python_file(source=source, rel_path="pkg/models.py")
         cls = _class(python_file=module)
         assert cls.name == "Record"
-        attributes = [m for m in cls.members if isinstance(m, AssignmentSymbol)]
-        assert [(a.name, a.annotation) for a in attributes] == [
+        assignments = [m for m in cls.members if isinstance(m, AssignmentSymbol)]
+        assert [(a.name, a.annotation) for a in assignments] == [
             ("name", "str"),
             ("value", "int"),
             ("_internal", "float"),
@@ -606,7 +606,7 @@ class TestExtractPythonFile:
         module = _extract_python_file(source=source, rel_path="pkg/mod.py")
         assert _class(python_file=module).members == []
 
-    def test_class_with_unannotated_attribute(self):
+    def test_class_with_unannotated_assignment(self):
         source = textwrap.dedent("""\
             class Registry:
                 items = []
@@ -620,7 +620,7 @@ class TestExtractPythonFile:
             ("count", "int", "0"),
         ]
 
-    def test_property_rendered_as_attribute(self):
+    def test_property_extracted_as_property(self):
         source = textwrap.dedent("""\
             class Config:
                 @property

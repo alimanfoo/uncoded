@@ -149,7 +149,7 @@ class TestRenderStub:
         assert "class Dog(Animal): ...\n" in _render_stub(python_file=module)
 
     def test_class_with_no_members_renders_body(self):
-        # A class with no attributes and no methods needs an explicit
+        # A class with no members needs an explicit
         # body so the rendered stub is valid Python.
         module = PythonFile(
             rel_path="pkg/mod.py",
@@ -159,7 +159,7 @@ class TestRenderStub:
         assert "class Sentinel: ...\n" in output
         compile(output, "pkg/mod.pyi", "exec")
 
-    def test_attribute_with_annotation(self):
+    def test_class_assignment_with_annotation(self):
         module = PythonFile(
             rel_path="pkg/mod.py",
             symbols=[
@@ -193,7 +193,7 @@ class TestRenderStub:
         module = PythonFile(rel_path="pkg/mod.py")
         assert _render_stub(python_file=module).endswith("\n")
 
-    def test_property_rendered_as_class_attribute(self):
+    def test_property_rendered_with_annotation(self):
         source = textwrap.dedent("""\
             class Config:
                 @property
@@ -265,7 +265,7 @@ class TestRenderStub:
         )
         assert "type UserId = int\n" in _render_stub(python_file=module)
 
-    def test_unannotated_class_attribute_rendered(self):
+    def test_unannotated_class_assignment_rendered(self):
         module = PythonFile(
             rel_path="pkg/mod.py",
             symbols=[
