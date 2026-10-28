@@ -138,11 +138,11 @@ measures.
     and
   - every parameter is keyword-only. Ruff's `too-many-positional-arguments`
     (PLR0917) with `max-positional-args = 0` checks it, in place of
-    dreamcatcher's script. It counts positional-only parameters too, so a
-    parameter that something outside uncoded passes by position needs a per-file
-    ignore with its reason. `src` has none today. Tests are not exempt: pytest
-    passes fixtures and parameters by name, so a test takes them after `*`, as
-    `def test_sync(*, tmp_path)`. This settles #219.
+    dreamcatcher's script. It counts positional-only parameters too. It exempts
+    a method marked `@override`, which keeps the signature of the method it
+    overrides, as `_CleanDumper.increase_indent` keeps PyYAML's. Tests are not
+    exempt: pytest passes fixtures and parameters by name, so a test takes them
+    after `*`, as `def test_sync(*, tmp_path)`. This settles #219.
 - **Fast readable tests.** The suite is fast and speaks the user's language.
   Transfers, with the bar at 60 seconds.
 - **Current tracker.** The tracker is current. Transfers. The baseline found
