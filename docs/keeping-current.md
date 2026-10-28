@@ -12,7 +12,7 @@ and fails the commit when it changes an installed skill file. Stale installed
 skill files then cannot be committed without anyone noticing.
 
 Add this entry to the `repos` list in `.pre-commit-config.yaml`, after any
-formatters that change indexed files. Replace `3.1.0` with the required version
+formatters that change indexed files. Replace `4.0.0` with the required version
 in the configuration file, since uncoded refuses to run at any other version:
 
 ```yaml title=".pre-commit-config.yaml"
@@ -20,7 +20,7 @@ in the configuration file, since uncoded refuses to run at any other version:
   hooks:
     - id: uncoded
       name: uncoded
-      entry: uvx uncoded@3.1.0 sync
+      entry: uvx uncoded@4.0.0 sync
       language: system
       always_run: true
       pass_filenames: false
