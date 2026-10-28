@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import subprocess
@@ -19,6 +20,12 @@ from uncoded.resolver import NamePath, resolve_name_position
 # `uncoded refs` reports. Before you raise it, compare `uncoded refs` output on
 # this repository under the old and the new version.
 TY_VERSION = "0.0.92"
+
+_TY_STOPPED = "ty failed: it stopped before it answered."
+
+
+class TyError(Exception):
+    """ty could not be started, or it failed before it answered."""
 
 
 @dataclass(frozen=True)
@@ -39,6 +46,7 @@ def find_refs(
     references, with project_root as its workspace, and returns results with
     1-indexed line/col sorted by (path, line, col). path is relative to the
     current working directory when possible; otherwise absolute.
+    Raises TyError when ty cannot be started or fails before it answers.
     Propagates SymbolNotFoundError from resolve_name_position. OSError,
     UnicodeDecodeError, and SyntaxError propagate from resolve_name_position
     and from read_source_text in the LSP exchange.
@@ -76,7 +84,7 @@ def _query_references(
             stderr=subprocess.DEVNULL,
         )
     except FileNotFoundError as exc:
-        raise RuntimeError(
+        raise TyError(
             "uvx not found on PATH — install uv (https://docs.astral.sh/uv/)"
         ) from exc
     try:
@@ -101,6 +109,10 @@ class _LSPLocation:
 
 
 def _terminate(*, proc: subprocess.Popen[bytes]) -> None:
+    # Closing ty's input flushes any message that ty never read, and the flush
+    # fails once ty has stopped.
+    with contextlib.suppress(OSError):
+        cast("IO[bytes]", proc.stdin).close()
     try:
         proc.wait(timeout=5)
     except subprocess.TimeoutExpired:
@@ -192,7 +204,9 @@ def _run_exchange(
 
     if "error" in response:
         error = response["error"]
-        raise RuntimeError(f"ty LSP error: {error.get('message', error)}")
+        raise TyError(
+            f"ty failed: it answered with an error: {error.get('message', error)}"
+        )
 
     return [
         _LSPLocation(
@@ -206,8 +220,11 @@ def _run_exchange(
 
 def _write_message(*, stream: IO[bytes], msg: dict) -> None:
     data = json.dumps(msg).encode("utf-8")
-    stream.write(f"Content-Length: {len(data)}\r\n\r\n".encode("ascii") + data)
-    stream.flush()
+    try:
+        stream.write(f"Content-Length: {len(data)}\r\n\r\n".encode("ascii") + data)
+        stream.flush()
+    except OSError as exc:
+        raise TyError(_TY_STOPPED) from exc
 
 
 def _read_message(*, stream: IO[bytes]) -> dict:
@@ -215,10 +232,13 @@ def _read_message(*, stream: IO[bytes]) -> dict:
     while not headers.endswith(b"\r\n\r\n"):
         ch = stream.read(1)
         if not ch:
-            raise RuntimeError("ty closed stdout unexpectedly")
+            raise TyError(_TY_STOPPED)
         headers += ch
-    length = int(headers.split(b"\r\n")[0].split(b":", 1)[1].strip())
-    return json.loads(stream.read(length).decode("utf-8"))
+    try:
+        length = int(headers.split(b"\r\n")[0].split(b":", 1)[1].strip())
+        return json.loads(stream.read(length).decode("utf-8"))
+    except (IndexError, ValueError) as exc:
+        raise TyError("ty failed: it sent a message that is not valid LSP.") from exc
 
 
 def _read_response(*, stream: IO[bytes], request_id: int) -> dict:

@@ -1229,14 +1229,26 @@ class TestRefsCommand:
 
         assert find_refs.call_args.kwargs["project_root"] == tmp_path.resolve()
 
-    def test_lsp_failure_exits_one(self, *, tmp_path, monkeypatch, capsys):
+    def test_ty_failure_is_not_blamed_on_the_file(
+        self, *, tmp_path, monkeypatch, capsys, stand_in_for_ty
+    ):
         _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "m.py").write_text("def foo(): pass\n", encoding="utf-8")
+        # A write to the input of a ty that has stopped reading fails with an
+        # OSError, the kind of error that a file which cannot be read raises.
+        stand_in_for_ty(
+            script="""
+            read_message()
+            os.close(0)
+            send(INITIALIZE_RESPONSE)
+            """
+        )
 
-        with mock.patch.object(cli, "find_refs", side_effect=RuntimeError("ty error")):
-            assert _refs(monkeypatch=monkeypatch, name_path="foo", in_path="m.py") == 1
+        assert _refs(monkeypatch=monkeypatch, name_path="foo", in_path="m.py") == 1
 
-        assert "ty error" in capsys.readouterr().err
+        captured = capsys.readouterr()
+        assert captured.out == ""
+        assert captured.err == "Error: ty failed: it stopped before it answered.\n"
 
 
 def _init_doc_repo(*, tmp_path, monkeypatch, doc_roots=("docs",)):

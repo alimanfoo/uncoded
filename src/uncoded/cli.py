@@ -22,7 +22,7 @@ from uncoded.extract import extract_modules, read_source_files
 from uncoded.markers import GENERATED_MARKER
 from uncoded.namespace_map import build_map, render_map
 from uncoded.read_helpers import SkippedFile
-from uncoded.refs import find_refs
+from uncoded.refs import TyError, find_refs
 from uncoded.resolver import NamePath, SymbolNotFoundError, UnsupportedNamePathError
 from uncoded.skill import SKILL_ROOTS, agent_instructions, sync_skills
 from uncoded.stubs import build_stubs, remove_all_stubs
@@ -307,7 +307,7 @@ def _refs(*, config: Config, name_path: str, in_path: str) -> int:
     Returns 1 if in_path is outside the project directory, if name_path is
     unsupported, if name_path is not present in the file, if the file cannot
     be read (missing, unreadable, or undecodable), if the source has a syntax
-    error, or if the reference lookup fails.
+    error, or if ty fails.
     """
     try:
         refs = find_refs(
@@ -315,7 +315,7 @@ def _refs(*, config: Config, name_path: str, in_path: str) -> int:
             in_path=_project_file(in_path=in_path, project_root=config.project_root),
             project_root=config.project_root,
         )
-    except RuntimeError as e:
+    except TyError as e:
         print(f"Error: {e}", file=sys.stderr)
         return 1
     except _LOOKUP_ERRORS as e:

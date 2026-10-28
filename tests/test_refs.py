@@ -10,6 +10,7 @@ import pytest
 from uncoded.refs import (
     TY_VERSION,
     Reference,
+    TyError,
     _LSPLocation,
     _path_for_display,
     _query_references,
@@ -215,13 +216,13 @@ class TestQueryReferences:
             _LSPLocation(path=pkg / "b.py", line=2, character=8),
         ]
 
-    def test_uvx_not_found_raises_runtime_error(self, *, tmp_path):
+    def test_uvx_not_found_raises_ty_error(self, *, tmp_path):
         in_path = tmp_path / "m.py"
         in_path.write_text("def foo(): pass\n", encoding="utf-8")
 
         with (
             mock.patch("uncoded.refs.subprocess.Popen", side_effect=FileNotFoundError),
-            pytest.raises(RuntimeError, match="uvx not found"),
+            pytest.raises(TyError, match="uvx not found"),
         ):
             _query_references(in_path=in_path, position=(0, 4), project_root=tmp_path)
 
@@ -289,7 +290,9 @@ class TestRunExchange:
             _shutdown_response(),
         )
 
-        with pytest.raises(RuntimeError, match="ty LSP error"):
+        with pytest.raises(
+            TyError, match=r"^ty failed: it answered with an error: not open$"
+        ):
             _run_exchange(
                 stdin=io.BytesIO(),
                 stdout=stdout,
@@ -339,9 +342,59 @@ class TestRunExchange:
         assert refs == []
 
 
+class TestTyFailures:
+    """uncoded refs with a stand-in for ty that fails."""
+
+    def _query(self, *, tmp_path):
+        in_path = tmp_path / "m.py"
+        in_path.write_text("def foo(): pass\n", encoding="utf-8")
+        return _query_references(
+            in_path=in_path, position=(0, 4), project_root=tmp_path
+        )
+
+    def test_ty_that_exits_at_once(self, *, tmp_path, stand_in_for_ty):
+        stand_in_for_ty(script="sys.exit(1)")
+
+        with pytest.raises(
+            TyError, match=r"^ty failed: it stopped before it answered\.$"
+        ):
+            self._query(tmp_path=tmp_path)
+
+    # Closing ty's input when the exchange ends must not leave a failed flush
+    # for the garbage collector to report.
+    @pytest.mark.filterwarnings("error::pytest.PytestUnraisableExceptionWarning")
+    def test_ty_that_stops_reading(self, *, tmp_path, stand_in_for_ty):
+        stand_in_for_ty(
+            script="""
+            read_message()
+            os.close(0)
+            send(INITIALIZE_RESPONSE)
+            """
+        )
+
+        with pytest.raises(
+            TyError, match=r"^ty failed: it stopped before it answered\.$"
+        ):
+            self._query(tmp_path=tmp_path)
+
+    def test_ty_that_sends_invalid_message(self, *, tmp_path, stand_in_for_ty):
+        stand_in_for_ty(
+            script="""
+            read_message()
+            send(b"\\xff")
+            """
+        )
+
+        with pytest.raises(
+            TyError, match=r"^ty failed: it sent a message that is not valid LSP\.$"
+        ):
+            self._query(tmp_path=tmp_path)
+
+
 class TestTerminate:
     def test_kills_on_timeout(self):
         proc = mock.Mock(spec=subprocess.Popen)
+        proc.stdin = io.BytesIO()
         proc.wait.side_effect = [subprocess.TimeoutExpired("cmd", 5), None]
 
         _terminate(proc=proc)
@@ -352,8 +405,21 @@ class TestTerminate:
 
 class TestReadMessage:
     def test_raises_on_closed_stream(self):
-        with pytest.raises(RuntimeError, match="closed"):
+        with pytest.raises(TyError, match="stopped before it answered"):
             _read_message(stream=io.BytesIO(b""))
+
+    @pytest.mark.parametrize(
+        "data",
+        [
+            pytest.param(b"Content-Length 2\r\n\r\n{}", id="header-without-colon"),
+            pytest.param(b"Content-Length: x\r\n\r\n{}", id="length-not-a-number"),
+            pytest.param(b"Content-Length: 1\r\n\r\n\xff", id="body-not-utf-8"),
+            pytest.param(b"Content-Length: 1\r\n\r\n{", id="body-not-json"),
+        ],
+    )
+    def test_raises_on_invalid_message(self, *, data):
+        with pytest.raises(TyError, match="not valid LSP"):
+            _read_message(stream=io.BytesIO(data))
 
     def test_parses_framed_message(self):
         msg = {"jsonrpc": "2.0", "id": 1, "result": {}}
