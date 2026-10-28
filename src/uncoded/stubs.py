@@ -341,14 +341,14 @@ def _generate_stubs(*, files: Iterable[tuple[str, str]]) -> dict[Path, str]:
 def _remove_orphan_stubs(
     *,
     expected: set[Path],
-    abs_stubs_root: Path,
+    stubs_dir: Path,
     project_root: Path,
     check: bool,
 ) -> int:
     changes = 0
     # The walk finishes before the first removal, because remove_file also
     # removes the directories that it leaves empty.
-    for existing in list(abs_stubs_root.rglob("*.pyi")):
+    for existing in sorted(stubs_dir.rglob("*.pyi")):
         if existing.resolve() in expected:
             continue
         display = existing.relative_to(project_root)
@@ -356,66 +356,18 @@ def _remove_orphan_stubs(
     return changes
 
 
-def _write_stubs(
-    *,
-    stubs: dict[Path, str],
-    source_root: Path,
-    output_dir: Path,
-    project_root: Path,
-    check: bool,
-) -> int:
-    """Write each expected stub and remove orphans."""
-    changes = 0
-    expected: set[Path] = set()
-    for rel_stub_path, content in stubs.items():
-        stub_path = output_dir / rel_stub_path
-        if sync_file(
-            path=stub_path, content=content, project_root=project_root, check=check
-        ):
-            changes += 1
-        expected.add((project_root / stub_path).resolve())
-    source_rel = source_root.resolve().relative_to(project_root)
-    changes += _remove_orphan_stubs(
-        expected=expected,
-        abs_stubs_root=project_root / output_dir / source_rel,
-        project_root=project_root,
-        check=check,
-    )
-    return changes
-
-
-def remove_all_stubs(*, output_dir: Path, project_root: Path, check: bool) -> int:
-    """Remove all .pyi stubs under output_dir.
-
-    Removes every .pyi file under ``output_dir``, reporting each as
-    apply/check mode dictates. In check mode, reports prospective
-    removals without touching disk. Returns the number of files removed
-    (or that would be).
-    """
-    project_root = project_root.resolve()
-    changes = 0
-    for pyi_file in sorted((project_root / output_dir).rglob("*.pyi")):
-        display = pyi_file.relative_to(project_root)
-        changes += remove_file(path=display, project_root=project_root, check=check)
-
-    return changes
-
-
-def build_stubs(
+def sync_stubs(
     *,
     files: Iterable[tuple[str, str]],
-    source_root: Path,
     output_dir: Path,
     project_root: Path,
     check: bool,
 ) -> int:
-    """Sync stub files for all symbols under source_root, removing any orphans.
+    """Write the stub of each file in ``files``, and remove every other stub.
 
-    The single stubs pipeline path: shared by ``cli._sync`` and the
-    test suite so both callers run the same ``_generate_stubs`` →
-    ``_write_stubs`` sequence. ``files`` holds the readable files from
-    :func:`read_source_files`, read once so callers that also need the
-    files for other steps (the namespace map) do not walk source twice.
+    ``files`` holds ``(source, rel_path)`` pairs from :func:`read_source_files`.
+    Every ``.pyi`` file under ``output_dir`` that ``files`` does not generate is
+    removed, so ``files`` holds every file that keeps a stub.
 
     ``project_root`` is the anchor for both ends of the pipeline:
     source paths in ``files`` are already relative to it (so each
@@ -423,7 +375,7 @@ def build_stubs(
     and the namespace map), and each stub is written to
     ``project_root / output_dir / <rel>``. The same ``project_root``
     must therefore be passed to :func:`read_source_files` (for
-    relativising) and to ``build_stubs`` (for writing); mismatched
+    relativising) and to ``sync_stubs`` (for writing); mismatched
     anchors silently produce wrong-looking stub paths.
 
     When ``check=True``, the on-disk tree is not mutated; instead,
@@ -431,11 +383,18 @@ def build_stubs(
     the number of changes (or prospective changes).
     """
     project_root = project_root.resolve()
-    stubs = _generate_stubs(files=files)
-    return _write_stubs(
-        stubs=stubs,
-        source_root=source_root,
-        output_dir=output_dir,
+    changes = 0
+    expected: set[Path] = set()
+    for rel_stub_path, content in _generate_stubs(files=files).items():
+        stub_path = output_dir / rel_stub_path
+        changes += sync_file(
+            path=stub_path, content=content, project_root=project_root, check=check
+        )
+        expected.add((project_root / stub_path).resolve())
+    changes += _remove_orphan_stubs(
+        expected=expected,
+        stubs_dir=project_root / output_dir,
         project_root=project_root,
         check=check,
     )
+    return changes
