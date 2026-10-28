@@ -59,6 +59,13 @@ includes it. Each entry links the pull request that made the change.
   misled. A `pyproject.toml` on the way up to the configuration file that is not
   valid TOML stops the command too.
   ([#326](https://github.com/alimanfoo/uncoded/pull/326))
+- `uncoded sync` and `uncoded check` check every root before they write
+  anything. A doc root that could not be used was found only after the code
+  index and the installed skill files were written. The message names the
+  configuration file, the setting and the root, and says whether the root does
+  not exist, is the wrong kind, or is outside the project directory. A root that
+  did not exist was reported as "not a directory".
+  ([#328](https://github.com/alimanfoo/uncoded/pull/328))
 - `uncoded body` and `uncoded refs` stop when two files in one directory both
   configure uncoded, as the other commands already do.
   ([#322](https://github.com/alimanfoo/uncoded/pull/322))
