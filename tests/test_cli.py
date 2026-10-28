@@ -12,6 +12,7 @@ from pathlib import Path
 from unittest import mock
 
 import pytest
+import yaml
 
 from uncoded import __version__, cli
 from uncoded.skill import SKILL_ROOTS, SKILLS, _skill_path
@@ -63,6 +64,17 @@ def _run(*, monkeypatch, arguments):
     return cli.main()
 
 
+def _make_index_stale(*, tmp_path, monkeypatch):
+    """Sync a repo, then change, add and delete one Python file each."""
+    _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+    (tmp_path / "src" / "foo.py").write_text("def foo(): pass\n", encoding="utf-8")
+    (tmp_path / "src" / "bar.py").write_text("def bar(): pass\n", encoding="utf-8")
+    _run(monkeypatch=monkeypatch, arguments=["sync"])
+    (tmp_path / "src" / "foo.py").write_text("def foo(x): pass\n", encoding="utf-8")
+    (tmp_path / "src" / "new.py").write_text("def new(): pass\n", encoding="utf-8")
+    (tmp_path / "src" / "bar.py").unlink()
+
+
 class TestSyncApplyMode:
     def test_syncs_code_navigation_artefacts(self, *, tmp_path, monkeypatch):
         _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
@@ -103,6 +115,22 @@ class TestSyncApplyMode:
             (tmp_path / p).stat().st_mtime_ns for p in _SOURCE_SKILL_PATHS
         ] == skill_mtimes
 
+    def test_lists_each_file_that_it_writes_updates_or_removes(
+        self, *, tmp_path, monkeypatch, capsys
+    ):
+        _make_index_stale(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        capsys.readouterr()
+
+        assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 0
+
+        assert capsys.readouterr().out == (
+            "Updated .uncoded/namespace.yaml\n"
+            "Updated .uncoded/stubs/src/foo.pyi\n"
+            "Wrote .uncoded/stubs/src/new.pyi\n"
+            "Removed .uncoded/stubs/src/bar.pyi\n"
+        )
+        assert not (tmp_path / ".uncoded" / "stubs" / "src" / "bar.pyi").exists()
+
     def test_error_when_no_config_file_points_to_init(
         self, *, tmp_path, monkeypatch, capsys
     ):
@@ -115,43 +143,24 @@ class TestSyncApplyMode:
         assert "set uncoded up with uncoded init" in err
         assert str(tmp_path) not in err
 
-    def test_error_when_configuration_names_no_roots(
+    def test_writes_back_a_hand_edited_skill_file(
         self, *, tmp_path, monkeypatch, capsys
     ):
-        # An empty [tool.uncoded] table names no roots. The message must name
-        # both configurable keys and both configuration file options.
-        (tmp_path / "pyproject.toml").write_text("[tool.uncoded]\n", encoding="utf-8")
-        monkeypatch.chdir(tmp_path)
+        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        _run(monkeypatch=monkeypatch, arguments=["sync"])
+        skill_path = _SOURCE_SKILL_PATHS[0]
+        generated = (tmp_path / skill_path).read_text(encoding="utf-8")
+        (tmp_path / skill_path).write_text("Our own wording.\n", encoding="utf-8")
+        capsys.readouterr()
 
-        assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 1
-
-        err = capsys.readouterr().err
-        assert "nothing to index" in err
-        assert "source-roots" in err
-        assert "doc-roots" in err
-        assert ".uncoded.toml" in err
-
-    def test_error_when_both_config_files_configure_uncoded(
-        self, *, tmp_path, monkeypatch, capsys
-    ):
-        # pyproject.toml with [tool.uncoded] + sibling .uncoded.toml:
-        # ambiguous config — must produce a clear error naming both files.
-        (tmp_path / "pyproject.toml").write_text(
-            '[project]\nname = "demo"\n\n[tool.uncoded]\nsource-roots = ["src"]\n',
-            encoding="utf-8",
+        assert _run(monkeypatch=monkeypatch, arguments=["check"]) == 1
+        assert capsys.readouterr().out.startswith(
+            f"Would update {skill_path.as_posix()}\n"
         )
-        (tmp_path / ".uncoded.toml").write_text(
-            'doc-roots = ["docs"]\n', encoding="utf-8"
-        )
-        (tmp_path / "src").mkdir()
-        monkeypatch.chdir(tmp_path)
 
-        assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 1
-
-        err = capsys.readouterr().err
-        assert "configure uncoded" in err
-        assert "pyproject.toml" in err
-        assert ".uncoded.toml" in err
+        assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 0
+        assert capsys.readouterr().out == f"Updated {skill_path.as_posix()}\n"
+        assert (tmp_path / skill_path).read_text(encoding="utf-8") == generated
 
     def test_skipped_files_are_warned_about_and_counted(
         self, *, tmp_path, monkeypatch, capsys
@@ -202,6 +211,40 @@ class TestSyncApplyMode:
         assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 0
 
         assert capsys.readouterr().err == ""
+
+    def test_indexes_a_linked_file_and_does_not_follow_a_linked_directory(
+        self, *, tmp_path, monkeypatch
+    ):
+        outside = tmp_path / "outside"
+        (outside / "pkg").mkdir(parents=True)
+        (outside / "guide").mkdir()
+        (outside / "linked.py").write_text("def linked(): pass\n", encoding="utf-8")
+        (outside / "pkg" / "deep.py").write_text("def deep(): pass\n", encoding="utf-8")
+        (outside / "linked.md").write_text("# Linked\n", encoding="utf-8")
+        (outside / "guide" / "deep.md").write_text("# Deep\n", encoding="utf-8")
+        project = tmp_path / "project"
+        (project / "src").mkdir(parents=True)
+        (project / "docs").mkdir()
+        (project / ".uncoded.toml").write_text(
+            'source-roots = ["src"]\ndoc-roots = ["docs"]\n', encoding="utf-8"
+        )
+        (project / "src" / "linked.py").symlink_to(outside / "linked.py")
+        (project / "src" / "pkg").symlink_to(outside / "pkg", target_is_directory=True)
+        (project / "docs" / "linked.md").symlink_to(outside / "linked.md")
+        (project / "docs" / "guide").symlink_to(
+            outside / "guide", target_is_directory=True
+        )
+        monkeypatch.chdir(project)
+
+        assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 0
+
+        index = project / ".uncoded"
+        assert yaml.safe_load(
+            (index / "namespace.yaml").read_text(encoding="utf-8")
+        ) == {"src/": {"linked.py": {"linked": None}}}
+        assert yaml.safe_load((index / "docs.yaml").read_text(encoding="utf-8")) == {
+            "docs/": {"linked.md": {"Linked": None}}
+        }
 
     def test_anchors_reads_and_writes_at_project_root_when_cwd_is_subdir(
         self, *, tmp_path, monkeypatch
@@ -330,37 +373,36 @@ class TestSyncCheckMode:
         assert _run(monkeypatch=monkeypatch, arguments=["check"]) == 1
         assert not ignore_path.exists()
 
-    def test_returns_one_when_source_changes_after_sync(self, *, tmp_path, monkeypatch):
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
-        (tmp_path / "src" / "foo.py").write_text(
-            "def hello(): pass\n", encoding="utf-8"
-        )
-        _run(monkeypatch=monkeypatch, arguments=["sync"])
-        # Signature changed: stub and namespace map are now stale.
-        (tmp_path / "src" / "foo.py").write_text(
-            "def hello(name: str) -> str: pass\n", encoding="utf-8"
-        )
-        stub = tmp_path / ".uncoded" / "stubs" / "src" / "foo.pyi"
-        stub_before = stub.read_text(encoding="utf-8")
+    def test_lists_each_file_that_sync_would_write_update_or_remove(
+        self, *, tmp_path, monkeypatch, capsys
+    ):
+        _make_index_stale(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        before = _contents(root=tmp_path)
+        capsys.readouterr()
 
         assert _run(monkeypatch=monkeypatch, arguments=["check"]) == 1
-        # Stale content is preserved — check mode must not mutate.
-        assert stub.read_text(encoding="utf-8") == stub_before
 
-    def test_returns_one_when_source_file_deleted(self, *, tmp_path, monkeypatch):
+        assert _contents(root=tmp_path) == before
+        assert capsys.readouterr().out == (
+            "Would update .uncoded/namespace.yaml\n"
+            "Would update .uncoded/stubs/src/foo.pyi\n"
+            "Would write .uncoded/stubs/src/new.pyi\n"
+            "Would remove .uncoded/stubs/src/bar.pyi\n"
+            "Index out of date: 4 file(s) would change.\n"
+        )
+
+    def test_returns_zero_from_a_subdirectory_when_current(
+        self, *, tmp_path, monkeypatch, capsys
+    ):
         _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
-        (tmp_path / "src" / "foo.py").write_text(
-            "def hello(): pass\n", encoding="utf-8"
-        )
-        (tmp_path / "src" / "bar.py").write_text(
-            "def goodbye(): pass\n", encoding="utf-8"
-        )
+        (tmp_path / "src" / "foo.py").write_text("def foo(): pass\n", encoding="utf-8")
         _run(monkeypatch=monkeypatch, arguments=["sync"])
+        monkeypatch.chdir(tmp_path / "src")
+        capsys.readouterr()
 
-        (tmp_path / "src" / "bar.py").unlink()
-        assert _run(monkeypatch=monkeypatch, arguments=["check"]) == 1
-        # Orphan stub must still be present after check.
-        assert (tmp_path / ".uncoded" / "stubs" / "src" / "bar.pyi").exists()
+        assert _run(monkeypatch=monkeypatch, arguments=["check"]) == 0
+
+        assert capsys.readouterr().out == "Index is up to date.\n"
 
     def test_error_still_returns_one(self, *, tmp_path, monkeypatch, capsys):
         # Config error: check mode should report non-zero the same as apply mode.
@@ -403,15 +445,6 @@ class TestMainDispatch:
         monkeypatch.setattr(sys, "argv", ["uncoded", "check"])
         assert cli.main() == 0
 
-    def test_no_subcommand_is_an_error(self, *, tmp_path, monkeypatch):
-        # Argparse enforces subparsers.required=True and exits with code 2
-        # when no subcommand is given. This keeps the CLI honest: there is
-        # no silent default, so every invocation names its operation.
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
-        monkeypatch.setattr(sys, "argv", ["uncoded"])
-        with pytest.raises(SystemExit):
-            cli.main()
-
     def test_version_flag_prints_version(self, *, monkeypatch, capsys):
         monkeypatch.setattr(sys, "argv", ["uncoded", "--version"])
         with pytest.raises(SystemExit) as exc_info:
@@ -419,11 +452,32 @@ class TestMainDispatch:
         assert exc_info.value.code == 0
         assert capsys.readouterr().out == f"uncoded {__version__}\n"
 
-    def test_unknown_subcommand_is_an_error(self, *, tmp_path, monkeypatch):
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
-        monkeypatch.setattr(sys, "argv", ["uncoded", "nonsense"])
-        with pytest.raises(SystemExit):
-            cli.main()
+
+class TestCommandUsedWrongly:
+    @pytest.mark.parametrize(
+        "arguments",
+        [
+            pytest.param([], id="no command"),
+            pytest.param(["nonsense"], id="unknown command"),
+            pytest.param(["check", "--bogus"], id="unknown option"),
+            pytest.param(["sync", "src/foo.py"], id="argument it does not take"),
+            pytest.param(["body", "fn"], id="body without --in"),
+            pytest.param(["refs", "fn"], id="refs without --in"),
+        ],
+    )
+    def test_prints_usage_and_exits_two(
+        self, *, tmp_path, monkeypatch, capsys, arguments
+    ):
+        # Outside a project, so the usage comes before any search for one.
+        monkeypatch.chdir(tmp_path)
+
+        with pytest.raises(SystemExit) as exc_info:
+            _run(monkeypatch=monkeypatch, arguments=arguments)
+
+        assert exc_info.value.code == 2
+        captured = capsys.readouterr()
+        assert captured.out == ""
+        assert captured.err.startswith("usage: uncoded")
 
 
 _BODY = ["body", "fn", "--in", "src/foo.py"]
@@ -437,6 +491,8 @@ _RUNS = [
     (["refs", "fn", "--in", "src/foo.py"], 0),
 ]
 _COMMANDS = [command for command, _status in _RUNS]
+# Every command, uncoded init included.
+_EVERY_COMMAND = [["init"], *_COMMANDS]
 
 
 def _init_versioned_repo(*, tmp_path, monkeypatch, required_version):
@@ -452,31 +508,30 @@ def _init_versioned_repo(*, tmp_path, monkeypatch, required_version):
     monkeypatch.chdir(tmp_path)
 
 
-def _tree(*, root):
-    return sorted(p.relative_to(root) for p in root.rglob("*"))
-
-
 def _contents(*, root):
-    """Return the contents of every file beneath ``root``, keyed by its path."""
-    return {p.relative_to(root): p.read_bytes() for p in root.rglob("*") if p.is_file()}
+    """Map every path beneath ``root`` to its bytes, or to None for a directory."""
+    return {
+        p.relative_to(root): p.read_bytes() if p.is_file() else None
+        for p in root.rglob("*")
+    }
 
 
 class TestRequiredVersion:
-    @pytest.mark.parametrize("command", _COMMANDS)
+    @pytest.mark.parametrize("command", _EVERY_COMMAND)
     def test_refuses_at_another_version(
         self, *, tmp_path, monkeypatch, capsys, command
     ):
         _init_versioned_repo(
             tmp_path=tmp_path, monkeypatch=monkeypatch, required_version="0.0.0"
         )
-        before = _tree(root=tmp_path)
+        before = _contents(root=tmp_path)
         monkeypatch.setattr(sys, "argv", ["uncoded", *command])
 
         with mock.patch.object(cli, "find_refs") as find_refs:
             assert cli.main() == 1
 
         find_refs.assert_not_called()
-        assert _tree(root=tmp_path) == before
+        assert _contents(root=tmp_path) == before
         captured = capsys.readouterr()
         assert captured.out == ""
         assert captured.err == (
@@ -504,18 +559,23 @@ class TestRequiredVersion:
         assert find_refs.called == (command[0] == "refs")
         assert capsys.readouterr().err == ""
 
-    def test_two_configuration_files_refuse_body(
-        self, *, tmp_path, monkeypatch, capsys
-    ):
+
+class TestTwoConfigurationFiles:
+    @pytest.mark.parametrize("command", _EVERY_COMMAND)
+    def test_every_command_refuses(self, *, tmp_path, monkeypatch, capsys, command):
         _init_versioned_repo(
             tmp_path=tmp_path, monkeypatch=monkeypatch, required_version=None
         )
         (tmp_path / "pyproject.toml").write_text(
             '[tool.uncoded]\nsource-roots = ["src"]\n', encoding="utf-8"
         )
-        monkeypatch.setattr(sys, "argv", ["uncoded", *_BODY])
+        before = _contents(root=tmp_path)
 
-        assert cli.main() == 1
+        with mock.patch.object(cli, "find_refs") as find_refs:
+            assert _run(monkeypatch=monkeypatch, arguments=command) == 1
+
+        find_refs.assert_not_called()
+        assert _contents(root=tmp_path) == before
         captured = capsys.readouterr()
         assert captured.out == ""
         assert captured.err == (
@@ -523,6 +583,45 @@ class TestRequiredVersion:
             f"{(tmp_path / '.uncoded.toml').resolve().as_posix()} configure uncoded. "
             "Configure uncoded in one file only.\n"
         )
+
+
+class TestConfigurationThatNamesNoRoots:
+    @pytest.mark.parametrize("command", [["init"], ["sync"], ["check"]])
+    def test_stops_before_writing(self, *, tmp_path, monkeypatch, capsys, command):
+        # A misspelt setting is ignored, so it names no root.
+        (tmp_path / ".uncoded.toml").write_text(
+            'source_roots = ["src"]\n', encoding="utf-8"
+        )
+        (tmp_path / "src").mkdir()
+        monkeypatch.chdir(tmp_path)
+        before = _contents(root=tmp_path)
+
+        assert _run(monkeypatch=monkeypatch, arguments=command) == 1
+
+        assert _contents(root=tmp_path) == before
+        captured = capsys.readouterr()
+        assert "Commit" not in captured.out
+        assert captured.err == (
+            "Error: nothing to index. Add source-roots or doc-roots to "
+            "[tool.uncoded] in pyproject.toml, or as top-level keys in "
+            ".uncoded.toml.\n"
+        )
+
+    @pytest.mark.parametrize("command", ["body", "refs"])
+    def test_body_and_refs_still_work(self, *, tmp_path, monkeypatch, capsys, command):
+        (tmp_path / ".uncoded.toml").write_text(
+            'source_roots = ["src"]\n', encoding="utf-8"
+        )
+        (tmp_path / "m.py").write_text("def fn():\n    pass\n", encoding="utf-8")
+        monkeypatch.chdir(tmp_path)
+
+        with mock.patch.object(cli, "find_refs", return_value=[]):
+            status = _run(
+                monkeypatch=monkeypatch, arguments=[command, "fn", "--in", "m.py"]
+            )
+
+        assert status == 0
+        assert capsys.readouterr().err == ""
 
 
 # One configuration file of each kind that cannot be used, with its problem.
@@ -537,7 +636,7 @@ _UNUSABLE_CONFIGS = [
 
 
 class TestConfigFileThatCannotBeUsed:
-    @pytest.mark.parametrize("command", [["init"], *_COMMANDS])
+    @pytest.mark.parametrize("command", _EVERY_COMMAND)
     @pytest.mark.parametrize("unusable_config", _UNUSABLE_CONFIGS)
     def test_stops_with_one_line(
         self, *, tmp_path, monkeypatch, capsys, command, unusable_config
@@ -548,14 +647,14 @@ class TestConfigFileThatCannotBeUsed:
         )
         config_file = tmp_path / ".uncoded.toml"
         config_file.write_text(toml, encoding="utf-8")
-        before = _tree(root=tmp_path)
+        before = _contents(root=tmp_path)
         monkeypatch.setattr(sys, "argv", ["uncoded", *command])
 
         with mock.patch.object(cli, "find_refs") as find_refs:
             assert cli.main() == 1
 
         find_refs.assert_not_called()
-        assert _tree(root=tmp_path) == before
+        assert _contents(root=tmp_path) == before
         captured = capsys.readouterr()
         assert captured.out == ""
         assert captured.err == (
@@ -703,9 +802,18 @@ class TestInitCommand:
             monkeypatch=monkeypatch,
             roots=["src", "tests", "README.md", "AGENTS.md", "docs"],
         )
+        (tmp_path / "CLAUDE.md").write_text("# Claude\n", encoding="utf-8")
+        (tmp_path / "pyproject.toml").write_text(
+            '[project]\nname = "demo"\n', encoding="utf-8"
+        )
+        unedited = {
+            name: (tmp_path / name).read_bytes()
+            for name in ["AGENTS.md", "CLAUDE.md", "pyproject.toml"]
+        }
 
         assert _run(monkeypatch=monkeypatch, arguments=["init"]) == 0
 
+        assert {name: (tmp_path / name).read_bytes() for name in unedited} == unedited
         assert (tmp_path / ".uncoded.toml").read_text(encoding="utf-8") == (
             'source-roots = ["src", "tests"]\n'
             'doc-roots = ["README.md", "AGENTS.md", "docs"]\n'
@@ -717,6 +825,10 @@ class TestInitCommand:
             assert (tmp_path / skill_path).exists()
         out = capsys.readouterr().out
         assert "Commit the configuration file and the installed skill files" in out
+        assert (
+            "Without them, agents load the uncoded skills only when they choose to."
+            in out
+        )
         assert out.endswith(
             "## Before you start\n\n"
             "- Load the `uncoded-code-navigation` skill once per session, before "
@@ -790,7 +902,7 @@ class TestInitCommand:
 
         assert _run(monkeypatch=monkeypatch, arguments=["init"]) == 1
 
-        assert _tree(root=tmp_path) == [Path("lib")]
+        assert _contents(root=tmp_path) == {Path("lib"): None}
         captured = capsys.readouterr()
         assert captured.out == ""
         assert captured.err.startswith(
@@ -846,22 +958,12 @@ class TestInitCommand:
         with mock.patch.object(Path, "write_text", side_effect=failure):
             assert _run(monkeypatch=monkeypatch, arguments=["init"]) == 1
 
-        assert _tree(root=tmp_path) == [Path("src")]
+        assert _contents(root=tmp_path) == {Path("src"): None}
         captured = capsys.readouterr()
         assert captured.out == ""
         assert captured.err == (
             "Error: cannot write .uncoded.toml: Permission denied\n"
         )
-
-    def test_stops_when_the_sync_fails(self, *, tmp_path, monkeypatch, capsys):
-        _init_project(tmp_path=tmp_path, monkeypatch=monkeypatch, roots=["src"])
-        (tmp_path / ".uncoded.toml").write_text("", encoding="utf-8")
-
-        assert _run(monkeypatch=monkeypatch, arguments=["init"]) == 1
-
-        captured = capsys.readouterr()
-        assert "nothing to index" in captured.err
-        assert "Commit" not in captured.out
 
 
 class TestOutsideAProject:
@@ -874,13 +976,13 @@ class TestOutsideAProject:
             "def fn():\n    pass\n", encoding="utf-8"
         )
         monkeypatch.chdir(tmp_path)
-        before = _tree(root=tmp_path)
+        before = _contents(root=tmp_path)
 
         with mock.patch.object(cli, "find_refs") as find_refs:
             assert _run(monkeypatch=monkeypatch, arguments=command) == 1
 
         find_refs.assert_not_called()
-        assert _tree(root=tmp_path) == before
+        assert _contents(root=tmp_path) == before
         captured = capsys.readouterr()
         assert captured.out == ""
         assert captured.err == (
@@ -1042,6 +1144,31 @@ class TestBodyCommand:
         )
         assert capsys.readouterr().out == "def fn():\n    pass\n"
 
+    @pytest.mark.parametrize(
+        ("in_path", "body"),
+        [
+            pytest.param("m.py", "def fn():\n    pass\n", id="outside the roots"),
+            pytest.param(
+                ".uncoded/stubs/src/foo.pyi",
+                "def fn(x: int) -> int:\n    ...\n",
+                id="stub",
+            ),
+        ],
+    )
+    def test_reads_any_python_file_in_the_project(
+        self, *, tmp_path, monkeypatch, capsys, in_path, body
+    ):
+        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        (tmp_path / "src" / "foo.py").write_text(
+            "def fn(x: int) -> int:\n    return x\n", encoding="utf-8"
+        )
+        (tmp_path / "m.py").write_text("def fn():\n    pass\n", encoding="utf-8")
+        _run(monkeypatch=monkeypatch, arguments=["sync"])
+        capsys.readouterr()
+
+        assert _body(monkeypatch=monkeypatch, name_path="fn", in_path=in_path) == 0
+        assert capsys.readouterr().out == body
+
     def test_stdout_is_exact_body(self, *, tmp_path, monkeypatch, capsys):
         _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
         body = "def compute(x: int) -> int:\n    return x * 2\n"
@@ -1069,15 +1196,6 @@ class TestBodyCommand:
         assert "Error:" in err
         assert "'name'" in err
         assert "'Class/member'" in err
-
-    def test_missing_in_flag_exits_with_two(self, *, tmp_path, monkeypatch, capsys):
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
-
-        with pytest.raises(SystemExit) as exc:
-            _run(monkeypatch=monkeypatch, arguments=["body", "fn"])
-
-        assert exc.value.code == 2
-        assert capsys.readouterr().err != ""
 
 
 class TestRefsCommand:
@@ -1183,15 +1301,6 @@ class TestRefsCommand:
         assert "'name'" in err
         assert "'Class/member'" in err
 
-    def test_missing_in_flag_exits_with_two(self, *, tmp_path, monkeypatch, capsys):
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
-
-        with pytest.raises(SystemExit) as exc:
-            _run(monkeypatch=monkeypatch, arguments=["refs", "fn"])
-
-        assert exc.value.code == 2
-        assert capsys.readouterr().err != ""
-
     def test_unused_symbol_prints_only_its_definition(
         self, *, tmp_path, monkeypatch, capsys
     ):
@@ -1228,6 +1337,19 @@ class TestRefsCommand:
             assert _refs(monkeypatch=monkeypatch, name_path="foo", in_path="m.py") == 0
 
         assert find_refs.call_args.kwargs["project_root"] == tmp_path.resolve()
+
+    def test_missing_uvx_exits_one(self, *, tmp_path, monkeypatch, capsys):
+        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        (tmp_path / "m.py").write_text("def foo(): pass\n", encoding="utf-8")
+
+        with mock.patch("uncoded.refs.subprocess.Popen", side_effect=FileNotFoundError):
+            assert _refs(monkeypatch=monkeypatch, name_path="foo", in_path="m.py") == 1
+
+        captured = capsys.readouterr()
+        assert captured.out == ""
+        assert captured.err == (
+            "Error: uvx not found on PATH — install uv (https://docs.astral.sh/uv/)\n"
+        )
 
     def test_ty_failure_is_not_blamed_on_the_file(
         self, *, tmp_path, monkeypatch, capsys, stand_in_for_ty
@@ -1384,9 +1506,8 @@ class TestSyncDocRoots:
         for path in _SOURCE_SKILL_PATHS:
             assert not (tmp_path / path).exists()
 
-    def test_doc_root_removal_cleans_docs_yaml(self, *, tmp_path, monkeypatch):
+    def test_doc_root_removal_cleans_doc_artefacts(self, *, tmp_path, monkeypatch):
         # First sync with doc-roots; then drop them.
-        # docs.yaml must be removed.
         (tmp_path / "pyproject.toml").write_text(
             textwrap.dedent(
                 """\
@@ -1408,6 +1529,8 @@ class TestSyncDocRoots:
         _run(monkeypatch=monkeypatch, arguments=["sync"])
 
         assert (tmp_path / ".uncoded" / "docs.yaml").exists()
+        for path in _DOC_SKILL_PATHS:
+            assert (tmp_path / path).exists()
 
         # Drop doc-roots.
         (tmp_path / "pyproject.toml").write_text(
@@ -1424,6 +1547,8 @@ class TestSyncDocRoots:
         )
         assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 0
         assert not (tmp_path / ".uncoded" / "docs.yaml").exists()
+        for path in _DOC_SKILL_PATHS:
+            assert not (tmp_path / path).exists()
 
     def test_check_returns_one_when_docs_yaml_stale(self, *, tmp_path, monkeypatch):
         _init_doc_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)

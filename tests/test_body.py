@@ -165,6 +165,14 @@ class TestResolveBodyTopLevel:
 
         assert result == "def café(): pass\n"
 
+    def test_prints_whole_lines(self, *, tmp_path):
+        path = tmp_path / "m.py"
+        path.write_text("x = 1; y = 2\n", encoding="utf-8")
+
+        result = resolve_body(name_path=NamePath("x"), in_path=path)
+
+        assert result == "x = 1; y = 2\n"
+
 
 class TestResolveBodyClassMember:
     def test_method(self, *, tmp_path):

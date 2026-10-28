@@ -225,6 +225,38 @@ class TestExtractModuleFromSource:
         assert result.functions == ["zebra", "apple"]
         assert result.classes[0].methods == ["omega", "alpha"]
 
+    def test_leaves_out_names_that_are_not_symbols(self):
+        source = textwrap.dedent("""\
+            import os
+            from pathlib import Path
+
+            class Registry:
+                def __init__(self):
+                    self.items = []
+
+                class Entry:
+                    pass
+
+            def run():
+                local = 1
+
+            if os.name == "nt":
+                SEPARATOR = ";"
+
+            try:
+                import tomllib
+            except ImportError:
+                FALLBACK = True
+        """)
+
+        result = extract_module(source=source, rel_path="names.py")
+
+        assert result.constants == []
+        assert [(c.name, c.attributes, c.methods) for c in result.classes] == [
+            ("Registry", [], ["__init__"])
+        ]
+        assert result.functions == ["run"]
+
 
 class TestIterAndExtract:
     def test_basic_walk(self, *, tmp_path):
