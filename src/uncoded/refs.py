@@ -33,7 +33,10 @@ class Reference:
 def find_refs(
     *, name_path: NamePath, in_path: Path, project_root: Path
 ) -> list[Reference]:
-    """Return all references to the symbol named by name_path in in_path.
+    """Return every reference to the symbol named by name_path in in_path.
+
+    The references are the symbol's definition, each import of it and each use
+    of it.
 
     Resolves the symbol's name-token position, queries ty's LSP server for
     references, with project_root as its workspace, and returns results with
@@ -177,7 +180,7 @@ def _run_exchange(
             "params": {
                 "textDocument": {"uri": file_uri},
                 "position": {"line": line, "character": character},
-                "context": {"includeDeclaration": False},
+                "context": {"includeDeclaration": True},
             },
         },
     )

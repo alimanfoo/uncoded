@@ -41,7 +41,7 @@ def _shutdown_response() -> dict:
 
 @pytest.mark.integration
 class TestFindRefs:
-    def test_returns_empty_for_dead_symbol(self, *, tmp_path):
+    def test_unused_symbol_has_only_its_definition(self, *, tmp_path):
         pkg = tmp_path / "pkg"
         pkg.mkdir()
         (tmp_path / "pyproject.toml").write_text(
@@ -53,9 +53,9 @@ class TestFindRefs:
             name_path=NamePath("uncalled"), in_path=pkg / "a.py", project_root=tmp_path
         )
 
-        assert refs == []
+        assert refs == [Reference(path=pkg / "a.py", line=1, col=5)]
 
-    def test_finds_multiple_references_across_files(self, *, tmp_path):
+    def test_finds_definition_imports_and_uses_across_files(self, *, tmp_path):
         pkg = tmp_path / "pkg"
         pkg.mkdir()
         (tmp_path / "pyproject.toml").write_text(
@@ -65,16 +65,19 @@ class TestFindRefs:
         (pkg / "b.py").write_text(
             "from pkg.a import foo\nresult = foo()\nother = foo()\n", encoding="utf-8"
         )
+        (pkg / "c.py").write_text("from pkg.a import foo as bar\n", encoding="utf-8")
 
         refs = find_refs(
             name_path=NamePath("foo"), in_path=pkg / "a.py", project_root=tmp_path
         )
 
-        assert len(refs) == 2
-        assert all(isinstance(r, Reference) for r in refs)
-        assert all(r.path == pkg / "b.py" for r in refs)
-        assert [r.line for r in refs] == [2, 3]
-        assert all(r.col >= 1 for r in refs)
+        assert refs == [
+            Reference(path=pkg / "a.py", line=1, col=5),
+            Reference(path=pkg / "b.py", line=1, col=19),
+            Reference(path=pkg / "b.py", line=2, col=10),
+            Reference(path=pkg / "b.py", line=3, col=9),
+            Reference(path=pkg / "c.py", line=1, col=19),
+        ]
 
     def test_class_method_shape(self, *, tmp_path):
         pkg = tmp_path / "pkg"
@@ -100,8 +103,11 @@ class TestFindRefs:
             project_root=tmp_path,
         )
 
-        assert len(refs) == 2
-        assert all(r.path == pkg / "b.py" for r in refs)
+        assert refs == [
+            Reference(path=pkg / "a.py", line=2, col=9),
+            Reference(path=pkg / "b.py", line=3, col=3),
+            Reference(path=pkg / "b.py", line=4, col=3),
+        ]
 
     def test_results_are_sorted(self, *, tmp_path):
         pkg = tmp_path / "pkg"
@@ -133,9 +139,7 @@ class TestFindRefs:
             name_path=NamePath("foo"), in_path=pkg / "a.py", project_root=tmp_path
         )
 
-        assert len(refs) == 1
-        assert refs[0].line == 2
-        assert refs[0].col == 1
+        assert refs[-1] == Reference(path=pkg / "b.py", line=2, col=1)
 
     def test_path_with_spaces_is_not_percent_encoded(self, *, tmp_path):
         root = tmp_path / "my project"
@@ -150,9 +154,8 @@ class TestFindRefs:
             name_path=NamePath("foo"), in_path=root / "a.py", project_root=root
         )
 
-        assert len(refs) == 1
-        assert "%20" not in str(refs[0].path)
-        assert " " in str(refs[0].path)
+        assert refs[0].path == root / "a.py"
+        assert all("%20" not in str(r.path) for r in refs)
 
 
 class TestPathForDisplay:
@@ -190,7 +193,7 @@ class TestPathForDisplay:
 
 class TestQueryReferences:
     @pytest.mark.integration
-    def test_finds_call_sites(self, *, tmp_path):
+    def test_finds_definition_import_and_call_sites(self, *, tmp_path):
         pkg = tmp_path / "pkg"
         pkg.mkdir()
         (tmp_path / "pyproject.toml").write_text(
@@ -205,10 +208,12 @@ class TestQueryReferences:
             in_path=pkg / "a.py", position=(0, 4), project_root=tmp_path
         )
 
-        assert len(refs) == 2
-        assert all(isinstance(r, _LSPLocation) for r in refs)
-        assert all(r.path == pkg / "b.py" for r in refs)
-        assert {r.line for r in refs} == {1, 2}
+        assert sorted(refs, key=lambda r: (r.path, r.line, r.character)) == [
+            _LSPLocation(path=pkg / "a.py", line=0, character=4),
+            _LSPLocation(path=pkg / "b.py", line=0, character=18),
+            _LSPLocation(path=pkg / "b.py", line=1, character=9),
+            _LSPLocation(path=pkg / "b.py", line=2, character=8),
+        ]
 
     def test_uvx_not_found_raises_runtime_error(self, *, tmp_path):
         in_path = tmp_path / "m.py"
@@ -300,6 +305,26 @@ class TestRunExchange:
         stdout = _lsp_stream(
             _init_response(),
             {"jsonrpc": "2.0", "id": 2, "result": []},
+            _shutdown_response(),
+        )
+
+        refs = _run_exchange(
+            stdin=io.BytesIO(),
+            stdout=stdout,
+            in_path=in_path,
+            position=(0, 4),
+            project_root=tmp_path,
+        )
+
+        assert refs == []
+
+    def test_null_result_returns_empty(self, *, tmp_path):
+        in_path = tmp_path / "m.py"
+        in_path.write_text("def foo(): pass\n", encoding="utf-8")
+
+        stdout = _lsp_stream(
+            _init_response(),
+            {"jsonrpc": "2.0", "id": 2, "result": None},
             _shutdown_response(),
         )
 

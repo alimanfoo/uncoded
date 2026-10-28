@@ -1108,10 +1108,8 @@ class TestRefsCommand:
             _refs(monkeypatch=monkeypatch, name_path="Dog/bark", in_path="pkg/a.py")
             == 0
         )
-        out = capsys.readouterr().out
-        lines = out.strip().splitlines()
-        assert len(lines) == 2
-        assert all("pkg/b.py" in line for line in lines)
+        lines = capsys.readouterr().out.splitlines()
+        assert lines == ["pkg/a.py:2:9", "pkg/b.py:3:3", "pkg/b.py:4:3"]
 
     def test_symbol_not_found_exits_one(self, *, tmp_path, monkeypatch, capsys):
         _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
@@ -1170,7 +1168,9 @@ class TestRefsCommand:
             _refs(monkeypatch=monkeypatch, name_path="foo", in_path="../pkg/a.py") == 0
         )
         captured = capsys.readouterr()
-        assert captured.out == f"{(pkg / 'b.py').resolve().as_posix()}:2:1\n"
+        a = (pkg / "a.py").resolve().as_posix()
+        b = (pkg / "b.py").resolve().as_posix()
+        assert captured.out == f"{a}:1:5\n{b}:1:19\n{b}:2:1\n"
         assert captured.err == ""
 
     def test_unsupported_name_path_exits_one(self, *, tmp_path, monkeypatch, capsys):
@@ -1192,7 +1192,7 @@ class TestRefsCommand:
         assert exc.value.code == 2
         assert capsys.readouterr().err != ""
 
-    def test_zero_references_exits_zero_with_empty_stdout(
+    def test_unused_symbol_prints_only_its_definition(
         self, *, tmp_path, monkeypatch, capsys
     ):
         _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
@@ -1200,7 +1200,7 @@ class TestRefsCommand:
 
         assert _refs(monkeypatch=monkeypatch, name_path="uncalled", in_path="m.py") == 0
         out, err = capsys.readouterr()
-        assert out == ""
+        assert out == "m.py:1:5\n"
         assert err == ""
 
     def test_multiple_references_prints_sorted(self, *, tmp_path, monkeypatch, capsys):
@@ -1211,10 +1211,13 @@ class TestRefsCommand:
         )
 
         assert _refs(monkeypatch=monkeypatch, name_path="foo", in_path="pkg/a.py") == 0
-        lines = capsys.readouterr().out.strip().splitlines()
-        assert len(lines) == 2
-        assert lines[0] == "pkg/b.py:2:10"
-        assert lines[1] == "pkg/b.py:3:9"
+        lines = capsys.readouterr().out.splitlines()
+        assert lines == [
+            "pkg/a.py:1:5",
+            "pkg/b.py:1:19",
+            "pkg/b.py:2:10",
+            "pkg/b.py:3:9",
+        ]
 
     def test_passes_the_project_directory_to_ty(self, *, tmp_path, monkeypatch):
         _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
