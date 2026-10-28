@@ -23,14 +23,11 @@ from uncoded.resolver import NamePath, resolve_name_position
 # this repository under the old and the new version.
 TY_VERSION = "0.0.92"
 
-_TY_STOPPED = "it stopped before it answered."
+_TY_STOPPED = "ty failed: it stopped before it answered."
 
 
 class TyError(Exception):
-    """ty could not be started, or it failed before it answered.
-
-    The message gives the reason, worded to follow "ty failed: ".
-    """
+    """ty could not be started, or it failed before it answered."""
 
 
 @dataclass(frozen=True)
@@ -117,7 +114,7 @@ def _run_ty(
             "uvx not found on PATH — install uv (https://docs.astral.sh/uv/)"
         ) from exc
     except OSError as exc:
-        raise TyError(f"uvx could not start: {exc}") from exc
+        raise TyError(f"ty failed: uvx could not start: {exc}") from exc
     try:
         return _run_exchange(
             stdin=cast("IO[bytes]", proc.stdin),
@@ -263,7 +260,7 @@ def _read_message(*, stream: IO[bytes]) -> dict:
         length = int(headers.split(b"\r\n")[0].split(b":", 1)[1].strip())
         return json.loads(stream.read(length).decode("utf-8"))
     except (IndexError, ValueError) as exc:
-        raise TyError("it sent a message that is not valid LSP.") from exc
+        raise TyError("ty failed: it sent a message that is not valid LSP.") from exc
 
 
 def _read_response(*, stream: IO[bytes], request_id: int) -> dict:
@@ -273,7 +270,9 @@ def _read_response(*, stream: IO[bytes], request_id: int) -> dict:
             continue
         if "error" in msg:
             error = msg["error"]
-            raise TyError(f"it answered with an error: {error.get('message', error)}")
+            raise TyError(
+                f"ty failed: it answered with an error: {error.get('message', error)}"
+            )
         return msg
 
 
