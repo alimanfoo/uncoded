@@ -32,6 +32,7 @@ dev = [
     "pre-commit>=3.0",
     "pytest>=9.0",
     "pytest-cov>=6.0",
+    "pytest-timeout>=2.4",
     "ruff==0.15.19",
     "ty>=0.0.93",
 ]
@@ -82,6 +83,9 @@ markers = ["integration: spawns real ty subprocess (requires uvx)"]
 # two parametrized cases with one ID. A misspelled marker would otherwise put a
 # test that spawns ty into the default run.
 strict = true
+# Fails a test that hangs, such as one waiting on ty, and prints the stack of
+# every thread. CI raises the limit on macOS and Windows, which run slower.
+timeout = 30
 
 [tool.coverage.run]
 source = ["src"]
