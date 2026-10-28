@@ -179,22 +179,6 @@ class TestReadConfig:
         config = read_config(start=child)
         assert config.doc_roots == [Path("from-child")]
 
-    def test_skips_uncoded_directory_as_configuration_file_home(self, *, tmp_path):
-        # A .uncoded.toml sitting inside a .uncoded/ directory is not a
-        # configuration file's home — the walk skips any directory named .uncoded.
-        uncoded_dir = tmp_path / ".uncoded"
-        uncoded_dir.mkdir()
-        (uncoded_dir / ".uncoded.toml").write_text(
-            'doc-roots = ["docs"]\n', encoding="utf-8"
-        )
-        # The real configuration file is one level up.
-        (tmp_path / "pyproject.toml").write_text(
-            '[tool.uncoded]\nsource-roots = ["src"]\n', encoding="utf-8"
-        )
-        config = read_config(start=uncoded_dir)
-        assert config.project_directory == tmp_path
-        assert config.source_roots == [Path("src")]
-
 
 class TestConfigurationFileThatCannotBeUsed:
     def test_not_valid_toml(self, *, tmp_path):

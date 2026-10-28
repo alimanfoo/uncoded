@@ -28,8 +28,6 @@ def _render_value(*, value: str) -> str:
 
 def _render_param(*, param: Parameter) -> str:
     """Render a single parameter as a string for a function signature."""
-    if param.name in ("/", "*"):
-        return param.name
     if param.annotation:
         return f"{param.name}: {param.annotation}"
     return param.name

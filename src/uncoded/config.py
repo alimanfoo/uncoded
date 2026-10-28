@@ -99,12 +99,10 @@ def _configuration_file_at(*, directory: Path) -> tuple[Path, dict] | None:
     """Return the configuration file in ``directory`` and its settings, or None.
 
     A ``pyproject.toml`` without a ``[tool.uncoded]`` table is not a
-    configuration file, so the search passes over it. Skips directories named
-    ``.uncoded``. Raises :exc:`ConfigError` when ``pyproject.toml`` and
-    ``.uncoded.toml`` both configure uncoded, or when either cannot be used.
+    configuration file, so the search passes over it. Raises
+    :exc:`ConfigError` when ``pyproject.toml`` and ``.uncoded.toml`` both
+    configure uncoded, or when either cannot be used.
     """
-    if directory.name == ".uncoded":
-        return None
     pyproject = directory / "pyproject.toml"
     uncoded_toml = directory / UNCODED_TOML
     pyproject_settings = _pyproject_settings(pyproject_path=pyproject)
