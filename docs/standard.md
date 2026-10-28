@@ -251,7 +251,8 @@ The suite is fast and speaks the user's language.
 
 - Measure: the wall-clock time of the default test run, and the test names.
 - Bar: under 60 seconds on a laptop, at 100% branch coverage. Every test is
-  named for a behaviour a user could recognise, not for a function it calls.
+  named for what it checks, in the concepts page's words, not for the function
+  it calls.
 - Check: pytest reports the time, and review reads the names.
 
 #### Accurate tracker
