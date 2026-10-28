@@ -7,8 +7,8 @@ for reading a symbol's body and `uncoded refs` for finding references.
 ## The dispatch rule
 
 **If your search term is the name of a Python symbol, use the index. Python
-symbols are classes, functions, methods, attributes, and module-level constants.
-If it's a pattern, regex, or free-text phrase, use grep.**
+symbols are classes, functions, methods, attributes, and module-level
+assignments. If it's a pattern, regex, or free-text phrase, use grep.**
 
 This dispatch rule applies to every tool call where you find code, not just the
 first in the session. The pretrained reflex for "find X" is grep, and that

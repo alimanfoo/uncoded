@@ -27,7 +27,7 @@ class ModuleInfo:
     """Symbols found in a single Python module."""
 
     rel_path: str
-    constants: list[str] = field(default_factory=list)
+    assignments: list[str] = field(default_factory=list)
     classes: list[ClassInfo] = field(default_factory=list)
     functions: list[str] = field(default_factory=list)
 
@@ -52,13 +52,13 @@ def _extract_class_members(*, node: ast.ClassDef) -> ClassInfo:
 
 
 def extract_module(*, source: str, rel_path: str) -> ModuleInfo:
-    """Parse Python source and extract classes, functions, and constants.
+    """Parse Python source and extract classes, functions, and assignments.
 
     A name defined more than once keeps only its later definition.
     """
     tree = ast.parse(source)
 
-    constants: list[str] = []
+    assignments: list[str] = []
     classes: list[ClassInfo] = []
     functions: list[str] = []
 
@@ -68,11 +68,11 @@ def extract_module(*, source: str, rel_path: str) -> ModuleInfo:
         elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             functions.append(name)
         else:
-            constants.append(name)
+            assignments.append(name)
 
     return ModuleInfo(
         rel_path=rel_path,
-        constants=constants,
+        assignments=assignments,
         classes=classes,
         functions=functions,
     )
@@ -126,6 +126,6 @@ def extract_modules(*, files: Iterable[tuple[str, str]]) -> list[ModuleInfo]:
     modules: list[ModuleInfo] = []
     for source, rel_path in files:
         module = extract_module(source=source, rel_path=rel_path)
-        if module.classes or module.functions or module.constants:
+        if module.classes or module.functions or module.assignments:
             modules.append(module)
     return modules

@@ -68,7 +68,7 @@ class TestResolveBodyTopLevel:
 
         assert result == source
 
-    def test_module_constant_annotated(self, *, tmp_path):
+    def test_module_level_assignment_annotated(self, *, tmp_path):
         source = textwrap.dedent("""\
             MAX: int = 100
         """)
@@ -79,7 +79,7 @@ class TestResolveBodyTopLevel:
 
         assert result == "MAX: int = 100\n"
 
-    def test_module_constant_unannotated(self, *, tmp_path):
+    def test_module_level_assignment_unannotated(self, *, tmp_path):
         source = textwrap.dedent("""\
             TIMEOUT = 30
         """)
@@ -121,7 +121,7 @@ class TestResolveBodyTopLevel:
 
         assert result == "def process(x):\n    return x\n"
 
-    def test_scans_past_non_matching_constant(self, *, tmp_path):
+    def test_scans_past_non_matching_assignment(self, *, tmp_path):
         source = textwrap.dedent("""\
             OTHER = 1
 

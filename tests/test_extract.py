@@ -60,7 +60,7 @@ class TestExtractModuleFromSource:
         assert result.classes == []
         assert result.functions == []
 
-    def test_module_level_constants(self):
+    def test_module_level_assignments(self):
         source = textwrap.dedent("""\
             TIMEOUT = 30
             MAX_RETRIES: int = 3
@@ -69,7 +69,7 @@ class TestExtractModuleFromSource:
 
         result = extract_module(source=source, rel_path="const.py")
 
-        assert result.constants == ["TIMEOUT", "MAX_RETRIES", "__version__"]
+        assert result.assignments == ["TIMEOUT", "MAX_RETRIES", "__version__"]
 
     def test_type_alias_classic(self):
         source = textwrap.dedent("""\
@@ -79,7 +79,7 @@ class TestExtractModuleFromSource:
 
         result = extract_module(source=source, rel_path="aliases.py")
 
-        assert result.constants == ["UserId"]
+        assert result.assignments == ["UserId"]
 
     def test_type_alias_pep695(self):
         source = textwrap.dedent("""\
@@ -89,7 +89,7 @@ class TestExtractModuleFromSource:
 
         result = extract_module(source=source, rel_path="aliases.py")
 
-        assert result.constants == ["UserId", "InternalId"]
+        assert result.assignments == ["UserId", "InternalId"]
 
     def test_tuple_unpacking_skipped(self):
         source = textwrap.dedent("""\
@@ -98,14 +98,14 @@ class TestExtractModuleFromSource:
 
         result = extract_module(source=source, rel_path="tuple.py")
 
-        assert result.constants == []
+        assert result.assignments == []
 
     def test_chained_assignment_skipped(self):
         source = "x = y = 1\n"
 
         result = extract_module(source=source, rel_path="chain.py")
 
-        assert result.constants == []
+        assert result.assignments == []
 
     def test_unannotated_class_variable(self):
         source = textwrap.dedent("""\
@@ -249,7 +249,7 @@ class TestExtractModuleFromSource:
 
         result = extract_module(source=source, rel_path="redefined.py")
 
-        assert result.constants == ["Shape"]
+        assert result.assignments == ["Shape"]
         assert [(c.name, c.attributes, c.methods) for c in result.classes] == [
             ("area", [], ["compute"]),
             ("Point", ["y"], []),
@@ -282,7 +282,7 @@ class TestExtractModuleFromSource:
 
         result = extract_module(source=source, rel_path="names.py")
 
-        assert result.constants == []
+        assert result.assignments == []
         assert [(c.name, c.attributes, c.methods) for c in result.classes] == [
             ("Registry", [], ["__init__"])
         ]
@@ -447,7 +447,7 @@ class TestExtractModulesFromFiles:
 
         assert [m.rel_path for m in modules] == ["src/a.py", "src/b.py", "src/c.py"]
 
-    def test_module_with_only_constants_is_kept(self):
+    def test_module_with_only_assignments_is_kept(self):
         files = [('__version__ = "1.0"\n', "src/mypackage/__init__.py")]
 
         modules = extract_modules(files=files)

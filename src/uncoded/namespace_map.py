@@ -39,11 +39,11 @@ def build_map(*, modules: list[ModuleInfo]) -> dict:
 
         # Build the file entry — symbols directly under the file key.
         # Classes with methods map to their method list.
-        # Classes without methods, bare functions, and constants map to None.
+        # Classes without methods, bare functions and assignments map to None.
         file_entry: dict = {}
 
-        for const in module.constants:
-            file_entry[const] = None
+        for assignment in module.assignments:
+            file_entry[assignment] = None
 
         for cls in module.classes:
             members = cls.attributes + cls.methods

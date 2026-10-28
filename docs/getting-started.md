@@ -34,12 +34,12 @@ required version does.
 `uncoded init` then builds the index and the skills, and prints the files it
 writes. With both kinds of root, you will find:
 
-| Output                                  | Purpose                                                 |
-| --------------------------------------- | ------------------------------------------------------- |
-| `.uncoded/namespace.yaml`               | Lists Python symbols and their locations.               |
-| `.uncoded/stubs/`                       | Records imports, signatures, constants, and attributes. |
-| `.uncoded/docs.yaml`                    | Lists Markdown files and headings.                      |
-| `.agents/skills/` and `.claude/skills/` | Give agents the navigation instructions.                |
+| Output                                  | Purpose                                                   |
+| --------------------------------------- | --------------------------------------------------------- |
+| `.uncoded/namespace.yaml`               | Lists Python symbols and their locations.                 |
+| `.uncoded/stubs/`                       | Records imports, signatures, assignments, and attributes. |
+| `.uncoded/docs.yaml`                    | Lists Markdown files and headings.                        |
+| `.agents/skills/` and `.claude/skills/` | Give agents the navigation instructions.                  |
 
 Check the roots in `.uncoded.toml`. If your code or docs live elsewhere, edit
 the roots and run `uvx uncoded init` again. It leaves the configuration file as

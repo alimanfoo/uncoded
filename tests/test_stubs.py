@@ -233,50 +233,50 @@ class TestExtractStub:
         assert module.functions[1].name == "apple"
         assert module.classes[0].name == "Alpha"
 
-    def test_constant_annotated_with_value(self):
+    def test_assignment_annotated_with_value(self):
         source = textwrap.dedent("""\
             MAX_RETRIES: int = 3
         """)
         module = extract_stub(source=source, rel_path="pkg/mod.py")
-        c = module.constants[0]
+        c = module.assignments[0]
         assert c.name == "MAX_RETRIES"
         assert c.annotation == "int"
         assert c.value_source == "3"
         assert c.is_pep695_alias is False
 
-    def test_constant_unannotated_with_value(self):
+    def test_assignment_unannotated_with_value(self):
         source = textwrap.dedent("""\
             TIMEOUT = 30
         """)
         module = extract_stub(source=source, rel_path="pkg/mod.py")
-        c = module.constants[0]
+        c = module.assignments[0]
         assert c.name == "TIMEOUT"
         assert c.annotation is None
         assert c.value_source == "30"
 
-    def test_constant_bare_annotation(self):
+    def test_assignment_bare_annotation(self):
         source = textwrap.dedent("""\
             FOO: int
         """)
         module = extract_stub(source=source, rel_path="pkg/mod.py")
-        c = module.constants[0]
+        c = module.assignments[0]
         assert c.annotation == "int"
         assert c.value_source is None
 
-    def test_constant_value_too_long_elided(self):
+    def test_assignment_value_too_long_elided(self):
         long_list = "[" + ", ".join(f'"item{i}"' for i in range(50)) + "]"
         source = f"BIG = {long_list}\n"
         module = extract_stub(source=source, rel_path="pkg/mod.py")
-        c = module.constants[0]
+        c = module.assignments[0]
         assert c.name == "BIG"
         assert c.value_source == "..."
 
-    def test_constant_private_included(self):
+    def test_assignment_private_included(self):
         source = textwrap.dedent("""\
             _INTERNAL = 42
         """)
         module = extract_stub(source=source, rel_path="pkg/mod.py")
-        assert module.constants[0].name == "_INTERNAL"
+        assert module.assignments[0].name == "_INTERNAL"
 
     def test_type_alias_classic(self):
         source = textwrap.dedent("""\
@@ -284,7 +284,7 @@ class TestExtractStub:
             UserId: TypeAlias = int
         """)
         module = extract_stub(source=source, rel_path="pkg/mod.py")
-        c = module.constants[0]
+        c = module.assignments[0]
         assert c.name == "UserId"
         assert c.annotation == "TypeAlias"
         assert c.value_source == "int"
@@ -295,7 +295,7 @@ class TestExtractStub:
             type UserId = int
         """)
         module = extract_stub(source=source, rel_path="pkg/mod.py")
-        c = module.constants[0]
+        c = module.assignments[0]
         assert c.name == "UserId"
         assert c.is_pep695_alias is True
         assert c.value_source == "int"
@@ -305,12 +305,12 @@ class TestExtractStub:
             X, Y = 1, 2
         """)
         module = extract_stub(source=source, rel_path="pkg/mod.py")
-        assert module.constants == []
+        assert module.assignments == []
 
     def test_ann_assign_non_name_target_skipped(self):
         source = "obj.x: int = 1\n"
         module = extract_stub(source=source, rel_path="pkg/mod.py")
-        assert module.constants == []
+        assert module.assignments == []
 
     def test_class_tuple_unpacking_skipped(self):
         source = textwrap.dedent("""\
@@ -402,7 +402,7 @@ class TestRenderStub:
     def test_rendered_stub_has_no_line_range_comments(self):
         module = StubModule(
             rel_path="pkg/mod.py",
-            constants=[StubAssignment(name="VALUE", value_source="1")],
+            assignments=[StubAssignment(name="VALUE", value_source="1")],
             functions=[StubFunction(name="run")],
             classes=[
                 StubClass(
@@ -556,17 +556,17 @@ class TestRenderStub:
         assert "class Config:\n    path: Path\n" in output
         assert "def path" not in output
 
-    def test_constant_with_value_rendered(self):
+    def test_assignment_with_value_rendered(self):
         module = StubModule(
             rel_path="pkg/mod.py",
-            constants=[StubAssignment(name="TIMEOUT", value_source="30")],
+            assignments=[StubAssignment(name="TIMEOUT", value_source="30")],
         )
         assert "TIMEOUT = 30\n" in render_stub(module=module)
 
-    def test_constant_annotated_with_value_rendered(self):
+    def test_assignment_annotated_with_value_rendered(self):
         module = StubModule(
             rel_path="pkg/mod.py",
-            constants=[
+            assignments=[
                 StubAssignment(
                     name="MAX",
                     annotation="int",
@@ -576,17 +576,17 @@ class TestRenderStub:
         )
         assert "MAX: int = 3\n" in render_stub(module=module)
 
-    def test_constant_elided_rendered(self):
+    def test_assignment_elided_rendered(self):
         module = StubModule(
             rel_path="pkg/mod.py",
-            constants=[StubAssignment(name="BIG", value_source="...")],
+            assignments=[StubAssignment(name="BIG", value_source="...")],
         )
         assert "BIG = ...\n" in render_stub(module=module)
 
-    def test_constant_bare_annotation_rendered(self):
+    def test_assignment_bare_annotation_rendered(self):
         module = StubModule(
             rel_path="pkg/mod.py",
-            constants=[StubAssignment(name="FOO", annotation="int")],
+            assignments=[StubAssignment(name="FOO", annotation="int")],
         )
         output = render_stub(module=module)
         assert "FOO: int\n" in output
@@ -595,7 +595,7 @@ class TestRenderStub:
     def test_type_alias_pep695_rendered(self):
         module = StubModule(
             rel_path="pkg/mod.py",
-            constants=[
+            assignments=[
                 StubAssignment(
                     name="UserId",
                     value_source="int",

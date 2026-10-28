@@ -63,7 +63,7 @@ class StubModule:
 
     rel_path: str
     imports: list[str] = field(default_factory=list)
-    constants: list[StubAssignment] = field(default_factory=list)
+    assignments: list[StubAssignment] = field(default_factory=list)
     classes: list[StubClass] = field(default_factory=list)
     functions: list[StubFunction] = field(default_factory=list)
 
@@ -214,10 +214,10 @@ def _extract_class(*, node: ast.ClassDef) -> StubClass:
 
 
 def extract_stub(*, source: str, rel_path: str) -> StubModule:
-    """Parse Python source and extract imports, constants, classes, and functions."""
+    """Parse Python source and extract imports, assignments, classes, and functions."""
     tree = ast.parse(source)
     imports: list[str] = []
-    constants: list[StubAssignment] = []
+    assignments: list[StubAssignment] = []
     classes: list[StubClass] = []
     functions: list[StubFunction] = []
 
@@ -231,12 +231,12 @@ def extract_stub(*, source: str, rel_path: str) -> StubModule:
         elif isinstance(node, (ast.Assign, ast.AnnAssign, ast.TypeAlias)):
             assignment = _extract_assignment(node=node)
             if assignment is not None:
-                constants.append(assignment)
+                assignments.append(assignment)
 
     return StubModule(
         rel_path=rel_path,
         imports=imports,
-        constants=constants,
+        assignments=assignments,
         classes=classes,
         functions=functions,
     )
@@ -307,8 +307,10 @@ def render_stub(*, module: StubModule) -> str:
         lines.extend(module.imports)
         lines.append("")
 
-    lines.extend(_render_assignment(assignment=const) for const in module.constants)
-    if module.constants:
+    lines.extend(
+        _render_assignment(assignment=assignment) for assignment in module.assignments
+    )
+    if module.assignments:
         lines.append("")
 
     for func in module.functions:
@@ -332,7 +334,7 @@ def _generate_stubs(*, files: Iterable[tuple[str, str]]) -> dict[Path, str]:
     result: dict[Path, str] = {}
     for source, rel_path in files:
         module = extract_stub(source=source, rel_path=rel_path)
-        if not module.classes and not module.functions and not module.constants:
+        if not module.classes and not module.functions and not module.assignments:
             continue
         result[Path(rel_path).with_suffix(".pyi")] = render_stub(module=module)
     return result

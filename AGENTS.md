@@ -25,7 +25,7 @@ The index files, generated from the roots:
 
 2. **Stub files** (`.uncoded/stubs/`). One `.pyi` per source file. It includes
    imports, full signatures (parameter names, types, return types), module
-   constants, and class attributes.
+   assignments, and class attributes.
 
 3. **Doc map** (`.uncoded/docs.yaml`). A heading outline of every Markdown file
    in configured `doc-roots`. Each file nests its `#`-prefixed headings as keys.
