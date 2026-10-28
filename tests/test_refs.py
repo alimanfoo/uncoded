@@ -40,6 +40,28 @@ def _shutdown_response() -> dict:
     return {"jsonrpc": "2.0", "id": 3, "result": None}
 
 
+class TestFindRefsWithoutTy:
+    def test_converts_and_sorts_locations(self, *, tmp_path):
+        in_path = tmp_path / "m.py"
+        in_path.write_text("def foo(): pass\n", encoding="utf-8")
+        locations = [
+            _LSPLocation(path=tmp_path / "b.py", line=4, character=8),
+            _LSPLocation(path=tmp_path / "a.py", line=1, character=4),
+        ]
+
+        with mock.patch("uncoded.refs._query_references", return_value=locations):
+            refs = find_refs(
+                name_path=NamePath("foo"),
+                in_path=in_path,
+                project_directory=tmp_path,
+            )
+
+        assert refs == [
+            _Reference(path=tmp_path / "a.py", line=2, col=5),
+            _Reference(path=tmp_path / "b.py", line=5, col=9),
+        ]
+
+
 @pytest.mark.integration
 class TestFindRefs:
     def test_unused_symbol_has_only_its_definition(self, *, tmp_path):

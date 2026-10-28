@@ -1228,10 +1228,16 @@ class TestRefsCommand:
             "from pkg.a import Dog\nd = Dog()\nd.bark()\nd.bark()\n", encoding="utf-8"
         )
 
-        assert (
-            _refs(monkeypatch=monkeypatch, name_path="Dog/bark", in_path="pkg/a.py")
-            == 0
-        )
+        references = [
+            mock.Mock(path=Path("pkg/a.py"), line=2, col=9),
+            mock.Mock(path=Path("pkg/b.py"), line=3, col=3),
+            mock.Mock(path=Path("pkg/b.py"), line=4, col=3),
+        ]
+        with mock.patch.object(cli, "find_refs", return_value=references):
+            assert (
+                _refs(monkeypatch=monkeypatch, name_path="Dog/bark", in_path="pkg/a.py")
+                == 0
+            )
         lines = capsys.readouterr().out.splitlines()
         assert lines == ["pkg/a.py:2:9", "pkg/b.py:3:3", "pkg/b.py:4:3"]
 
@@ -1288,9 +1294,16 @@ class TestRefsCommand:
         subdir.mkdir()
         monkeypatch.chdir(subdir)
 
-        assert (
-            _refs(monkeypatch=monkeypatch, name_path="foo", in_path="../pkg/a.py") == 0
-        )
+        references = [
+            mock.Mock(path=(pkg / "a.py").resolve(), line=1, col=5),
+            mock.Mock(path=(pkg / "b.py").resolve(), line=1, col=19),
+            mock.Mock(path=(pkg / "b.py").resolve(), line=2, col=1),
+        ]
+        with mock.patch.object(cli, "find_refs", return_value=references):
+            assert (
+                _refs(monkeypatch=monkeypatch, name_path="foo", in_path="../pkg/a.py")
+                == 0
+            )
         captured = capsys.readouterr()
         a = (pkg / "a.py").resolve().as_posix()
         b = (pkg / "b.py").resolve().as_posix()
@@ -1313,7 +1326,12 @@ class TestRefsCommand:
         _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "m.py").write_text("def uncalled():\n    pass\n", encoding="utf-8")
 
-        assert _refs(monkeypatch=monkeypatch, name_path="uncalled", in_path="m.py") == 0
+        references = [mock.Mock(path=Path("m.py"), line=1, col=5)]
+        with mock.patch.object(cli, "find_refs", return_value=references):
+            assert (
+                _refs(monkeypatch=monkeypatch, name_path="uncalled", in_path="m.py")
+                == 0
+            )
         out, err = capsys.readouterr()
         assert out == "m.py:1:5\n"
         assert err == ""
@@ -1325,7 +1343,16 @@ class TestRefsCommand:
             "from pkg.a import foo\nresult = foo()\nother = foo()\n", encoding="utf-8"
         )
 
-        assert _refs(monkeypatch=monkeypatch, name_path="foo", in_path="pkg/a.py") == 0
+        references = [
+            mock.Mock(path=Path("pkg/a.py"), line=1, col=5),
+            mock.Mock(path=Path("pkg/b.py"), line=1, col=19),
+            mock.Mock(path=Path("pkg/b.py"), line=2, col=10),
+            mock.Mock(path=Path("pkg/b.py"), line=3, col=9),
+        ]
+        with mock.patch.object(cli, "find_refs", return_value=references):
+            assert (
+                _refs(monkeypatch=monkeypatch, name_path="foo", in_path="pkg/a.py") == 0
+            )
         lines = capsys.readouterr().out.splitlines()
         assert lines == [
             "pkg/a.py:1:5",
@@ -1348,7 +1375,13 @@ class TestRefsCommand:
         _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "m.py").write_text("def foo(): pass\n", encoding="utf-8")
 
-        with mock.patch("uncoded.refs.subprocess.Popen", side_effect=FileNotFoundError):
+        with mock.patch.object(
+            cli,
+            "find_refs",
+            side_effect=cli.TyError(
+                "uvx not found on PATH — install uv (https://docs.astral.sh/uv/)"
+            ),
+        ):
             assert _refs(monkeypatch=monkeypatch, name_path="foo", in_path="m.py") == 1
 
         captured = capsys.readouterr()
@@ -1358,22 +1391,21 @@ class TestRefsCommand:
         )
 
     def test_ty_failure_is_not_blamed_on_the_file(
-        self, *, tmp_path, monkeypatch, capsys, stand_in_for_ty
+        self, *, tmp_path, monkeypatch, capsys
     ):
         _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "m.py").write_text("def foo(): pass\n", encoding="utf-8")
-        # A write to the input of a ty that has stopped reading fails with an
-        # OSError, the kind of error that a file which cannot be read raises.
-        stand_in_for_ty(
-            script="""
-            read_message()
-            os.close(0)
-            send(INITIALIZE_RESPONSE)
-            sys.stderr.write("ty panicked\\n")
-            """
-        )
 
-        assert _refs(monkeypatch=monkeypatch, name_path="foo", in_path="m.py") == 1
+        with mock.patch.object(
+            cli,
+            "find_refs",
+            side_effect=cli.TyError(
+                "ty failed: it stopped before it answered.\n"
+                "Output from uvx and ty:\n"
+                "  ty panicked"
+            ),
+        ):
+            assert _refs(monkeypatch=monkeypatch, name_path="foo", in_path="m.py") == 1
 
         captured = capsys.readouterr()
         assert captured.out == ""
