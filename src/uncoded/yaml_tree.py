@@ -1,18 +1,12 @@
 """Shared nesting and YAML rendering for pure-key-hierarchy tree maps."""
 
 from collections.abc import Iterable
-from typing import override
 
 import yaml
 
 
 class _CleanDumper(yaml.SafeDumper):
-    """YAML dumper that indents list items and suppresses 'null' values."""
-
-    @override
-    def increase_indent(self, flow: bool = False, indentless: bool = False) -> None:
-        """Force list items to be indented relative to their parent key."""
-        return super().increase_indent(flow, False)
+    """YAML dumper that suppresses 'null' values."""
 
 
 # Render None as empty rather than "null" so leaf entries appear as just "name:"
