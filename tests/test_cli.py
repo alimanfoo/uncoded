@@ -639,6 +639,61 @@ def _init_project(*, tmp_path, monkeypatch, roots):
     monkeypatch.chdir(tmp_path)
 
 
+class TestGeneratedFileThatCannotBeUsed:
+    def test_sync_stops_with_one_line_when_a_file_cannot_be_written(
+        self, *, tmp_path, monkeypatch, capsys
+    ):
+        # A file where the stubs directory should be fails on every system,
+        # with a reason that differs between them.
+        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        (tmp_path / "src" / "mod.py").write_text("def f(): pass\n", encoding="utf-8")
+        (tmp_path / ".uncoded").mkdir()
+        (tmp_path / ".uncoded" / "stubs").write_text("", encoding="utf-8")
+
+        assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 1
+
+        captured = capsys.readouterr()
+        assert captured.out == (
+            "Wrote .uncoded/.gitignore\nWrote .uncoded/namespace.yaml\n"
+        )
+        assert captured.err.startswith(
+            "Error: cannot write .uncoded/stubs/src/mod.pyi: "
+        )
+        assert captured.err.count("\n") == 1
+        assert "Errno" not in captured.err
+
+    @pytest.mark.parametrize("command", ["sync", "check"])
+    def test_stops_with_one_line_when_a_file_is_not_utf8(
+        self, *, tmp_path, monkeypatch, capsys, command
+    ):
+        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        _run(monkeypatch=monkeypatch, arguments=["sync"])
+        (tmp_path / ".uncoded" / "namespace.yaml").write_bytes(b"\xff")
+        capsys.readouterr()
+
+        assert _run(monkeypatch=monkeypatch, arguments=[command]) == 1
+
+        assert capsys.readouterr().err == (
+            "Error: cannot read .uncoded/namespace.yaml: 'utf-8' codec can't "
+            "decode byte 0xff in position 0: invalid start byte\n"
+        )
+
+    def test_sync_stops_with_one_line_when_a_file_cannot_be_removed(
+        self, *, tmp_path, monkeypatch, capsys
+    ):
+        # Removing a directory as a file fails on every system, with a reason
+        # that differs between them.
+        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        (tmp_path / ".uncoded" / "stubs" / "src" / "orphan.pyi").mkdir(parents=True)
+
+        assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 1
+
+        err = capsys.readouterr().err
+        assert err.startswith("Error: cannot remove .uncoded/stubs/src/orphan.pyi: ")
+        assert err.count("\n") == 1
+        assert "Errno" not in err
+
+
 class TestInitCommand:
     def test_configures_every_conventional_root_and_syncs(
         self, *, tmp_path, monkeypatch, capsys
