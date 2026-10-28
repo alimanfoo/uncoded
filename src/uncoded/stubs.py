@@ -60,47 +60,41 @@ def _render_assignment(
     return f"{indent}{head} = {_render_value(value=assignment.value)}"
 
 
+def _join_blocks(*, blocks: list[list[str]]) -> list[str]:
+    """Join blocks of stub lines, with a blank line between each two of them."""
+    lines: list[str] = []
+    for block in filter(None, blocks):
+        if lines:
+            lines.append("")
+        lines.extend(block)
+    return lines
+
+
 def _render_class(*, cls: ClassSymbol) -> list[str]:
     bases_str = f"({', '.join(cls.bases)})" if cls.bases else ""
-    lines = [f"class {cls.name}{bases_str}:"]
+    header = f"class {cls.name}{bases_str}:"
     if not cls.attributes and not cls.methods:
-        lines.append("    ...")
-        lines.append("")
-        return lines
-    lines.extend(
+        return [header, "    ..."]
+    attributes = [
         _render_assignment(assignment=attr, indent="    ") for attr in cls.attributes
-    )
-    if cls.attributes:
-        lines.append("")
-    for method in cls.methods:
-        lines.extend(_render_function(func=method, indent="    "))
-        lines.append("")
-    return lines
+    ]
+    methods = [_render_function(func=method, indent="    ") for method in cls.methods]
+    return [header, *_join_blocks(blocks=[attributes, *methods])]
 
 
 def _render_stub(*, python_file: PythonFile) -> str:
     """Render a PythonFile as a .pyi file string."""
-    lines: list[str] = [f"# {GENERATED_MARKER}", f"# {python_file.rel_path}", ""]
-
-    if python_file.imports:
-        lines.extend(python_file.imports)
-        lines.append("")
-
-    lines.extend(
-        _render_assignment(assignment=assignment)
-        for assignment in python_file.assignments
-    )
-    if python_file.assignments:
-        lines.append("")
-
-    for func in python_file.functions:
-        lines.extend(_render_function(func=func))
-        lines.append("")
-
-    for cls in python_file.classes:
-        lines.extend(_render_class(cls=cls))
-
-    return "\n".join(lines).rstrip() + "\n"
+    blocks = [
+        [f"# {GENERATED_MARKER}", f"# {python_file.rel_path}"],
+        python_file.imports,
+        [
+            _render_assignment(assignment=assignment)
+            for assignment in python_file.assignments
+        ],
+        *(_render_function(func=func) for func in python_file.functions),
+        *(_render_class(cls=cls) for cls in python_file.classes),
+    ]
+    return "\n".join(_join_blocks(blocks=blocks)) + "\n"
 
 
 def _remove_orphan_stubs(
