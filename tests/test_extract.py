@@ -4,7 +4,7 @@ from uncoded.extract import extract_module, extract_modules, read_source_files
 from uncoded.read_helpers import SkippedFile
 
 
-class TestExtractModuleFromSource:
+class TestExtractModule:
     def test_classes_and_functions(self):
         source = textwrap.dedent("""\
             class MyClass:
@@ -289,7 +289,7 @@ class TestExtractModuleFromSource:
         assert result.functions == ["run"]
 
 
-class TestIterAndExtract:
+class TestReadSourceFiles:
     def test_keeps_each_python_file_that_has_symbols(self, *, tmp_path):
         # Simulate project structure: src/mypackage/...
         src = tmp_path / "src"
@@ -423,7 +423,7 @@ class TestIterAndExtract:
         assert skipped == []
 
 
-class TestExtractModulesFromFiles:
+class TestExtractModules:
     def test_extracts_the_symbols_of_each_file(self):
         files = [
             ("def foo(): pass\n", "src/a.py"),
