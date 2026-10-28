@@ -6,26 +6,17 @@ Refactoring, tests, CI and the documentation get no entry. The release notes on
 GitHub list every merged pull request.
 
 Each release groups its entries under these headings, in this order, and leaves
-out any heading that would be empty:
+out any heading that would be empty. Each heading names the type of release that
+its entries make, as [Compatibility](compatibility.md#versions) describes the
+types:
 
-- **Breaking** for a change that can break a project, which the developer must
-  act on before upgrading, as [Upgrading](upgrading.md) says;
-- **Added** for a new command, flag, configuration key, generated file or skill
-  guidance;
-- **Changed** for existing behaviour that now works differently without breaking
-  a project, such as a deprecation; and
-- **Fixed** for behaviour that did not match what the documentation or the
-  skills say.
-
-The headings decide the type of a release, as
-[Compatibility](compatibility.md#versions) describes the types. Any **Breaking**
-entry makes the release major, any **Added** or **Changed** entry makes it
-minor, and **Fixed** entries alone make it a patch.
+- **Breaking** for a change that makes the release major;
+- **Added** for an addition that makes the release minor;
+- **Changed** for any other change that makes the release minor; and
+- **Fixed** for a fix that makes the release a patch.
 
 A change stays under **Unreleased**, with the same headings, until a release
-includes it. Each entry links the pull request that made the change. The entries
-for 3.0.1 and earlier releases were written after those releases, briefly, and
-without the headings.
+includes it. Each entry links the pull request that made the change.
 
 ## Unreleased
 

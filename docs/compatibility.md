@@ -62,9 +62,6 @@ it does what its documentation or its skills say. For example, a patch can
 correct a skill to match the commands, list a symbol that the index missed, or
 reword a skill without changing what it tells the agent to do.
 
-A patch can therefore change the generated files, even though it changes no rule
-for how they are laid out.
-
 ### Unclear cases
 
 Where a change could fit more than one kind of release, the effect that it is
