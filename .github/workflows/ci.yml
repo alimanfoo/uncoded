@@ -22,20 +22,31 @@ jobs:
       - run: uv sync --locked
       - run: uv run pre-commit run --all-files
 
+  # The test job runs on every supported operating system, and on every
+  # released Python from the requires-python floor up, because the standard
+  # library behaves differently between them. setup-uv sets UV_PYTHON, which
+  # every later uv command obeys.
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        python-version: ["3.12", "3.13"]
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python: ["3.12", "3.13", "3.14", "3.15"]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
       - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
-      - run: uv python install ${{ matrix.python-version }}
+        with:
+          python-version: ${{ matrix.python }}
       - run: uv sync --locked
+      # Fails the job if the environment is not on the matrix interpreter.
+      - run: uv run python -c "import os, sys; assert sys.version.startswith(os.environ['UV_PYTHON'] + '.'), sys.version"
+        shell: bash
       - run: uv run pytest -v -m "integration or not integration"
+        shell: bash
         env:
           PYTHONWARNDEFAULTENCODING: "1"
 
