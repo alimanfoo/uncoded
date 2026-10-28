@@ -527,6 +527,26 @@ class TestResolveBodyByteIdentical:
 
         assert result == body
 
+    @pytest.mark.parametrize("line_ending", ["\r\n", "\r"])
+    def test_keeps_line_endings(self, *, tmp_path, line_ending):
+        body = f"def compute():{line_ending}    return 1{line_ending}"
+        source = f"# header{line_ending}{body}# footer{line_ending}"
+        path = tmp_path / "m.py"
+        path.write_bytes(source.encode("utf-8"))
+
+        result = resolve_body(name_path=NamePath("compute"), in_path=path)
+
+        assert result == body
+
+    def test_leaves_out_byte_order_mark(self, *, tmp_path):
+        body = "def compute():\n    return 1\n"
+        path = tmp_path / "m.py"
+        path.write_bytes(b"\xef\xbb\xbf" + body.encode("utf-8"))
+
+        result = resolve_body(name_path=NamePath("compute"), in_path=path)
+
+        assert result == body
+
     def test_lines_are_counted_as_python_counts_them(self, *, tmp_path):
         # A form feed and a line separator do not end a line in Python.
         body = "def compute():\x0c\n    return 1\n"

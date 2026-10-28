@@ -64,8 +64,9 @@ includes it. Each entry links the pull request that made the change.
 
 ### Fixed
 
-- On Windows, `uncoded body` prints a definition with the line endings that it
-  has in the file. It printed every line ending as CRLF.
+- `uncoded body` prints a definition with the line endings that it has in the
+  file. It printed every line ending as LF, and on Windows as CRLF, so an edit
+  tool given the printed text could fail to find it in the file.
   ([#342](https://github.com/alimanfoo/uncoded/pull/342))
 - `uncoded body` prints the definition when a form feed or a Unicode line
   separator, such as `\u2028` in a string, comes before the definition's end. It
