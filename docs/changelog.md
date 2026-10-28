@@ -27,6 +27,11 @@ includes it. Each entry links the pull request that made the change.
   already do. So do the paths in the messages and warnings of `uncoded sync` and
   `uncoded check`. ([#312](https://github.com/alimanfoo/uncoded/pull/312))
 
+### Added
+
+- `uncoded --version` prints the installed version.
+  ([#312](https://github.com/alimanfoo/uncoded/pull/312))
+
 ### Fixed
 
 - `uncoded refs` runs ty 0.0.92, in place of 0.0.53, and finds references that

@@ -13,7 +13,7 @@ from unittest import mock
 
 import pytest
 
-from uncoded import cli
+from uncoded import __version__, cli
 from uncoded.skill import SKILL_ROOTS, SKILLS, _skill_path
 
 # Paths split by gate so tests can assert the right subset.
@@ -425,6 +425,13 @@ class TestMainDispatch:
         monkeypatch.setattr(sys, "argv", ["uncoded"])
         with pytest.raises(SystemExit):
             cli.main()
+
+    def test_version_flag_prints_version(self, monkeypatch, capsys):
+        monkeypatch.setattr(sys, "argv", ["uncoded", "--version"])
+        with pytest.raises(SystemExit) as exc_info:
+            cli.main()
+        assert exc_info.value.code == 0
+        assert capsys.readouterr().out == f"uncoded {__version__}\n"
 
     def test_unknown_subcommand_is_an_error(self, tmp_path, monkeypatch):
         _init_repo(tmp_path, monkeypatch)

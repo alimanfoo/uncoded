@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 from typing import Literal
 
+from uncoded import __version__
 from uncoded.body import resolve_body
 from uncoded.config import ConfigError, read_config
 from uncoded.docs_map import build_docs_map, iter_doc_files, render_docs_map
@@ -318,6 +319,9 @@ def main() -> int:
     parser = argparse.ArgumentParser(
         prog="uncoded",
         description="Build a navigation index for AI coding agents.",
+    )
+    parser.add_argument(
+        "--version", action="version", version=f"%(prog)s {__version__}"
     )
     subparsers = parser.add_subparsers(required=True)
 

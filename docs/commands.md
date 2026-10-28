@@ -9,6 +9,7 @@ code in their checkout.
 | Check generated files without writing | `uvx uncoded check`                     |
 | Read a Python symbol's source         | `uvx uncoded body <symbol> --in <file>` |
 | Find references to a Python symbol    | `uvx uncoded refs <symbol> --in <file>` |
+| Print the installed version           | `uvx uncoded --version`                 |
 
 ## `sync`
 
@@ -71,11 +72,20 @@ path:line:column
 ```
 
 Positions are one-based. Results are sorted by path and position. Paths within
-the current directory are relative; other paths are absolute. Empty output with
-exit status `0` means no references were found.
+the current directory are relative; other paths are absolute. Every path uses
+`/` to separate directories, on Windows too. Empty output with exit status `0`
+means no references were found.
 
 Reference resolution uses the pinned `ty` language server through `uvx`. The
 first call may download it. `uvx` must be on `PATH`.
+
+## `--version`
+
+```sh
+uvx uncoded --version
+```
+
+Prints `uncoded` and the installed version, such as `uncoded 3.0.1`.
 
 ## Lookup errors
 
