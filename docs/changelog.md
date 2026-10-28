@@ -40,8 +40,10 @@ includes it. Each entry links the pull request that made the change.
   ([#312](https://github.com/alimanfoo/uncoded/pull/312))
 - The `required-version` setting names the one version of uncoded that a project
   uses. At any other version, every command stops, writes nothing, and gives the
-  command that runs the required version.
-  ([#322](https://github.com/alimanfoo/uncoded/pull/322))
+  command that runs the required version. A value that is not one exact version,
+  such as `"3.1"`, stops every command with a message that names the
+  configuration file. ([#322](https://github.com/alimanfoo/uncoded/pull/322),
+  [#326](https://github.com/alimanfoo/uncoded/pull/326))
 - `uncoded init` sets uncoded up in a project. It writes `.uncoded.toml` with
   the roots that exist among `src`, `tests`, `README.md`, `AGENTS.md` and
   `docs`, and with the running version as the required version. It then runs
@@ -51,11 +53,11 @@ includes it. Each entry links the pull request that made the change.
 
 ### Fixed
 
-- When a configuration file is not valid TOML, a setting has the wrong type, or
-  `required-version` is not one exact version, every command names the file and
-  the problem in one line, exits with status `1` and writes nothing. These gave
-  a Python traceback, or a message that misled. A `pyproject.toml` on the way up
-  to the configuration file that is not valid TOML stops the command too.
+- When a configuration file is not valid TOML or a setting has the wrong type,
+  every command names the file and the problem in one line, exits with status
+  `1` and writes nothing. These gave a Python traceback, or a message that
+  misled. A `pyproject.toml` on the way up to the configuration file that is not
+  valid TOML stops the command too.
   ([#326](https://github.com/alimanfoo/uncoded/pull/326))
 - `uncoded body` and `uncoded refs` stop when two files in one directory both
   configure uncoded, as the other commands already do.

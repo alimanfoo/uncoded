@@ -1,4 +1,4 @@
-"""File-reading helpers for Python source and Markdown document reads."""
+"""File-reading helpers, and the reason a file read failed, for messages."""
 
 import sys
 import tokenize
