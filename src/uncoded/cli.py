@@ -287,7 +287,9 @@ def _body(*, config: Config, name_path: str, in_path: str) -> int:
     except _LOOKUP_ERRORS as e:
         return _report_lookup_error(exc=e, name_path=name_path, in_path=in_path)
 
-    sys.stdout.write(body)
+    # Write bytes, so that the stream cannot turn each "\n" into "\r\n", as
+    # it does on Windows.
+    sys.stdout.buffer.write(body.encode(sys.stdout.encoding))
     return 0
 
 

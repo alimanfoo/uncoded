@@ -64,6 +64,9 @@ includes it. Each entry links the pull request that made the change.
 
 ### Fixed
 
+- On Windows, `uncoded body` prints a definition with the line endings that it
+  has in the file. It printed every line ending as CRLF.
+  ([#342](https://github.com/alimanfoo/uncoded/pull/342))
 - `uncoded body` prints the definition when a form feed or a Unicode line
   separator, such as `\u2028` in a string, comes before the definition's end. It
   counted those characters as line breaks, which Python does not, so it printed

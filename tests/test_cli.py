@@ -5,6 +5,7 @@ have their own unit tests; this suite covers the orchestration and the
 ``check`` exit-code contract.
 """
 
+import io
 import shlex
 import sys
 import textwrap
@@ -1203,6 +1204,25 @@ class TestBodyCommand:
         out, err = capsys.readouterr()
         assert out == body
         assert err == ""
+
+    def test_stdout_keeps_line_endings_where_the_stream_translates_them(
+        self, *, tmp_path, monkeypatch
+    ):
+        # A stream that writes each "\n" as "\r\n", as standard output does on
+        # Windows.
+        written = io.BytesIO()
+        stdout = io.TextIOWrapper(written, encoding="utf-8", newline="\r\n")
+        monkeypatch.setattr(sys, "stdout", stdout)
+        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        body = "def compute(x: int) -> int:\n    return x * 2\n"
+        (tmp_path / "src" / "foo.py").write_bytes(body.encode("utf-8"))
+
+        assert (
+            _body(monkeypatch=monkeypatch, name_path="compute", in_path="src/foo.py")
+            == 0
+        )
+
+        assert written.getvalue() == body.encode("utf-8")
 
     def test_unsupported_name_path_exits_one(self, *, tmp_path, monkeypatch, capsys):
         _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
