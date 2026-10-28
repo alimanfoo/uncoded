@@ -167,7 +167,7 @@ class TestSyncApplyMode:
         self, *, tmp_path, monkeypatch, capsys
     ):
         # An empty [tool.uncoded] table names no roots. The message must name
-        # both configurable keys and both config file options.
+        # both configurable keys and both configuration file options.
         (tmp_path / "pyproject.toml").write_text("[tool.uncoded]\n", encoding="utf-8")
         monkeypatch.chdir(tmp_path)
 

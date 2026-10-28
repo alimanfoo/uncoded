@@ -38,24 +38,22 @@ def _pyproject_settings(*, pyproject_path: Path) -> dict | None:
     """
     if not pyproject_path.exists():
         return None
-    with pyproject_path.open("rb") as f:
-        data = tomllib.load(f)
-    return data.get("tool", {}).get("uncoded")
+    return _load_toml(path=pyproject_path).get("tool", {}).get("uncoded")
 
 
-def _uncoded_toml_settings(*, uncoded_toml_path: Path) -> dict:
-    """Return the settings of ``uncoded_toml_path``, held as top-level keys."""
-    with uncoded_toml_path.open("rb") as f:
+def _load_toml(*, path: Path) -> dict:
+    """Parse the TOML file at ``path``."""
+    with path.open("rb") as f:
         return tomllib.load(f)
 
 
 def _config_file_at(*, directory: Path) -> tuple[Path, dict] | None:
-    """Return the config file in ``directory`` and its settings, or None.
+    """Return the configuration file in ``directory`` and its settings, or None.
 
-    A ``pyproject.toml`` without a ``[tool.uncoded]`` table is not a config
-    file, so the search passes over it. Skips directories named ``.uncoded``.
-    Raises :exc:`ConfigError` when ``pyproject.toml`` and ``.uncoded.toml``
-    both configure uncoded.
+    A ``pyproject.toml`` without a ``[tool.uncoded]`` table is not a
+    configuration file, so the search passes over it. Skips directories named
+    ``.uncoded``. Raises :exc:`ConfigError` when ``pyproject.toml`` and
+    ``.uncoded.toml`` both configure uncoded.
     """
     if directory.name == ".uncoded":
         return None
@@ -69,18 +67,18 @@ def _config_file_at(*, directory: Path) -> tuple[Path, dict] | None:
                 "configure uncoded in the same directory. "
                 "Configure uncoded in one file only."
             )
-        return uncoded_toml, _uncoded_toml_settings(uncoded_toml_path=uncoded_toml)
+        return uncoded_toml, _load_toml(path=uncoded_toml)
     if pyproject_settings is not None:
         return pyproject, pyproject_settings
     return None
 
 
 def _find_config_file(*, start: Path) -> tuple[Path, dict] | None:
-    """Return the nearest config file and its settings, walking up from ``start``.
+    """Return the nearest configuration file and its settings, from ``start`` up.
 
     The nearest directory with a result wins. Ambiguity is a same-directory
     condition only. Files at different levels do not conflict. Returns None
-    when no config file is found.
+    when no configuration file is found.
     """
     start_resolved = start.resolve()
     for directory in [start_resolved, *start_resolved.parents]:
@@ -91,19 +89,19 @@ def _find_config_file(*, start: Path) -> tuple[Path, dict] | None:
 
 
 def read_config(*, start: Path) -> Config:
-    """Locate the config file and read all uncoded settings from it.
+    """Locate the configuration file and read all uncoded settings from it.
 
     Walks up from ``start`` looking for ``.uncoded.toml`` or a
     ``pyproject.toml`` with a ``[tool.uncoded]`` table. Raises
-    :exc:`ConfigError` when no config file is found, or when two config files
-    in the same directory both configure uncoded.
+    :exc:`ConfigError` when no configuration file is found, or when two
+    files in the same directory both configure uncoded.
     """
     found = _find_config_file(start=start)
     if found is None:
         raise ConfigError(
             "No configuration file found in this directory or above it. "
-            "Configure uncoded in .uncoded.toml, "
-            "or in a [tool.uncoded] table in pyproject.toml."
+            "Run the command from inside the project, or configure uncoded "
+            "in .uncoded.toml or in a [tool.uncoded] table in pyproject.toml."
         )
     config_file, settings = found
 
