@@ -36,7 +36,10 @@ def read_source_text_or_warn(*, path: Path, warning_path: str) -> str | None:
     try:
         return read_source_text(path=path)
     except (OSError, UnicodeDecodeError, SyntaxError) as e:
-        print(f"warning: skipping {warning_path}: {_reason(error=e)}", file=sys.stderr)
+        print(
+            f"warning: skipping {warning_path}: {failure_reason(error=e)}",
+            file=sys.stderr,
+        )
         return None
 
 
@@ -56,14 +59,20 @@ def read_doc_text_or_warn(*, path: Path, warning_path: str) -> str | None:
     try:
         return path.read_text(encoding="utf-8-sig")
     except (UnicodeDecodeError, OSError) as e:
-        print(f"warning: skipping {warning_path}: {_reason(error=e)}", file=sys.stderr)
+        print(
+            f"warning: skipping {warning_path}: {failure_reason(error=e)}",
+            file=sys.stderr,
+        )
         return None
 
 
-def _reason(*, error: Exception) -> str:
-    # The warning names the file already. An OSError from the system names it
-    # again, by its absolute path in the system's form, so give only the
-    # reason. An OSError without one has only its own text.
+def failure_reason(*, error: Exception) -> str:
+    """Return why reading a file failed, for a message that names the file.
+
+    An OSError from the system names the file again, by its absolute path in
+    the system's form, so this gives only its reason. An OSError without one
+    gives its own text.
+    """
     if isinstance(error, OSError):
         return error.strerror or str(error)
     return str(error)
