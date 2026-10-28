@@ -19,9 +19,7 @@ def read_source_text(path: Path) -> str:
         return f.read()
 
 
-def read_source_text_or_warn(
-    path: Path, *, warning_path: Path | str | None = None
-) -> str | None:
+def read_source_text_or_warn(path: Path, *, warning_path: str) -> str | None:
     """Read a Python source file, returning None and warning to stderr on failure.
 
     Wraps read_source_text and catches OSError, UnicodeDecodeError, and
@@ -29,21 +27,18 @@ def read_source_text_or_warn(
     stderr and returns None so callers can skip-and-continue without aborting
     the whole sync.
 
-    warning_path overrides the path shown in the warning message; pass a
-    project-relative path so the warning matches the format used for other
-    skip messages in the same iterator.
+    warning_path is the path shown in the warning message. Pass the
+    project-relative path with ``/`` separators, so the warning matches the
+    other skip messages in the same iterator.
     """
     try:
         return read_source_text(path)
     except (OSError, UnicodeDecodeError, SyntaxError) as e:
-        label = warning_path if warning_path is not None else path
-        print(f"warning: skipping {label}: {e}", file=sys.stderr)
+        print(f"warning: skipping {warning_path}: {e}", file=sys.stderr)
         return None
 
 
-def read_doc_text_or_warn(
-    path: Path, *, warning_path: Path | str | None = None
-) -> str | None:
+def read_doc_text_or_warn(path: Path, *, warning_path: str) -> str | None:
     """Read a Markdown document as UTF-8, returning None and warning on failure.
 
     Strips a leading UTF-8 BOM on read. Files without a BOM are unaffected.
@@ -52,13 +47,12 @@ def read_doc_text_or_warn(
     unreadable or contains non-UTF-8 bytes, so callers can skip-and-continue
     without aborting the whole sync.
 
-    warning_path overrides the path shown in the warning message; pass a
-    project-relative path so the warning matches the format used for other
-    skip messages in the same iterator.
+    warning_path is the path shown in the warning message. Pass the
+    project-relative path with ``/`` separators, so the warning matches the
+    other skip messages in the same iterator.
     """
     try:
         return path.read_text(encoding="utf-8-sig")
     except (UnicodeDecodeError, OSError) as e:
-        label = warning_path if warning_path is not None else path
-        print(f"warning: skipping {label}: {e}", file=sys.stderr)
+        print(f"warning: skipping {warning_path}: {e}", file=sys.stderr)
         return None

@@ -20,6 +20,13 @@ includes it. Each entry links the pull request that made the change.
 
 ## Unreleased
 
+### Breaking
+
+- On Windows, the paths that `uncoded refs` prints and the path comment in each
+  stub use `/` to separate directories, as the namespace map and the docs map
+  already do. So do the paths in the messages and warnings of `uncoded sync` and
+  `uncoded check`. ([#312](https://github.com/alimanfoo/uncoded/pull/312))
+
 ### Fixed
 
 - `uncoded refs` runs ty 0.0.92, in place of 0.0.53, and finds references that

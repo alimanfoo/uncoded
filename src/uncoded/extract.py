@@ -96,7 +96,7 @@ def iter_source_files(
     project_root = project_root.resolve()
 
     for py_file in sorted(source_root.rglob("*.py")):
-        rel_path = str(py_file.relative_to(project_root))
+        rel_path = py_file.relative_to(project_root).as_posix()
         source = read_source_text_or_warn(py_file, warning_path=rel_path)
         if source is None:
             continue

@@ -112,13 +112,13 @@ def iter_doc_files(doc_root: Path, project_root: Path) -> Iterator[tuple[str, Pa
     project_root = project_root.resolve()
     if doc_root.is_file():
         rel = doc_root.relative_to(project_root)
-        text = read_doc_text_or_warn(doc_root, warning_path=rel)
+        text = read_doc_text_or_warn(doc_root, warning_path=rel.as_posix())
         if text is not None:
             yield text, rel
     else:
         for md_file in sorted(doc_root.rglob("*.md")):
             rel = md_file.relative_to(project_root)
-            text = read_doc_text_or_warn(md_file, warning_path=rel)
+            text = read_doc_text_or_warn(md_file, warning_path=rel.as_posix())
             if text is None:
                 continue
             yield text, rel

@@ -35,13 +35,13 @@ def sync_file(
         if not check:
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text(content, encoding="utf-8")
-        print(f"{'Would write' if check else 'Wrote'} {path}")
+        print(f"{'Would write' if check else 'Wrote'} {path.as_posix()}")
         return True
     if target.read_text(encoding="utf-8") == content:
         return False
     if not check:
         target.write_text(content, encoding="utf-8")
-    print(f"{'Would update' if check else 'Updated'} {path}")
+    print(f"{'Would update' if check else 'Updated'} {path.as_posix()}")
     return True
 
 
@@ -66,5 +66,5 @@ def remove_file(
         return False
     if not check:
         target.unlink()
-    print(f"{'Would remove' if check else 'Removed'} {path}")
+    print(f"{'Would remove' if check else 'Removed'} {path.as_posix()}")
     return True

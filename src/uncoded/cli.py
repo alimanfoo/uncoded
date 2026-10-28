@@ -32,10 +32,11 @@ def _validate_root(
     is not a valid target. When accepts_md_file is True, a lone .md file is
     also valid. kind selects the noun used in the error messages.
     """
+    root_label = f"{kind} root {configured.as_posix()}"
     resolved = (project_root / configured).resolve()
     if not resolved.is_relative_to(resolved_project_root):
         raise ConfigError(
-            f"{kind} root {configured} is outside the project root. "
+            f"{root_label} is outside the project root. "
             f"Check {kind}-roots in your uncoded config file."
         )
     is_valid = resolved.is_dir() or (
@@ -44,11 +45,11 @@ def _validate_root(
     if not is_valid:
         if accepts_md_file:
             raise ConfigError(
-                f"{kind} root {configured} is not a directory or .md file. "
+                f"{root_label} is not a directory or .md file. "
                 f"Check {kind}-roots in your uncoded config file."
             )
         raise ConfigError(
-            f"{kind} root {configured} is not a directory. "
+            f"{root_label} is not a directory. "
             f"Check {kind}-roots in your uncoded config file."
         )
     return resolved
@@ -293,7 +294,7 @@ def _refs(*, name_path: str, in_path: str) -> int:
         return _report_lookup_error(e, name_path=name_path, in_path=in_path)
 
     for ref in refs:
-        print(f"{ref.path}:{ref.line}:{ref.col}")
+        print(f"{ref.path.as_posix()}:{ref.line}:{ref.col}")
     return 0
 
 
