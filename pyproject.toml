@@ -18,8 +18,7 @@ dependencies = [
     "pyyaml>=6.0",
 ]
 classifiers = [
-    "Development Status :: 3 - Alpha",
-    "License :: OSI Approved :: MIT License",
+    "Development Status :: 4 - Beta",
     "Programming Language :: Python :: 3",
 ]
 
@@ -39,10 +38,12 @@ dev = [
 [project.scripts]
 uncoded = "uncoded.cli:main"
 
+# Only collaborators can open an issue, so PyPI links no issue tracker.
 [project.urls]
-Homepage = "https://github.com/alimanfoo/uncoded"
+Homepage = "https://alimanfoo.github.io/uncoded/"
 Repository = "https://github.com/alimanfoo/uncoded"
 Changelog = "https://alimanfoo.github.io/uncoded/changelog/"
+Discussions = "https://github.com/alimanfoo/uncoded/discussions"
 
 [tool.hatch.version]
 source = "vcs"
