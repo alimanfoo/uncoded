@@ -247,3 +247,41 @@ class TestConfigFileThatCannotBeUsed:
         )
         assert "\n" not in message
         assert "Errno" not in message
+
+    @pytest.mark.parametrize(
+        ("toml", "problem"),
+        [
+            ('tool = "x"\n', "tool is not a table."),
+            ("[tool]\nuncoded = 5\n", "tool.uncoded is not a table."),
+            (
+                '[tool.uncoded]\nsource-roots = "src"\n',
+                "source-roots is not a list of strings.",
+            ),
+            (
+                "[tool.uncoded]\ndoc-roots = [1]\n",
+                "doc-roots is not a list of strings.",
+            ),
+            (
+                "[tool.uncoded]\nrequired-version = 3.1\n",
+                "required-version is not a string.",
+            ),
+        ],
+    )
+    def test_setting_of_the_wrong_type_in_pyproject(self, *, tmp_path, toml, problem):
+        (tmp_path / "pyproject.toml").write_text(toml, encoding="utf-8")
+        with pytest.raises(ConfigError) as exc_info:
+            read_config(start=tmp_path)
+        assert str(exc_info.value) == (
+            f"{(tmp_path / 'pyproject.toml').resolve().as_posix()}: {problem}"
+        )
+
+    def test_setting_of_the_wrong_type_in_uncoded_toml(self, *, tmp_path):
+        (tmp_path / ".uncoded.toml").write_text(
+            'source-roots = ["src", ["tests"]]\n', encoding="utf-8"
+        )
+        with pytest.raises(ConfigError) as exc_info:
+            read_config(start=tmp_path)
+        assert str(exc_info.value) == (
+            f"{(tmp_path / '.uncoded.toml').resolve().as_posix()}: "
+            "source-roots is not a list of strings."
+        )

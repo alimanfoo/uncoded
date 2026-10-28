@@ -34,10 +34,22 @@ class Config:
 def _pyproject_settings(*, pyproject_path: Path) -> dict | None:
     """Return the ``[tool.uncoded]`` table of ``pyproject_path``, or None.
 
-    Returns None when the file or the table is absent.
+    Returns None when the file or the table is absent. Raises
+    :exc:`ConfigError`, naming the file, when ``tool`` or ``tool.uncoded`` is
+    not a table.
     """
     data = _load_toml(path=pyproject_path)
-    return None if data is None else data.get("tool", {}).get("uncoded")
+    if data is None:
+        return None
+    tool = data.get("tool", {})
+    if not isinstance(tool, dict):
+        raise _config_file_error(path=pyproject_path, problem="tool is not a table.")
+    settings = tool.get("uncoded")
+    if settings is not None and not isinstance(settings, dict):
+        raise _config_file_error(
+            path=pyproject_path, problem="tool.uncoded is not a table."
+        )
+    return settings
 
 
 def _load_toml(*, path: Path) -> dict | None:
@@ -117,16 +129,44 @@ def find_config(*, start: Path) -> Config | None:
     if found is None:
         return None
     config_file, settings = found
-
-    source_roots = [Path(r) for r in settings.get("source-roots", [])]
-    doc_roots = [Path(r) for r in settings.get("doc-roots", [])]
-
     return Config(
         project_root=config_file.parent,
-        source_roots=source_roots,
-        doc_roots=doc_roots,
-        required_version=settings.get("required-version"),
+        source_roots=_roots(
+            settings=settings, setting="source-roots", config_file=config_file
+        ),
+        doc_roots=_roots(
+            settings=settings, setting="doc-roots", config_file=config_file
+        ),
+        required_version=_required_version(settings=settings, config_file=config_file),
     )
+
+
+def _roots(*, settings: dict, setting: str, config_file: Path) -> list[Path]:
+    """Return the roots that ``setting`` lists, or no roots when it is unset.
+
+    Raises :exc:`ConfigError`, naming ``config_file``, when the setting is not
+    a list of strings.
+    """
+    roots = settings.get(setting, [])
+    if not isinstance(roots, list) or not all(isinstance(r, str) for r in roots):
+        raise _config_file_error(
+            path=config_file, problem=f"{setting} is not a list of strings."
+        )
+    return [Path(r) for r in roots]
+
+
+def _required_version(*, settings: dict, config_file: Path) -> str | None:
+    """Return the ``required-version`` setting, or None when it is unset.
+
+    Raises :exc:`ConfigError`, naming ``config_file``, when the setting is not
+    a string.
+    """
+    version = settings.get("required-version")
+    if version is not None and not isinstance(version, str):
+        raise _config_file_error(
+            path=config_file, problem="required-version is not a string."
+        )
+    return version
 
 
 def read_config(*, start: Path) -> Config:
