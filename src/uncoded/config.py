@@ -6,7 +6,7 @@ from pathlib import Path
 
 
 class ConfigError(Exception):
-    """Raised by read_config when the configuration cannot be determined."""
+    """Raised when the project's configuration cannot be used."""
 
 
 @dataclass(frozen=True)

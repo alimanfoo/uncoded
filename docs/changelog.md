@@ -38,6 +38,9 @@ includes it. Each entry links the pull request that made the change.
 
 ### Fixed
 
+- `uncoded body` and `uncoded refs` stop when two files in one directory both
+  configure uncoded, as the other commands already do.
+  ([#322](https://github.com/alimanfoo/uncoded/pull/322))
 - `uncoded refs` runs ty 0.0.92, in place of 0.0.53, and finds references that
   the older ty missed. ([#308](https://github.com/alimanfoo/uncoded/pull/308))
 - `uncoded refs` on Windows prints each reference's path relative to the current

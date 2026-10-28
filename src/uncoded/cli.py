@@ -345,8 +345,7 @@ def main() -> int:
     - ``refs`` — finds all references to a named symbol and prints them.
 
     Each subparser binds its own ``action`` callable via
-    ``set_defaults``; ``main`` then dispatches via ``args.action()``,
-    unless ``_refusal`` gives a reason that no command may run.
+    ``set_defaults``; ``main`` then dispatches via ``args.action()``.
     Adding a new subcommand is a local change at the registration site —
     no central dispatch ladder to update, and no silent fall-through if
     the binding is forgotten (``args.action`` will simply be missing).

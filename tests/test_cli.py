@@ -446,12 +446,17 @@ class TestMainDispatch:
             cli.main()
 
 
-_COMMANDS = [
-    ["sync"],
-    ["check"],
-    ["body", "fn", "--in", "src/foo.py"],
-    ["refs", "fn", "--in", "src/foo.py"],
+_BODY = ["body", "fn", "--in", "src/foo.py"]
+
+# Each command, with the exit status it gives when it runs in a fresh repo.
+_RUNS = [
+    (["sync"], 0),
+    # The fresh repo has no index, so check reports it as stale.
+    (["check"], 1),
+    (_BODY, 0),
+    (["refs", "fn", "--in", "src/foo.py"], 0),
 ]
+_COMMANDS = [command for command, _status in _RUNS]
 
 
 def _init_versioned_repo(*, tmp_path, monkeypatch, required_version):
@@ -496,7 +501,7 @@ class TestRequiredVersion:
         )
 
     @pytest.mark.parametrize("required_version", [__version__, None])
-    @pytest.mark.parametrize("run", zip(_COMMANDS, [0, 1, 0, 0], strict=True))
+    @pytest.mark.parametrize("run", _RUNS)
     def test_runs_at_required_version_or_with_none_set(
         self, *, tmp_path, monkeypatch, capsys, required_version, run
     ):
@@ -523,7 +528,7 @@ class TestRequiredVersion:
         (tmp_path / "pyproject.toml").write_text(
             '[tool.uncoded]\nsource-roots = ["src"]\n', encoding="utf-8"
         )
-        monkeypatch.setattr(sys, "argv", ["uncoded", *_COMMANDS[2]])
+        monkeypatch.setattr(sys, "argv", ["uncoded", *_BODY])
 
         assert cli.main() == 1
         captured = capsys.readouterr()
