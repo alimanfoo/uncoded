@@ -7,11 +7,8 @@ creating the tag is the only version change.
 ## Choose the version
 
 Choose the version from the headings of the entries under **Unreleased** in
-[the changelog](changelog.md). Any entry under **Breaking** makes a major
-release, any entry under **Added** or **Changed** a minor release, and entries
-under **Fixed** alone a patch release.
-[Compatibility](compatibility.md#versions) says what each kind of release can
-change.
+[the changelog](changelog.md), which says what kind of release each heading
+makes.
 
 ## Check the standard
 
@@ -21,10 +18,9 @@ If the release is major or minor, do this. A patch release skips it.
    `src`, `tests`, `README.md`, `AGENTS.md`, `docs` and the skill sources, with
    [the concepts page](concepts.md) as the authority. Fix what is quick to fix,
    and file an issue for each other finding.
-2. Triage the open issues. Rewrite each issue that uses a word the concepts page
-   replaces, which is any word after "Replaces:" on that page. Close each issue
-   whose work is done, or that asks for what [a story](stories.md) rules out,
-   and say why.
+2. Triage the open issues against the measure of
+   [Accurate tracker](standard.md#accurate-tracker). Rewrite or close each issue
+   that falls short, and say why.
 3. Measure every criterion in [the standard](standard.md), by the method that
    [the measurement](measurement.md) gives, reading the enduring documents
    against the code. Replace the measurement with the results, and name an issue
@@ -93,8 +89,6 @@ did not build that version. Watch the workflow until it ends:
 ```sh
 gh run watch --exit-status "$(gh run list --workflow publish.yml --limit 1 --json databaseId --jq '.[0].databaseId')"
 ```
-
-Once it succeeds, check that the release history on PyPI lists the new version.
 
 The upload uses PyPI Trusted Publishing, so it needs no `PYPI_TOKEN` or any
 other long-lived publishing secret. The PyPI trusted publisher is configured
