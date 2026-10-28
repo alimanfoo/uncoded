@@ -385,5 +385,6 @@ Every criterion is measured again before each major or minor release, as
 [the release checklist](releasing.md) says, and the enduring documents are read
 against the code. [The measurement](measurement.md) holds the latest results and
 says how each was taken, so the next measurement can repeat it. Each shortfall
-is owned by an issue. Where a check that this page names is not yet in place,
-the measurement says so and names the issue that adds it.
+that a change to the repository can fix is owned by an issue. The measurement
+reports every other shortfall. Where a check that this page names is not yet in
+place, the measurement says so and names the issue that adds it.

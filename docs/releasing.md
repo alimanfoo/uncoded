@@ -23,7 +23,8 @@ If the release is major or minor, do this. A patch release skips it.
 3. Measure every criterion in [the standard](standard.md), by the method that
    [the measurement](measurement.md) gives, reading the enduring documents
    against the code. Replace the measurement with the results, and name an issue
-   for each shortfall, filing one where no open issue owns it.
+   for each shortfall that a change to the repository can fix, filing one where
+   no open issue owns it.
 
 A shortfall does not hold the release back. A failing test or check does.
 
