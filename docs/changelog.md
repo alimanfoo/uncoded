@@ -24,6 +24,9 @@ includes it. Each entry links the pull request that made the change.
 
 - `uncoded refs` runs ty 0.0.92, in place of 0.0.53, and finds references that
   the older ty missed. ([#308](https://github.com/alimanfoo/uncoded/pull/308))
+- `uncoded refs` on Windows prints each reference's path relative to the current
+  directory, in place of a path that names no file.
+  ([#312](https://github.com/alimanfoo/uncoded/pull/312))
 
 ## [3.0.1](https://github.com/alimanfoo/uncoded/releases/tag/v3.0.1) — 2026-10-09
 

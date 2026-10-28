@@ -8,7 +8,8 @@ import subprocess  # noqa: S404 -- subprocess used to spawn the ty LSP server
 from dataclasses import dataclass
 from pathlib import Path
 from typing import IO, cast
-from urllib.parse import unquote, urlparse
+from urllib.parse import urlparse
+from urllib.request import url2pathname
 
 from uncoded.config import ConfigError, find_pyproject_toml, read_config
 from uncoded.read_helpers import read_source_text
@@ -235,4 +236,6 @@ def _read_response(*, stream: IO[bytes], request_id: int) -> dict:
 
 
 def _uri_to_path(uri: str) -> Path:
-    return Path(unquote(urlparse(uri).path))
+    # url2pathname decodes the percent escapes and, on Windows, turns a URI path
+    # such as /C:/src/m.py into C:\src\m.py.
+    return Path(url2pathname(urlparse(uri).path))
