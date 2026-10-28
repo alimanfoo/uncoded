@@ -53,6 +53,11 @@ includes it. Each entry links the pull request that made the change.
 
 ### Fixed
 
+- `uncoded sync` and `uncoded check` end their warnings about the files they
+  skipped with a line that says how many files they skipped. A skip was easy to
+  miss among the other lines, such as in the output of a pre-commit hook. The
+  exit status is still `0`.
+  ([#329](https://github.com/alimanfoo/uncoded/pull/329))
 - When a configuration file is not valid TOML or a setting has the wrong type,
   every command names the file and the problem in one line, exits with status
   `1` and writes nothing. These gave a Python traceback, or a message that
