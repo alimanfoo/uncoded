@@ -12,14 +12,14 @@ from uncoded.config import (
 
 
 class TestFindConfig:
-    def test_returns_none_when_no_config_file(self, *, tmp_path):
+    def test_returns_none_when_no_configuration_file(self, *, tmp_path):
         assert find_config(start=tmp_path) is None
 
 
 class TestReadConfig:
     # --- pyproject.toml ---
 
-    def test_raises_when_no_config_file(self, *, tmp_path):
+    def test_raises_when_no_configuration_file(self, *, tmp_path):
         with pytest.raises(ConfigError, match=r"No configuration file found"):
             read_config(start=tmp_path)
 
@@ -61,11 +61,11 @@ class TestReadConfig:
         assert config.project_directory == tmp_path
         assert config.source_roots == [Path("pkg")]
 
-    def test_project_directory_is_config_file_parent(self, *, tmp_path):
+    def test_project_directory_is_configuration_file_parent(self, *, tmp_path):
         toml = '[tool.uncoded]\nsource-roots = ["src"]\n'
         (tmp_path / "pyproject.toml").write_text(toml, encoding="utf-8")
         config = read_config(start=tmp_path)
-        assert config.config_file == tmp_path / "pyproject.toml"
+        assert config.configuration_file == tmp_path / "pyproject.toml"
         assert config.project_directory == tmp_path
 
     def test_finds_pyproject_in_parent_directory(self, *, tmp_path):

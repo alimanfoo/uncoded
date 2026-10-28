@@ -153,7 +153,7 @@ class TestSyncApplyMode:
         assert not (tmp_path / ".uncoded" / "stubs" / "b").exists()
         assert (tmp_path / ".uncoded" / "stubs" / "a" / "m.pyi").exists()
 
-    def test_error_when_no_config_file_points_to_init(
+    def test_error_when_no_configuration_file_points_to_init(
         self, *, tmp_path, monkeypatch, capsys
     ):
         monkeypatch.chdir(tmp_path)
@@ -667,8 +667,8 @@ class TestConfigFileThatCannotBeUsed:
         _init_versioned_repo(
             tmp_path=tmp_path, monkeypatch=monkeypatch, required_version=None
         )
-        config_file = tmp_path / ".uncoded.toml"
-        config_file.write_text(toml, encoding="utf-8")
+        configuration_file = tmp_path / ".uncoded.toml"
+        configuration_file.write_text(toml, encoding="utf-8")
         before = _contents(root=tmp_path)
         monkeypatch.setattr(sys, "argv", ["uncoded", *command])
 
@@ -680,7 +680,7 @@ class TestConfigFileThatCannotBeUsed:
         captured = capsys.readouterr()
         assert captured.out == ""
         assert captured.err == (
-            f"Error: {config_file.resolve().as_posix()}: {problem}\n"
+            f"Error: {configuration_file.resolve().as_posix()}: {problem}\n"
         )
 
 
@@ -730,13 +730,13 @@ class TestRootThatCannotBeUsed:
         (project / "setup.py").write_text("", encoding="utf-8")
         (project / "readme.rst").write_text("= Title\n", encoding="utf-8")
         (project / "link").symlink_to(tmp_path / "outside", target_is_directory=True)
-        config_file = project / ".uncoded.toml"
-        config_file.write_text(
+        configuration_file = project / ".uncoded.toml"
+        configuration_file.write_text(
             'source-roots = ["src"]\ndoc-roots = ["docs"]\n', encoding="utf-8"
         )
         monkeypatch.chdir(project)
         assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 0
-        config_file.write_text(toml, encoding="utf-8")
+        configuration_file.write_text(toml, encoding="utf-8")
         before = _contents(root=tmp_path)
         capsys.readouterr()
 
@@ -746,7 +746,7 @@ class TestRootThatCannotBeUsed:
         captured = capsys.readouterr()
         assert captured.out == ""
         assert captured.err == (
-            f"Error: {config_file.resolve().as_posix()}: {problem}\n"
+            f"Error: {configuration_file.resolve().as_posix()}: {problem}\n"
         )
 
 

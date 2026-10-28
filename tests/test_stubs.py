@@ -339,7 +339,7 @@ class TestExtractStub:
             class Config:
                 @property
                 def path(self) -> Path:
-                    '''Return the config file path.'''
+                    '''Return the configuration file path.'''
                     return self._path
         """)
         module = extract_stub(source=source, rel_path="pkg/cfg.py")
