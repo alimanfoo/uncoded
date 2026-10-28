@@ -7,6 +7,7 @@ from uncoded.extract import (
     ClassSymbol,
     FunctionSymbol,
     Parameter,
+    PropertySymbol,
     PythonFile,
     Symbol,
     TypeAliasSymbol,
@@ -59,6 +60,12 @@ def _render_assignment(
     return f"{indent}{head} = {_render_value(value=assignment.value)}"
 
 
+def _render_property(*, prop: PropertySymbol, indent: str = "") -> str:
+    """Render a property as a stub line."""
+    annotation = f": {prop.annotation}" if prop.annotation else ""
+    return f"{indent}{prop.name}{annotation}"
+
+
 def _join_blocks(*, blocks: list[list[str]]) -> list[str]:
     """Join the blocks of stub lines that are not empty, with a blank line between."""
     lines: list[str] = []
@@ -70,11 +77,15 @@ def _join_blocks(*, blocks: list[list[str]]) -> list[str]:
 
 
 def _render_line(
-    *, symbol: AssignmentSymbol | TypeAliasSymbol | FunctionSymbol, indent: str = ""
+    *,
+    symbol: AssignmentSymbol | TypeAliasSymbol | FunctionSymbol | PropertySymbol,
+    indent: str = "",
 ) -> str:
     """Render a symbol that is not a class as a stub line."""
     if isinstance(symbol, FunctionSymbol):
         return _render_function(func=symbol, indent=indent)
+    if isinstance(symbol, PropertySymbol):
+        return _render_property(prop=symbol, indent=indent)
     return _render_assignment(assignment=symbol, indent=indent)
 
 

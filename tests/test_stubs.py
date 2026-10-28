@@ -8,6 +8,7 @@ from uncoded.extract import (
     ClassSymbol,
     FunctionSymbol,
     Parameter,
+    PropertySymbol,
     PythonFile,
     TypeAliasSymbol,
     _extract_python_file,
@@ -207,6 +208,18 @@ class TestRenderStub:
         output = _render_stub(python_file=module)
         assert "class Config:\n    path: Path\n" in output
         assert "def path" not in output
+
+    def test_property_without_annotation_rendered(self):
+        module = PythonFile(
+            rel_path="pkg/mod.py",
+            symbols=[
+                ClassSymbol(
+                    name="Config",
+                    members=[PropertySymbol("path")],
+                )
+            ],
+        )
+        assert "class Config:\n    path\n" in _render_stub(python_file=module)
 
     def test_assignment_with_value_rendered(self):
         module = PythonFile(

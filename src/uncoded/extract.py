@@ -38,15 +38,23 @@ class FunctionSymbol:
 
 @dataclass
 class AssignmentSymbol:
-    """An assignment or annotation whose one target is a bare name, or a property.
+    """An assignment or annotation whose one target is a bare name.
 
     ``value`` is the source of the right-hand side, or None when there is none,
-    as for a bare annotation ``X: int`` or a property.
+    as for a bare annotation ``X: int``.
     """
 
     name: str
     annotation: str | None = None
     value: str | None = None
+
+
+@dataclass(frozen=True)
+class PropertySymbol:
+    """A property with its name and any return annotation."""
+
+    name: str
+    annotation: str | None = None
 
 
 @dataclass
@@ -61,13 +69,14 @@ class TypeAliasSymbol:
 class ClassSymbol:
     """A class with its bases and every definition in its class body.
 
-    ``members`` keeps source order and every definition of a redefined name. A
-    property is an ``AssignmentSymbol``.
+    ``members`` keeps source order and every definition of a redefined name.
     """
 
     name: str
     bases: list[str] = field(default_factory=list)
-    members: list[AssignmentSymbol | FunctionSymbol] = field(default_factory=list)
+    members: list[AssignmentSymbol | FunctionSymbol | PropertySymbol] = field(
+        default_factory=list
+    )
 
 
 type Symbol = AssignmentSymbol | TypeAliasSymbol | ClassSymbol | FunctionSymbol
@@ -157,12 +166,12 @@ def _extract_function(
     )
 
 
-def _property_attribute(
+def _extract_property(
     *,
     node: ast.FunctionDef | ast.AsyncFunctionDef,
-) -> AssignmentSymbol:
-    """Build an AssignmentSymbol representing a @property as a class attribute."""
-    return AssignmentSymbol(
+) -> PropertySymbol:
+    """Build a PropertySymbol from a @property getter."""
+    return PropertySymbol(
         name=node.name,
         annotation=_unparse_or_none(node=node.returns),
     )
@@ -170,12 +179,12 @@ def _property_attribute(
 
 def _extract_member(
     *, name: str, node: MemberNode
-) -> AssignmentSymbol | FunctionSymbol:
+) -> AssignmentSymbol | FunctionSymbol | PropertySymbol:
     """Build the member that ``node`` defines as ``name`` in a class body."""
     if isinstance(node, (ast.AnnAssign, ast.Assign)):
         return _extract_assignment(name=name, node=node)
     if property_kind(node=node) == "property":
-        return _property_attribute(node=node)
+        return _extract_property(node=node)
     return _extract_function(node=node)
 
 

@@ -7,6 +7,7 @@ from uncoded.extract import (
     ClassSymbol,
     FunctionSymbol,
     Parameter,
+    PropertySymbol,
     TypeAliasSymbol,
     _extract_python_file,
     read_python_files,
@@ -629,7 +630,7 @@ class TestExtractPythonFile:
         """)
         module = _extract_python_file(source=source, rel_path="pkg/cfg.py")
         cls = _class(python_file=module)
-        assert cls.members == [AssignmentSymbol(name="path", annotation="Path")]
+        assert cls.members == [PropertySymbol(name="path", annotation="Path")]
 
     def test_property_without_return_annotation(self):
         source = textwrap.dedent("""\
@@ -640,7 +641,7 @@ class TestExtractPythonFile:
         """)
         module = _extract_python_file(source=source, rel_path="pkg/cfg.py")
         cls = _class(python_file=module)
-        assert cls.members == [AssignmentSymbol(name="path")]
+        assert cls.members == [PropertySymbol(name="path")]
 
     def test_property_setter_and_deleter_suppressed(self):
         source = textwrap.dedent("""\
@@ -659,4 +660,4 @@ class TestExtractPythonFile:
         """)
         module = _extract_python_file(source=source, rel_path="pkg/cfg.py")
         cls = _class(python_file=module)
-        assert cls.members == [AssignmentSymbol(name="path", annotation="Path")]
+        assert cls.members == [PropertySymbol(name="path", annotation="Path")]
