@@ -4,9 +4,18 @@ The maintainer decides when to release. This page lists what to do before and
 when publishing a release. The package takes its version from the Git tag, so
 creating the tag is the only version change.
 
+## Choose the version
+
+Choose the version from the headings of the entries under **Unreleased** in
+[the changelog](changelog.md). Any entry under **Breaking** makes a major
+release, any entry under **Added** or **Changed** a minor release, and entries
+under **Fixed** alone a patch release.
+[Compatibility](compatibility.md#versions) says what each kind of release can
+change.
+
 ## Check the standard
 
-Do this before a major or minor release. A patch release skips it.
+If the release is major or minor, do this. A patch release skips it.
 
 1. Run the consistency review, the `uncoded-consistency-review` skill, over
    `src`, `tests`, `README.md`, `AGENTS.md`, `docs` and the skill sources, with
@@ -25,12 +34,13 @@ A shortfall does not hold the release back. A failing test or check does.
 
 ## Check what nothing else checks
 
-Do this before a major or minor release too.
+If the release is major or minor, do this too. A patch release skips it.
 
 1. Add each Python release that came out since the previous release to the
    `python` list of the `test` job in `.github/workflows/ci.yml`. That list is
    the one record of the Python versions that uncoded supports.
-2. Read the repository settings back, since they live outside the repository:
+2. Read the repository settings back, since they live outside the repository.
+   The calls need a `gh` session with admin rights on the repository:
 
    ```sh
    R=repos/alimanfoo/uncoded
@@ -44,9 +54,10 @@ Do this before a major or minor release too.
    ```
 
    Check that Discussions, private vulnerability reporting, secret scanning and
-   push protection are on, that CodeQL default setup covers `actions` and
-   `python`, and that only collaborators can open pull requests. Check that
-   `main` requires a pull request and the "Required checks pass" and
+   push protection are on, that the dependency graph is on, which the SBOM call
+   shows by returning the repository's name, that CodeQL default setup covers
+   `actions` and `python`, and that only collaborators can open pull requests.
+   Check that `main` requires a pull request and the "Required checks pass" and
    `dependency-review` checks, enforced for admins, with "require branches to be
    up to date" and conversation resolution off. Check that the `pypi`
    environment allows only tags that match `v*`, and has no required reviewer.
@@ -56,18 +67,13 @@ Do this before a major or minor release too.
 
 ## Prepare the release
 
-1. Choose the version from the headings of the entries under **Unreleased** in
-   the changelog. Any entry under **Breaking** makes a major release, any entry
-   under **Added** or **Changed** a minor release, and entries under **Fixed**
-   alone a patch release. [Compatibility](compatibility.md#versions) says what
-   each kind of release can change.
-2. Move the entries under **Unreleased** into a section for the new version,
+1. Move the entries under **Unreleased** into a section for the new version,
    headed like the released sections below it. Keep each entry under its
    heading, and leave out a heading with no entries.
-3. If the release is major, add a section to [Upgrading](upgrading.md) that
+2. If the release is major, add a section to [Upgrading](upgrading.md) that
    takes a project from the previous major version, and link it from the top of
    the version's section in the changelog, as 3.0.0 does.
-4. Merge these changes, and the measurement, in one pull request. Then wait for
+3. Merge these changes, and the measurement, in one pull request. Then wait for
    CI to pass on `main`.
 
 ## Publish
@@ -82,8 +88,13 @@ gh release create v3.0.1 --target main --generate-notes
 Publishing the release starts `.github/workflows/publish.yml`. It builds the
 source distribution and wheel from the tag, then uploads them to
 [PyPI](https://pypi.org/p/uncoded). The build fails before the upload if the tag
-did not build that version. Check that the workflow succeeds and that PyPI lists
-the new version.
+did not build that version. Watch the workflow until it ends:
+
+```sh
+gh run watch --exit-status "$(gh run list --workflow publish.yml --limit 1 --json databaseId --jq '.[0].databaseId')"
+```
+
+Once it succeeds, check that the release history on PyPI lists the new version.
 
 The upload uses PyPI Trusted Publishing, so it needs no `PYPI_TOKEN` or any
 other long-lived publishing secret. The PyPI trusted publisher is configured
