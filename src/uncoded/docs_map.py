@@ -100,7 +100,7 @@ def _collapse_empty(*, mapping: dict) -> dict | None:
 
 def read_doc_files(
     *, doc_root: Path, project_directory: Path
-) -> tuple[list[tuple[str, Path]], list[SkippedFile]]:
+) -> tuple[list[tuple[str, str]], list[SkippedFile]]:
     """Read the Markdown files of ``doc_root``, keeping those that read as UTF-8.
 
     If ``doc_root`` is a directory, reads every ``*.md`` file found by rglob,
@@ -109,27 +109,27 @@ def read_doc_files(
 
     Returns the ``(text, rel_path)`` pair of every file that reads, and a
     :class:`SkippedFile` for every file that is unreadable or not UTF-8.
-    ``rel_path`` is relative to ``project_directory``.
+    Each ``rel_path`` is the file's path relative to ``project_directory``, with
+    ``/`` separators on every platform.
     """
     doc_root = doc_root.resolve()
     project_directory = project_directory.resolve()
     md_files = [doc_root] if doc_root.is_file() else sorted(doc_root.rglob("*.md"))
 
-    files: list[tuple[str, Path]] = []
+    files: list[tuple[str, str]] = []
     skipped: list[SkippedFile] = []
     for md_file in md_files:
-        rel = md_file.relative_to(project_directory)
+        rel_path = md_file.relative_to(project_directory).as_posix()
         try:
             text = md_file.read_text(encoding="utf-8-sig")
         except (UnicodeDecodeError, OSError) as e:
-            reason = failure_reason(error=e)
-            skipped.append(SkippedFile(path=rel.as_posix(), reason=reason))
+            skipped.append(SkippedFile(path=rel_path, reason=failure_reason(error=e)))
             continue
-        files.append((text, rel))
+        files.append((text, rel_path))
     return files, skipped
 
 
-def build_docs_map(*, files: Iterable[tuple[str, Path]]) -> dict:
+def build_docs_map(*, files: Iterable[tuple[str, str]]) -> dict:
     """Build a nested dict from ``(text, rel_path)`` doc-file pairs.
 
     Top-level keys are directory names (trailing "/") and file names.
@@ -141,7 +141,7 @@ def build_docs_map(*, files: Iterable[tuple[str, Path]]) -> dict:
     root: dict = {}
 
     for text, rel_path in files:
-        parts = rel_path.parts
+        parts = Path(rel_path).parts
         node = root
 
         for dir_part in parts[:-1]:
