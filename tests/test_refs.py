@@ -168,7 +168,9 @@ class TestFindRefs:
 
 
 class TestPathForDisplay:
-    def test_returns_relative_path_when_under_cwd(self, *, tmp_path, monkeypatch):
+    def test_displays_path_relative_to_current_directory(
+        self, *, tmp_path, monkeypatch
+    ):
         monkeypatch.chdir(tmp_path)
         path = tmp_path / "pkg" / "m.py"
 
@@ -224,7 +226,7 @@ class TestQueryReferences:
             _LSPLocation(path=pkg / "b.py", line=2, character=8),
         ]
 
-    def test_uvx_not_found_raises_ty_error(self, *, tmp_path):
+    def test_reports_missing_uvx(self, *, tmp_path):
         in_path = tmp_path / "m.py"
         in_path.write_text("def foo(): pass\n", encoding="utf-8")
 
@@ -236,7 +238,7 @@ class TestQueryReferences:
                 in_path=in_path, position=(0, 4), project_directory=tmp_path
             )
 
-    def test_uvx_that_cannot_start_raises_ty_error(self, *, tmp_path):
+    def test_reports_uvx_start_failure(self, *, tmp_path):
         in_path = tmp_path / "m.py"
         in_path.write_text("def foo(): pass\n", encoding="utf-8")
 
@@ -329,7 +331,7 @@ class TestRunExchange:
                 project_directory=tmp_path,
             )
 
-    def test_empty_result_list_returns_empty(self, *, tmp_path):
+    def test_treats_an_empty_reference_list_as_no_references(self, *, tmp_path):
         in_path = tmp_path / "m.py"
         in_path.write_text("def foo(): pass\n", encoding="utf-8")
 
@@ -349,7 +351,7 @@ class TestRunExchange:
 
         assert refs == []
 
-    def test_null_result_returns_empty(self, *, tmp_path):
+    def test_treats_a_null_reference_list_as_no_references(self, *, tmp_path):
         in_path = tmp_path / "m.py"
         in_path.write_text("def foo(): pass\n", encoding="utf-8")
 
@@ -464,7 +466,7 @@ class TestReadMessage:
             pytest.param(b"Content-Length: 1\r\n\r\n{", id="body-not-json"),
         ],
     )
-    def test_raises_on_invalid_message(self, *, data):
+    def test_raises_when_ty_sends_an_invalid_message(self, *, data):
         with pytest.raises(TyError, match="not valid LSP"):
             _read_message(stream=io.BytesIO(data))
 
@@ -488,7 +490,7 @@ class TestReadResponse:
 
         assert _read_response(stream=stream, request_id=7) == response
 
-    def test_raises_on_error_reply(self):
+    def test_raises_when_ty_answers_with_an_error(self):
         stream = _lsp_stream(
             {"jsonrpc": "2.0", "id": 1, "error": {"code": -32603, "message": "boom"}}
         )
