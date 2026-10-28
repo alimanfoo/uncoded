@@ -379,7 +379,7 @@ class TestTyFailures:
     def test_passes_on_what_uvx_and_ty_wrote(self, *, tmp_path, stand_in_for_ty):
         stand_in_for_ty(
             script="""
-            sys.stderr.write("Resolved 1 package\\n")
+            sys.stderr.buffer.write(b"Resolved 1 package\\r\\n")
             sys.stderr.write("error: Failed to fetch: https://pypi.org/simple/ty/\\n")
             sys.exit(2)
             """

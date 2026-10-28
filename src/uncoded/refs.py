@@ -91,7 +91,9 @@ def _query_references(
             )
         except TyError as exc:
             ty_stderr.seek(0)
-            output = ty_stderr.read().decode("utf-8", errors="replace").strip()
+            # splitlines drops the carriage returns of Windows line endings.
+            text = ty_stderr.read().decode("utf-8", errors="replace").strip()
+            output = "\n".join(text.splitlines())
             if not output:
                 raise
             raise TyError(
