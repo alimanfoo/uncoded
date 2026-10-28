@@ -1,36 +1,38 @@
 # Get started
 
-Set up uncoded in your repository, then ask your agent to use the index. You
-need [uv](https://docs.astral.sh/uv/getting-started/installation/). `uvx` runs
+Set uncoded up in your repository with one command, then tell your agent to use
+the index. You need
+[uv](https://docs.astral.sh/uv/getting-started/installation/). `uvx` runs
 uncoded on demand; there is no separate install step.
 
 <span id="install-uv"></span> <span id="choose-a-configuration-file"></span>
+<span id="build-the-index"></span>
 
-## 1. Choose what to index
+## 1. Set uncoded up
 
-Create `.uncoded.toml` in your repository root:
+Run from the directory that is to be the project directory, usually the root of
+your repository:
+
+```sh
+uvx uncoded init
+```
+
+`uncoded init` writes `.uncoded.toml`, the configuration file, in the project
+directory. For a repository that has all the roots it looks for, the file is:
 
 ```toml title=".uncoded.toml"
 source-roots = ["src", "tests"]
-doc-roots = ["README.md", "docs"]
+doc-roots = ["README.md", "AGENTS.md", "docs"]
+required-version = "3.1.0"
 ```
 
-Replace these paths with directories and files that exist in your repository.
-`source-roots` indexes Python files. `doc-roots` indexes Markdown headings.
-Remove either line if you only need the other index.
+`source-roots` indexes Python files, and `doc-roots` indexes Markdown headings.
+[`init`](commands.md#init) says which roots `uncoded init` looks for, and
+[Require one version](configuration.md#require-one-version) says what the
+required version does.
 
-<span id="build-the-index"></span>
-
-## 2. Build the index
-
-Run from your repository root:
-
-```sh
-uvx uncoded sync
-```
-
-The command prints the files it creates. With both root types configured, you
-will find:
+`uncoded init` then builds the index and the skills, and prints the files it
+writes. With both kinds of root, you will find:
 
 | Output                                  | Purpose                                                 |
 | --------------------------------------- | ------------------------------------------------------- |
@@ -39,23 +41,27 @@ will find:
 | `.uncoded/docs.yaml`                    | Lists Markdown files and headings.                      |
 | `.agents/skills/` and `.claude/skills/` | Give agents the navigation instructions.                |
 
-Commit the generated skill files. The `.uncoded/` index stays local and is
-ignored by Git.
+Check the roots in `.uncoded.toml`. If your code or docs live elsewhere, edit
+the roots and run `uvx uncoded init` again. It leaves the configuration file as
+it is, and rebuilds the index from it.
 
 <span id="tell-agents-to-use-the-skills"></span>
 
-## 3. Tell your agent to use it
+## 2. Tell your agent to use it
 
-Add these instructions to your repository's `AGENTS.md` or `CLAUDE.md`:
+`uncoded init` ends by printing the lines to add to your repository's
+`AGENTS.md` or `CLAUDE.md`. They tell agents to load the navigation skills at
+the start of every session, one line for each kind of root. Without them, agents
+load the uncoded skills only when they choose to. Add them to the file that your
+agents read.
 
-```text title="Agent instructions"
-## Before you start
+Running `uvx uncoded init` again prints the lines for the roots that the
+configuration file names now.
 
-- Load the `uncoded-code-navigation` skill once per session, before searching, reading or editing any code.
-- Load the `uncoded-doc-navigation` skill once per session, before searching, reading or editing any docs.
-```
+## 3. Commit
 
-Keep only the lines for the root types you configured.
+Commit `.uncoded.toml`, the installed skill files, and the edited `AGENTS.md` or
+`CLAUDE.md`. The `.uncoded/` index stays local and is ignored by Git.
 
 ## 4. Try a task
 
@@ -75,9 +81,9 @@ section.
 
 <span id="keep-the-index-current"></span>
 
-When you change indexed code or docs, run `uvx uncoded sync` again before
-navigating. [Keep the index current](keeping-current.md) explains how to
-automate this with pre-commit.
+The agent runs `uncoded sync` to keep the index current as it works.
+[Keep the index current](keeping-current.md) explains how, and how to add a
+pre-commit hook.
 
 See [Configuration](configuration.md) to use `pyproject.toml` or change the
 indexed paths.

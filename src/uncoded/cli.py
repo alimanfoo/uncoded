@@ -4,57 +4,26 @@ import argparse
 import shlex
 import sys
 from pathlib import Path
-from typing import Literal
 
 from uncoded import __version__
 from uncoded.body import resolve_body
-from uncoded.config import ConfigError, find_config, read_config
+from uncoded.config import (
+    UNCODED_TOML,
+    ConfigError,
+    find_config,
+    read_config,
+    render_conventional_config,
+    validate_root,
+)
 from uncoded.docs_map import build_docs_map, iter_doc_files, render_docs_map
 from uncoded.extract import extract_modules, iter_source_files
 from uncoded.markers import GENERATED_MARKER
 from uncoded.namespace_map import build_map, render_map
 from uncoded.refs import find_refs
 from uncoded.resolver import NamePath, SymbolNotFoundError, UnsupportedNamePathError
-from uncoded.skill import sync_skills
+from uncoded.skill import SKILL_ROOTS, agent_instructions, sync_skills
 from uncoded.stubs import build_stubs, remove_all_stubs
 from uncoded.sync import remove_file, sync_file
-
-
-def _validate_root(
-    *,
-    configured: Path,
-    kind: Literal["source", "doc"],
-    project_root: Path,
-    resolved_project_root: Path,
-    accepts_md_file: bool,
-) -> Path:
-    """Resolve configured against project_root and validate the result.
-
-    Raises ConfigError if the resolved path falls outside the project root or
-    is not a valid target. When accepts_md_file is True, a lone .md file is
-    also valid. kind selects the noun used in the error messages.
-    """
-    root_label = f"{kind} root {configured.as_posix()}"
-    resolved = (project_root / configured).resolve()
-    if not resolved.is_relative_to(resolved_project_root):
-        raise ConfigError(
-            f"{root_label} is outside the project root. "
-            f"Check {kind}-roots in your uncoded config file."
-        )
-    is_valid = resolved.is_dir() or (
-        accepts_md_file and resolved.is_file() and resolved.suffix == ".md"
-    )
-    if not is_valid:
-        if accepts_md_file:
-            raise ConfigError(
-                f"{root_label} is not a directory or .md file. "
-                f"Check {kind}-roots in your uncoded config file."
-            )
-        raise ConfigError(
-            f"{root_label} is not a directory. "
-            f"Check {kind}-roots in your uncoded config file."
-        )
-    return resolved
 
 
 def _sync_code_artefacts(
@@ -62,7 +31,6 @@ def _sync_code_artefacts(
     build: bool,
     configured_source_roots: list[Path],
     project_root: Path,
-    resolved_project_root: Path,
     check: bool,
 ) -> int:
     """Build or remove the code artefacts (namespace map and stubs).
@@ -82,13 +50,7 @@ def _sync_code_artefacts(
         return n
 
     source_roots = [
-        _validate_root(
-            configured=configured,
-            kind="source",
-            project_root=project_root,
-            resolved_project_root=resolved_project_root,
-            accepts_md_file=False,
-        )
+        validate_root(configured=configured, kind="source", project_root=project_root)
         for configured in configured_source_roots
     ]
 
@@ -125,7 +87,6 @@ def _sync_doc_artefacts(
     build: bool,
     configured_doc_roots: list[Path],
     project_root: Path,
-    resolved_project_root: Path,
     check: bool,
 ) -> int:
     """Build or remove the doc artefact (docs.yaml).
@@ -139,13 +100,7 @@ def _sync_doc_artefacts(
             path=Path(".uncoded/docs.yaml"), project_root=project_root, check=check
         )
     doc_roots = [
-        _validate_root(
-            configured=configured,
-            kind="doc",
-            project_root=project_root,
-            resolved_project_root=resolved_project_root,
-            accepts_md_file=True,
-        )
+        validate_root(configured=configured, kind="doc", project_root=project_root)
         for configured in configured_doc_roots
     ]
     all_doc_files = [
@@ -195,7 +150,6 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
             )
 
         project_root = config.project_root
-        resolved_project_root = project_root.resolve()
         changes = sync_file(
             path=Path(".uncoded/.gitignore"),
             content=f"# {GENERATED_MARKER}\n*\n",
@@ -208,7 +162,6 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
             build=bool(config.source_roots),
             configured_source_roots=config.source_roots,
             project_root=project_root,
-            resolved_project_root=resolved_project_root,
             check=check,
         )
         changes += sync_skills(
@@ -222,7 +175,6 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
             build=bool(config.doc_roots),
             configured_doc_roots=config.doc_roots,
             project_root=project_root,
-            resolved_project_root=resolved_project_root,
             check=check,
         )
     except ConfigError as e:
@@ -235,6 +187,51 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
             return 1
         print("Index is up to date.")
         return 0
+    return 0
+
+
+def _init() -> int:
+    """Set uncoded up in the project at the current directory, then sync it.
+
+    With no configuration file found from the current directory, writes one
+    there naming the conventional roots. Leaves a configuration file it finds
+    as it is, and says where it is. After the sync, says what to commit and
+    prints the lines that tell agents to load the navigation skills. Returns 1
+    when there is no root to name or the sync fails, and 0 otherwise.
+    """
+    start = Path.cwd()
+    config = find_config(start=start)
+    if config is None:
+        try:
+            content = render_conventional_config(
+                directory=start, required_version=__version__
+            )
+        except ConfigError as e:
+            print(f"Error: {e}", file=sys.stderr)
+            return 1
+        sync_file(path=Path(UNCODED_TOML), content=content, project_root=start)
+    else:
+        print(
+            f"Found the configuration file in {config.project_root.as_posix()}, "
+            "and left it as it is."
+        )
+
+    if _sync(start=start) != 0:
+        return 1
+
+    config = read_config(start=start)
+    skill_dirs = " and ".join(root.as_posix() for root in SKILL_ROOTS)
+    instructions = agent_instructions(
+        source=bool(config.source_roots), docs=bool(config.doc_roots)
+    )
+    print(
+        f"\nCommit the configuration file and the installed skill files in "
+        f"{skill_dirs}.\n\n"
+        f"Add these lines to AGENTS.md or CLAUDE.md, so that agents load the "
+        f"navigation skills at the start of every session. Without them, agents "
+        f"load the uncoded skills only when they choose to.\n\n{instructions}",
+        end="",
+    )
     return 0
 
 
@@ -336,11 +333,12 @@ def _refusal(*, arguments: list[str]) -> str | None:
 def main() -> int:
     """Dispatch the uncoded CLI.
 
-    Four subcommands:
+    Five subcommands:
 
+    - ``init`` — sets uncoded up in a project, then syncs its index.
     - ``sync`` — builds or refreshes the navigation index.
     - ``check`` — verifies the index matches what a rebuild would produce;
-      exits non-zero on drift, useful in CI.
+      exits non-zero on drift.
     - ``body`` — prints the source body of a named symbol to stdout.
     - ``refs`` — finds all references to a named symbol and prints them.
 
@@ -359,6 +357,12 @@ def main() -> int:
     )
     subparsers = parser.add_subparsers(required=True)
 
+    init_parser = subparsers.add_parser(
+        "init",
+        help="Set uncoded up in a project, then build its index and skills.",
+    )
+    init_parser.set_defaults(action=_init)
+
     sync_parser = subparsers.add_parser(
         "sync",
         help="Build or refresh generated navigation artefacts.",
@@ -369,7 +373,7 @@ def main() -> int:
         "check",
         help=(
             "Verify the index is up to date without writing. Exits non-zero "
-            "if any file would change. Useful in CI."
+            "if any file would change."
         ),
     )
     check_parser.set_defaults(action=lambda: _sync(check=True))

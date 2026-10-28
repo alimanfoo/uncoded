@@ -98,17 +98,16 @@ class TestSyncApplyMode:
             (tmp_path / p).stat().st_mtime_ns for p in _SOURCE_SKILL_PATHS
         ] == skill_mtimes
 
-    def test_error_when_no_config_file(self, *, tmp_path, monkeypatch, capsys):
-        # Pins the problem statement (names both supported config files)
-        # and the absence of any absolute path leak.
+    def test_error_when_no_config_file_points_to_init(
+        self, *, tmp_path, monkeypatch, capsys
+    ):
         monkeypatch.chdir(tmp_path)
 
         assert cli._sync() == 1
 
         err = capsys.readouterr().err
-        assert "Error:" in err
-        assert "pyproject.toml" in err
-        assert ".uncoded.toml" in err
+        assert err.startswith("Error: No configuration file found")
+        assert "set uncoded up with uncoded init" in err
         assert str(tmp_path) not in err
 
     def test_error_when_source_root_outside_project_root(
@@ -534,6 +533,175 @@ class TestRequiredVersion:
         captured = capsys.readouterr()
         assert captured.out == ""
         assert captured.err.startswith("Error: Ambiguous config")
+
+
+def _init_project(*, tmp_path, monkeypatch, roots):
+    """Create each of ``roots`` in ``tmp_path``, then chdir into it."""
+    for root in roots:
+        if root.endswith(".md"):
+            (tmp_path / root).write_text("# Title\n", encoding="utf-8")
+        else:
+            (tmp_path / root).mkdir()
+    monkeypatch.chdir(tmp_path)
+
+
+def _run_init(*, monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["uncoded", "init"])
+    return cli.main()
+
+
+class TestInitCommand:
+    def test_configures_every_conventional_root_and_syncs(
+        self, *, tmp_path, monkeypatch, capsys
+    ):
+        _init_project(
+            tmp_path=tmp_path,
+            monkeypatch=monkeypatch,
+            roots=["src", "tests", "README.md", "AGENTS.md", "docs"],
+        )
+
+        assert _run_init(monkeypatch=monkeypatch) == 0
+
+        assert (tmp_path / ".uncoded.toml").read_text(encoding="utf-8") == (
+            'source-roots = ["src", "tests"]\n'
+            'doc-roots = ["README.md", "AGENTS.md", "docs"]\n'
+            f'required-version = "{__version__}"\n'
+        )
+        assert (tmp_path / ".uncoded" / "namespace.yaml").exists()
+        assert (tmp_path / ".uncoded" / "docs.yaml").exists()
+        for skill_path in _SKILL_PATHS:
+            assert (tmp_path / skill_path).exists()
+        out = capsys.readouterr().out
+        assert "Commit the configuration file and the installed skill files" in out
+        assert out.endswith(
+            "## Before you start\n\n"
+            "- Load the `uncoded-code-navigation` skill once per session, before "
+            "searching, reading or editing any code.\n"
+            "- Load the `uncoded-doc-navigation` skill once per session, before "
+            "searching, reading or editing any docs.\n"
+        )
+
+    def test_names_only_the_roots_that_exist(self, *, tmp_path, monkeypatch, capsys):
+        _init_project(tmp_path=tmp_path, monkeypatch=monkeypatch, roots=["docs"])
+
+        assert _run_init(monkeypatch=monkeypatch) == 0
+
+        assert (tmp_path / ".uncoded.toml").read_text(encoding="utf-8") == (
+            f'doc-roots = ["docs"]\nrequired-version = "{__version__}"\n'
+        )
+        for skill_path in _SOURCE_SKILL_PATHS:
+            assert not (tmp_path / skill_path).exists()
+        out = capsys.readouterr().out
+        assert "uncoded-doc-navigation" in out
+        assert "uncoded-code-navigation" not in out
+
+    def test_names_no_root_of_the_wrong_kind(self, *, tmp_path, monkeypatch):
+        (tmp_path / "outside").mkdir()
+        project = tmp_path / "project"
+        project.mkdir()
+        _init_project(tmp_path=project, monkeypatch=monkeypatch, roots=[])
+        (project / "README.md").write_text("# T\n", encoding="utf-8")
+        (project / "src").write_text("", encoding="utf-8")
+        (project / "tests").symlink_to(tmp_path / "outside", target_is_directory=True)
+
+        assert _run_init(monkeypatch=monkeypatch) == 0
+
+        assert (project / ".uncoded.toml").read_text(encoding="utf-8") == (
+            f'doc-roots = ["README.md"]\nrequired-version = "{__version__}"\n'
+        )
+
+    def test_passes_over_pyproject_without_uncoded_table(
+        self, *, tmp_path, monkeypatch
+    ):
+        _init_project(tmp_path=tmp_path, monkeypatch=monkeypatch, roots=["src"])
+        (tmp_path / "pyproject.toml").write_text(
+            '[project]\nname = "demo"\n', encoding="utf-8"
+        )
+
+        assert _run_init(monkeypatch=monkeypatch) == 0
+
+        assert (tmp_path / ".uncoded.toml").exists()
+
+    def test_uses_the_configuration_file_above_a_subdirectory(
+        self, *, tmp_path, monkeypatch, capsys
+    ):
+        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        (tmp_path / "src" / "docs").mkdir()
+        monkeypatch.chdir(tmp_path / "src")
+
+        assert _run_init(monkeypatch=monkeypatch) == 0
+
+        assert not (tmp_path / "src" / ".uncoded.toml").exists()
+        assert (tmp_path / ".uncoded" / "namespace.yaml").exists()
+        out = capsys.readouterr().out
+        assert out.startswith(
+            f"Found the configuration file in {tmp_path.as_posix()}, "
+            "and left it as it is.\n"
+        )
+
+    def test_writes_nothing_when_no_conventional_root_exists(
+        self, *, tmp_path, monkeypatch, capsys
+    ):
+        _init_project(tmp_path=tmp_path, monkeypatch=monkeypatch, roots=["lib"])
+
+        assert _run_init(monkeypatch=monkeypatch) == 1
+
+        assert _tree(root=tmp_path) == [Path("lib")]
+        captured = capsys.readouterr()
+        assert captured.out == ""
+        assert captured.err.startswith(
+            "Error: found none of the source roots src, tests or the doc roots "
+            "README.md, AGENTS.md, docs in this directory"
+        )
+        assert "Write .uncoded.toml by hand" in captured.err
+
+    def test_leaves_an_existing_configuration_file_as_it_is(
+        self, *, tmp_path, monkeypatch, capsys
+    ):
+        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        (tmp_path / "docs").mkdir()
+        pyproject = (tmp_path / "pyproject.toml").read_text(encoding="utf-8")
+
+        assert _run_init(monkeypatch=monkeypatch) == 0
+
+        assert (tmp_path / "pyproject.toml").read_text(encoding="utf-8") == pyproject
+        assert not (tmp_path / ".uncoded.toml").exists()
+        assert (tmp_path / ".uncoded" / "namespace.yaml").exists()
+        out = capsys.readouterr().out
+        assert out.startswith(
+            f"Found the configuration file in {tmp_path.as_posix()}, "
+            "and left it as it is.\n"
+        )
+        assert "uncoded-code-navigation" in out
+        assert "uncoded-doc-navigation" not in out
+
+    def test_second_run_changes_nothing(self, *, tmp_path, monkeypatch, capsys):
+        _init_project(
+            tmp_path=tmp_path, monkeypatch=monkeypatch, roots=["src", "README.md"]
+        )
+        assert _run_init(monkeypatch=monkeypatch) == 0
+        first = capsys.readouterr().out
+        files = {p: p.read_bytes() for p in tmp_path.rglob("*") if p.is_file()}
+
+        assert _run_init(monkeypatch=monkeypatch) == 0
+
+        assert {p: p.read_bytes() for p in tmp_path.rglob("*") if p.is_file()} == files
+        second = capsys.readouterr().out
+        assert second.startswith(
+            f"Found the configuration file in {tmp_path.as_posix()}, "
+            "and left it as it is.\n"
+        )
+        assert second.endswith(first[first.index("\nCommit") :])
+
+    def test_stops_when_the_sync_fails(self, *, tmp_path, monkeypatch, capsys):
+        _init_project(tmp_path=tmp_path, monkeypatch=monkeypatch, roots=["src"])
+        (tmp_path / ".uncoded.toml").write_text("", encoding="utf-8")
+
+        assert _run_init(monkeypatch=monkeypatch) == 1
+
+        captured = capsys.readouterr()
+        assert "nothing to index" in captured.err
+        assert "Commit" not in captured.out
 
 
 class TestBodyCommand:

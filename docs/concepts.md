@@ -256,8 +256,9 @@ the same concept, with verbatim evidence for each.
 
 ### Generated file
 
-A **generated file** is a file that uncoded writes in a project: one of the
-index's files, an installed skill file, or `.uncoded/.gitignore`.
+A **generated file** is a file that `uncoded sync` writes in a project: one of
+the index's files, an installed skill file, or `.uncoded/.gitignore`. The
+configuration file that `uncoded init` writes is not a generated file.
 
 Replaces: "artefact", "index artefact", "navigation artefact".
 

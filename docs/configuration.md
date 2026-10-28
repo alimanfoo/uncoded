@@ -1,7 +1,9 @@
 # Configuration
 
-Use one configuration file in your repository root. Choose the directories
+Use one configuration file in your project directory. Choose the directories
 containing Python code and the files or directories containing Markdown docs.
+[`uncoded init`](getting-started.md) writes `.uncoded.toml` for you, and you can
+edit it afterwards.
 
 ## Choose a configuration file
 

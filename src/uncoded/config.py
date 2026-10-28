@@ -1,8 +1,18 @@
 """Read uncoded configuration from pyproject.toml or .uncoded.toml."""
 
+import json
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Literal
+
+UNCODED_TOML = ".uncoded.toml"
+
+# The roots that uncoded init names, by kind, in the order it names them.
+_CONVENTIONAL_ROOTS: dict[Literal["source", "doc"], tuple[str, ...]] = {
+    "source": ("src", "tests"),
+    "doc": ("README.md", "AGENTS.md", "docs"),
+}
 
 
 class ConfigError(Exception):
@@ -60,7 +70,7 @@ def _config_file_at(*, directory: Path) -> tuple[Path, dict] | None:
     if directory.name == ".uncoded":
         return None
     pyproject = directory / "pyproject.toml"
-    uncoded_toml = directory / ".uncoded.toml"
+    uncoded_toml = directory / UNCODED_TOML
     pyproject_settings = _pyproject_settings(pyproject_path=pyproject)
     uncoded_toml_settings = _load_toml(path=uncoded_toml)
     if uncoded_toml_settings is not None:
@@ -124,7 +134,82 @@ def read_config(*, start: Path) -> Config:
     if config is None:
         raise ConfigError(
             "No configuration file found in this directory or above it. "
-            "Run the command from inside the project, or configure uncoded "
-            "in .uncoded.toml or in a [tool.uncoded] table in pyproject.toml."
+            "Run the command from inside the project, or set uncoded up with "
+            "uncoded init."
         )
     return config
+
+
+def validate_root(
+    *, configured: Path, kind: Literal["source", "doc"], project_root: Path
+) -> Path:
+    """Resolve the configured root against ``project_root`` and return it.
+
+    Raises :exc:`ConfigError` when the root resolves outside ``project_root``,
+    or is not a directory or, for a doc root, a Markdown file. ``kind`` also
+    selects the noun used in the error messages.
+    """
+    root_label = f"{kind} root {configured.as_posix()}"
+    resolved = (project_root / configured).resolve()
+    if not resolved.is_relative_to(project_root.resolve()):
+        raise ConfigError(
+            f"{root_label} is outside the project root. "
+            f"Check {kind}-roots in your uncoded config file."
+        )
+    accepts_md_file = kind == "doc"
+    is_valid = resolved.is_dir() or (
+        accepts_md_file and resolved.is_file() and resolved.suffix == ".md"
+    )
+    if not is_valid:
+        if accepts_md_file:
+            raise ConfigError(
+                f"{root_label} is not a directory or .md file. "
+                f"Check {kind}-roots in your uncoded config file."
+            )
+        raise ConfigError(
+            f"{root_label} is not a directory. "
+            f"Check {kind}-roots in your uncoded config file."
+        )
+    return resolved
+
+
+def _is_valid_root(
+    *, configured: Path, kind: Literal["source", "doc"], project_root: Path
+) -> bool:
+    """Return whether :func:`validate_root` accepts the configured root."""
+    try:
+        validate_root(configured=configured, kind=kind, project_root=project_root)
+    except ConfigError:
+        return False
+    return True
+
+
+def render_conventional_config(*, directory: Path, required_version: str) -> str:
+    """Return the text of a configuration file for the project in ``directory``.
+
+    The file names as roots whichever of the conventional roots in
+    ``directory`` are valid roots, and sets ``required_version``. Raises
+    :exc:`ConfigError` when none of them are.
+    """
+    roots = {
+        kind: [
+            name
+            for name in names
+            if _is_valid_root(configured=Path(name), kind=kind, project_root=directory)
+        ]
+        for kind, names in _CONVENTIONAL_ROOTS.items()
+    }
+    if not any(roots.values()):
+        raise ConfigError(
+            "found none of the source roots "
+            f"{', '.join(_CONVENTIONAL_ROOTS['source'])} or the doc roots "
+            f"{', '.join(_CONVENTIONAL_ROOTS['doc'])} in this directory, so "
+            f"wrote no configuration file. Write {UNCODED_TOML} by hand, with "
+            "source-roots listing the directories of Python code and doc-roots "
+            "listing the Markdown files and directories."
+        )
+    lines = [
+        f"{kind}-roots = {json.dumps(found)}" for kind, found in roots.items() if found
+    ]
+    lines.append(f"required-version = {json.dumps(required_version)}")
+    return "\n".join(lines) + "\n"
