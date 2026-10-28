@@ -63,6 +63,17 @@ def _run(*, monkeypatch, arguments):
     return cli.main()
 
 
+def _make_index_stale(*, tmp_path, monkeypatch):
+    """Sync a repo, then change, add and delete one Python file each."""
+    _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+    (tmp_path / "src" / "foo.py").write_text("def foo(): pass\n", encoding="utf-8")
+    (tmp_path / "src" / "bar.py").write_text("def bar(): pass\n", encoding="utf-8")
+    _run(monkeypatch=monkeypatch, arguments=["sync"])
+    (tmp_path / "src" / "foo.py").write_text("def foo(x): pass\n", encoding="utf-8")
+    (tmp_path / "src" / "new.py").write_text("def new(): pass\n", encoding="utf-8")
+    (tmp_path / "src" / "bar.py").unlink()
+
+
 class TestSyncApplyMode:
     def test_syncs_code_navigation_artefacts(self, *, tmp_path, monkeypatch):
         _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
@@ -361,6 +372,37 @@ class TestSyncCheckMode:
         assert _run(monkeypatch=monkeypatch, arguments=["check"]) == 1
         # Orphan stub must still be present after check.
         assert (tmp_path / ".uncoded" / "stubs" / "src" / "bar.pyi").exists()
+
+    def test_lists_each_file_that_sync_would_write_update_or_remove(
+        self, *, tmp_path, monkeypatch, capsys
+    ):
+        _make_index_stale(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        before = _contents(root=tmp_path)
+        capsys.readouterr()
+
+        assert _run(monkeypatch=monkeypatch, arguments=["check"]) == 1
+
+        assert _contents(root=tmp_path) == before
+        assert capsys.readouterr().out == (
+            "Would update .uncoded/namespace.yaml\n"
+            "Would update .uncoded/stubs/src/foo.pyi\n"
+            "Would write .uncoded/stubs/src/new.pyi\n"
+            "Would remove .uncoded/stubs/src/bar.pyi\n"
+            "Index out of date: 4 file(s) would change.\n"
+        )
+
+    def test_returns_zero_from_a_subdirectory_when_current(
+        self, *, tmp_path, monkeypatch, capsys
+    ):
+        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        (tmp_path / "src" / "foo.py").write_text("def foo(): pass\n", encoding="utf-8")
+        _run(monkeypatch=monkeypatch, arguments=["sync"])
+        monkeypatch.chdir(tmp_path / "src")
+        capsys.readouterr()
+
+        assert _run(monkeypatch=monkeypatch, arguments=["check"]) == 0
+
+        assert capsys.readouterr().out == "Index is up to date.\n"
 
     def test_error_still_returns_one(self, *, tmp_path, monkeypatch, capsys):
         # Config error: check mode should report non-zero the same as apply mode.
@@ -703,9 +745,18 @@ class TestInitCommand:
             monkeypatch=monkeypatch,
             roots=["src", "tests", "README.md", "AGENTS.md", "docs"],
         )
+        (tmp_path / "CLAUDE.md").write_text("# Claude\n", encoding="utf-8")
+        (tmp_path / "pyproject.toml").write_text(
+            '[project]\nname = "demo"\n', encoding="utf-8"
+        )
+        unedited = {
+            name: (tmp_path / name).read_bytes()
+            for name in ["AGENTS.md", "CLAUDE.md", "pyproject.toml"]
+        }
 
         assert _run(monkeypatch=monkeypatch, arguments=["init"]) == 0
 
+        assert {name: (tmp_path / name).read_bytes() for name in unedited} == unedited
         assert (tmp_path / ".uncoded.toml").read_text(encoding="utf-8") == (
             'source-roots = ["src", "tests"]\n'
             'doc-roots = ["README.md", "AGENTS.md", "docs"]\n'
@@ -717,6 +768,10 @@ class TestInitCommand:
             assert (tmp_path / skill_path).exists()
         out = capsys.readouterr().out
         assert "Commit the configuration file and the installed skill files" in out
+        assert (
+            "Without them, agents load the uncoded skills only when they choose to."
+            in out
+        )
         assert out.endswith(
             "## Before you start\n\n"
             "- Load the `uncoded-code-navigation` skill once per session, before "
@@ -1384,7 +1439,7 @@ class TestSyncDocRoots:
         for path in _SOURCE_SKILL_PATHS:
             assert not (tmp_path / path).exists()
 
-    def test_doc_root_removal_cleans_docs_yaml(self, *, tmp_path, monkeypatch):
+    def test_doc_root_removal_cleans_doc_artefacts(self, *, tmp_path, monkeypatch):
         # First sync with doc-roots; then drop them.
         # docs.yaml must be removed.
         (tmp_path / "pyproject.toml").write_text(
@@ -1408,6 +1463,8 @@ class TestSyncDocRoots:
         _run(monkeypatch=monkeypatch, arguments=["sync"])
 
         assert (tmp_path / ".uncoded" / "docs.yaml").exists()
+        for path in _DOC_SKILL_PATHS:
+            assert (tmp_path / path).exists()
 
         # Drop doc-roots.
         (tmp_path / "pyproject.toml").write_text(
@@ -1424,6 +1481,8 @@ class TestSyncDocRoots:
         )
         assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 0
         assert not (tmp_path / ".uncoded" / "docs.yaml").exists()
+        for path in _DOC_SKILL_PATHS:
+            assert not (tmp_path / path).exists()
 
     def test_check_returns_one_when_docs_yaml_stale(self, *, tmp_path, monkeypatch):
         _init_doc_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
