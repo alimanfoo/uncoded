@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from uncoded.ast_helpers import (
+    MemberNode,
     SymbolNode,
     class_symbols,
     module_symbols,
@@ -79,7 +80,7 @@ class ClassSymbol:
         return [m for m in self.members if isinstance(m, FunctionSymbol)]
 
 
-type _Symbol = AssignmentSymbol | TypeAliasSymbol | ClassSymbol | FunctionSymbol
+type Symbol = AssignmentSymbol | TypeAliasSymbol | ClassSymbol | FunctionSymbol
 
 
 @dataclass
@@ -91,7 +92,7 @@ class PythonFile:
 
     rel_path: str
     imports: list[str] = field(default_factory=list)
-    symbols: list[_Symbol] = field(default_factory=list)
+    symbols: list[Symbol] = field(default_factory=list)
 
     @property
     def assignments(self) -> list[AssignmentSymbol | TypeAliasSymbol]:
@@ -197,9 +198,7 @@ def _property_attribute(
 
 
 def _extract_member(
-    *,
-    name: str,
-    node: ast.AnnAssign | ast.Assign | ast.FunctionDef | ast.AsyncFunctionDef,
+    *, name: str, node: MemberNode
 ) -> AssignmentSymbol | FunctionSymbol:
     """Build the member that ``node`` defines as ``name`` in a class body."""
     if isinstance(node, (ast.AnnAssign, ast.Assign)):
@@ -221,7 +220,7 @@ def _extract_class(*, node: ast.ClassDef) -> ClassSymbol:
     )
 
 
-def _extract_symbol(*, name: str, node: SymbolNode) -> _Symbol:
+def _extract_symbol(*, name: str, node: SymbolNode) -> Symbol:
     """Build the symbol that ``node`` defines as ``name`` in a module body."""
     if isinstance(node, ast.ClassDef):
         return _extract_class(node=node)
