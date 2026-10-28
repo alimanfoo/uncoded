@@ -64,6 +64,16 @@ includes it. Each entry links the pull request that made the change.
 
 ### Fixed
 
+- The uncoded skills use the words that [the concepts page](concepts.md) gives
+  each concept, such as "code index", "definition" and "project". They also stop
+  listing directories and files among the symbols in the namespace map.
+  ([#344](https://github.com/alimanfoo/uncoded/pull/344))
+- The documentation navigation skill and the docs map's header say how to find a
+  heading that the docs map marks with a " (N)" suffix: take the Nth match of
+  the heading's text under the same parent. The skill said that every heading in
+  the docs map is literal text, and the header said to take the Nth match in the
+  whole file, which finds the wrong heading when the same text comes earlier
+  under another parent. ([#344](https://github.com/alimanfoo/uncoded/pull/344))
 - `uncoded body` prints a definition with the line endings that it has in the
   file. It printed every line ending as LF, and on Windows as CRLF, so an edit
   tool given the printed text could fail to find it in the file.
