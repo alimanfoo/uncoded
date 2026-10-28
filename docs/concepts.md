@@ -290,6 +290,14 @@ Replaces: "contributor".
 
 A **user** is a developer or an agent: anyone who uses uncoded in a project.
 
+### Contract
+
+uncoded's **contract** is the part of uncoded that a project can rely on from
+one release to the next. [The compatibility page](compatibility.md) says what it
+covers, and which releases can change it.
+
+Replaces: "agent-facing contract".
+
 ## Relationships and rules
 
 This section says how the things above relate. What uncoded does with them, and

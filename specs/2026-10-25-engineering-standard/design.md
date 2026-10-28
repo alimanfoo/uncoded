@@ -53,9 +53,8 @@ A change is a **patch** when it fixes behaviour to match its documented intent.
 That includes correcting a skill to match the command-line tool, listing a
 symbol the index missed, and rewording a skill without changing its intent.
 
-Messages on standard error, and the wording of any message, are not part of the
-contract. Commands write data to standard output and everything else to standard
-error.
+A command writes its data to standard output. Messages, and their wording, are
+not part of the contract, wherever they are printed.
 
 Where a case is unclear, the expected impact on users decides.
 
