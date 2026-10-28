@@ -9,8 +9,10 @@ from uncoded import __version__
 from uncoded.body import resolve_body
 from uncoded.config import (
     UNCODED_TOML,
+    Config,
     ConfigError,
     find_config,
+    is_inside_project,
     read_config,
     render_conventional_config,
     validate_root,
@@ -117,69 +119,60 @@ def _sync_doc_artefacts(
     )
 
 
-def _sync(*, start: Path | None = None, check: bool = False) -> int:
-    """Sync (or verify) the index artefacts for each configured root type.
+def _sync(*, config: Config, check: bool = False) -> int:
+    """Sync (or verify) the index artefacts of the project that config configures.
 
-    The upward walk for the config file begins at ``start`` (defaulting
-    to the current working directory at the CLI boundary). The parent of
-    the located config file becomes ``project_root``: the single anchor
-    every writer uses for project-relative paths it reads or writes.
-    Running from a subdirectory of the project produces artefacts in the
-    same locations as running from the project root.
+    Every writer anchors the project-relative paths that it reads or writes at
+    ``config.project_root``, so running from a subdirectory of the project
+    produces artefacts in the same locations as running from the project
+    directory.
 
     source-roots drive code artefacts (namespace.yaml, stubs); doc-roots
     drive doc artefacts (docs.yaml). Each root type is independent: when
     a root type is absent its artefacts are removed. Before writing any index
     artefact, sync writes .uncoded/.gitignore so the index stays local by
-    default. At least one root type must be configured.
+    default. Raises ConfigError when the configuration names no roots or a
+    root cannot be used.
 
     When ``check=True``, the on-disk tree is not mutated; the function
     reports each prospective write or removal, returns 1 if anything
-    would change, and 0 otherwise. Configuration errors return 1.
+    would change, and 0 otherwise.
     """
-    if start is None:
-        start = Path.cwd()
-
-    try:
-        config = read_config(start=start)
-        if not config.source_roots and not config.doc_roots:
-            raise ConfigError(
-                "nothing to index. "
-                "Add source-roots or doc-roots to [tool.uncoded] in pyproject.toml, "
-                "or as top-level keys in .uncoded.toml."
-            )
-
-        project_root = config.project_root
-        changes = sync_file(
-            path=Path(".uncoded/.gitignore"),
-            content=f"# {GENERATED_MARKER}\n*\n",
-            project_root=project_root,
-            check=check,
+    if not config.source_roots and not config.doc_roots:
+        raise ConfigError(
+            "nothing to index. "
+            "Add source-roots or doc-roots to [tool.uncoded] in pyproject.toml, "
+            "or as top-level keys in .uncoded.toml."
         )
 
-        # Code artefacts — build when source_roots configured, else remove.
-        changes += _sync_code_artefacts(
-            build=bool(config.source_roots),
-            configured_source_roots=config.source_roots,
-            project_root=project_root,
-            check=check,
-        )
-        changes += sync_skills(
-            source=bool(config.source_roots),
-            docs=bool(config.doc_roots),
-            project_root=project_root,
-            check=check,
-        )
-        # Doc artefacts — build when doc_roots configured, else remove.
-        changes += _sync_doc_artefacts(
-            build=bool(config.doc_roots),
-            configured_doc_roots=config.doc_roots,
-            project_root=project_root,
-            check=check,
-        )
-    except ConfigError as e:
-        print(f"Error: {e}", file=sys.stderr)
-        return 1
+    project_root = config.project_root
+    changes = sync_file(
+        path=Path(".uncoded/.gitignore"),
+        content=f"# {GENERATED_MARKER}\n*\n",
+        project_root=project_root,
+        check=check,
+    )
+
+    # Code artefacts — build when source_roots configured, else remove.
+    changes += _sync_code_artefacts(
+        build=bool(config.source_roots),
+        configured_source_roots=config.source_roots,
+        project_root=project_root,
+        check=check,
+    )
+    changes += sync_skills(
+        source=bool(config.source_roots),
+        docs=bool(config.doc_roots),
+        project_root=project_root,
+        check=check,
+    )
+    # Doc artefacts — build when doc_roots configured, else remove.
+    changes += _sync_doc_artefacts(
+        build=bool(config.doc_roots),
+        configured_doc_roots=config.doc_roots,
+        project_root=project_root,
+        check=check,
+    )
 
     if check:
         if changes:
@@ -190,36 +183,30 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
     return 0
 
 
-def _init() -> int:
+def _init(*, config: Config | None) -> int:
     """Set uncoded up in the project at the current directory, then sync it.
 
-    With no configuration file found from the current directory, writes one
-    there naming the conventional roots. Leaves a configuration file it finds
+    With no configuration, writes a configuration file in the current directory
+    naming the conventional roots. Leaves the configuration file of ``config``
     as it is, and says where it is. After the sync, says what to commit and
-    prints the lines that tell agents to load the navigation skills. Returns 1
-    when there is no root to name or the sync fails, and 0 otherwise.
+    prints the lines that tell agents to load the navigation skills. Returns 0.
+    Raises ConfigError when there is no root to name or the sync fails.
     """
-    start = Path.cwd()
-    config = find_config(start=start)
     if config is None:
-        try:
-            content = render_conventional_config(
-                directory=start, required_version=__version__
-            )
-        except ConfigError as e:
-            print(f"Error: {e}", file=sys.stderr)
-            return 1
+        start = Path.cwd()
+        content = render_conventional_config(
+            directory=start, required_version=__version__
+        )
         sync_file(path=Path(UNCODED_TOML), content=content, project_root=start)
+        config = read_config(start=start)
     else:
         print(
             f"Found the configuration file in {config.project_root.as_posix()}, "
             "and left it as it is."
         )
 
-    if _sync(start=start) != 0:
-        return 1
+    _sync(config=config)
 
-    config = read_config(start=start)
     skill_dirs = " and ".join(root.as_posix() for root in SKILL_ROOTS)
     instructions = agent_instructions(
         source=bool(config.source_roots), docs=bool(config.doc_roots)
@@ -235,11 +222,36 @@ def _init() -> int:
     return 0
 
 
+class _OutsideProjectError(Exception):
+    """Raised when an ``--in`` file is outside the project directory."""
+
+
+def _project_file(*, in_path: str, project_root: Path) -> Path:
+    """Return the ``--in`` file, or raise _OutsideProjectError when it is outside."""
+    target = Path(in_path)
+    if not is_inside_project(path=target, project_root=project_root):
+        raise _OutsideProjectError(
+            f"outside the project directory {project_root.as_posix()}."
+        )
+    return target
+
+
+# The failures of a lookup that `uncoded body` and `uncoded refs` report, each
+# with its message in _report_lookup_error.
+_LOOKUP_ERRORS = (
+    _OutsideProjectError,
+    UnsupportedNamePathError,
+    SymbolNotFoundError,
+    OSError,
+    UnicodeDecodeError,
+    SyntaxError,
+)
+
+
 def _report_lookup_error(*, exc: Exception, name_path: str, in_path: str) -> int:
     """Print the CLI error message for a lookup failure and return 1.
 
-    Covers the four shared error arms for _body and _refs: unsupported name
-    path, symbol not found, file not found, and read/parse error.
+    Covers the error arms that _body and _refs share.
     FileNotFoundError is checked before OSError because it subclasses it.
     """
     shown_path = Path(in_path).as_posix()
@@ -254,52 +266,45 @@ def _report_lookup_error(*, exc: Exception, name_path: str, in_path: str) -> int
     return 1
 
 
-def _body(*, name_path: str, in_path: str) -> int:
+def _body(*, config: Config, name_path: str, in_path: str) -> int:
     """Print the source body of name_path in in_path to stdout.
 
-    Returns 0 on success. Returns 1 if name_path is unsupported, if
-    name_path is not present in the file, if the file cannot be read
-    (missing, unreadable, or undecodable), or if the source has a syntax error.
+    Returns 0 on success. Returns 1 if in_path is outside the project
+    directory of ``config``, if name_path is unsupported, if name_path is not
+    present in the file, if the file cannot be read (missing, unreadable, or
+    undecodable), or if the source has a syntax error.
     """
-    target = Path(in_path)
     try:
+        target = _project_file(in_path=in_path, project_root=config.project_root)
         body = resolve_body(name_path=NamePath.parse(raw=name_path), in_path=target)
-    except (
-        UnsupportedNamePathError,
-        SymbolNotFoundError,
-        FileNotFoundError,
-        OSError,
-        UnicodeDecodeError,
-        SyntaxError,
-    ) as e:
+    except _LOOKUP_ERRORS as e:
         return _report_lookup_error(exc=e, name_path=name_path, in_path=in_path)
 
     sys.stdout.write(body)
     return 0
 
 
-def _refs(*, name_path: str, in_path: str) -> int:
+def _refs(*, config: Config, name_path: str, in_path: str) -> int:
     """Find all references to name_path in in_path and print them to stdout.
 
+    ty reads the project directory of ``config`` as its workspace.
+
     Returns 0 on success. Each reference is printed as path:line:col.
-    Returns 1 if name_path is unsupported, if name_path is not present in
-    the file, if the file cannot be read (missing, unreadable, or
-    undecodable), if the source has a syntax error, or if the reference
-    lookup fails.
+    Returns 1 if in_path is outside the project directory, if name_path is
+    unsupported, if name_path is not present in the file, if the file cannot
+    be read (missing, unreadable, or undecodable), if the source has a syntax
+    error, or if the reference lookup fails.
     """
     try:
-        refs = find_refs(name_path=NamePath.parse(raw=name_path), in_path=Path(in_path))
+        refs = find_refs(
+            name_path=NamePath.parse(raw=name_path),
+            in_path=_project_file(in_path=in_path, project_root=config.project_root),
+            project_root=config.project_root,
+        )
     except RuntimeError as e:
         print(f"Error: {e}", file=sys.stderr)
         return 1
-    except (
-        UnsupportedNamePathError,
-        SymbolNotFoundError,
-        FileNotFoundError,
-        OSError,
-        UnicodeDecodeError,
-        SyntaxError,
-    ) as e:
+    except _LOOKUP_ERRORS as e:
         return _report_lookup_error(exc=e, name_path=name_path, in_path=in_path)
 
     for ref in refs:
@@ -307,23 +312,17 @@ def _refs(*, name_path: str, in_path: str) -> int:
     return 0
 
 
-def _refusal(*, arguments: list[str]) -> str | None:
-    """Return why no command may run in the current project, or None.
+def _check_required_version(*, config: Config | None, arguments: list[str]) -> None:
+    """Raise ConfigError when the project requires another version of uncoded.
 
-    A command may not run when two files in one directory both configure
-    uncoded, or when the project's required version is not the running
-    version. The refusal for a version gives ``arguments`` again, as the
-    command that runs the required version. Outside a project, or with no
-    required version set, every command may run.
+    The message gives ``arguments`` again, as the command that runs the
+    required version. Without a project, or with no required version set,
+    every version may run.
     """
-    try:
-        config = find_config(start=Path.cwd())
-    except ConfigError as e:
-        return str(e)
     if config is None or config.required_version in (None, __version__):
-        return None
+        return
     required = config.required_version
-    return (
+    raise ConfigError(
         f"the project requires uncoded {required}, and this is uncoded "
         f"{__version__}. Run the command at the required version: "
         f"uvx uncoded@{required} {shlex.join(arguments)}"
@@ -342,11 +341,8 @@ def main() -> int:
     - ``body`` — prints the source body of a named symbol to stdout.
     - ``refs`` — finds all references to a named symbol and prints them.
 
-    Each subparser binds its own ``action`` callable via
-    ``set_defaults``; ``main`` then dispatches via ``args.action()``.
-    Adding a new subcommand is a local change at the registration site —
-    no central dispatch ladder to update, and no silent fall-through if
-    the binding is forgotten (``args.action`` will simply be missing).
+    Each subparser binds how it finds the configuration and the action it
+    runs on it.
     """
     parser = argparse.ArgumentParser(
         prog="uncoded",
@@ -361,13 +357,16 @@ def main() -> int:
         "init",
         help="Set uncoded up in a project, then build its index and skills.",
     )
-    init_parser.set_defaults(action=_init)
+    init_parser.set_defaults(find_project=find_config, action=_init)
 
     sync_parser = subparsers.add_parser(
         "sync",
         help="Build or refresh generated navigation artefacts.",
     )
-    sync_parser.set_defaults(action=lambda: _sync(check=False))
+    sync_parser.set_defaults(
+        find_project=read_config,
+        action=lambda *, config: _sync(config=config, check=False),
+    )
 
     check_parser = subparsers.add_parser(
         "check",
@@ -376,7 +375,10 @@ def main() -> int:
             "if any file would change."
         ),
     )
-    check_parser.set_defaults(action=lambda: _sync(check=True))
+    check_parser.set_defaults(
+        find_project=read_config,
+        action=lambda *, config: _sync(config=config, check=True),
+    )
 
     body_parser = subparsers.add_parser(
         "body",
@@ -394,7 +396,10 @@ def main() -> int:
         help="Source file path (relative to current directory).",
     )
     body_parser.set_defaults(
-        action=lambda: _body(name_path=args.name_path, in_path=args.in_path)
+        find_project=read_config,
+        action=lambda *, config: _body(
+            config=config, name_path=args.name_path, in_path=args.in_path
+        ),
     )
 
     refs_parser = subparsers.add_parser(
@@ -413,13 +418,18 @@ def main() -> int:
         help="Source file path (relative to current directory).",
     )
     refs_parser.set_defaults(
-        action=lambda: _refs(name_path=args.name_path, in_path=args.in_path)
+        find_project=read_config,
+        action=lambda *, config: _refs(
+            config=config, name_path=args.name_path, in_path=args.in_path
+        ),
     )
 
     arguments = sys.argv[1:]
     args = parser.parse_args(arguments)
-    refusal = _refusal(arguments=arguments)
-    if refusal is not None:
-        print(f"Error: {refusal}", file=sys.stderr)
+    try:
+        config = args.find_project(start=Path.cwd())
+        _check_required_version(config=config, arguments=arguments)
+        return args.action(config=config)
+    except ConfigError as e:
+        print(f"Error: {e}", file=sys.stderr)
         return 1
-    return args.action()

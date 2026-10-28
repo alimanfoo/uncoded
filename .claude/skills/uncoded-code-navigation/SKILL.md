@@ -64,9 +64,11 @@ directly.
 
 **Step 3: Act.** Use `uncoded body` to read a symbol's body. Use `uncoded refs`
 to find every reference to a symbol. Use `Edit` (with `uncoded body`'s output as
-`old_string`) to change a symbol. Use the exact `relative_path` and `name_path`
-from the map. Use `ClassName/method` for a method and `function_name` for a
-top-level function. Per task:
+`old_string`) to change a symbol. Run both from the project directory, the
+directory that holds the uncoded configuration file. The map's paths are
+relative to that directory, so you can pass them to `--in` unchanged. Use the
+exact `relative_path` and `name_path` from the map. Use `ClassName/method` for a
+method and `function_name` for a top-level function. Per task:
 
 - **Read a symbol's body.** `uvx uncoded body <name_path> --in <relative_path>`
   prints the symbol's source text to stdout, byte-identical to disk. Returns

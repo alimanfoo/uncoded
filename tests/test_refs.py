@@ -10,7 +10,6 @@ import pytest
 from uncoded.refs import (
     TY_VERSION,
     Reference,
-    _find_root,
     _LSPLocation,
     _path_for_display,
     _query_references,
@@ -50,7 +49,9 @@ class TestFindRefs:
         )
         (pkg / "a.py").write_text("def uncalled():\n    pass\n", encoding="utf-8")
 
-        refs = find_refs(name_path=NamePath("uncalled"), in_path=pkg / "a.py")
+        refs = find_refs(
+            name_path=NamePath("uncalled"), in_path=pkg / "a.py", project_root=tmp_path
+        )
 
         assert refs == []
 
@@ -65,7 +66,9 @@ class TestFindRefs:
             "from pkg.a import foo\nresult = foo()\nother = foo()\n", encoding="utf-8"
         )
 
-        refs = find_refs(name_path=NamePath("foo"), in_path=pkg / "a.py")
+        refs = find_refs(
+            name_path=NamePath("foo"), in_path=pkg / "a.py", project_root=tmp_path
+        )
 
         assert len(refs) == 2
         assert all(isinstance(r, Reference) for r in refs)
@@ -91,7 +94,11 @@ class TestFindRefs:
             "from pkg.a import Dog\nd = Dog()\nd.bark()\nd.bark()\n", encoding="utf-8"
         )
 
-        refs = find_refs(name_path=NamePath("Dog", "bark"), in_path=pkg / "a.py")
+        refs = find_refs(
+            name_path=NamePath("Dog", "bark"),
+            in_path=pkg / "a.py",
+            project_root=tmp_path,
+        )
 
         assert len(refs) == 2
         assert all(r.path == pkg / "b.py" for r in refs)
@@ -107,7 +114,9 @@ class TestFindRefs:
             "from pkg.a import foo\nresult = foo()\nother = foo()\n", encoding="utf-8"
         )
 
-        refs = find_refs(name_path=NamePath("foo"), in_path=pkg / "a.py")
+        refs = find_refs(
+            name_path=NamePath("foo"), in_path=pkg / "a.py", project_root=tmp_path
+        )
 
         assert refs == sorted(refs, key=lambda r: (r.path, r.line, r.col))
 
@@ -120,7 +129,9 @@ class TestFindRefs:
         (pkg / "a.py").write_text("def foo():\n    return 42\n", encoding="utf-8")
         (pkg / "b.py").write_text("from pkg.a import foo\nfoo()\n", encoding="utf-8")
 
-        refs = find_refs(name_path=NamePath("foo"), in_path=pkg / "a.py")
+        refs = find_refs(
+            name_path=NamePath("foo"), in_path=pkg / "a.py", project_root=tmp_path
+        )
 
         assert len(refs) == 1
         assert refs[0].line == 2
@@ -135,7 +146,9 @@ class TestFindRefs:
         (root / "a.py").write_text("def foo():\n    pass\n", encoding="utf-8")
         (root / "b.py").write_text("from a import foo\nfoo()\n", encoding="utf-8")
 
-        refs = find_refs(name_path=NamePath("foo"), in_path=root / "a.py")
+        refs = find_refs(
+            name_path=NamePath("foo"), in_path=root / "a.py", project_root=root
+        )
 
         assert len(refs) == 1
         assert "%20" not in str(refs[0].path)
@@ -188,7 +201,9 @@ class TestQueryReferences:
             "from pkg.a import foo\nresult = foo()\nother = foo()\n", encoding="utf-8"
         )
 
-        refs = _query_references(in_path=pkg / "a.py", position=(0, 4))
+        refs = _query_references(
+            in_path=pkg / "a.py", position=(0, 4), project_root=tmp_path
+        )
 
         assert len(refs) == 2
         assert all(isinstance(r, _LSPLocation) for r in refs)
@@ -203,7 +218,7 @@ class TestQueryReferences:
             mock.patch("uncoded.refs.subprocess.Popen", side_effect=FileNotFoundError),
             pytest.raises(RuntimeError, match="uvx not found"),
         ):
-            _query_references(in_path=in_path, position=(0, 4))
+            _query_references(in_path=in_path, position=(0, 4), project_root=tmp_path)
 
     @pytest.mark.integration
     def test_returns_empty_list_when_no_references(self, *, tmp_path):
@@ -213,7 +228,7 @@ class TestQueryReferences:
         m = tmp_path / "m.py"
         m.write_text("# just a comment\ndef foo(): pass\n", encoding="utf-8")
 
-        refs = _query_references(in_path=m, position=(0, 2))
+        refs = _query_references(in_path=m, position=(0, 2), project_root=tmp_path)
 
         assert refs == []
 
@@ -240,7 +255,9 @@ class TestQueryReferences:
         with mock.patch(
             "uncoded.refs.subprocess.Popen", return_value=mock_proc
         ) as mock_popen:
-            refs = _query_references(in_path=in_path, position=(0, 4))
+            refs = _query_references(
+                in_path=in_path, position=(0, 4), project_root=tmp_path
+            )
 
         assert refs == [_LSPLocation(path=ref_path, line=3, character=7)]
         mock_popen.assert_called_once_with(
@@ -273,7 +290,7 @@ class TestRunExchange:
                 stdout=stdout,
                 in_path=in_path,
                 position=(0, 4),
-                root=tmp_path,
+                project_root=tmp_path,
             )
 
     def test_empty_result_list_returns_empty(self, *, tmp_path):
@@ -291,46 +308,10 @@ class TestRunExchange:
             stdout=stdout,
             in_path=in_path,
             position=(0, 4),
-            root=tmp_path,
+            project_root=tmp_path,
         )
 
         assert refs == []
-
-
-class TestFindRoot:
-    def test_returns_pyproject_parent_when_found(self, *, tmp_path):
-        sub = tmp_path / "pkg"
-        sub.mkdir()
-        (tmp_path / "pyproject.toml").write_text("", encoding="utf-8")
-
-        assert _find_root(in_path=sub / "m.py") == tmp_path
-
-    def test_returns_uncoded_toml_parent_when_found(self, *, tmp_path):
-        sub = tmp_path / "pkg"
-        sub.mkdir()
-        (tmp_path / ".uncoded.toml").write_text(
-            'source-roots = ["pkg"]\n', encoding="utf-8"
-        )
-
-        assert _find_root(in_path=sub / "m.py") == tmp_path
-
-    def test_returns_pyproject_parent_when_config_is_ambiguous(self, *, tmp_path):
-        sub = tmp_path / "pkg"
-        sub.mkdir()
-        (tmp_path / "pyproject.toml").write_text(
-            '[tool.uncoded]\nsource-roots = ["pkg"]\n', encoding="utf-8"
-        )
-        (tmp_path / ".uncoded.toml").write_text(
-            'source-roots = ["pkg"]\n', encoding="utf-8"
-        )
-
-        assert _find_root(in_path=sub / "m.py") == tmp_path
-
-    def test_returns_in_path_parent_when_not_found(self, *, tmp_path):
-        sub = tmp_path / "pkg"
-        sub.mkdir()
-
-        assert _find_root(in_path=sub / "m.py") == sub
 
 
 class TestTerminate:

@@ -12,6 +12,10 @@ code in their checkout.
 | Find references to a Python symbol    | `uvx uncoded refs <symbol> --in <file>` |
 | Print the installed version           | `uvx uncoded --version`                 |
 
+Every command but `init` and `--version` runs inside a project. It finds the
+configuration file in the current directory or the nearest directory above it.
+If there is none, it exits with status `1`.
+
 ## `init`
 
 ```sh
@@ -79,7 +83,9 @@ Use one name for a top-level function, class, module assignment, or Python 3.12
 and empty segments are unsupported.
 
 The `--in` path is relative to your current directory, not the configuration
-file. No project configuration is required.
+file. It must be inside the project directory, once symbolic links are resolved.
+Run `body` from the project directory, so that you can pass the namespace map's
+paths to `--in` unchanged.
 
 ## `refs`
 
@@ -113,7 +119,7 @@ Prints `uncoded` and the installed version, such as `uncoded 3.0.1`.
 
 ## Lookup errors
 
-`body` and `refs` exit with status `1` if the source cannot be read or parsed,
-the symbol is missing, or its name path is unsupported. A reference lookup also
-fails if the language server fails. Missing required arguments exit with status
-`2`.
+`body` and `refs` exit with status `1` if the `--in` file is outside the project
+directory, the source cannot be read or parsed, the symbol is missing, or its
+name path is unsupported. A reference lookup also fails if the language server
+fails. Missing required arguments exit with status `2`.
