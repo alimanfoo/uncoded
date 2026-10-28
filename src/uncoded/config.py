@@ -31,19 +31,21 @@ def find_pyproject_toml(*, start: Path) -> Path | None:
         current = parent
 
 
-def _has_uncoded_section(*, pyproject_path: Path) -> bool:
-    """Return True if ``pyproject_path`` contains a ``[tool.uncoded]`` section."""
+def _pyproject_settings(*, pyproject_path: Path) -> dict | None:
+    """Return the ``[tool.uncoded]`` table of ``pyproject_path``, or None."""
     with pyproject_path.open("rb") as f:
         data = tomllib.load(f)
-    try:
-        data["tool"]["uncoded"]
-        return True
-    except KeyError:
-        return False
+    return data.get("tool", {}).get("uncoded")
 
 
-def _config_file_at(*, directory: Path) -> Path | None:
-    """Return the config file in ``directory``, or None.
+def _uncoded_toml_settings(*, uncoded_toml_path: Path) -> dict:
+    """Return the settings of ``uncoded_toml_path``, held as top-level keys."""
+    with uncoded_toml_path.open("rb") as f:
+        return tomllib.load(f)
+
+
+def _config_file_at(*, directory: Path) -> tuple[Path, dict] | None:
+    """Return the config file in ``directory`` and its settings, or None.
 
     Skips directories named ``.uncoded``. Per-directory resolution rules:
 
@@ -63,7 +65,8 @@ def _config_file_at(*, directory: Path) -> Path | None:
     uncoded_toml = directory / ".uncoded.toml"
     has_uncoded_toml = uncoded_toml.exists()
     if pyproject.exists():
-        has_section = _has_uncoded_section(pyproject_path=pyproject)
+        settings = _pyproject_settings(pyproject_path=pyproject)
+        has_section = settings is not None
         if has_section and has_uncoded_toml:
             raise ConfigError(
                 "Ambiguous config: both pyproject.toml and .uncoded.toml "
@@ -72,15 +75,15 @@ def _config_file_at(*, directory: Path) -> Path | None:
             )
         if not has_section and has_uncoded_toml:
             # Bare pyproject does not shadow a sibling .uncoded.toml.
-            return uncoded_toml
-        return pyproject
+            return uncoded_toml, _uncoded_toml_settings(uncoded_toml_path=uncoded_toml)
+        return pyproject, settings or {}
     if has_uncoded_toml:
-        return uncoded_toml
+        return uncoded_toml, _uncoded_toml_settings(uncoded_toml_path=uncoded_toml)
     return None
 
 
-def _find_config_file(*, start: Path) -> Path | None:
-    """Return the nearest config file walking up from ``start``.
+def _find_config_file(*, start: Path) -> tuple[Path, dict] | None:
+    """Return the nearest config file and its settings, walking up from ``start``.
 
     The nearest directory with a result wins. Ambiguity is a same-directory
     condition only. Files at different levels do not conflict. Returns None
@@ -103,26 +106,15 @@ def read_config(*, start: Path) -> Config:
     uncoded. A found config file with no uncoded settings returns a Config
     with empty root lists.
     """
-    config_file = _find_config_file(start=start)
-    if config_file is None:
+    found = _find_config_file(start=start)
+    if found is None:
         raise ConfigError(
             "No pyproject.toml or .uncoded.toml found. Create one to configure uncoded."
         )
+    config_file, settings = found
 
-    with config_file.open("rb") as f:
-        data = tomllib.load(f)
-
-    if config_file.name == "pyproject.toml":
-        try:
-            section = data["tool"]["uncoded"]
-        except KeyError:
-            section = {}
-    else:
-        # .uncoded.toml uses top-level keys with no wrapper section.
-        section = data
-
-    source_roots = [Path(r) for r in section.get("source-roots", [])]
-    doc_roots = [Path(r) for r in section.get("doc-roots", [])]
+    source_roots = [Path(r) for r in settings.get("source-roots", [])]
+    doc_roots = [Path(r) for r in settings.get("doc-roots", [])]
 
     return Config(
         project_root=config_file.parent,
