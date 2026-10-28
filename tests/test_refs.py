@@ -151,6 +151,19 @@ class TestPathForDisplay:
 
         assert result == Path("pkg/m.py")
 
+    def test_returns_relative_path_when_cwd_is_a_symbolic_link(
+        self, tmp_path, monkeypatch
+    ):
+        project = tmp_path / "project"
+        project.mkdir()
+        link = tmp_path / "link"
+        link.symlink_to(project, target_is_directory=True)
+        monkeypatch.chdir(link)
+
+        result = _path_for_display(path=project.resolve() / "pkg" / "m.py")
+
+        assert result == Path("pkg/m.py")
+
     def test_returns_absolute_path_when_outside_cwd(self, tmp_path, monkeypatch):
         workspace = tmp_path / "workspace"
         workspace.mkdir()

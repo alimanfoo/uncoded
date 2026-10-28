@@ -482,6 +482,18 @@ class TestBodyCommand:
         assert cli._body(name_path="fn", in_path=in_path) == 1
         assert capsys.readouterr().err == "Error: src/nonexistent.py: file not found.\n"
 
+    def test_unreadable_file_names_it_with_slashes(self, tmp_path, monkeypatch, capsys):
+        # A directory cannot be read as a source file. The error that the
+        # system gives names it, and that name uses / on Windows too.
+        _init_repo(tmp_path, monkeypatch)
+        (tmp_path / "src" / "pkg").mkdir()
+
+        in_path = str(Path("src") / "pkg")
+        assert cli._body(name_path="fn", in_path=in_path) == 1
+        err = capsys.readouterr().err
+        assert err.startswith("Error: src/pkg: ")
+        assert "\\" not in err
+
     def test_syntax_error_exits_one(self, tmp_path, monkeypatch, capsys):
         _init_repo(tmp_path, monkeypatch)
         (tmp_path / "src" / "foo.py").write_text("def broken(:\n", encoding="utf-8")

@@ -115,8 +115,10 @@ def _terminate(*, proc: subprocess.Popen[bytes]) -> None:
 
 
 def _path_for_display(*, path: Path) -> Path:
+    # ty reports resolved paths, so the current directory is resolved too, in
+    # case it is reached through a symbolic link.
     try:
-        return path.relative_to(Path.cwd())
+        return path.relative_to(Path.cwd().resolve())
     except ValueError:
         return path
 

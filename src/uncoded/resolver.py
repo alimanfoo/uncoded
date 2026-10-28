@@ -130,7 +130,7 @@ def resolve_ast_node_from_source(
     Raises SymbolNotFoundError if the symbol is not present; propagates SyntaxError
     if source cannot be parsed.
     """
-    tree = ast.parse(source, filename=str(in_path))
+    tree = ast.parse(source, filename=in_path.as_posix())
     head = name_path.head
     tail = name_path.tail
 

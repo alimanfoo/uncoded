@@ -13,9 +13,10 @@ def read_source_text(path: Path) -> str:
     UnicodeDecodeError if the bytes don't match the declared or default
     encoding, and SyntaxError if the coding cookie is malformed or names an
     unknown codec (tokenize.open re-raises codec lookup failures as
-    SyntaxError).
+    SyntaxError). Each of these names the file with ``/`` separators, on
+    Windows too, because the file is opened by that form of its path.
     """
-    with tokenize.open(path) as f:
+    with tokenize.open(path.as_posix()) as f:
         return f.read()
 
 
@@ -53,6 +54,11 @@ def read_doc_text_or_warn(path: Path, *, warning_path: str) -> str | None:
     """
     try:
         return path.read_text(encoding="utf-8-sig")
-    except (UnicodeDecodeError, OSError) as e:
-        print(f"warning: skipping {warning_path}: {e}", file=sys.stderr)
-        return None
+    except UnicodeDecodeError as e:
+        reason = str(e)
+    except OSError as e:
+        # The OSError's own text names the file in the system's form, so give
+        # only its reason.
+        reason = e.strerror
+    print(f"warning: skipping {warning_path}: {reason}", file=sys.stderr)
+    return None

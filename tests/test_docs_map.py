@@ -165,6 +165,17 @@ class TestIterDocFiles:
         err = capsys.readouterr().err
         assert "warning: skipping docs/guide/bad.md" in err
 
+    def test_skips_unreadable_file_with_reason(self, tmp_path, capsys):
+        # A directory whose name ends in .md cannot be read as a file. The
+        # warning gives the reason without the error's own copy of the path,
+        # which would use the system's separator.
+        (tmp_path / "docs" / "notes.md").mkdir(parents=True)
+        results = list(iter_doc_files(tmp_path / "docs", tmp_path))
+        assert results == []
+        err = capsys.readouterr().err
+        assert err.startswith("warning: skipping docs/notes.md: ")
+        assert str(tmp_path) not in err
+
     def test_single_file_root_unreadable_yields_nothing(self, tmp_path, capsys):
         # When the single-file root itself is unreadable, the iterator yields
         # nothing and emits a warning with the project-relative path.
