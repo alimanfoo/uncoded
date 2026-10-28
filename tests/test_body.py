@@ -53,7 +53,7 @@ class TestResolveDefinitionTopLevel:
 
         assert result == "async def fetch():\n    return 0\n"
 
-    def test_class_whole_body(self, *, tmp_path):
+    def test_class_whole_definition(self, *, tmp_path):
         source = textwrap.dedent("""\
             class Engine:
                 speed: int = 0
@@ -188,7 +188,7 @@ class TestResolveDefinitionClassMember:
 
         assert result == '    def bark(self):\n        print("woof")\n'
 
-    def test_property_returns_getter_body(self, *, tmp_path):
+    def test_property_returns_getter_definition(self, *, tmp_path):
         source = textwrap.dedent("""\
             class Config:
                 @property
@@ -265,7 +265,7 @@ class TestResolveDefinitionClassMember:
 
         assert result == "    def method(self):\n        pass\n"
 
-    def test_shadowed_class_member_found_in_last_definition(self, *, tmp_path):
+    def test_redefined_class_member_found_in_last_definition(self, *, tmp_path):
         source = textwrap.dedent("""\
             class Foo:
                 def first_only(self):
@@ -284,7 +284,7 @@ class TestResolveDefinitionClassMember:
 
         assert result == "    def second_only(self):\n        pass\n"
 
-    def test_shadowed_class_member_not_found_in_last_definition(self, *, tmp_path):
+    def test_redefined_class_member_not_found_in_last_definition(self, *, tmp_path):
         source = textwrap.dedent("""\
             class Foo:
                 def first_only(self):

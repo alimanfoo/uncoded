@@ -26,8 +26,8 @@ zero-reference symbols, or redundant public surfaces merely because they exist.
 
 ## Prerequisites
 
-Run the repository's configured `uncoded sync` command. Read the repository's
-agent instructions and follow its navigation rules.
+Run the project's configured `uncoded sync` command. Read the project's agent
+instructions and follow its navigation rules.
 
 ## Orientation
 
@@ -59,9 +59,9 @@ Findings may cover:
 - name-behaviour disagreement
 
 Read each relevant source file's stub for names and signatures. Run the
-repository's configured `uncoded body` command only when a docstring or
-implementation is needed to confirm a candidate. Do not retrieve every symbol
-body.
+project's configured `uncoded body` command only when a docstring or
+implementation is needed to confirm a candidate. Do not retrieve every
+definition.
 
 ## Report
 

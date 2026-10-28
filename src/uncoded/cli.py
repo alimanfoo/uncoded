@@ -175,7 +175,7 @@ def _sync(*, config: Config, check: bool = False) -> int:
     changes += code_changes
     changes += sync_skills(
         source=bool(source_roots),
-        docs=bool(doc_roots),
+        doc=bool(doc_roots),
         project_directory=project_directory,
         check=check,
     )
@@ -222,7 +222,7 @@ def _init(*, config: Config | None) -> int:
 
     skill_dirs = " and ".join(root.as_posix() for root in SKILL_ROOTS)
     instructions = agent_instructions(
-        source=bool(config.source_roots), docs=bool(config.doc_roots)
+        source=bool(config.source_roots), doc=bool(config.doc_roots)
     )
     print(
         f"\nCommit the configuration file and the installed skill files in "
@@ -363,9 +363,9 @@ def main() -> int:
     Five subcommands:
 
     - ``init`` — sets uncoded up in a project, then syncs its index.
-    - ``sync`` — builds or refreshes the navigation index.
-    - ``check`` — verifies the index matches what a rebuild would produce;
-      exits non-zero on drift.
+    - ``sync`` — builds or refreshes the index and the skills.
+    - ``check`` — verifies that the generated files are current; exits
+      non-zero when they are stale.
     - ``body`` — prints the definition of a named symbol to stdout.
     - ``refs`` — finds all references to a named symbol and prints them.
 

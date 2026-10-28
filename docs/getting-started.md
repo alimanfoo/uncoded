@@ -39,7 +39,7 @@ writes. With both kinds of root, they are:
 | `.uncoded/namespace.yaml`               | Lists Python symbols and their locations.                 |
 | `.uncoded/stubs/`                       | Records imports, signatures, assignments, and attributes. |
 | `.uncoded/docs.yaml`                    | Lists Markdown files and headings.                        |
-| `.agents/skills/` and `.claude/skills/` | Give agents the navigation instructions.                  |
+| `.agents/skills/` and `.claude/skills/` | Hold the uncoded skills.                                  |
 
 Check the roots in `.uncoded.toml`. If the code or docs live elsewhere, edit the
 roots and run `uvx uncoded init` again. It leaves the configuration file as it
@@ -65,10 +65,10 @@ Commit `.uncoded.toml`, the installed skill files, and the edited `AGENTS.md` or
 
 ## 4. Try a task
 
-Start a new agent session in the repository and ask:
+Start a new agent session in the project and ask:
 
 ```text title="Example prompt"
-Explain this repository using the uncoded navigation skills.
+Explain this project using the uncoded navigation skills.
 Read the index first, then show me one function or documentation section
 that explains how the project works.
 ```

@@ -72,7 +72,7 @@ such as `uvx uncoded@3.1.0 sync`. To upgrade, raise the version in both places.
 | Code navigation and consistency review skills | `source-roots` is set. | Yes.       |
 | Documentation navigation skill                | `doc-roots` is set.    | Yes.       |
 
-The index's generated `.gitignore` keeps `.uncoded/` out of Git. Skills are
+The generated `.uncoded/.gitignore` keeps `.uncoded/` out of Git. Skills are
 written to both `.agents/skills/` and `.claude/skills/`.
 
 When every root of one kind is removed, `sync` removes that part of the index,

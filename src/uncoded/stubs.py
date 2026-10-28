@@ -59,7 +59,7 @@ class StubClass:
 
 @dataclass
 class StubModule:
-    """All symbols extracted from a single Python module."""
+    """What a stub holds for one Python file: its imports and definitions."""
 
     rel_path: str
     imports: list[str] = field(default_factory=list)

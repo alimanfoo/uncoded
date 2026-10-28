@@ -33,7 +33,7 @@ class ConfigError(Exception):
 
 @dataclass(frozen=True)
 class Config:
-    """Uncoded configuration loaded from a project's configuration file."""
+    """The uncoded settings loaded from a project's configuration file."""
 
     configuration_file: Path
     source_roots: list[Path]

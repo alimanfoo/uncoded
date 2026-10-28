@@ -23,7 +23,7 @@ The agent can stop as soon as one view gives it enough information.
 
 ## What the agent sees
 
-For a repository containing this function, uncoded generates a map with its name
+For a project containing this function, uncoded generates a map with its name
 and location.
 
 <div class="home-example" markdown="1">
@@ -75,5 +75,5 @@ at the stub.
 Before a rename, `uncoded refs` finds the references to check and update.
 Markdown docs get a separate map of files and headings.
 
-The index stays local. The generated navigation skills are committed with the
-project so agents know how to use it.
+The index stays local. The installed skill files are committed with the project
+so agents know how to use it.

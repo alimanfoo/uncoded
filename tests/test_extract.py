@@ -291,7 +291,7 @@ class TestExtractModuleFromSource:
 
 class TestIterAndExtract:
     def test_basic_walk(self, *, tmp_path):
-        # Simulate repo structure: src/mypackage/...
+        # Simulate project structure: src/mypackage/...
         src = tmp_path / "src"
         pkg = src / "mypackage"
         pkg.mkdir(parents=True)

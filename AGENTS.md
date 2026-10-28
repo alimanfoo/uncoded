@@ -19,9 +19,10 @@ code and navigates directly to what it needs, without guessing or grepping.
 The index files, generated from the roots:
 
 1. **Namespace map** (`.uncoded/namespace.yaml`). A hierarchical YAML file
-   listing all symbols: directories, files, classes (with attributes and
-   methods), and functions. It covers both source and tests. The agent loads it
-   into context before any task begins. The map gives the agent a world view.
+   listing all symbols, beneath the directories and files that hold them:
+   classes (with attributes and methods), functions and assignments. It covers
+   both source and tests. The agent loads it into context before any task
+   begins. The map gives the agent a world view.
 
 2. **Stub files** (`.uncoded/stubs/`). One `.pyi` per source file. It includes
    imports, full signatures (parameter names, types, return types), module
@@ -67,7 +68,7 @@ install, which may have different behaviour.
 # Generate or update the index and the skills
 uv run uncoded sync
 
-# Verify the index without writing. It exits non-zero if any file would change
+# Verify the generated files without writing. It exits non-zero if any would change
 uv run uncoded check
 
 # Print the definition of a named symbol to stdout

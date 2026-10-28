@@ -1,4 +1,4 @@
-"""Generate skill files for the target repository."""
+"""Generate the installed skill files for a project."""
 
 from dataclasses import dataclass
 from importlib.resources import files
@@ -18,12 +18,12 @@ SKILL_ROOTS = [
 
 @dataclass(frozen=True)
 class Skill:
-    """Frozen record of one skill: name, content file, and gate."""
+    """Frozen record of one skill: name, skill source, and gate."""
 
     name: str
     description: str
-    body_file: str
-    gate: Literal["source", "docs"]
+    skill_source: str
+    gate: Literal["source", "doc"]
     is_navigation: bool = False
 
 
@@ -37,7 +37,7 @@ SKILLS: list[Skill] = [
             " uncoded is installed (.uncoded/namespace.yaml and .uncoded/stubs/"
             " present)."
         ),
-        body_file="consistency_review.md",
+        skill_source="consistency_review.md",
         gate="source",
     ),
     Skill(
@@ -48,7 +48,7 @@ SKILLS: list[Skill] = [
             " reading a definition, or checking references before you refactor,"
             " rename, or delete."
         ),
-        body_file="code_navigation.md",
+        skill_source="code_navigation.md",
         gate="source",
         is_navigation=True,
     ),
@@ -59,8 +59,8 @@ SKILLS: list[Skill] = [
             " Markdown documentation indexed by uncoded. Covers locating which file"
             " and section cover a topic, or orienting to what documentation exists."
         ),
-        body_file="doc_navigation.md",
-        gate="docs",
+        skill_source="doc_navigation.md",
+        gate="doc",
         is_navigation=True,
     ),
 ]
@@ -71,9 +71,9 @@ def _skill_path(*, root: Path, name: str) -> Path:
     return root / name / "SKILL.md"
 
 
-def _is_built(*, skill: Skill, source: bool, docs: bool) -> bool:
+def _is_built(*, skill: Skill, source: bool, doc: bool) -> bool:
     """Return whether the project's roots meet ``skill``'s gate."""
-    return source if skill.gate == "source" else docs
+    return source if skill.gate == "source" else doc
 
 
 def _render_content(*, skill: Skill) -> str:
@@ -85,7 +85,8 @@ def _render_content(*, skill: Skill) -> str:
         sort_keys=False,
         width=10000,
     )
-    body = (files("uncoded") / skill.body_file).read_text(encoding="utf-8").lstrip("\n")
+    text = files("uncoded").joinpath(skill.skill_source).read_text(encoding="utf-8")
+    body = text.lstrip("\n")
     return f"---\n{front}---\n\n<!-- {GENERATED_MARKER} -->\n\n{body}"
 
 
@@ -93,7 +94,7 @@ def _sync_one_skill(
     *,
     skill: Skill,
     source: bool,
-    docs: bool,
+    doc: bool,
     project_directory: Path,
     check: bool,
 ) -> int:
@@ -102,7 +103,7 @@ def _sync_one_skill(
     Returns the number of file changes (writes and removals).
     """
     changes = 0
-    if _is_built(skill=skill, source=source, docs=docs):
+    if _is_built(skill=skill, source=source, doc=doc):
         content = _render_content(skill=skill)
         for root in SKILL_ROOTS:
             changes += sync_file(
@@ -124,14 +125,14 @@ def _sync_one_skill(
 def sync_skills(
     *,
     source: bool,
-    docs: bool,
+    doc: bool,
     project_directory: Path,
     check: bool,
 ) -> int:
-    """Sync all registered skill files for the target repository.
+    """Sync all registered skill files for the project.
 
     For each skill, builds the skill files when its gate condition is met
-    (gate "source" requires source=True; gate "docs" requires docs=True) and
+    (gate "source" requires source=True; gate "doc" requires doc=True) and
     removes them otherwise.
 
     Returns the total number of file changes (writes and removals).
@@ -141,14 +142,14 @@ def sync_skills(
         changes += _sync_one_skill(
             skill=skill,
             source=source,
-            docs=docs,
+            doc=doc,
             project_directory=project_directory,
             check=check,
         )
     return changes
 
 
-def agent_instructions(*, source: bool, docs: bool) -> str:
+def agent_instructions(*, source: bool, doc: bool) -> str:
     """Return the lines for ``AGENTS.md`` or ``CLAUDE.md`` that load skills.
 
     Gives one line for each navigation skill that the project's roots build.
@@ -157,6 +158,6 @@ def agent_instructions(*, source: bool, docs: bool) -> str:
         f"- Load the `{skill.name}` skill once per session, before searching,"
         f" reading or editing any {'code' if skill.gate == 'source' else 'docs'}."
         for skill in SKILLS
-        if skill.is_navigation and _is_built(skill=skill, source=source, docs=docs)
+        if skill.is_navigation and _is_built(skill=skill, source=source, doc=doc)
     ]
     return "\n".join(["## Before you start", "", *lines]) + "\n"

@@ -1,4 +1,4 @@
-"""Uncoded."""
+"""uncoded: an index of a codebase, and tools to read its code."""
 
 from importlib.metadata import version
 

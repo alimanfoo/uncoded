@@ -13,7 +13,7 @@ for reading a symbol's definition and `uncoded refs` for finding references.
 
 ## The dispatch rule
 
-**If your search term is the name of a Python symbol, use the index. Python
+**If your search term is the name of a Python symbol, use the code index. Python
 symbols are classes, functions, methods, attributes, and module-level
 assignments. If it's a pattern, regex, or free-text phrase, use grep.**
 
@@ -31,10 +31,10 @@ indexed tools don't.
 
 ## How to execute the rule
 
-The index has two parts: a namespace map and per-file stubs. Start with the map
-and add detail only when the task needs it.
+The code index has two parts: a namespace map and per-file stubs. Start with the
+map and add detail only when the task needs it.
 
-**Step 1: Orient. Sync, then read the namespace map.** Run the repository's
+**Step 1: Orient. Sync, then read the namespace map.** Run the project's
 configured `uncoded sync` command, so that the map is current. Then, before
 answering the user and before any other tool call:
 
@@ -42,10 +42,11 @@ answering the user and before any other tool call:
 Read .uncoded/namespace.yaml
 ```
 
-This lists every symbol in the codebase: directories, files, classes, methods,
-functions. Without it loaded, "find X" answers come from pretrained guesses.
-They reflect what a project like this probably contains, not what is actually
-here. Read it once, in full, at session start.
+This lists every symbol under the source roots: classes, methods, functions and
+assignments, beneath the directories and files that hold them. Without it
+loaded, "find X" answers come from pretrained guesses. They reflect what a
+project like this probably contains, not what is actually here. Read it once, in
+full, at session start.
 
 **Step 2: Understand. Read the `.pyi` stub before any `.py` source.** Stub paths
 mirror source paths under `.uncoded/stubs/`:
@@ -102,7 +103,7 @@ Per task:
   unused, `Edit` to remove it.
 
 **Step 4: Refresh.** After every modification to indexed Python source, run the
-repository's configured `uncoded sync` command before the next code-navigation
+project's configured `uncoded sync` command before the next code-navigation
 operation. The modification can change the namespace map and stubs. Run it too
 whenever you notice that something else has changed files, such as a pull, a
 checkout, or another agent working in the same project.
@@ -121,5 +122,5 @@ and grep stay correct:
   `uncoded body`.
 - The rare stub-less Python file that needs exploratory reading.
 
-The dispatch rule turns on the search term. A symbol name goes to the index. A
-regex or free-text phrase goes to grep.
+The dispatch rule turns on the search term. A symbol name goes to the code
+index. A regex or free-text phrase goes to grep.

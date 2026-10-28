@@ -3,14 +3,14 @@
 Run uncoded with `uvx uncoded`. In a checkout of uncoded itself,
 `uv run uncoded` runs the code in the checkout.
 
-| To…                                   | Use                                     |
-| ------------------------------------- | --------------------------------------- |
-| Set uncoded up in a project           | `uvx uncoded init`                      |
-| Build or refresh the index and skills | `uvx uncoded sync`                      |
-| Check generated files without writing | `uvx uncoded check`                     |
-| Read a Python symbol's source         | `uvx uncoded body <symbol> --in <file>` |
-| Find references to a Python symbol    | `uvx uncoded refs <symbol> --in <file>` |
-| Print the installed version           | `uvx uncoded --version`                 |
+| To…                                   | Use                                        |
+| ------------------------------------- | ------------------------------------------ |
+| Set uncoded up in a project           | `uvx uncoded init`                         |
+| Build or refresh the index and skills | `uvx uncoded sync`                         |
+| Check generated files without writing | `uvx uncoded check`                        |
+| Read a Python symbol's source         | `uvx uncoded body <name path> --in <file>` |
+| Find references to a Python symbol    | `uvx uncoded refs <name path> --in <file>` |
+| Print the installed version           | `uvx uncoded --version`                    |
 
 Every command but `init` and `--version` runs inside a project. It finds the
 configuration file in the current directory or the nearest directory above it.
@@ -44,9 +44,9 @@ those files or `pyproject.toml`. Running it again does no harm.
 uvx uncoded sync
 ```
 
-Builds or refreshes every configured index and navigation skill. Output lists
-files created, updated, or removed. Running it from a subdirectory writes the
-same files, in the project directory.
+Builds or refreshes the index and the skills. Output lists files created,
+updated, or removed. Running it from a subdirectory writes the same files, in
+the project directory.
 
 Files that cannot be parsed or decoded are skipped with a warning, and the
 output ends with a line that says how many files were skipped. A skipped file

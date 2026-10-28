@@ -135,7 +135,7 @@ includes it. Each entry links the pull request that made the change.
   namespace map or the docs map, and whenever it notices that something else has
   changed files, such as a pull or a checkout. They told it to run
   `uncoded sync` only when a map was missing, so an agent could read a map that
-  was out of date. ([#333](https://github.com/alimanfoo/uncoded/pull/333))
+  was stale. ([#333](https://github.com/alimanfoo/uncoded/pull/333))
 
 ## [3.0.1](https://github.com/alimanfoo/uncoded/releases/tag/v3.0.1) — 2026-10-09
 
