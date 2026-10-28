@@ -289,7 +289,7 @@ class TestExtractModule:
         assert result.functions == ["run"]
 
 
-class TestReadSourceFiles:
+class TestReadAndExtract:
     def test_keeps_each_python_file_that_has_symbols(self, *, tmp_path):
         # Simulate project structure: src/mypackage/...
         src = tmp_path / "src"

@@ -283,7 +283,7 @@ class TestRenderDocsMap:
         output = render_docs_map(mapping={})
         assert output.startswith(DOCS_HEADER)
 
-    def test_yaml_parseable(self):
+    def test_roundtrips_through_yaml(self):
         files = [("# Setup\n## Config\n", Path("guide.md"))]
         m = build_docs_map(files=files)
         output = render_docs_map(mapping=m)

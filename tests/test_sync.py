@@ -26,7 +26,7 @@ class TestSyncFile:
         assert changed is True
         assert path.read_text(encoding="utf-8") == "new"
 
-    def test_noop_when_content_matches(self, *, tmp_path):
+    def test_noop_when_current(self, *, tmp_path):
         path = tmp_path / "out.txt"
         path.write_text("same", encoding="utf-8")
         mtime_before = path.stat().st_mtime_ns
