@@ -59,7 +59,7 @@ class TestRenderStub:
                 FunctionSymbol(name="run"),
                 ClassSymbol(
                     name="Worker",
-                    methods=[
+                    members=[
                         FunctionSymbol(
                             name="work",
                             params=[Parameter("self")],
@@ -164,7 +164,7 @@ class TestRenderStub:
             symbols=[
                 ClassSymbol(
                     name="Record",
-                    attributes=[AssignmentSymbol("name", annotation="str")],
+                    members=[AssignmentSymbol("name", annotation="str")],
                 )
             ],
         )
@@ -176,7 +176,7 @@ class TestRenderStub:
             symbols=[
                 ClassSymbol(
                     name="Foo",
-                    methods=[
+                    members=[
                         FunctionSymbol(
                             name="bar",
                             params=[Parameter("self")],
@@ -258,7 +258,7 @@ class TestRenderStub:
             symbols=[
                 ClassSymbol(
                     name="Registry",
-                    attributes=[AssignmentSymbol("items", value="[]")],
+                    members=[AssignmentSymbol("items", value="[]")],
                 )
             ],
         )

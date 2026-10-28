@@ -58,12 +58,25 @@ class TypeAliasSymbol:
 
 @dataclass
 class ClassSymbol:
-    """A class with its bases and every definition in its class body."""
+    """A class with its bases and every definition in its class body.
+
+    ``members`` keeps source order and every definition of a redefined name. A
+    property is an ``AssignmentSymbol``.
+    """
 
     name: str
     bases: list[str] = field(default_factory=list)
-    attributes: list[AssignmentSymbol] = field(default_factory=list)
-    methods: list[FunctionSymbol] = field(default_factory=list)
+    members: list[AssignmentSymbol | FunctionSymbol] = field(default_factory=list)
+
+    @property
+    def attributes(self) -> list[AssignmentSymbol]:
+        """The attributes and properties, in order."""
+        return [m for m in self.members if isinstance(m, AssignmentSymbol)]
+
+    @property
+    def methods(self) -> list[FunctionSymbol]:
+        """The methods, in order."""
+        return [m for m in self.members if isinstance(m, FunctionSymbol)]
 
 
 type _Symbol = AssignmentSymbol | TypeAliasSymbol | ClassSymbol | FunctionSymbol
@@ -183,24 +196,28 @@ def _property_attribute(
     )
 
 
+def _extract_member(
+    *,
+    name: str,
+    node: ast.AnnAssign | ast.Assign | ast.FunctionDef | ast.AsyncFunctionDef,
+) -> AssignmentSymbol | FunctionSymbol:
+    """Build the member that ``node`` defines as ``name`` in a class body."""
+    if isinstance(node, (ast.AnnAssign, ast.Assign)):
+        return _extract_assignment(name=name, node=node)
+    if property_kind(node=node) == "property":
+        return _property_attribute(node=node)
+    return _extract_function(node=node)
+
+
 def _extract_class(*, node: ast.ClassDef) -> ClassSymbol:
     """Build a ClassSymbol from a class AST node."""
-    attributes: list[AssignmentSymbol] = []
-    methods: list[FunctionSymbol] = []
-
-    for name, child in class_symbols(node=node):
-        if isinstance(child, (ast.AnnAssign, ast.Assign)):
-            attributes.append(_extract_assignment(name=name, node=child))
-        elif property_kind(node=child) == "property":
-            attributes.append(_property_attribute(node=child))
-        else:
-            methods.append(_extract_function(node=child))
-
     return ClassSymbol(
         name=node.name,
         bases=[ast.unparse(b) for b in node.bases],
-        attributes=attributes,
-        methods=methods,
+        members=[
+            _extract_member(name=name, node=child)
+            for name, child in class_symbols(node=node)
+        ],
     )
 
 
