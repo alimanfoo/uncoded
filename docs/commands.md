@@ -82,8 +82,8 @@ file. These examples assume a `greet` function or a `Greeter.greet` method in
 `src/greetings.py`.
 
 Use one name for a top-level function, class, module assignment, or Python 3.12
-`type` alias. Use `Class/member` for a method or class attribute. Deeper paths
-and empty segments are unsupported.
+`type` alias. Use `Class/member` for a method, property or assignment in a class
+body. Deeper paths and empty segments are unsupported.
 
 The `--in` path is relative to the current directory, not the configuration
 file. It must be inside the project directory, once symbolic links are resolved.

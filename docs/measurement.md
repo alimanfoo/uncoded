@@ -30,7 +30,7 @@ bugs.
 | Accurate references        | No generated `--help` blocks; 2 behaviours that a reference or skill describes differently from the code                         | not met | #274; #292                           |
 | Machine-checked rules      | 3 of the 6 rules checked; removals outside `sync.py` at 4 places; 286 functions with positional parameters                       | not met | #269, #270                           |
 | Fast readable tests        | 368 tests in 2.07 seconds at 100% branch coverage; 18 of 326 distinct test names name a mechanism, not a behaviour               | not met | product owner, #310                  |
-| Current tracker            | 7 of 46 open issues fall short: 4 use a replaced word, and 4 ask for work done or ruled out                                      | not met | #272, #275                           |
+| Accurate tracker           | 7 of 46 open issues fall short: 4 use a replaced word, and 4 ask for work done or ruled out                                      | not met | #272, #275                           |
 | Reviewed changes           | 11 pull requests merged since v3.0.0, 10 linking an issue or spec, 0 answering the definition of done; 4 commits outside one     | not met | #275                                 |
 | Loud failures              | No `strict = true`, `pytest>=8.0`, no test timeout                                                                               | not met | #269                                 |
 | Rules not cases            | No ledger; 4 conditionals name a situation, each with a cause inside uncoded                                                     | not met | #273, #293, #296, #304               |
@@ -143,7 +143,7 @@ bugs.
   every distinct test name, and #310 lists the ones that name a function, a type
   or a step of a protocol that a user never sees. No stage of the roadmap
   renames tests for the behaviour they test.
-- **Current tracker.** Four open issues use a word the concepts page replaces:
+- **Accurate tracker.** Four open issues use a word the concepts page replaces:
   #162 ("artefact"), #231 and #235 ("contributor"), and #280 ("up to date").
   Four ask for work that is done or that a story rules out: #162, since
   `.uncoded/.gitignore` now ignores everything under `.uncoded/`; #226, which
