@@ -2,7 +2,6 @@
 
 import argparse
 import io
-import shlex
 import sys
 from pathlib import Path
 from typing import cast
@@ -203,9 +202,7 @@ def _init(*, config: Config | None) -> int:
     """
     if config is None:
         start = Path.cwd()
-        content = render_conventional_config(
-            directory=start, required_version=__version__
-        )
+        content = render_conventional_config(directory=start)
         sync_file(path=Path(UNCODED_TOML), content=content, project_directory=start)
         config = read_config(start=start)
     else:
@@ -333,23 +330,6 @@ def _refs(*, config: Config, name_path: str, in_path: str) -> int:
     return 0
 
 
-def _check_required_version(*, config: Config | None, arguments: list[str]) -> None:
-    """Raise ConfigError when the project requires another version of uncoded.
-
-    The message gives ``arguments`` again, as the command that runs the
-    required version. Without a project, or with no required version set,
-    every version may run.
-    """
-    if config is None or config.required_version in (None, __version__):
-        return
-    required = config.required_version
-    raise ConfigError(
-        f"the project requires uncoded {required}, and this is uncoded "
-        f"{__version__}. Run the command at the required version: "
-        f"uvx uncoded@{required} {shlex.join(arguments)}"
-    )
-
-
 def main() -> int:
     """Dispatch the uncoded CLI.
 
@@ -443,11 +423,9 @@ def main() -> int:
         ),
     )
 
-    arguments = sys.argv[1:]
-    args = parser.parse_args(arguments)
+    args = parser.parse_args()
     try:
         config = args.find_configuration(start=Path.cwd())
-        _check_required_version(config=config, arguments=arguments)
         return args.action(config=config)
     except (ConfigError, FileSyncError) as e:
         # The error follows the lines that name the files already written,

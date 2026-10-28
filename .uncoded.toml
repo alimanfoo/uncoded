@@ -1,3 +1,2 @@
 source-roots = ["src", "tests"]
 doc-roots = ["README.md", "AGENTS.md", "docs", "src/uncoded"]
-required-version = "4.0.0"

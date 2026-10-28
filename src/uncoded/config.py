@@ -1,7 +1,6 @@
 """Read uncoded configuration from pyproject.toml or .uncoded.toml."""
 
 import json
-import re
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
@@ -10,15 +9,6 @@ from typing import Literal
 from uncoded.read_helpers import failure_reason
 
 UNCODED_TOML = ".uncoded.toml"
-
-# One exact version, written as uncoded writes its own, since the required
-# version is compared with uncoded's own as a string: three release numbers and
-# any pre-release, post-release, development or local part, as in "3.1.0",
-# "3.1.0rc1" or "3.1.0.dev2+g1a2b3c4".
-_EXACT_VERSION = re.compile(
-    r"\d+\.\d+\.\d+(?:(?:a|b|rc)\d+)?(?:\.post\d+)?(?:\.dev\d+)?"
-    r"(?:\+[a-z0-9]+(?:\.[a-z0-9]+)*)?"
-)
 
 # The roots that uncoded init names, by kind, in the order it names them.
 _CONVENTIONAL_ROOTS: dict[Literal["source", "doc"], tuple[str, ...]] = {
@@ -38,7 +28,6 @@ class Config:
     configuration_file: Path
     source_roots: list[Path]
     doc_roots: list[Path]
-    required_version: str | None
 
     @property
     def project_directory(self) -> Path:
@@ -159,9 +148,6 @@ def find_config(*, start: Path) -> Config | None:
             setting="doc-roots",
             configuration_file=configuration_file,
         ),
-        required_version=_required_version(
-            settings=settings, configuration_file=configuration_file
-        ),
     )
 
 
@@ -177,23 +163,6 @@ def _roots(*, settings: dict, setting: str, configuration_file: Path) -> list[Pa
             path=configuration_file, problem=f"{setting} is not a list of strings"
         )
     return [Path(r) for r in roots]
-
-
-def _required_version(*, settings: dict, configuration_file: Path) -> str | None:
-    """Return the ``required-version`` setting, or None when it is unset.
-
-    Raises :exc:`ConfigError`, naming ``configuration_file``, when the setting is not
-    one exact version.
-    """
-    version = settings.get("required-version")
-    if version is None or (
-        isinstance(version, str) and _EXACT_VERSION.fullmatch(version)
-    ):
-        return version
-    raise _configuration_file_error(
-        path=configuration_file,
-        problem='required-version is not one exact version, such as "3.1.0"',
-    )
 
 
 def read_config(*, start: Path) -> Config:
@@ -261,12 +230,12 @@ def _resolve_root(
     return resolved, "is not a directory or a Markdown file"
 
 
-def render_conventional_config(*, directory: Path, required_version: str) -> str:
+def render_conventional_config(*, directory: Path) -> str:
     """Return the text of a configuration file for the project in ``directory``.
 
     The file names as roots whichever of the conventional roots in
-    ``directory`` are valid roots, and sets ``required_version``. Raises
-    :exc:`ConfigError` when none of them are.
+    ``directory`` are valid roots. Raises :exc:`ConfigError` when none of them
+    are.
     """
     roots: dict[str, list[str]] = {kind: [] for kind in _CONVENTIONAL_ROOTS}
     for kind, names in _CONVENTIONAL_ROOTS.items():
@@ -288,5 +257,4 @@ def render_conventional_config(*, directory: Path, required_version: str) -> str
     lines = [
         f"{kind}-roots = {json.dumps(found)}" for kind, found in roots.items() if found
     ]
-    lines.append(f"required-version = {json.dumps(required_version)}")
     return "\n".join(lines) + "\n"

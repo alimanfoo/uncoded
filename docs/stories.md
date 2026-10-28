@@ -79,8 +79,7 @@ directory. In it:
 
 - the source roots are whichever of `src` and `tests` exist in that directory;
 - the doc roots are whichever of `README.md`, `AGENTS.md` and `docs` exist in
-  that directory;
-- the required version is the version of uncoded that is running.
+  that directory.
 
 `uncoded init` then runs `uncoded sync`, which writes the index and the
 installed skill files. It ends by doing three things:
@@ -150,12 +149,11 @@ with no other step.
 The developer wants a commit to fail when it would leave the installed skill
 files stale, for example when an agent forgot to run `uncoded sync`. They add a
 hook to their pre-commit configuration that runs `uvx uncoded@<version> sync`,
-naming the project's required version, since any other version is refused. The
-hook passes no file names to the command, and runs on every commit. When the
-hook changes an installed skill file, pre-commit fails the commit. Whoever made
-the commit, the developer or an agent, stages the changed file and commits
-again. A CI job that runs the same pre-commit hooks catches what a local commit
-missed.
+naming the release of uncoded that the project uses. The hook passes no file
+names to the command, and runs on every commit. When the hook changes an
+installed skill file, pre-commit fails the commit. Whoever made the commit, the
+developer or an agent, stages the changed file and commits again. A CI job that
+runs the same pre-commit hooks catches what a local commit missed.
 
 `uncoded check` is for a different need. It reports whether the generated files
 are current, without changing anything. It exits with status `0` when they are
@@ -170,23 +168,23 @@ committed without anyone noticing.
 #### The developer upgrades uncoded
 
 A new release of uncoded is out, and the developer wants it. They raise the
-required version in the configuration file, and in the command of their
-pre-commit hook, if they have one. The next `uncoded sync`, run at the new
-version by an agent or by a pre-commit hook, writes, rewrites or removes the
-generated files that the new version generates differently. The developer
-commits the configuration file and the installed skill files together. Before
-upgrading to a new major version, they read `docs/upgrading.md`, which says what
-else to change. That includes deleting any installed skill files that an earlier
-version wrote under names the new version no longer uses, since `uncoded sync`
-removes only the skills the running version generates.
+version in the `entry` of their pre-commit hook. At the next commit, the hook
+runs the new version, which writes, rewrites or removes the installed skill
+files that the new version generates differently. If any change, pre-commit
+fails the commit. The developer commits the pre-commit configuration and the
+installed skill files together. Before upgrading to a new major version, they
+read `docs/upgrading.md`, which says what else to change. That includes deleting
+any installed skill files that an earlier version wrote under names the new
+version no longer uses, since `uncoded sync` removes only the skills the running
+version generates.
 
-A project set up before uncoded had a required version has no `required-version`
-setting, and runs at whatever version is cached. Its developer adds the setting
-by hand, as `docs/upgrading.md` says for that release.
-
-Until someone raises the required version, it holds. A new release never reaches
-the project unannounced. Every agent and tool that runs uncoded in the project,
-on any machine, runs the required version, or is refused.
+Until someone raises the version in the hook, it holds. A new release never
+reaches the committed files unannounced. An agent or a developer that runs
+another version of uncoded changes only the index, which is local, and the
+installed skill files in the working tree. If anyone stages those files, the
+hook writes them back and fails the commit. A project without a pre-commit hook
+pins no version, so each run of `uncoded sync` writes the installed skill files
+that its own version generates.
 
 The value to the developer is that upgrading is one deliberate change, visible
 in a pull request, and that two projects on one machine can use different
@@ -202,10 +200,6 @@ them, it runs `uncoded sync` before it reads either map, so that the index is
 current, whatever has changed since it was last written. It then reads in full
 the namespace map, if the project has source roots, and the docs map, if it has
 doc roots.
-
-If the agent runs a version of uncoded other than the project's required
-version, uncoded refuses, and gives the command that runs the required version.
-The agent uses that command for the rest of the session.
 
 The value to the agent is that it starts every session from a current index and
 a complete list of the project's symbols. That list is what gives it recall.
@@ -348,11 +342,10 @@ uncoded up.
 
 ### A configuration file that cannot be read
 
-The configuration file is not valid TOML, a setting has the wrong type, such as
-`source-roots = "src"` where a list belongs, or `required-version` is not one
-exact version. Every uncoded command that reads the configuration file stops.
-uncoded names the file and says what is wrong with it, in one line. It exits
-with status `1` and writes nothing.
+The configuration file is not valid TOML, or a setting has the wrong type, such
+as `source-roots = "src"` where a list belongs. Every uncoded command that reads
+the configuration file stops. uncoded names the file and says what is wrong with
+it, in one line. It exits with status `1` and writes nothing.
 
 A `pyproject.toml` on the way up to the configuration file stops every command
 in the same way when it is not valid TOML or cannot be read, even when it has no
@@ -414,16 +407,6 @@ A `pyproject.toml` without a `[tool.uncoded]` table, in the same directory as
 `.uncoded.toml`, is not a conflict.
 
 The developer deletes one of the two.
-
-### Running a version other than the required version
-
-A user or a tool runs a version of uncoded other than the project's required
-version. uncoded stops before doing anything else. It says which version the
-project requires, and gives the command that runs it,
-`uvx uncoded@<version> <command>`. It exits with status `1` and writes nothing.
-
-The user runs the command again at the required version. A project whose
-configuration file sets no required version runs at any version.
 
 ### An `--in` file that cannot be used
 

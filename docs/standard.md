@@ -238,7 +238,7 @@ A structural rule that review keeps missing is checked by a machine.
     import-linter `layers` contract in `pyproject.toml` checks it.
   - Every generated file carries the provenance marker. The tests check it.
   - Every stub is laid out in the standard stub style. A hook runs
-    `ruff format --check` on the stubs that the required version writes for
+    `ruff format --check` on the stubs that the uncoded hook writes for
     uncoded's own source, so it checks a change to the layout once this
     repository upgrades to the release that carries it.
   - Every text read and write names its encoding. Ruff's PLW1514 and the runtime

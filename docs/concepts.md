@@ -37,12 +37,6 @@ file, with the settings in its `[tool.uncoded]` table.
 
 Replaces: "config file".
 
-### Required version
-
-A project's **required version** is the version of uncoded it uses, named
-exactly, such as `"4.0.0"`, by the `required-version` setting in its
-configuration file.
-
 ### Project directory
 
 A project's **project directory** is the directory that holds its configuration

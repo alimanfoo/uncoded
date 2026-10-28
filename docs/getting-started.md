@@ -25,13 +25,8 @@ source-roots = ["src", "tests"]
 doc-roots = ["README.md", "AGENTS.md", "docs"]
 ```
 
-`uncoded init` also sets `required-version` to its own version, so every machine
-runs the same uncoded.
-
 `source-roots` indexes Python files, and `doc-roots` indexes Markdown headings.
-[`init`](commands.md#init) says which roots `uncoded init` looks for, and
-[Require one version](configuration.md#require-one-version) says what the
-required version does.
+[`init`](commands.md#init) says which roots `uncoded init` looks for.
 
 `uncoded init` then builds the index and the skills, and prints the files it
 writes. With both kinds of root, the output is:

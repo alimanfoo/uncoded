@@ -8,7 +8,7 @@ configuration, validates roots, and coordinates extraction and file writes.
 | Module             | Responsibility                                                                                                                          |
 | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
 | `config.py`        | Finds the nearest configuration, checks its settings, resolves the project directory, checks roots, and renders the file `init` writes. |
-| `cli.py`           | Checks the required version and dispatches the configured work.                                                                         |
+| `cli.py`           | Dispatches the configured work.                                                                                                         |
 | `extract.py`       | Extracts the imports and symbols of parseable Python files, with their signatures and assignments.                                      |
 | `namespace_map.py` | Renders the Python hierarchy as YAML.                                                                                                   |
 | `stubs.py`         | Renders the imports, signatures, and assignments into a mirrored `.pyi` tree.                                                           |

@@ -62,9 +62,8 @@ that fails one needs a strong reason.
 ## Commands
 
 This project uses [uv](https://docs.astral.sh/uv/). Run the commands below via
-`uv run`. The required version in `.uncoded.toml` refuses `uv run uncoded` in
-this repository. To try a change to uncoded by hand, run it in another project,
-as `uv run --project <path to this checkout> uncoded <command>`.
+`uv run`. `uv run uncoded` runs the code in the checkout, and the pre-commit
+hook runs the release that its `entry` names.
 
 ```sh
 # Run tests. PYTHONWARNDEFAULTENCODING=1 arms the EncodingWarning gate.
