@@ -1,6 +1,6 @@
 """Generate a YAML namespace map from extracted symbols."""
 
-from uncoded.extract import ClassSymbol, PythonFile
+from uncoded.extract import ClassSymbol, PythonFile, Symbol
 from uncoded.markers import GENERATED_MARKER
 from uncoded.yaml_tree import nest_by_path, render_yaml_tree
 
@@ -16,29 +16,24 @@ _HEADER = f"""\
 """
 
 
-def _members(*, cls: ClassSymbol) -> dict | None:
-    """Return the map entry under ``cls``: its members, or None when it has none.
+def _members(*, symbol: Symbol) -> dict | None:
+    """Return the map entry under ``symbol``: a class's members, else None.
 
-    A name defined more than once in the class body is listed once.
+    A name defined more than once in the class body is listed once, where it is
+    first defined.
     """
-    members = [s.name for s in cls.attributes] + [s.name for s in cls.methods]
-    return dict.fromkeys(members) or None
+    if not isinstance(symbol, ClassSymbol):
+        return None
+    return {member.name: None for member in symbol.members} or None
 
 
 def _file_entry(*, python_file: PythonFile) -> dict:
-    """Return the map entry of ``python_file``: its symbols, by kind.
+    """Return the map entry of ``python_file``: its symbols, in file order.
 
-    Lists assignments first, then classes, then functions. A name defined more
-    than once in the module body is listed once, where it is first defined, as
-    the kind of its later definition.
+    A name defined more than once in the module body is listed once, where it is
+    first defined.
     """
-    later = {symbol.name: symbol for symbol in python_file.symbols}
-    symbols = PythonFile(rel_path=python_file.rel_path, symbols=list(later.values()))
-    return {
-        **dict.fromkeys(s.name for s in symbols.assignments),
-        **{cls.name: _members(cls=cls) for cls in symbols.classes},
-        **dict.fromkeys(s.name for s in symbols.functions),
-    }
+    return {s.name: _members(symbol=s) for s in python_file.symbols}
 
 
 def build_map(*, python_files: list[PythonFile]) -> dict:
