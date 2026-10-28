@@ -36,6 +36,27 @@ Index artefacts, generated from the configured roots:
 Alongside the index, uncoded ships `uncoded body` to read symbol bodies and
 `uncoded refs` to find all references.
 
+## How we decide
+
+Test every proposed change against these questions before making it. A change
+that fails one needs a strong reason.
+
+1. **Purpose.** How does it serve uncoded's goal, to raise the recall and
+   precision of agents' code reading? Judge a change against the whole project,
+   not only the issue or bug report in front of you.
+2. **Value.** What does it gain a user, and is the gain real? A problem nobody
+   has met is not yet a reason.
+3. **Less, not more.** Could the same goal be reached by removing code rather
+   than adding it?
+4. **Evidence.** Has the code been read, and the behaviour tried, rather than
+   reasoned about from memory?
+5. **Cost.** Is it simple to build? Does it need new machinery, a new concept,
+   or a second home for a fact? Anything new has to earn its place.
+6. **Precedent.** What do the best open-source tools do? Where they disagree,
+   does the reason behind the convention apply to uncoded?
+7. **Common sense.** Does the rule fit the case, or would following it to the
+   letter cost more than it gains?
+
 ## Commands
 
 This project uses [uv](https://docs.astral.sh/uv/). Run all commands via
