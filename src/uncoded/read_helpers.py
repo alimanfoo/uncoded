@@ -1,8 +1,20 @@
-"""File-reading helpers, and the reason a file read failed, for messages."""
+"""File-reading helpers, and the record of a file that could not be used."""
 
-import sys
 import tokenize
+from dataclasses import dataclass
 from pathlib import Path
+
+
+@dataclass(frozen=True)
+class SkippedFile:
+    """A file under a root that could not be read or parsed, and why.
+
+    ``path`` is the file's path relative to the project directory, with
+    ``/`` separators on every platform.
+    """
+
+    path: str
+    reason: str
 
 
 def read_source_text(*, path: Path) -> str:
@@ -19,51 +31,6 @@ def read_source_text(*, path: Path) -> str:
     """
     with tokenize.open(path.as_posix()) as f:
         return f.read()
-
-
-def read_source_text_or_warn(*, path: Path, warning_path: str) -> str | None:
-    """Read a Python source file, returning None and warning to stderr on failure.
-
-    Wraps read_source_text and catches OSError, UnicodeDecodeError, and
-    SyntaxError. Prints a "warning: skipping ..." line to
-    stderr and returns None so callers can skip-and-continue without aborting
-    the whole sync.
-
-    warning_path is the path shown in the warning message. Pass the
-    project-relative path with ``/`` separators, so the warning matches the
-    other skip messages in the same iterator.
-    """
-    try:
-        return read_source_text(path=path)
-    except (OSError, UnicodeDecodeError, SyntaxError) as e:
-        print(
-            f"warning: skipping {warning_path}: {failure_reason(error=e)}",
-            file=sys.stderr,
-        )
-        return None
-
-
-def read_doc_text_or_warn(*, path: Path, warning_path: str) -> str | None:
-    """Read a Markdown document as UTF-8, returning None and warning on failure.
-
-    Strips a leading UTF-8 BOM on read. Files without a BOM are unaffected.
-
-    Returns None and prints a one-line warning to stderr when the file is
-    unreadable or contains non-UTF-8 bytes, so callers can skip-and-continue
-    without aborting the whole sync.
-
-    warning_path is the path shown in the warning message. Pass the
-    project-relative path with ``/`` separators, so the warning matches the
-    other skip messages in the same iterator.
-    """
-    try:
-        return path.read_text(encoding="utf-8-sig")
-    except (UnicodeDecodeError, OSError) as e:
-        print(
-            f"warning: skipping {warning_path}: {failure_reason(error=e)}",
-            file=sys.stderr,
-        )
-        return None
 
 
 def failure_reason(*, error: Exception) -> str:

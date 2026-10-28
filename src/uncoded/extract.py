@@ -1,13 +1,12 @@
 """Extract symbols from Python source files using the AST."""
 
 import ast
-import sys
-from collections.abc import Iterable, Iterator
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
 
 from uncoded.ast_helpers import assign_target_name, property_kind
-from uncoded.read_helpers import read_source_text_or_warn
+from uncoded.read_helpers import SkippedFile, failure_reason, read_source_text
 
 
 @dataclass
@@ -76,46 +75,47 @@ def extract_module(*, source: str, rel_path: str) -> ModuleInfo:
     )
 
 
-def iter_source_files(
+def read_source_files(
     *, source_root: Path, project_root: Path
-) -> Iterator[tuple[str, str]]:
-    """Yield (source_text, rel_path) for every readable, parseable Python file.
+) -> tuple[list[tuple[str, str]], list[SkippedFile]]:
+    """Read every Python file under ``source_root``, keeping those that parse.
 
-    Each yielded ``rel_path`` is the file's path relative to
-    ``project_root``.
+    Returns the ``(source_text, rel_path)`` pair of every readable, parseable
+    file, and a :class:`SkippedFile` for every other one. Each ``rel_path`` is
+    the file's path relative to ``project_root``.
 
     Source files are read under their declared PEP 263 encoding, UTF-8
-    default. Files that fail to read (OSError, UnicodeDecodeError, or a
-    SyntaxError from a malformed encoding cookie) or fail to parse
-    (SyntaxError) are each skipped with a single
-    ``warning: skipping ...`` line on stderr — centralising these decisions
-    here lets ``extract_modules`` and ``_generate_stubs`` trust they only
-    receive readable, parseable source.
+    default. A file is skipped when it fails to read (OSError,
+    UnicodeDecodeError, or a SyntaxError from a malformed encoding cookie) or
+    fails to parse (SyntaxError). Deciding this here lets ``extract_modules``
+    and ``_generate_stubs`` trust they only receive readable, parseable source.
     """
     source_root = source_root.resolve()
     project_root = project_root.resolve()
 
+    files: list[tuple[str, str]] = []
+    skipped: list[SkippedFile] = []
     for py_file in sorted(source_root.rglob("*.py")):
         rel_path = py_file.relative_to(project_root).as_posix()
-        source = read_source_text_or_warn(path=py_file, warning_path=rel_path)
-        if source is None:
+        try:
+            source = read_source_text(path=py_file)
+        except (OSError, UnicodeDecodeError, SyntaxError) as e:
+            skipped.append(SkippedFile(path=rel_path, reason=failure_reason(error=e)))
             continue
         try:
             ast.parse(source, rel_path)
         except SyntaxError as e:
-            print(
-                f"warning: skipping {rel_path}: "
-                f"SyntaxError at line {e.lineno}: {e.msg}",
-                file=sys.stderr,
-            )
+            reason = f"SyntaxError at line {e.lineno}: {e.msg}"
+            skipped.append(SkippedFile(path=rel_path, reason=reason))
             continue
-        yield source, rel_path
+        files.append((source, rel_path))
+    return files, skipped
 
 
 def extract_modules(*, files: Iterable[tuple[str, str]]) -> list[ModuleInfo]:
     """Extract a :class:`ModuleInfo` for each file in *files*.
 
-    *files* is the output of :func:`iter_source_files` — an iterable of
+    *files* holds the readable files from :func:`read_source_files`, as
     ``(source, rel_path)`` pairs where the source has already been
     confirmed parseable. Pure transformation: no IO, no warnings, no
     parsing decisions. Skips files with no symbols.

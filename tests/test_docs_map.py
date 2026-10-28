@@ -6,7 +6,7 @@ from uncoded.docs_map import (
     DOCS_HEADER,
     build_docs_map,
     extract_headings,
-    iter_doc_files,
+    read_doc_files,
     render_docs_map,
 )
 
@@ -103,33 +103,33 @@ class TestExtractHeadings:
         assert extract_headings(text="  # Indented\n") == []
 
 
-class TestIterDocFiles:
+class TestReadDocFiles:
     def test_single_file_root(self, *, tmp_path):
         md = tmp_path / "README.md"
         md.write_text("# Hello\n", encoding="utf-8")
-        results = list(iter_doc_files(doc_root=md, project_root=tmp_path))
+        results, _skipped = read_doc_files(doc_root=md, project_root=tmp_path)
         assert len(results) == 1
         text, rel = results[0]
         assert text == "# Hello\n"
         assert rel == Path("README.md")
 
-    def test_directory_walk_yields_md_files(self, *, tmp_path):
+    def test_directory_walk_reads_md_files(self, *, tmp_path):
         (tmp_path / "a.md").write_text("# A\n", encoding="utf-8")
         (tmp_path / "b.md").write_text("# B\n", encoding="utf-8")
-        results = list(iter_doc_files(doc_root=tmp_path, project_root=tmp_path))
+        results, _skipped = read_doc_files(doc_root=tmp_path, project_root=tmp_path)
         assert len(results) == 2
 
     def test_directory_walk_sorted(self, *, tmp_path):
         (tmp_path / "z.md").write_text("z", encoding="utf-8")
         (tmp_path / "a.md").write_text("a", encoding="utf-8")
-        results = list(iter_doc_files(doc_root=tmp_path, project_root=tmp_path))
+        results, _skipped = read_doc_files(doc_root=tmp_path, project_root=tmp_path)
         names = [r[1].name for r in results]
         assert names == ["a.md", "z.md"]
 
     def test_directory_excludes_non_md(self, *, tmp_path):
         (tmp_path / "guide.md").write_text("# Guide\n", encoding="utf-8")
         (tmp_path / "notes.txt").write_text("some text", encoding="utf-8")
-        results = list(iter_doc_files(doc_root=tmp_path, project_root=tmp_path))
+        results, _skipped = read_doc_files(doc_root=tmp_path, project_root=tmp_path)
         assert len(results) == 1
         assert results[0][1] == Path("guide.md")
 
@@ -137,65 +137,63 @@ class TestIterDocFiles:
         sub = tmp_path / "docs"
         sub.mkdir()
         (sub / "guide.md").write_text("# Guide\n", encoding="utf-8")
-        results = list(iter_doc_files(doc_root=tmp_path, project_root=tmp_path))
+        results, _skipped = read_doc_files(doc_root=tmp_path, project_root=tmp_path)
         assert len(results) == 1
         assert results[0][1] == Path("docs/guide.md")
 
-    def test_empty_directory_yields_nothing(self, *, tmp_path):
-        results = list(iter_doc_files(doc_root=tmp_path, project_root=tmp_path))
+    def test_empty_directory_reads_nothing(self, *, tmp_path):
+        results, _skipped = read_doc_files(doc_root=tmp_path, project_root=tmp_path)
         assert results == []
 
     def test_rel_path_is_relative_to_project_root(self, *, tmp_path):
         docs = tmp_path / "docs"
         docs.mkdir()
         (docs / "a.md").write_text("", encoding="utf-8")
-        results = list(iter_doc_files(doc_root=docs, project_root=tmp_path))
+        results, _skipped = read_doc_files(doc_root=docs, project_root=tmp_path)
         assert results[0][1] == Path("docs/a.md")
 
-    def test_skips_non_utf8_file_with_warning(self, *, tmp_path, capsys):
-        # A file with invalid UTF-8 bytes must be skipped with a warning;
-        # other files in the same directory must still yield.
+    def test_skips_non_utf8_file(self, *, tmp_path):
+        # A file with invalid UTF-8 bytes must be skipped; other files in the
+        # same directory must still be read.
         guide = tmp_path / "docs" / "guide"
         guide.mkdir(parents=True)
         (guide / "good.md").write_text("# Good\n", encoding="utf-8")
         (guide / "bad.md").write_bytes(b"\xff\xfe not utf-8")
-        results = list(
-            iter_doc_files(doc_root=tmp_path / "docs", project_root=tmp_path)
+        results, skipped = read_doc_files(
+            doc_root=tmp_path / "docs", project_root=tmp_path
         )
         assert len(results) == 1
         assert results[0][1].name == "good.md"
-        err = capsys.readouterr().err
-        assert "warning: skipping docs/guide/bad.md" in err
+        assert [s.path for s in skipped] == ["docs/guide/bad.md"]
 
-    def test_skips_unreadable_file_with_reason(self, *, tmp_path, capsys):
+    def test_skips_unreadable_file_with_reason(self, *, tmp_path):
         # A directory whose name ends in .md cannot be read as a file. The
-        # warning gives the reason without the error's own copy of the path,
-        # which would use the system's separator.
+        # reason leaves out the error's own copy of the path, which would use
+        # the system's separator.
         (tmp_path / "docs" / "notes.md").mkdir(parents=True)
-        results = list(
-            iter_doc_files(doc_root=tmp_path / "docs", project_root=tmp_path)
+        results, skipped = read_doc_files(
+            doc_root=tmp_path / "docs", project_root=tmp_path
         )
         assert results == []
-        err = capsys.readouterr().err
-        assert err.startswith("warning: skipping docs/notes.md: ")
-        assert str(tmp_path) not in err
+        assert [s.path for s in skipped] == ["docs/notes.md"]
+        assert skipped[0].reason
+        assert str(tmp_path) not in skipped[0].reason
 
-    def test_single_file_root_unreadable_yields_nothing(self, *, tmp_path, capsys):
-        # When the single-file root itself is unreadable, the iterator yields
-        # nothing and emits a warning with the project-relative path.
+    def test_single_file_root_unreadable_is_skipped(self, *, tmp_path):
+        # When the single-file root itself is unreadable, nothing is read and
+        # the root is skipped under its project-relative path.
         (tmp_path / "docs").mkdir()
         bad = tmp_path / "docs" / "bad.md"
         bad.write_bytes(b"\xff\xfe not utf-8")
-        results = list(iter_doc_files(doc_root=bad, project_root=tmp_path))
+        results, skipped = read_doc_files(doc_root=bad, project_root=tmp_path)
         assert results == []
-        err = capsys.readouterr().err
-        assert "warning: skipping docs/bad.md" in err
+        assert [s.path for s in skipped] == ["docs/bad.md"]
 
     def test_bom_prefixed_file_heading_appears(self, *, tmp_path):
         # A UTF-8 BOM before the first heading must not suppress it.
         bom = b"\xef\xbb\xbf"
         (tmp_path / "guide.md").write_bytes(bom + b"# Guide\n")
-        results = list(iter_doc_files(doc_root=tmp_path, project_root=tmp_path))
+        results, _skipped = read_doc_files(doc_root=tmp_path, project_root=tmp_path)
         assert len(results) == 1
         text, _rel = results[0]
         assert extract_headings(text=text) == [(1, "Guide")]

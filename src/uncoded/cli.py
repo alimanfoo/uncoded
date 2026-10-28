@@ -17,15 +17,25 @@ from uncoded.config import (
     render_conventional_config,
     validate_root,
 )
-from uncoded.docs_map import build_docs_map, iter_doc_files, render_docs_map
-from uncoded.extract import extract_modules, iter_source_files
+from uncoded.docs_map import build_docs_map, read_doc_files, render_docs_map
+from uncoded.extract import extract_modules, read_source_files
 from uncoded.markers import GENERATED_MARKER
 from uncoded.namespace_map import build_map, render_map
+from uncoded.read_helpers import SkippedFile
 from uncoded.refs import find_refs
 from uncoded.resolver import NamePath, SymbolNotFoundError, UnsupportedNamePathError
 from uncoded.skill import SKILL_ROOTS, agent_instructions, sync_skills
 from uncoded.stubs import build_stubs, remove_all_stubs
 from uncoded.sync import remove_file, sync_file
+
+
+def _warn_skipped(*, skipped: list[SkippedFile]) -> None:
+    """Warn on standard error about each file that could not be indexed."""
+    for skipped_file in skipped:
+        print(
+            f"warning: skipping {skipped_file.path}: {skipped_file.reason}",
+            file=sys.stderr,
+        )
 
 
 def _sync_code_artefacts(
@@ -46,13 +56,13 @@ def _sync_code_artefacts(
         )
         return n
 
-    roots_with_files = [
-        (
-            src_root,
-            list(iter_source_files(source_root=src_root, project_root=project_root)),
+    roots_with_files = []
+    for src_root in source_roots:
+        files, skipped = read_source_files(
+            source_root=src_root, project_root=project_root
         )
-        for src_root in source_roots
-    ]
+        _warn_skipped(skipped=skipped)
+        roots_with_files.append((src_root, files))
     modules = [
         m for _root, files in roots_with_files for m in extract_modules(files=files)
     ]
@@ -87,11 +97,11 @@ def _sync_doc_artefacts(
         return remove_file(
             path=Path(".uncoded/docs.yaml"), project_root=project_root, check=check
         )
-    all_doc_files = [
-        f
-        for dr in doc_roots
-        for f in iter_doc_files(doc_root=dr, project_root=project_root)
-    ]
+    all_doc_files = []
+    for doc_root in doc_roots:
+        files, skipped = read_doc_files(doc_root=doc_root, project_root=project_root)
+        _warn_skipped(skipped=skipped)
+        all_doc_files.extend(files)
     docs_content = render_docs_map(mapping=build_docs_map(files=all_doc_files))
     return sync_file(
         path=Path(".uncoded/docs.yaml"),
