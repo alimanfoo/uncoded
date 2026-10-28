@@ -112,6 +112,16 @@ repos:
         args: ["--write"]
         files: \.md$
         exclude: ^(CLAUDE\.md|(\.claude|\.agents)/skills/.*)$
+      # Regenerates the --help blocks in docs/commands.md, so the commit fails
+      # when a block changes. argparse lays out help by the Python version and
+      # the terminal width, so the hook runs one version, in an environment of
+      # its own, and the blocks set the width.
+      - id: cog
+        name: generate command help
+        entry: uv run --isolated --python 3.13 cog -r -U docs/commands.md
+        language: system
+        files: ^(src/uncoded/cli\.py|docs/commands\.md)$
+        pass_filenames: false
       - id: mkdocs
         name: build documentation
         entry: uv run mkdocs build

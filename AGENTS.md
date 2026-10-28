@@ -84,6 +84,9 @@ PYTHONWARNDEFAULTENCODING=1 uv run pytest
 # Run a subset of tests without the coverage gate
 PYTHONWARNDEFAULTENCODING=1 uv run pytest tests/test_stubs.py --no-cov
 
+# Run every test, the integration tests that spawn ty included
+PYTHONWARNDEFAULTENCODING=1 uv run pytest -m "integration or not integration"
+
 # Preview the documentation site at http://127.0.0.1:8000/
 uv run mkdocs serve
 
@@ -124,7 +127,8 @@ Run `uv run ruff check --fix` and `uv run ruff format` before committing. Both
 are pinned via the `dev` optional dependency. The pre-commit hooks run the same
 commands automatically. If a hook rewrites files, the commit fails. Re-stage the
 modified files and commit again. The uncoded sync hook follows the same pattern
-for tracked generated skill files.
+for tracked generated skill files, and the cog hook for the `--help` blocks in
+`docs/commands.md`.
 
 Never commit with `--no-verify`. CI runs `pre-commit run --all-files` on every
 pull request and will fail a build where a hook was skipped.
@@ -146,6 +150,9 @@ Public symbols need a pep257 plain-prose docstring. Magic methods are included.
 Private symbols (underscore-prefixed) and test code are exempt.
 
 ## Testing
+
+[docs/testing.md](docs/testing.md) says what each kind of test establishes, when
+to run the integration tests, and what CI runs.
 
 The test suite enforces 100% branch coverage. The threshold is set in
 `[tool.coverage.report]` in `pyproject.toml`. In CI, the coverage job in
