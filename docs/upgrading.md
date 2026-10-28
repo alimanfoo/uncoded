@@ -6,8 +6,8 @@ To upgrade a project to a new release of uncoded:
    project uses.
 2. If the new release is major, follow the section below for each major release
    that the upgrade crosses, oldest first.
-3. Run `uncoded sync` with the new release, such as `uvx uncoded@3.0.1 sync`,
-   and commit the installed skill files that it changes.
+3. Run `uvx uncoded@<version> sync`, where `<version>` is the new release, and
+   commit every installed skill file that it writes, rewrites or removes.
 
 ## From version 2 to version 3
 

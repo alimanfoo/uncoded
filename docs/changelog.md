@@ -1,14 +1,14 @@
 # Changelog
 
-This page lists the changes to uncoded that a user would notice: every change to
-[the contract](compatibility.md), and every fix to how uncoded behaves.
+This page lists every change to [the contract](compatibility.md), including
+every fix that makes uncoded do what its documentation or its skills say.
 Refactoring, tests, CI and the documentation get no entry. The release notes on
 GitHub list every merged pull request.
 
-Each release groups its entries under these headings, in this order, and leaves
-out any heading that would be empty. Each heading names the type of release that
-its entries make, as [Compatibility](compatibility.md#versions) describes the
-types:
+Each release after 3.0.1 groups its entries under these headings, in this order,
+and leaves out any heading that would be empty. Each heading names the type of
+release that its entries make, as [Compatibility](compatibility.md#versions)
+describes the types:
 
 - **Breaking** for a change that makes the release major;
 - **Added** for an addition that makes the release minor;
