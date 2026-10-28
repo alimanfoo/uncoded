@@ -9,13 +9,13 @@ from uncoded.stubs import StubModule, render_stub
 
 class TestMarkerCompleteness:
     def test_namespace_map_carries_marker(self):
-        assert GENERATED_MARKER in render_map({})
+        assert GENERATED_MARKER in render_map(namespace={})
 
     def test_docs_map_carries_marker(self):
-        assert GENERATED_MARKER in render_docs_map({})
+        assert GENERATED_MARKER in render_docs_map(mapping={})
 
     def test_stub_carries_marker(self):
-        assert GENERATED_MARKER in render_stub(StubModule(rel_path="x.py"))
+        assert GENERATED_MARKER in render_stub(module=StubModule(rel_path="x.py"))
 
     def test_skill_carries_marker(self):
         assert GENERATED_MARKER in _render_content(skill=SKILLS[0])

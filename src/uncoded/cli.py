@@ -20,8 +20,8 @@ from uncoded.sync import remove_file, sync_file
 
 
 def _validate_root(
-    configured: Path,
     *,
+    configured: Path,
     kind: Literal["source", "doc"],
     project_root: Path,
     resolved_project_root: Path,
@@ -73,16 +73,16 @@ def _sync_code_artefacts(
     """
     if not build:
         n = remove_file(
-            Path(".uncoded/namespace.yaml"), project_root=project_root, check=check
+            path=Path(".uncoded/namespace.yaml"), project_root=project_root, check=check
         )
         n += remove_all_stubs(
-            Path(".uncoded/stubs"), project_root=project_root, check=check
+            output_dir=Path(".uncoded/stubs"), project_root=project_root, check=check
         )
         return n
 
     source_roots = [
         _validate_root(
-            configured,
+            configured=configured,
             kind="source",
             project_root=project_root,
             resolved_project_root=resolved_project_root,
@@ -92,14 +92,19 @@ def _sync_code_artefacts(
     ]
 
     roots_with_files = [
-        (src_root, list(iter_source_files(src_root, project_root=project_root)))
+        (
+            src_root,
+            list(iter_source_files(source_root=src_root, project_root=project_root)),
+        )
         for src_root in source_roots
     ]
-    modules = [m for _root, files in roots_with_files for m in extract_modules(files)]
-    map_content = render_map(build_map(modules))
+    modules = [
+        m for _root, files in roots_with_files for m in extract_modules(files=files)
+    ]
+    map_content = render_map(namespace=build_map(modules=modules))
     n = sync_file(
-        Path(".uncoded/namespace.yaml"),
-        map_content,
+        path=Path(".uncoded/namespace.yaml"),
+        content=map_content,
         project_root=project_root,
         check=check,
     )
@@ -130,11 +135,11 @@ def _sync_doc_artefacts(
     """
     if not build:
         return remove_file(
-            Path(".uncoded/docs.yaml"), project_root=project_root, check=check
+            path=Path(".uncoded/docs.yaml"), project_root=project_root, check=check
         )
     doc_roots = [
         _validate_root(
-            configured,
+            configured=configured,
             kind="doc",
             project_root=project_root,
             resolved_project_root=resolved_project_root,
@@ -142,11 +147,15 @@ def _sync_doc_artefacts(
         )
         for configured in configured_doc_roots
     ]
-    all_doc_files = [f for dr in doc_roots for f in iter_doc_files(dr, project_root)]
-    docs_content = render_docs_map(build_docs_map(all_doc_files))
+    all_doc_files = [
+        f
+        for dr in doc_roots
+        for f in iter_doc_files(doc_root=dr, project_root=project_root)
+    ]
+    docs_content = render_docs_map(mapping=build_docs_map(files=all_doc_files))
     return sync_file(
-        Path(".uncoded/docs.yaml"),
-        docs_content,
+        path=Path(".uncoded/docs.yaml"),
+        content=docs_content,
         project_root=project_root,
         check=check,
     )
@@ -176,7 +185,7 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
         start = Path.cwd()
 
     try:
-        config = read_config(start)
+        config = read_config(start=start)
         if not config.source_roots and not config.doc_roots:
             raise ConfigError(
                 "nothing to index. "
@@ -187,8 +196,8 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
         project_root = config.project_root
         resolved_project_root = project_root.resolve()
         changes = sync_file(
-            Path(".uncoded/.gitignore"),
-            f"# {GENERATED_MARKER}\n*\n",
+            path=Path(".uncoded/.gitignore"),
+            content=f"# {GENERATED_MARKER}\n*\n",
             project_root=project_root,
             check=check,
         )
@@ -228,7 +237,7 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
     return 0
 
 
-def _report_lookup_error(exc: Exception, *, name_path: str, in_path: str) -> int:
+def _report_lookup_error(*, exc: Exception, name_path: str, in_path: str) -> int:
     """Print the CLI error message for a lookup failure and return 1.
 
     Covers the four shared error arms for _body and _refs: unsupported name
@@ -256,7 +265,7 @@ def _body(*, name_path: str, in_path: str) -> int:
     """
     target = Path(in_path)
     try:
-        body = resolve_body(NamePath.parse(name_path), target)
+        body = resolve_body(name_path=NamePath.parse(raw=name_path), in_path=target)
     except (
         UnsupportedNamePathError,
         SymbolNotFoundError,
@@ -265,7 +274,7 @@ def _body(*, name_path: str, in_path: str) -> int:
         UnicodeDecodeError,
         SyntaxError,
     ) as e:
-        return _report_lookup_error(e, name_path=name_path, in_path=in_path)
+        return _report_lookup_error(exc=e, name_path=name_path, in_path=in_path)
 
     sys.stdout.write(body)
     return 0
@@ -281,7 +290,7 @@ def _refs(*, name_path: str, in_path: str) -> int:
     lookup fails.
     """
     try:
-        refs = find_refs(NamePath.parse(name_path), Path(in_path))
+        refs = find_refs(name_path=NamePath.parse(raw=name_path), in_path=Path(in_path))
     except RuntimeError as e:
         print(f"Error: {e}", file=sys.stderr)
         return 1
@@ -293,7 +302,7 @@ def _refs(*, name_path: str, in_path: str) -> int:
         UnicodeDecodeError,
         SyntaxError,
     ) as e:
-        return _report_lookup_error(e, name_path=name_path, in_path=in_path)
+        return _report_lookup_error(exc=e, name_path=name_path, in_path=in_path)
 
     for ref in refs:
         print(f"{ref.path.as_posix()}:{ref.line}:{ref.col}")

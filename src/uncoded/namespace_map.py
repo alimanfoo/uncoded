@@ -18,7 +18,7 @@ HEADER = f"""\
 """
 
 
-def build_map(modules: list[ModuleInfo]) -> dict:
+def build_map(*, modules: list[ModuleInfo]) -> dict:
     """Build a nested dict representing the namespace.
 
     Keys are repo-relative paths. Directory keys have a trailing slash.
@@ -57,6 +57,6 @@ def build_map(modules: list[ModuleInfo]) -> dict:
     return root
 
 
-def render_map(namespace: dict) -> str:
+def render_map(*, namespace: dict) -> str:
     """Render a namespace map dict as a YAML string with an explanatory header."""
-    return render_yaml_tree(HEADER, namespace)
+    return render_yaml_tree(header=HEADER, mapping=namespace)

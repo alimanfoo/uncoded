@@ -18,13 +18,13 @@ from uncoded.skill import SKILL_ROOTS, SKILLS, _skill_path
 
 # Paths split by gate so tests can assert the right subset.
 _SOURCE_SKILL_PATHS = [
-    _skill_path(root, skill.name)
+    _skill_path(root=root, name=skill.name)
     for skill in SKILLS
     if skill.gate == "source"
     for root in SKILL_ROOTS
 ]
 _DOC_SKILL_PATHS = [
-    _skill_path(root, skill.name)
+    _skill_path(root=root, name=skill.name)
     for skill in SKILLS
     if skill.gate == "docs"
     for root in SKILL_ROOTS

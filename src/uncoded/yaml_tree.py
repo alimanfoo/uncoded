@@ -18,7 +18,7 @@ _CleanDumper.add_representer(
 )
 
 
-def render_yaml_tree(header: str, mapping: dict) -> str:
+def render_yaml_tree(*, header: str, mapping: dict) -> str:
     """Render a nested dict as a YAML string with a leading comment header."""
     body = yaml.dump(
         mapping,

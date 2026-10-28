@@ -24,7 +24,7 @@ class TestExtractModuleFromSource:
                 pass
         """)
 
-        result = extract_module(source, "module.py")
+        result = extract_module(source=source, rel_path="module.py")
 
         assert result.rel_path == "module.py"
         assert len(result.classes) == 2
@@ -47,14 +47,14 @@ class TestExtractModuleFromSource:
                     pass
         """)
 
-        result = extract_module(source, "async_module.py")
+        result = extract_module(source=source, rel_path="async_module.py")
 
         assert result.functions == ["fetch_data"]
         assert result.classes[0].name == "Client"
         assert result.classes[0].methods == ["connect", "disconnect"]
 
     def test_empty_module(self):
-        result = extract_module("", "empty.py")
+        result = extract_module(source="", rel_path="empty.py")
 
         assert result.classes == []
         assert result.functions == []
@@ -66,7 +66,7 @@ class TestExtractModuleFromSource:
             __version__ = "1.0.0"
         """)
 
-        result = extract_module(source, "const.py")
+        result = extract_module(source=source, rel_path="const.py")
 
         assert result.constants == ["TIMEOUT", "MAX_RETRIES", "__version__"]
 
@@ -76,7 +76,7 @@ class TestExtractModuleFromSource:
             UserId: TypeAlias = int
         """)
 
-        result = extract_module(source, "aliases.py")
+        result = extract_module(source=source, rel_path="aliases.py")
 
         assert result.constants == ["UserId"]
 
@@ -86,7 +86,7 @@ class TestExtractModuleFromSource:
             type InternalId = int
         """)
 
-        result = extract_module(source, "aliases.py")
+        result = extract_module(source=source, rel_path="aliases.py")
 
         assert result.constants == ["UserId", "InternalId"]
 
@@ -95,14 +95,14 @@ class TestExtractModuleFromSource:
             X, Y = 1, 2
         """)
 
-        result = extract_module(source, "tuple.py")
+        result = extract_module(source=source, rel_path="tuple.py")
 
         assert result.constants == []
 
     def test_chained_assignment_skipped(self):
         source = "x = y = 1\n"
 
-        result = extract_module(source, "chain.py")
+        result = extract_module(source=source, rel_path="chain.py")
 
         assert result.constants == []
 
@@ -114,7 +114,7 @@ class TestExtractModuleFromSource:
                 count: int = 0
         """)
 
-        result = extract_module(source, "reg.py")
+        result = extract_module(source=source, rel_path="reg.py")
 
         cls = result.classes[0]
         assert cls.attributes == ["items", "_cache", "count"]
@@ -125,7 +125,7 @@ class TestExtractModuleFromSource:
                 a, b = 1, 2
         """)
 
-        result = extract_module(source, "c.py")
+        result = extract_module(source=source, rel_path="c.py")
 
         assert result.classes[0].attributes == []
 
@@ -143,7 +143,7 @@ class TestExtractModuleFromSource:
                     pass
         """)
 
-        result = extract_module(source, "record.py")
+        result = extract_module(source=source, rel_path="record.py")
 
         cls = result.classes[0]
         assert cls.name == "Record"
@@ -161,7 +161,7 @@ class TestExtractModuleFromSource:
                     pass
         """)
 
-        result = extract_module(source, "config.py")
+        result = extract_module(source=source, rel_path="config.py")
 
         cls = result.classes[0]
         assert cls.attributes == ["path"]
@@ -183,7 +183,7 @@ class TestExtractModuleFromSource:
                     del self._path
         """)
 
-        result = extract_module(source, "config.py")
+        result = extract_module(source=source, rel_path="config.py")
 
         cls = result.classes[0]
         assert cls.attributes == ["path"]
@@ -197,7 +197,7 @@ class TestExtractModuleFromSource:
                     pass
         """)
 
-        result = extract_module(source, "util.py")
+        result = extract_module(source=source, rel_path="util.py")
 
         cls = result.classes[0]
         assert cls.methods == ["helper"]
@@ -219,7 +219,7 @@ class TestExtractModuleFromSource:
                 pass
         """)
 
-        result = extract_module(source, "ordering.py")
+        result = extract_module(source=source, rel_path="ordering.py")
 
         assert result.functions == ["zebra", "apple"]
         assert result.classes[0].methods == ["omega", "alpha"]
@@ -246,7 +246,9 @@ class TestIterAndExtract:
         (pkg / "_internal.py").write_text("def helper(): pass\n", encoding="utf-8")
         (pkg / "empty.py").write_text("# nothing here\n", encoding="utf-8")
 
-        modules = extract_modules(iter_source_files(src, project_root=tmp_path))
+        modules = extract_modules(
+            files=iter_source_files(source_root=src, project_root=tmp_path)
+        )
 
         rel_paths = [m.rel_path for m in modules]
         assert "src/mypackage/core.py" in rel_paths
@@ -265,7 +267,9 @@ class TestIterAndExtract:
             "def format_output(): pass\n", encoding="utf-8"
         )
 
-        modules = extract_modules(iter_source_files(src, project_root=tmp_path))
+        modules = extract_modules(
+            files=iter_source_files(source_root=src, project_root=tmp_path)
+        )
 
         rel_paths = [m.rel_path for m in modules]
         assert "src/mypackage/utils/formatting.py" in rel_paths
@@ -277,7 +281,9 @@ class TestIterAndExtract:
         (pkg / "__init__.py").write_text("def create(): pass\n", encoding="utf-8")
         (pkg / "core.py").write_text("def run(): pass\n", encoding="utf-8")
 
-        modules = extract_modules(iter_source_files(src, project_root=tmp_path))
+        modules = extract_modules(
+            files=iter_source_files(source_root=src, project_root=tmp_path)
+        )
 
         rel_paths = [m.rel_path for m in modules]
         assert "src/mypackage/__init__.py" in rel_paths
@@ -290,7 +296,9 @@ class TestIterAndExtract:
         (pkg / "__init__.py").write_text("", encoding="utf-8")
         (pkg / "core.py").write_text("def run(): pass\n", encoding="utf-8")
 
-        modules = extract_modules(iter_source_files(src, project_root=tmp_path))
+        modules = extract_modules(
+            files=iter_source_files(source_root=src, project_root=tmp_path)
+        )
 
         rel_paths = [m.rel_path for m in modules]
         assert not any("__init__.py" in p for p in rel_paths)
@@ -303,7 +311,9 @@ class TestIterAndExtract:
         (pkg / "good.py").write_text("def works(): pass\n", encoding="utf-8")
         (pkg / "bad.py").write_text("def broken(:\n", encoding="utf-8")
 
-        modules = extract_modules(iter_source_files(src, project_root=tmp_path))
+        modules = extract_modules(
+            files=iter_source_files(source_root=src, project_root=tmp_path)
+        )
 
         rel_paths = [m.rel_path for m in modules]
         assert "src/mypackage/good.py" in rel_paths
@@ -321,7 +331,10 @@ class TestIterAndExtract:
         # A directory whose name ends in .py cannot be read as a file. The
         # warning gives the reason without the error's own copy of the path.
         (tmp_path / "src" / "pkg" / "notes.py").mkdir(parents=True)
-        assert list(iter_source_files(tmp_path / "src", project_root=tmp_path)) == []
+        assert (
+            list(iter_source_files(source_root=tmp_path / "src", project_root=tmp_path))
+            == []
+        )
         err = capsys.readouterr().err
         assert err.startswith("warning: skipping src/pkg/notes.py: ")
         assert str(tmp_path) not in err
@@ -334,7 +347,7 @@ class TestIterAndExtract:
         pkg.mkdir(parents=True)
         (pkg / "good.py").write_text("def works(): pass\n", encoding="utf-8")
         (pkg / "binary.py").write_bytes(b"\xff\xfe not utf-8")
-        results = list(iter_source_files(src, project_root=tmp_path))
+        results = list(iter_source_files(source_root=src, project_root=tmp_path))
         rel_paths = [rel for _, rel in results]
         assert any("good.py" in p for p in rel_paths)
         assert not any("binary.py" in p for p in rel_paths)
@@ -350,7 +363,7 @@ class TestIterAndExtract:
         (pkg / "latin1.py").write_bytes(
             b"# -*- coding: latin-1 -*-\ndef caf\xe9(): pass\n"
         )
-        results = list(iter_source_files(src, project_root=tmp_path))
+        results = list(iter_source_files(source_root=src, project_root=tmp_path))
         rel_paths = [rel for _, rel in results]
         assert any("latin1.py" in p for p in rel_paths)
         assert "warning" not in capsys.readouterr().err
@@ -363,7 +376,7 @@ class TestExtractModulesFromFiles:
             ("class Bar: pass\n", "src/b.py"),
         ]
 
-        modules = extract_modules(files)
+        modules = extract_modules(files=files)
 
         assert [m.rel_path for m in modules] == ["src/a.py", "src/b.py"]
         assert modules[0].functions == ["foo"]
@@ -376,14 +389,14 @@ class TestExtractModulesFromFiles:
             ("def c(): pass\n", "src/c.py"),
         ]
 
-        modules = extract_modules(files)
+        modules = extract_modules(files=files)
 
         assert [m.rel_path for m in modules] == ["src/a.py", "src/b.py", "src/c.py"]
 
     def test_module_with_only_constants_is_kept(self):
         files = [('__version__ = "1.0"\n', "src/mypackage/__init__.py")]
 
-        modules = extract_modules(files)
+        modules = extract_modules(files=files)
 
         assert [m.rel_path for m in modules] == ["src/mypackage/__init__.py"]
 
@@ -394,6 +407,6 @@ class TestExtractModulesFromFiles:
             ("class Bar: pass\n", "src/b.py"),
         ]
 
-        modules = extract_modules(files)
+        modules = extract_modules(files=files)
 
         assert [m.rel_path for m in modules] == ["src/a.py", "src/b.py"]

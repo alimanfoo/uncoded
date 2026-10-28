@@ -7,13 +7,13 @@ from uncoded.read_helpers import read_source_text
 from uncoded.resolver import NamePath, resolve_ast_node_from_source
 
 
-def resolve_body(name_path: NamePath, in_path: Path) -> str:
+def resolve_body(*, name_path: NamePath, in_path: Path) -> str:
     """Return the source text for the symbol named by name_path in in_path.
 
     Raises SymbolNotFoundError if the symbol is not present. Lets OSError,
     UnicodeDecodeError, and SyntaxError propagate from the file read.
     """
-    source = read_source_text(in_path)
+    source = read_source_text(path=in_path)
     node = resolve_ast_node_from_source(
         name_path=name_path, source=source, in_path=in_path
     )

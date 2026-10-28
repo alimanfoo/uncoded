@@ -2,7 +2,7 @@
 
 import ast
 from pathlib import Path
-from typing import NamedTuple, TypeGuard
+from typing import NamedTuple
 
 from uncoded.ast_helpers import assign_target_name, property_kind
 from uncoded.read_helpers import read_source_text
@@ -24,15 +24,15 @@ class NamePath(NamedTuple):
     tail: str | None = None
 
     @classmethod
-    def parse(cls, s: str) -> "NamePath":
+    def parse(cls, *, raw: str) -> "NamePath":
         """Parse a raw name_path string into a validated NamePath.
 
         Raises UnsupportedNamePathError for more than two segments or any empty segment.
         """
-        segments = s.split("/")
+        segments = raw.split("/")
         if len(segments) > 2 or any(seg == "" for seg in segments):
             raise UnsupportedNamePathError(
-                f"Unsupported name_path {s!r}: use 'name' or 'Class/member'"
+                f"Unsupported name_path {raw!r}: use 'name' or 'Class/member'"
             )
         head = segments[0]
         tail = segments[1] if len(segments) == 2 else None
@@ -55,19 +55,19 @@ class UnsupportedNamePathError(Exception):
     """
 
 
-def resolve_ast_node(name_path: NamePath, in_path: Path) -> _SymbolNode:
+def resolve_ast_node(*, name_path: NamePath, in_path: Path) -> _SymbolNode:
     """Return the AST node for the symbol named by name_path in in_path.
 
     Raises SymbolNotFoundError if the symbol is not present. Lets OSError,
     UnicodeDecodeError, and SyntaxError propagate from the file read.
     """
-    source = read_source_text(in_path)
+    source = read_source_text(path=in_path)
     return resolve_ast_node_from_source(
         name_path=name_path, source=source, in_path=in_path
     )
 
 
-def resolve_name_position(name_path: NamePath, in_path: Path) -> tuple[int, int]:
+def resolve_name_position(*, name_path: NamePath, in_path: Path) -> tuple[int, int]:
     """Return the 0-indexed (line, character) position of the name token for name_path.
 
     Follows LSP convention: both line and character are 0-indexed.
@@ -76,7 +76,7 @@ def resolve_name_position(name_path: NamePath, in_path: Path) -> tuple[int, int]
     Raises SymbolNotFoundError, OSError, UnicodeDecodeError, and SyntaxError under
     the same conditions as resolve_ast_node.
     """
-    node = resolve_ast_node(name_path, in_path)
+    node = resolve_ast_node(name_path=name_path, in_path=in_path)
     if isinstance(node, ast.FunctionDef):
         return (node.lineno - 1, node.col_offset + len("def "))
     if isinstance(node, ast.AsyncFunctionDef):
@@ -90,29 +90,31 @@ def resolve_name_position(name_path: NamePath, in_path: Path) -> tuple[int, int]
     return (node.name.lineno - 1, node.name.col_offset)
 
 
-def _top_level_match(
-    node: ast.stmt,
+def _top_level_symbol(
     *,
+    node: ast.stmt,
     head: str,
     tail: str | None,
-) -> TypeGuard[_SymbolNode]:
-    """Return True if node matches head as a top-level symbol.
+) -> _SymbolNode | None:
+    """Return node if it matches head as a top-level symbol, else None.
 
     ClassDef matches regardless of tail (it is the dispatch target for
     class-member lookups). Function, assignment, and type-alias nodes
     match only when tail is None.
     """
     if isinstance(node, ast.ClassDef):
-        return node.name == head
+        return node if node.name == head else None
     if tail is not None:
-        return False
+        return None
     if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-        return node.name == head
-    if isinstance(node, (ast.Assign, ast.AnnAssign)):
-        return assign_target_name(node) == head
-    if isinstance(node, ast.TypeAlias):
-        return node.name.id == head
-    return False
+        name = node.name
+    elif isinstance(node, (ast.Assign, ast.AnnAssign)):
+        name = assign_target_name(node=node)
+    elif isinstance(node, ast.TypeAlias):
+        name = node.name.id
+    else:
+        return None
+    return node if name == head else None
 
 
 def resolve_ast_node_from_source(
@@ -136,9 +138,10 @@ def resolve_ast_node_from_source(
 
     top_match: _SymbolNode | None = None
 
-    for node in ast.iter_child_nodes(tree):
-        if isinstance(node, ast.stmt) and _top_level_match(node, head=head, tail=tail):
-            top_match = node
+    for node in tree.body:
+        symbol = _top_level_symbol(node=node, head=head, tail=tail)
+        if symbol is not None:
+            top_match = symbol
 
     if top_match is None:
         raise SymbolNotFoundError(f"{str(name_path)!r} not found in {in_path}")
@@ -165,11 +168,11 @@ def _resolve_class_member(
 
     for node in ast.iter_child_nodes(class_node):
         if isinstance(node, (ast.Assign, ast.AnnAssign)):
-            name = assign_target_name(node)
+            name = assign_target_name(node=node)
             if name == member_name:
                 match = node
         elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            kind = property_kind(node)
+            kind = property_kind(node=node)
             if kind in ("setter", "deleter"):
                 continue
             if node.name == member_name:

@@ -50,7 +50,7 @@ class TestFindRefs:
         )
         (pkg / "a.py").write_text("def uncalled():\n    pass\n", encoding="utf-8")
 
-        refs = find_refs(NamePath("uncalled"), pkg / "a.py")
+        refs = find_refs(name_path=NamePath("uncalled"), in_path=pkg / "a.py")
 
         assert refs == []
 
@@ -65,7 +65,7 @@ class TestFindRefs:
             "from pkg.a import foo\nresult = foo()\nother = foo()\n", encoding="utf-8"
         )
 
-        refs = find_refs(NamePath("foo"), pkg / "a.py")
+        refs = find_refs(name_path=NamePath("foo"), in_path=pkg / "a.py")
 
         assert len(refs) == 2
         assert all(isinstance(r, Reference) for r in refs)
@@ -91,7 +91,7 @@ class TestFindRefs:
             "from pkg.a import Dog\nd = Dog()\nd.bark()\nd.bark()\n", encoding="utf-8"
         )
 
-        refs = find_refs(NamePath("Dog", "bark"), pkg / "a.py")
+        refs = find_refs(name_path=NamePath("Dog", "bark"), in_path=pkg / "a.py")
 
         assert len(refs) == 2
         assert all(r.path == pkg / "b.py" for r in refs)
@@ -107,7 +107,7 @@ class TestFindRefs:
             "from pkg.a import foo\nresult = foo()\nother = foo()\n", encoding="utf-8"
         )
 
-        refs = find_refs(NamePath("foo"), pkg / "a.py")
+        refs = find_refs(name_path=NamePath("foo"), in_path=pkg / "a.py")
 
         assert refs == sorted(refs, key=lambda r: (r.path, r.line, r.col))
 
@@ -120,7 +120,7 @@ class TestFindRefs:
         (pkg / "a.py").write_text("def foo():\n    return 42\n", encoding="utf-8")
         (pkg / "b.py").write_text("from pkg.a import foo\nfoo()\n", encoding="utf-8")
 
-        refs = find_refs(NamePath("foo"), pkg / "a.py")
+        refs = find_refs(name_path=NamePath("foo"), in_path=pkg / "a.py")
 
         assert len(refs) == 1
         assert refs[0].line == 2
@@ -135,7 +135,7 @@ class TestFindRefs:
         (root / "a.py").write_text("def foo():\n    pass\n", encoding="utf-8")
         (root / "b.py").write_text("from a import foo\nfoo()\n", encoding="utf-8")
 
-        refs = find_refs(NamePath("foo"), root / "a.py")
+        refs = find_refs(name_path=NamePath("foo"), in_path=root / "a.py")
 
         assert len(refs) == 1
         assert "%20" not in str(refs[0].path)
@@ -303,7 +303,7 @@ class TestFindRoot:
         sub.mkdir()
         (tmp_path / "pyproject.toml").write_text("", encoding="utf-8")
 
-        assert _find_root(sub / "m.py") == tmp_path
+        assert _find_root(in_path=sub / "m.py") == tmp_path
 
     def test_returns_uncoded_toml_parent_when_found(self, tmp_path):
         sub = tmp_path / "pkg"
@@ -312,7 +312,7 @@ class TestFindRoot:
             'source-roots = ["pkg"]\n', encoding="utf-8"
         )
 
-        assert _find_root(sub / "m.py") == tmp_path
+        assert _find_root(in_path=sub / "m.py") == tmp_path
 
     def test_returns_pyproject_parent_when_config_is_ambiguous(self, tmp_path):
         sub = tmp_path / "pkg"
@@ -324,13 +324,13 @@ class TestFindRoot:
             'source-roots = ["pkg"]\n', encoding="utf-8"
         )
 
-        assert _find_root(sub / "m.py") == tmp_path
+        assert _find_root(in_path=sub / "m.py") == tmp_path
 
     def test_returns_in_path_parent_when_not_found(self, tmp_path):
         sub = tmp_path / "pkg"
         sub.mkdir()
 
-        assert _find_root(sub / "m.py") == sub
+        assert _find_root(in_path=sub / "m.py") == sub
 
 
 class TestTerminate:
