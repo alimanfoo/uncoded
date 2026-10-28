@@ -82,6 +82,11 @@ repos:
         entry: uv run complexipy src tests
         language: system
         pass_filenames: false
+      - id: import-linter
+        name: import-linter
+        entry: uv run lint-imports
+        language: system
+        pass_filenames: false
       # The strict documentation build checks the links under docs/, so this
       # hook checks the rest. .remarkrc.json loads the plugin and names the
       # repository, so that a link to a file on GitHub's copy of the repository

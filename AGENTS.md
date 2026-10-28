@@ -199,6 +199,10 @@ the filterwarnings escalation is removed.
 directories, so that `uncoded check` changes nothing. The `writes-only-in-sync`
 hook in `.pre-commit-config.yaml` checks it.
 
+**Import layers.** Imports point down the three layers that
+`docs/architecture.md` describes. The import-linter contract in `pyproject.toml`
+checks them.
+
 **Complexity ceiling.** The enabled complexity checks and their thresholds are
 in `pyproject.toml`. See [Linting and formatting](#linting-and-formatting) for
 the response to a violation.
