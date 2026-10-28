@@ -84,7 +84,7 @@ PYTHONWARNDEFAULTENCODING=1 uv run pytest
 # Run a subset of tests without the coverage gate
 PYTHONWARNDEFAULTENCODING=1 uv run pytest tests/test_stubs.py --no-cov
 
-# Run every test, the integration tests that spawn ty included, as CI does
+# Run every test, the integration tests that spawn ty included
 PYTHONWARNDEFAULTENCODING=1 uv run pytest -m "integration or not integration"
 
 # Preview the documentation site at http://127.0.0.1:8000/

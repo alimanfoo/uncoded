@@ -24,10 +24,10 @@ def help_block(*command):
     """Write the --help of an uncoded command as a text block."""
     result = subprocess.run(
         ["uncoded", *command, "--help"],
-        capture_output=True,
+        stdout=subprocess.PIPE,
         check=True,
         encoding="utf-8",
-        env={**os.environ, "COLUMNS": "80"},
+        env={**os.environ, "COLUMNS": "80", "PYTHONIOENCODING": "utf-8"},
     )
     cog.outl()
     cog.outl("```text")

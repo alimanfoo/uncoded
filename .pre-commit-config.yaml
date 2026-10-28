@@ -118,7 +118,7 @@ repos:
       # its own, and the blocks set the width.
       - id: cog
         name: generate command help
-        entry: uv run --isolated --python 3.13 cog -r docs/commands.md
+        entry: uv run --isolated --python 3.13 cog -r -U docs/commands.md
         language: system
         always_run: true
         pass_filenames: false
