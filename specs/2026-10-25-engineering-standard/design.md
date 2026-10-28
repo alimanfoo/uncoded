@@ -110,11 +110,12 @@ measures.
   `docs/commands.md`, `docs/configuration.md` or a skill describes differently
   from the code. The bar is zero. The check follows llm. Under each command's
   heading, `docs/commands.md` keeps its prose and examples and gains a block
-  that cog generates from that command's `--help`. `cog --check` runs in
-  pre-commit, on one Python version with a fixed `COLUMNS`, since argparse lays
-  out help by both. Exit statuses are held by the tests of each story. The
-  skills, the surrounding prose and `docs/configuration.md`, which has only two
-  settings, are held by the consistency review at each release.
+  that cog generates from that command's `--help`. A pre-commit hook regenerates
+  the blocks and fails when one changes, as the formatting hooks do. It runs cog
+  on one Python version with a fixed `COLUMNS`, since argparse lays out help by
+  both. Exit statuses are held by the tests of each story. The skills, the
+  surrounding prose and `docs/configuration.md`, which has only two settings,
+  are held by the consistency review at each release.
 
 ### Consistency
 

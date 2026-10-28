@@ -124,7 +124,8 @@ Run `uv run ruff check --fix` and `uv run ruff format` before committing. Both
 are pinned via the `dev` optional dependency. The pre-commit hooks run the same
 commands automatically. If a hook rewrites files, the commit fails. Re-stage the
 modified files and commit again. The uncoded sync hook follows the same pattern
-for tracked generated skill files.
+for tracked generated skill files, and the cog hook for the `--help` blocks in
+`docs/commands.md`.
 
 Never commit with `--no-verify`. CI runs `pre-commit run --all-files` on every
 pull request and will fail a build where a hook was skipped.

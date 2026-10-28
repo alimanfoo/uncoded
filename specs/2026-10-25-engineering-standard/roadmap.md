@@ -439,12 +439,12 @@ because both edit `src` and `tests`.
 
 Delivers cog, as the design's accurate-references criterion describes: a block
 under each command's heading in `docs/commands.md`, generated from its `--help`.
-`docs/configuration.md` is not generated. `cog --check` runs in pre-commit on
-one Python version with a fixed `COLUMNS`. Delivers `docs/testing.md` under
-"Development", which closes #231, as the design's Testing page section
-describes.
+`docs/configuration.md` is not generated. A pre-commit hook regenerates the
+blocks on one Python version with a fixed `COLUMNS`, and fails when one changes.
+Delivers `docs/testing.md` under "Development", which closes #231, as the
+design's Testing page section describes.
 
-Proof: `cog --check` passes, and fails when a flag is renamed in the code alone.
+Proof: the cog hook passes, and fails when a flag is renamed in the code alone.
 The skills are reviewed against the commands and nothing is found.
 
 Leaves nothing.

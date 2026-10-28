@@ -16,7 +16,63 @@ Every command but `init` and `--version` runs inside a project. It finds the
 configuration file in the current directory or the nearest directory above it.
 If there is none, it exits with status `1`.
 
+<!-- [[[cog
+import os
+import subprocess
+
+def help_block(*command):
+    """Write the --help of an uncoded command as a text block."""
+    result = subprocess.run(
+        ["uncoded", *command, "--help"],
+        capture_output=True,
+        check=True,
+        encoding="utf-8",
+        env={**os.environ, "COLUMNS": "80"},
+    )
+    cog.outl()
+    cog.outl("```text")
+    cog.out(result.stdout)
+    cog.outl("```")
+    cog.outl()
+
+help_block()
+]]] -->
+
+```text
+usage: uncoded [-h] [--version] {init,sync,check,body,refs} ...
+
+Build an index of a codebase for AI coding agents.
+
+positional arguments:
+  {init,sync,check,body,refs}
+    init                Set uncoded up in a project, then build its index and
+                        skills.
+    sync                Build or refresh the index and the skills.
+    check               Verify that the generated files are current, without
+                        writing. Exits non-zero if any file would change.
+    body                Print the definition of a named symbol to stdout.
+    refs                Find all references to a named symbol and print them
+                        to stdout.
+
+options:
+  -h, --help            show this help message and exit
+  --version             show program's version number and exit
+```
+
+<!-- [[[end]]] -->
+
 ## `init`
+
+<!-- [[[cog help_block("init") ]]] -->
+
+```text
+usage: uncoded init [-h]
+
+options:
+  -h, --help  show this help message and exit
+```
+
+<!-- [[[end]]] -->
 
 ```sh
 uvx uncoded init
@@ -40,6 +96,17 @@ those files or `pyproject.toml`. Running it again does no harm.
 
 ## `sync`
 
+<!-- [[[cog help_block("sync") ]]] -->
+
+```text
+usage: uncoded sync [-h]
+
+options:
+  -h, --help  show this help message and exit
+```
+
+<!-- [[[end]]] -->
+
 ```sh
 uvx uncoded sync
 ```
@@ -54,6 +121,17 @@ does not change the exit status. Invalid configuration or roots, or a generated
 file that cannot be read, written or removed, cause exit status `1`.
 
 ## `check`
+
+<!-- [[[cog help_block("check") ]]] -->
+
+```text
+usage: uncoded check [-h]
+
+options:
+  -h, --help  show this help message and exit
+```
+
+<!-- [[[end]]] -->
 
 ```sh
 uvx uncoded check
@@ -71,6 +149,21 @@ as stale. It is not a check for CI. See
 [Keep the index current](keeping-current.md#check-without-writing).
 
 ## `body`
+
+<!-- [[[cog help_block("body") ]]] -->
+
+```text
+usage: uncoded body [-h] --in PATH name_path
+
+positional arguments:
+  name_path   Name path: one segment for top-level, two for Class/member.
+
+options:
+  -h, --help  show this help message and exit
+  --in PATH   Source file path (relative to current directory).
+```
+
+<!-- [[[end]]] -->
 
 ```sh
 uvx uncoded body greet --in src/greetings.py
@@ -91,6 +184,21 @@ Run `body` from the project directory, so that the namespace map's paths can be
 passed to `--in` unchanged.
 
 ## `refs`
+
+<!-- [[[cog help_block("refs") ]]] -->
+
+```text
+usage: uncoded refs [-h] --in PATH name_path
+
+positional arguments:
+  name_path   Name path: one segment for top-level, two for Class/member.
+
+options:
+  -h, --help  show this help message and exit
+  --in PATH   Source file path (relative to current directory).
+```
+
+<!-- [[[end]]] -->
 
 ```sh
 uvx uncoded refs greet --in src/greetings.py

@@ -214,11 +214,11 @@ The references agree with the tool.
   `docs/configuration.md` or a skill describes differently from the code.
 - Bar: zero.
 - Check: under each command's heading, `docs/commands.md` holds a block that cog
-  generates from that command's `--help`, and `cog --check` runs in pre-commit
-  on one Python version with a fixed `COLUMNS`, since argparse lays out help by
-  both. The tests of each story hold the exit statuses. The consistency review
-  at each release holds the skills, the prose around the generated blocks, and
-  `docs/configuration.md`.
+  generates from that command's `--help`. A pre-commit hook regenerates the
+  blocks and fails when one changes. It runs cog on one Python version with a
+  fixed `COLUMNS`, since argparse lays out help by both. The tests of each story
+  hold the exit statuses. The consistency review at each release holds the
+  skills, the prose around the generated blocks, and `docs/configuration.md`.
 
 ### Consistency
 
