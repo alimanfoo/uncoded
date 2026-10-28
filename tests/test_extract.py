@@ -1,6 +1,16 @@
 import textwrap
 
-from uncoded.extract import extract_module, extract_modules, read_source_files
+import pytest
+
+from uncoded.extract import (
+    AssignmentSymbol,
+    Parameter,
+    TypeAliasSymbol,
+    extract_module,
+    extract_modules,
+    extract_python_file,
+    read_source_files,
+)
 from uncoded.read_helpers import SkippedFile
 
 
@@ -464,3 +474,331 @@ class TestExtractModules:
         modules = extract_modules(files=files)
 
         assert [m.rel_path for m in modules] == ["src/a.py", "src/b.py"]
+
+
+class TestExtractPythonFile:
+    def test_simple_function(self):
+        source = textwrap.dedent("""\
+            def greet(name: str) -> str:
+                '''Say hello.'''
+                return f"Hello, {name}"
+        """)
+        module = extract_python_file(source=source, rel_path="pkg/greet.py")
+        assert len(module.functions) == 1
+        f = module.functions[0]
+        assert f.name == "greet"
+        assert f.params == [Parameter("name", "str")]
+        assert f.return_annotation == "str"
+
+    def test_function_no_annotations(self):
+        source = textwrap.dedent("""\
+            def run(x, y):
+                pass
+        """)
+        module = extract_python_file(source=source, rel_path="pkg/run.py")
+        f = module.functions[0]
+        assert f.params == [Parameter("x"), Parameter("y")]
+        assert f.return_annotation is None
+
+    def test_async_function(self):
+        source = textwrap.dedent("""\
+            async def fetch(url: str) -> bytes:
+                pass
+        """)
+        module = extract_python_file(source=source, rel_path="pkg/net.py")
+        f = module.functions[0]
+        assert f.is_async is True
+        assert f.name == "fetch"
+
+    def test_private_function_included(self):
+        source = textwrap.dedent("""\
+            def public(): pass
+            def _private(): pass
+        """)
+        module = extract_python_file(source=source, rel_path="pkg/mod.py")
+        assert len(module.functions) == 2
+        assert module.functions[0].name == "public"
+        assert module.functions[1].name == "_private"
+
+    def test_class_with_attributes_and_methods(self):
+        source = textwrap.dedent("""\
+            class Record:
+                '''Stores a named value.'''
+                name: str
+                value: int
+                _internal: float
+
+                def save(self) -> None:
+                    '''Persist the record.'''
+                    pass
+
+                def _validate(self) -> bool:
+                    pass
+        """)
+        module = extract_python_file(source=source, rel_path="pkg/models.py")
+        assert len(module.classes) == 1
+        cls = module.classes[0]
+        assert cls.name == "Record"
+        assert [(a.name, a.annotation) for a in cls.attributes] == [
+            ("name", "str"),
+            ("value", "int"),
+            ("_internal", "float"),
+        ]
+        assert [m.name for m in cls.methods] == ["save", "_validate"]
+
+    def test_class_with_bases(self):
+        source = textwrap.dedent("""\
+            class Dog(Animal, Domestic):
+                pass
+        """)
+        module = extract_python_file(source=source, rel_path="pkg/animals.py")
+        assert module.classes[0].bases == ["Animal", "Domestic"]
+
+    def test_class_no_bases(self):
+        source = textwrap.dedent("""\
+            class Plain:
+                pass
+        """)
+        module = extract_python_file(source=source, rel_path="pkg/plain.py")
+        assert module.classes[0].bases == []
+
+    @pytest.mark.parametrize(
+        ("source", "expected"),
+        [
+            pytest.param(
+                "def f(x): pass\n",
+                [Parameter("x")],
+                id="regular_positional_bare",
+            ),
+            pytest.param(
+                "def f(x: str): pass\n",
+                [Parameter("x", "str")],
+                id="regular_positional_annotated",
+            ),
+            pytest.param(
+                "def f(x: int = 0): pass\n",
+                [Parameter("x", "int")],
+                id="defaults_dropped_positional",
+            ),
+            pytest.param(
+                "def f(*args): pass\n",
+                [Parameter("*args")],
+                id="varargs_bare",
+            ),
+            pytest.param(
+                "def f(*args: str): pass\n",
+                [Parameter("*args", "str")],
+                id="varargs_annotated",
+            ),
+            pytest.param(
+                "def f(**kwargs): pass\n",
+                [Parameter("**kwargs")],
+                id="kwargs_bare",
+            ),
+            pytest.param(
+                "def f(**kwargs: int): pass\n",
+                [Parameter("**kwargs", "int")],
+                id="kwargs_annotated",
+            ),
+            pytest.param(
+                "def f(x, /): pass\n",
+                [Parameter("x"), Parameter("/")],
+                id="posonly_bare",
+            ),
+            pytest.param(
+                "def f(x: str, /): pass\n",
+                [Parameter("x", "str"), Parameter("/")],
+                id="posonly_annotated",
+            ),
+            pytest.param(
+                "def f(*, x): pass\n",
+                [Parameter("*"), Parameter("x")],
+                id="kwonly_bare",
+            ),
+            pytest.param(
+                "def f(*, x: str): pass\n",
+                [Parameter("*"), Parameter("x", "str")],
+                id="kwonly_annotated",
+            ),
+            pytest.param(
+                "def f(*, x: int = 0): pass\n",
+                [Parameter("*"), Parameter("x", "int")],
+                id="defaults_dropped_kwonly",
+            ),
+            pytest.param(
+                "def f(*args, x): pass\n",
+                [Parameter("*args"), Parameter("x")],
+                id="vararg_with_kwonly",
+            ),
+            pytest.param(
+                "def f(*args, **kwargs): pass\n",
+                [Parameter("*args"), Parameter("**kwargs")],
+                id="vararg_with_kwarg",
+            ),
+        ],
+    )
+    def test_extracts_each_kind_of_parameter(self, *, source, expected):
+        module = extract_python_file(source=source, rel_path="pkg/f.py")
+        f = module.functions[0]
+        assert f.params == expected
+
+    def test_imports_collected(self):
+        source = textwrap.dedent("""\
+            import os
+            from pathlib import Path
+            from typing import Optional
+
+            def run(p: Path) -> Optional[str]:
+                pass
+        """)
+        module = extract_python_file(source=source, rel_path="pkg/run.py")
+        assert module.imports == [
+            "import os",
+            "from pathlib import Path",
+            "from typing import Optional",
+        ]
+
+    def test_syntax_error_raises(self):
+        with pytest.raises(SyntaxError):
+            extract_python_file(source="def broken(:\n", rel_path="pkg/bad.py")
+
+    def test_source_order_preserved(self):
+        source = textwrap.dedent("""\
+            def zebra(): pass
+            class Alpha: pass
+            def apple(): pass
+        """)
+        module = extract_python_file(source=source, rel_path="pkg/mixed.py")
+        assert module.functions[0].name == "zebra"
+        assert module.functions[1].name == "apple"
+        assert module.classes[0].name == "Alpha"
+
+    def test_assignment_annotated_with_value(self):
+        source = textwrap.dedent("""\
+            MAX_RETRIES: int = 3
+        """)
+        module = extract_python_file(source=source, rel_path="pkg/mod.py")
+        assert module.assignments == [
+            AssignmentSymbol(name="MAX_RETRIES", annotation="int", value="3")
+        ]
+
+    def test_assignment_unannotated_with_value(self):
+        source = textwrap.dedent("""\
+            TIMEOUT = 30
+        """)
+        module = extract_python_file(source=source, rel_path="pkg/mod.py")
+        assert module.assignments == [AssignmentSymbol(name="TIMEOUT", value="30")]
+
+    def test_assignment_bare_annotation(self):
+        source = textwrap.dedent("""\
+            FOO: int
+        """)
+        module = extract_python_file(source=source, rel_path="pkg/mod.py")
+        assert module.assignments == [AssignmentSymbol(name="FOO", annotation="int")]
+
+    def test_assignment_private_included(self):
+        source = textwrap.dedent("""\
+            _INTERNAL = 42
+        """)
+        module = extract_python_file(source=source, rel_path="pkg/mod.py")
+        assert module.assignments[0].name == "_INTERNAL"
+
+    def test_type_alias_classic(self):
+        source = textwrap.dedent("""\
+            from typing import TypeAlias
+            UserId: TypeAlias = int
+        """)
+        module = extract_python_file(source=source, rel_path="pkg/mod.py")
+        assert module.assignments == [
+            AssignmentSymbol(name="UserId", annotation="TypeAlias", value="int")
+        ]
+
+    def test_type_alias_pep695(self):
+        source = textwrap.dedent("""\
+            type UserId = int
+        """)
+        module = extract_python_file(source=source, rel_path="pkg/mod.py")
+        assert module.assignments == [TypeAliasSymbol(name="UserId", value="int")]
+
+    def test_tuple_unpacking_skipped(self):
+        source = textwrap.dedent("""\
+            X, Y = 1, 2
+        """)
+        module = extract_python_file(source=source, rel_path="pkg/mod.py")
+        assert module.assignments == []
+
+    def test_annotation_whose_target_is_not_a_bare_name_skipped(self):
+        source = "obj.x: int = 1\n"
+        module = extract_python_file(source=source, rel_path="pkg/mod.py")
+        assert module.assignments == []
+
+    def test_class_tuple_unpacking_skipped(self):
+        source = textwrap.dedent("""\
+            class C:
+                a, b = 1, 2
+        """)
+        module = extract_python_file(source=source, rel_path="pkg/mod.py")
+        assert module.classes[0].attributes == []
+
+    def test_class_with_unannotated_attribute(self):
+        source = textwrap.dedent("""\
+            class Registry:
+                items = []
+                count: int = 0
+        """)
+        module = extract_python_file(source=source, rel_path="pkg/mod.py")
+        cls = module.classes[0]
+        names = [(a.name, a.annotation, a.value) for a in cls.attributes]
+        assert names == [
+            ("items", None, "[]"),
+            ("count", "int", "0"),
+        ]
+
+    def test_property_rendered_as_attribute(self):
+        source = textwrap.dedent("""\
+            class Config:
+                @property
+                def path(self) -> Path:
+                    '''Return the configuration file path.'''
+                    return self._path
+        """)
+        module = extract_python_file(source=source, rel_path="pkg/cfg.py")
+        cls = module.classes[0]
+        assert cls.methods == []
+        assert len(cls.attributes) == 1
+        attr = cls.attributes[0]
+        assert attr.name == "path"
+        assert attr.annotation == "Path"
+        assert attr.value is None
+
+    def test_property_without_return_annotation(self):
+        source = textwrap.dedent("""\
+            class Config:
+                @property
+                def path(self):
+                    return self._path
+        """)
+        module = extract_python_file(source=source, rel_path="pkg/cfg.py")
+        cls = module.classes[0]
+        assert cls.attributes[0].name == "path"
+        assert cls.attributes[0].annotation is None
+
+    def test_property_setter_and_deleter_suppressed(self):
+        source = textwrap.dedent("""\
+            class Config:
+                @property
+                def path(self) -> Path:
+                    return self._path
+
+                @path.setter
+                def path(self, value: Path) -> None:
+                    self._path = value
+
+                @path.deleter
+                def path(self) -> None:
+                    del self._path
+        """)
+        module = extract_python_file(source=source, rel_path="pkg/cfg.py")
+        cls = module.classes[0]
+        assert [a.name for a in cls.attributes] == ["path"]
+        assert cls.methods == []

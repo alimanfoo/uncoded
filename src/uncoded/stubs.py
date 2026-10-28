@@ -1,248 +1,34 @@
 """Generate .pyi stub files for agent navigation."""
 
-import ast
 from collections.abc import Iterable
-from dataclasses import dataclass, field
 from pathlib import Path
 
-from uncoded.ast_helpers import property_kind
+from uncoded.extract import (
+    AssignmentSymbol,
+    ClassSymbol,
+    FunctionSymbol,
+    Parameter,
+    PythonFile,
+    TypeAliasSymbol,
+    extract_python_file,
+)
 from uncoded.markers import GENERATED_MARKER
 from uncoded.sync import remove_file, sync_file
 
-# Width cap for inlining the right-hand side of an assignment. If the unparsed
-# RHS exceeds this, it is elided to "..." so stubs stay compact and stable.
+# Width cap for inlining the right-hand side of an assignment. If the source of
+# the right-hand side exceeds this, it is elided to "..." so stubs stay compact
+# and stable.
 VALUE_WIDTH_CAP = 80
 
 
-@dataclass
-class StubParam:
-    """A function parameter with name and optional type annotation."""
-
-    name: str
-    annotation: str | None = None
-
-
-@dataclass
-class StubFunction:
-    """A function or method with its signature."""
-
-    name: str
-    params: list[StubParam] = field(default_factory=list)
-    return_annotation: str | None = None
-    is_async: bool = False
-
-
-@dataclass
-class StubAssignment:
-    """A module-level or class-level assignment.
-
-    ``value_source`` is the rendered RHS if it fits within ``VALUE_WIDTH_CAP``,
-    or the literal string ``"..."`` if the RHS was elided. ``None`` means there
-    is no RHS at all (e.g. a bare annotation ``X: int``).
-    """
-
-    name: str
-    annotation: str | None = None
-    value_source: str | None = None
-    is_pep695_alias: bool = False
-
-
-@dataclass
-class StubClass:
-    """A class with its members."""
-
-    name: str
-    bases: list[str] = field(default_factory=list)
-    attributes: list[StubAssignment] = field(default_factory=list)
-    methods: list[StubFunction] = field(default_factory=list)
-
-
-@dataclass
-class StubModule:
-    """What a stub holds for one Python file: its imports and its symbols."""
-
-    rel_path: str
-    imports: list[str] = field(default_factory=list)
-    assignments: list[StubAssignment] = field(default_factory=list)
-    classes: list[StubClass] = field(default_factory=list)
-    functions: list[StubFunction] = field(default_factory=list)
-
-
-def _unparse_or_none(*, node: ast.expr | None) -> str | None:
-    """Unparse an optional annotation node, returning None when absent."""
-    return ast.unparse(node) if node else None
-
-
-def _args_to_params(*, arg_nodes: list[ast.arg]) -> list[StubParam]:
-    """Convert a list of AST argument nodes to StubParam records."""
-    return [
-        StubParam(name=a.arg, annotation=_unparse_or_none(node=a.annotation))
-        for a in arg_nodes
-    ]
-
-
-def _extract_params(*, args: ast.arguments) -> list[StubParam]:
-    """Extract parameters from a function argument node, without defaults."""
-    params: list[StubParam] = []
-
-    params.extend(_args_to_params(arg_nodes=args.posonlyargs))
-    if args.posonlyargs:
-        params.append(StubParam(name="/"))
-
-    params.extend(_args_to_params(arg_nodes=args.args))
-
-    if args.vararg:
-        params.append(
-            StubParam(
-                name=f"*{args.vararg.arg}",
-                annotation=_unparse_or_none(node=args.vararg.annotation),
-            )
-        )
-    elif args.kwonlyargs:
-        params.append(StubParam(name="*"))
-
-    params.extend(_args_to_params(arg_nodes=args.kwonlyargs))
-
-    if args.kwarg:
-        params.append(
-            StubParam(
-                name=f"**{args.kwarg.arg}",
-                annotation=_unparse_or_none(node=args.kwarg.annotation),
-            )
-        )
-
-    return params
-
-
-def _render_value(*, value: ast.expr) -> str:
-    """Render an expression as source, eliding to '...' if too long or multi-line."""
-    source = ast.unparse(value)
-    if len(source) > VALUE_WIDTH_CAP or "\n" in source:
+def _render_value(*, value: str) -> str:
+    """Return the source of a value, elided to '...' if too long or multi-line."""
+    if len(value) > VALUE_WIDTH_CAP or "\n" in value:
         return "..."
-    return source
+    return value
 
 
-def _extract_assignment(
-    *,
-    node: ast.Assign | ast.AnnAssign | ast.TypeAlias,
-) -> StubAssignment | None:
-    """Build a StubAssignment from an assignment-style AST node.
-
-    Returns None if the node's target is not a single simple name (e.g. tuple
-    unpacking or attribute assignment), which we can't represent cleanly.
-    """
-    if isinstance(node, ast.TypeAlias):
-        return StubAssignment(
-            name=node.name.id,
-            value_source=_render_value(value=node.value),
-            is_pep695_alias=True,
-        )
-
-    if isinstance(node, ast.AnnAssign):
-        if not isinstance(node.target, ast.Name):
-            return None
-        annotation = ast.unparse(node.annotation)
-        value_source = (
-            _render_value(value=node.value) if node.value is not None else None
-        )
-        return StubAssignment(
-            name=node.target.id,
-            annotation=annotation,
-            value_source=value_source,
-        )
-
-    # ast.Assign
-    if len(node.targets) != 1 or not isinstance(node.targets[0], ast.Name):
-        return None
-    return StubAssignment(
-        name=node.targets[0].id,
-        value_source=_render_value(value=node.value),
-    )
-
-
-def _extract_function(
-    *,
-    node: ast.FunctionDef | ast.AsyncFunctionDef,
-) -> StubFunction:
-    """Build a StubFunction from a function or method AST node."""
-    return StubFunction(
-        name=node.name,
-        params=_extract_params(args=node.args),
-        return_annotation=_unparse_or_none(node=node.returns),
-        is_async=isinstance(node, ast.AsyncFunctionDef),
-    )
-
-
-def _property_attribute(
-    *,
-    node: ast.FunctionDef | ast.AsyncFunctionDef,
-) -> StubAssignment:
-    """Build a StubAssignment representing a @property as a class attribute."""
-    return StubAssignment(
-        name=node.name,
-        annotation=_unparse_or_none(node=node.returns),
-    )
-
-
-def _extract_class(*, node: ast.ClassDef) -> StubClass:
-    """Build a StubClass from a class AST node."""
-    bases = [ast.unparse(b) for b in node.bases]
-
-    attributes: list[StubAssignment] = []
-    methods: list[StubFunction] = []
-
-    for child in ast.iter_child_nodes(node):
-        if isinstance(child, (ast.AnnAssign, ast.Assign)):
-            assignment = _extract_assignment(node=child)
-            if assignment is not None:
-                attributes.append(assignment)
-        elif isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            kind = property_kind(node=child)
-            if kind in {"setter", "deleter"}:
-                continue
-            if kind == "property":
-                attributes.append(_property_attribute(node=child))
-            else:
-                methods.append(_extract_function(node=child))
-
-    return StubClass(
-        name=node.name,
-        bases=bases,
-        attributes=attributes,
-        methods=methods,
-    )
-
-
-def extract_stub(*, source: str, rel_path: str) -> StubModule:
-    """Parse Python source and extract imports, assignments, classes, and functions."""
-    tree = ast.parse(source)
-    imports: list[str] = []
-    assignments: list[StubAssignment] = []
-    classes: list[StubClass] = []
-    functions: list[StubFunction] = []
-
-    for node in ast.iter_child_nodes(tree):
-        if isinstance(node, (ast.Import, ast.ImportFrom)):
-            imports.append(ast.unparse(node))
-        elif isinstance(node, ast.ClassDef):
-            classes.append(_extract_class(node=node))
-        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            functions.append(_extract_function(node=node))
-        elif isinstance(node, (ast.Assign, ast.AnnAssign, ast.TypeAlias)):
-            assignment = _extract_assignment(node=node)
-            if assignment is not None:
-                assignments.append(assignment)
-
-    return StubModule(
-        rel_path=rel_path,
-        imports=imports,
-        assignments=assignments,
-        classes=classes,
-        functions=functions,
-    )
-
-
-def _render_param(*, param: StubParam) -> str:
+def _render_param(*, param: Parameter) -> str:
     """Render a single parameter as a string for a function signature."""
     if param.name in ("/", "*"):
         return param.name
@@ -251,7 +37,7 @@ def _render_param(*, param: StubParam) -> str:
     return param.name
 
 
-def _render_function(*, func: StubFunction, indent: str = "") -> list[str]:
+def _render_function(*, func: FunctionSymbol, indent: str = "") -> list[str]:
     """Render a function or method as stub lines, indented for methods."""
     params_str = ", ".join(_render_param(param=param) for param in func.params)
     ret = f" -> {func.return_annotation}" if func.return_annotation else ""
@@ -261,27 +47,29 @@ def _render_function(*, func: StubFunction, indent: str = "") -> list[str]:
     return lines
 
 
-def _format_assignment(*, assignment: StubAssignment) -> str:
+def _format_assignment(*, assignment: AssignmentSymbol | TypeAliasSymbol) -> str:
     """Render the 'name [: type] [= value]' portion of an assignment."""
-    if assignment.is_pep695_alias:
-        return f"type {assignment.name} = {assignment.value_source}"
+    if isinstance(assignment, TypeAliasSymbol):
+        return f"type {assignment.name} = {_render_value(value=assignment.value)}"
     head = (
         f"{assignment.name}: {assignment.annotation}"
         if assignment.annotation
         else assignment.name
     )
-    if assignment.value_source is None:
+    if assignment.value is None:
         return head
-    return f"{head} = {assignment.value_source}"
+    return f"{head} = {_render_value(value=assignment.value)}"
 
 
-def _render_assignment(*, assignment: StubAssignment, indent: str = "") -> str:
+def _render_assignment(
+    *, assignment: AssignmentSymbol | TypeAliasSymbol, indent: str = ""
+) -> str:
     """Render an assignment, at module level or in a class body, as a stub line."""
     line = _format_assignment(assignment=assignment)
     return f"{indent}{line}"
 
 
-def _render_class(*, cls: StubClass) -> list[str]:
+def _render_class(*, cls: ClassSymbol) -> list[str]:
     bases_str = f"({', '.join(cls.bases)})" if cls.bases else ""
     lines = [f"class {cls.name}{bases_str}:"]
     if not cls.attributes and not cls.methods:
@@ -299,8 +87,8 @@ def _render_class(*, cls: StubClass) -> list[str]:
     return lines
 
 
-def render_stub(*, module: StubModule) -> str:
-    """Render a StubModule as a .pyi file string."""
+def render_stub(*, module: PythonFile) -> str:
+    """Render a PythonFile as a .pyi file string."""
     lines: list[str] = [f"# {GENERATED_MARKER}", f"# {module.rel_path}", ""]
 
     if module.imports:
@@ -333,8 +121,8 @@ def _generate_stubs(*, files: Iterable[tuple[str, str]]) -> dict[Path, str]:
     """
     result: dict[Path, str] = {}
     for source, rel_path in files:
-        module = extract_stub(source=source, rel_path=rel_path)
-        if not module.classes and not module.functions and not module.assignments:
+        module = extract_python_file(source=source, rel_path=rel_path)
+        if not module.symbols:
             continue
         result[Path(rel_path).with_suffix(".pyi")] = render_stub(module=module)
     return result
