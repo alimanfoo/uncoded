@@ -17,6 +17,11 @@ out any heading that would be empty:
 - **Fixed** for behaviour that did not match what the documentation or the
   skills say.
 
+The headings decide the type of a release, as
+[Compatibility](compatibility.md#versions) describes the types. Any **Breaking**
+entry makes the release major, any **Added** or **Changed** entry makes it
+minor, and **Fixed** entries alone make it a patch.
+
 A change stays under **Unreleased**, with the same headings, until a release
 includes it. Each entry links the pull request that made the change. The entries
 for 3.0.1 and earlier releases were written after those releases, briefly, and

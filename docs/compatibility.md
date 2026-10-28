@@ -4,15 +4,16 @@ uncoded's contract is the part of uncoded that a project can rely on from one
 release to the next. The version number of each release says whether it changes
 the contract in a way that can break a project. This page says what the contract
 covers and what each kind of release can change. [Upgrading](upgrading.md) says
-what to change in a project for each major release, and
-[the changelog](changelog.md) lists the changes in each release.
+how to upgrade a project, and [the changelog](changelog.md) lists the changes in
+each release.
 
 ## The contract
 
 The contract covers:
 
 - each command, its flags and its exit statuses;
-- the data that `uncoded body` and `uncoded refs` print on standard output;
+- the data that a command prints on standard output, such as the source that
+  `uncoded body` prints and the references that `uncoded refs` prints;
 - each configuration key;
 - each generated file's path, and the layout of the namespace map, the docs map
   and the stubs;
@@ -20,9 +21,11 @@ The contract covers:
 - the Python versions that uncoded runs on.
 
 The contract does not cover the messages that a command prints, or their
-wording. These include the lines in which `uncoded sync` names the files it
-wrote, and the warnings it prints about files it skipped. Nor does it cover
-uncoded's Python modules. Run uncoded through its commands, not by importing it.
+wording, wherever the command prints them. These include the lines in which
+`uncoded sync` names the files it wrote, the line in which `uncoded check` says
+whether the index is current, and the warnings about files that `uncoded sync`
+skipped. Nor does it cover uncoded's Python modules. Run uncoded through its
+commands, not by importing it.
 
 ## Versions
 
@@ -36,10 +39,10 @@ way that can break a project. That is when it:
 
 - removes or renames a command, a flag, a configuration key or a generated
   file's path, or changes its meaning or its default;
-- changes an exit status, or the format of the data that `uncoded body` or
-  `uncoded refs` prints;
+- changes an exit status, or the format of the data that a command prints on
+  standard output;
 - changes how a generated file is laid out, such as how its keys nest or which
-  keys end in `/`;
+  keys end in `/`, but not which symbols or headings it lists;
 - changes what a skill tells the agent to do, by removing, reversing or
   narrowing an instruction, or by reordering the steps of a workflow;
 - removes a feature that an earlier release deprecated; or
@@ -66,18 +69,3 @@ for how they are laid out.
 
 Where a change could fit more than one kind of release, the effect that it is
 expected to have on projects decides.
-
-## Choose when to upgrade
-
-If a project should stay on one release until its developer chooses to upgrade,
-name the release wherever the project runs uncoded, such as
-`uvx uncoded@3.0.1 sync`, including in its pre-commit hook.
-
-To upgrade a project:
-
-1. Read [the changelog](changelog.md) for every release after the one that the
-   project uses.
-2. If the new release is major, follow its section of [Upgrading](upgrading.md).
-3. If the project names its release, change the name to the new release.
-4. Run `uncoded sync` with the new release, and commit the installed skill files
-   that it changes.

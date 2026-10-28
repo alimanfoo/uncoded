@@ -1,11 +1,13 @@
 # Upgrading
 
-Each major release has a section on this page, which says what to change in a
-project before it uses that release. [Compatibility](compatibility.md) says
-which releases are major.
+To upgrade a project to a new release of uncoded:
 
-From version 2, follow the steps below. From version 1, complete
-[the version 1 to 2 steps](#from-version-1-to-version-2) first.
+1. Read [the changelog](changelog.md) for every release after the one that the
+   project uses.
+2. If the new release is major, follow the section below for each major release
+   that the upgrade crosses, oldest first.
+3. Run `uncoded sync` with the new release, such as `uvx uncoded@3.0.1 sync`,
+   and commit the installed skill files that it changes.
 
 ## From version 2 to version 3
 

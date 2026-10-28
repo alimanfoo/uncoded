@@ -356,10 +356,9 @@ questions.
 7. **Conditionals are rules.** Every conditional it adds applies a rule, or is
    on the ledger with its external cause.
 8. **Changelog entry.** Any change to the contract has an entry under
-   **Unreleased**, under the heading that fits it. An entry does not state a
-   release type. The headings imply it: any **Breaking** entry makes the next
-   release major, any **Added** or **Changed** entry minor, and **Fixed** alone
-   a patch.
+   **Unreleased**, under the heading that fits it, as
+   [the changelog](changelog.md) defines the headings. An entry does not state a
+   release type, because the headings decide it.
 
 A pull request answers each question under a "Definition of done" heading,
 starting with the question's title in bold, not its number, and giving its
