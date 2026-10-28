@@ -35,6 +35,12 @@ includes it. Each entry links the pull request that made the change.
   uses. At any other version, every command stops, writes nothing, and gives the
   command that runs the required version.
   ([#322](https://github.com/alimanfoo/uncoded/pull/322))
+- `uncoded init` sets uncoded up in a project. It writes `.uncoded.toml` with
+  the roots that exist among `src`, `tests`, `README.md`, `AGENTS.md` and
+  `docs`, and with the running version as the required version. It then runs
+  `uncoded sync`, says which files to commit, and prints the lines that tell
+  agents to load the navigation skills.
+  ([#323](https://github.com/alimanfoo/uncoded/pull/323))
 
 ### Fixed
 

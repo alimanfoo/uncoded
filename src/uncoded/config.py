@@ -1,8 +1,17 @@
 """Read uncoded configuration from pyproject.toml or .uncoded.toml."""
 
+import json
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
+
+UNCODED_TOML = ".uncoded.toml"
+
+# The roots that uncoded init names, in the order it names them.
+_CONVENTIONAL_ROOTS = {
+    "source-roots": ("src", "tests"),
+    "doc-roots": ("README.md", "AGENTS.md", "docs"),
+}
 
 
 class ConfigError(Exception):
@@ -60,7 +69,7 @@ def _config_file_at(*, directory: Path) -> tuple[Path, dict] | None:
     if directory.name == ".uncoded":
         return None
     pyproject = directory / "pyproject.toml"
-    uncoded_toml = directory / ".uncoded.toml"
+    uncoded_toml = directory / UNCODED_TOML
     pyproject_settings = _pyproject_settings(pyproject_path=pyproject)
     uncoded_toml_settings = _load_toml(path=uncoded_toml)
     if uncoded_toml_settings is not None:
@@ -128,3 +137,31 @@ def read_config(*, start: Path) -> Config:
             "in .uncoded.toml or in a [tool.uncoded] table in pyproject.toml."
         )
     return config
+
+
+def render_conventional_config(*, directory: Path, required_version: str) -> str:
+    """Return the text of a configuration file for the project in ``directory``.
+
+    The file names as roots whichever of the conventional roots exist in
+    ``directory``, and sets ``required_version``. Raises :exc:`ConfigError`
+    when none of them exist.
+    """
+    roots = {
+        setting: [name for name in names if (directory / name).exists()]
+        for setting, names in _CONVENTIONAL_ROOTS.items()
+    }
+    if not any(roots.values()):
+        looked_for = ", ".join(
+            name for names in _CONVENTIONAL_ROOTS.values() for name in names
+        )
+        raise ConfigError(
+            f"none of {looked_for} is in this directory, so there is nothing to "
+            f"index and no configuration file was written. Write {UNCODED_TOML} "
+            "by hand, with source-roots listing the directories of Python code "
+            "and doc-roots listing the Markdown files and directories."
+        )
+    lines = [
+        f"{setting} = {json.dumps(found)}" for setting, found in roots.items() if found
+    ]
+    lines.append(f"required-version = {json.dumps(required_version)}")
+    return "\n".join(lines) + "\n"

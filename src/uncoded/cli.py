@@ -8,14 +8,20 @@ from typing import Literal
 
 from uncoded import __version__
 from uncoded.body import resolve_body
-from uncoded.config import ConfigError, find_config, read_config
+from uncoded.config import (
+    UNCODED_TOML,
+    ConfigError,
+    find_config,
+    read_config,
+    render_conventional_config,
+)
 from uncoded.docs_map import build_docs_map, iter_doc_files, render_docs_map
 from uncoded.extract import extract_modules, iter_source_files
 from uncoded.markers import GENERATED_MARKER
 from uncoded.namespace_map import build_map, render_map
 from uncoded.refs import find_refs
 from uncoded.resolver import NamePath, SymbolNotFoundError, UnsupportedNamePathError
-from uncoded.skill import sync_skills
+from uncoded.skill import SKILL_ROOTS, agent_instructions, sync_skills
 from uncoded.stubs import build_stubs, remove_all_stubs
 from uncoded.sync import remove_file, sync_file
 
@@ -238,6 +244,47 @@ def _sync(*, start: Path | None = None, check: bool = False) -> int:
     return 0
 
 
+def _init() -> int:
+    """Set uncoded up in the project at the current directory, then sync it.
+
+    With no configuration file found from the current directory, writes one
+    there naming the conventional roots. Leaves a configuration file it finds
+    as it is. After the sync, says what to commit and prints the lines that
+    tell agents to load the navigation skills. Returns 1 when there is no root
+    to name or the sync fails, and 0 otherwise.
+    """
+    start = Path.cwd()
+    if find_config(start=start) is None:
+        try:
+            content = render_conventional_config(
+                directory=start, required_version=__version__
+            )
+        except ConfigError as e:
+            print(f"Error: {e}", file=sys.stderr)
+            return 1
+        sync_file(path=Path(UNCODED_TOML), content=content, project_root=start)
+    else:
+        print("Found a configuration file, and left it as it is.")
+
+    if _sync(start=start) != 0:
+        return 1
+
+    config = read_config(start=start)
+    skill_dirs = " and ".join(root.as_posix() for root in SKILL_ROOTS)
+    instructions = agent_instructions(
+        source=bool(config.source_roots), docs=bool(config.doc_roots)
+    )
+    print(
+        f"\nCommit the configuration file and the installed skill files in "
+        f"{skill_dirs}.\n\n"
+        f"Add these lines to AGENTS.md or CLAUDE.md, so that agents load the "
+        f"navigation skills at the start of every session. Without them, agents "
+        f"load the uncoded skills only when they choose to.\n\n{instructions}",
+        end="",
+    )
+    return 0
+
+
 def _report_lookup_error(*, exc: Exception, name_path: str, in_path: str) -> int:
     """Print the CLI error message for a lookup failure and return 1.
 
@@ -336,8 +383,9 @@ def _refusal(*, arguments: list[str]) -> str | None:
 def main() -> int:
     """Dispatch the uncoded CLI.
 
-    Four subcommands:
+    Five subcommands:
 
+    - ``init`` — sets uncoded up in a project, then syncs its index.
     - ``sync`` — builds or refreshes the navigation index.
     - ``check`` — verifies the index matches what a rebuild would produce;
       exits non-zero on drift, useful in CI.
@@ -358,6 +406,12 @@ def main() -> int:
         "--version", action="version", version=f"%(prog)s {__version__}"
     )
     subparsers = parser.add_subparsers(required=True)
+
+    init_parser = subparsers.add_parser(
+        "init",
+        help="Set uncoded up in a project, then build its index and skills.",
+    )
+    init_parser.set_defaults(action=_init)
 
     sync_parser = subparsers.add_parser(
         "sync",

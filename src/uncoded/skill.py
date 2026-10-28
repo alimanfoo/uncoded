@@ -18,13 +18,18 @@ SKILL_ROOTS = [
 
 @dataclass(frozen=True)
 class Skill:
-    """Frozen record of one skill: name, content file, gate, and any legacy names."""
+    """Frozen record of one skill: name, content file, gate, and any legacy names.
+
+    A navigation skill names what it navigates, ``"code"`` or ``"docs"``, and
+    agents load it at the start of every session.
+    """
 
     name: str
     description: str
     body_file: str
     gate: Literal["source", "docs"]
     legacy_names: tuple[str, ...] = ()
+    navigates: Literal["code", "docs"] | None = None
 
 
 SKILLS: list[Skill] = [
@@ -55,6 +60,7 @@ SKILLS: list[Skill] = [
         ),
         body_file="code_navigation.md",
         gate="source",
+        navigates="code",
     ),
     Skill(
         name="uncoded-doc-navigation",
@@ -65,6 +71,7 @@ SKILLS: list[Skill] = [
         ),
         body_file="doc_navigation.md",
         gate="docs",
+        navigates="docs",
     ),
 ]
 
@@ -72,6 +79,11 @@ SKILLS: list[Skill] = [
 def _skill_path(*, root: Path, name: str) -> Path:
     """Return the SKILL.md path for a skill name under a given root."""
     return root / name / "SKILL.md"
+
+
+def _is_built(*, skill: Skill, source: bool, docs: bool) -> bool:
+    """Return whether the project's roots meet ``skill``'s gate."""
+    return source if skill.gate == "source" else docs
 
 
 def _render_content(*, skill: Skill) -> str:
@@ -100,8 +112,7 @@ def _sync_one_skill(
     Returns the number of file changes (writes and removals).
     """
     changes = 0
-    build = source if skill.gate == "source" else docs
-    if build:
+    if _is_built(skill=skill, source=source, docs=docs):
         content = _render_content(skill=skill)
         for root in SKILL_ROOTS:
             changes += sync_file(
@@ -152,3 +163,18 @@ def sync_skills(
             check=check,
         )
     return changes
+
+
+def agent_instructions(*, source: bool, docs: bool) -> str:
+    """Return the lines for ``AGENTS.md`` or ``CLAUDE.md`` that load skills.
+
+    Gives one line for each navigation skill that the project's roots build.
+    """
+    lines = [
+        f"- Load the `{skill.name}` skill once per session, before searching,"
+        f" reading or editing any {skill.navigates}."
+        for skill in SKILLS
+        if skill.navigates is not None
+        and _is_built(skill=skill, source=source, docs=docs)
+    ]
+    return "\n".join(["## Before you start", "", *lines]) + "\n"

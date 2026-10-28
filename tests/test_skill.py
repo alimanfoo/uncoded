@@ -1,9 +1,11 @@
 from importlib.resources import files
 from pathlib import Path
 
+import pytest
+
 import uncoded.skill as skill_module
 from uncoded.markers import GENERATED_MARKER
-from uncoded.skill import SKILL_ROOTS, SKILLS, Skill, sync_skills
+from uncoded.skill import SKILL_ROOTS, SKILLS, Skill, agent_instructions, sync_skills
 
 _REVIEW_SKILL = SKILLS[0]
 _REVIEW_SKILL_FILE = Path(_REVIEW_SKILL.name) / "SKILL.md"
@@ -321,3 +323,21 @@ class TestSyncSkillsProjectRootAnchor:
         for root in SKILL_ROOTS:
             for legacy_file in _LEGACY_REVIEW_FILES:
                 assert not (tmp_path / root / legacy_file).exists()
+
+
+class TestAgentInstructions:
+    @pytest.mark.parametrize(
+        ("source", "docs", "skill_names"),
+        [
+            (True, True, ["uncoded-code-navigation", "uncoded-doc-navigation"]),
+            (True, False, ["uncoded-code-navigation"]),
+            (False, True, ["uncoded-doc-navigation"]),
+        ],
+    )
+    def test_loads_the_navigation_skill_of_each_kind_of_root(
+        self, *, source, docs, skill_names
+    ):
+        lines = agent_instructions(source=source, docs=docs).splitlines()
+
+        assert lines[:2] == ["## Before you start", ""]
+        assert [line.split("`")[1] for line in lines[2:]] == skill_names
