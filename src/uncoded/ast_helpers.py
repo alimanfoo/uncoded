@@ -29,3 +29,28 @@ def assign_target_name(*, node: ast.Assign | ast.AnnAssign) -> str | None:
         return None
     target = node.targets[0]
     return target.id if isinstance(target, ast.Name) else None
+
+
+type SymbolNode = (
+    ast.FunctionDef
+    | ast.AsyncFunctionDef
+    | ast.ClassDef
+    | ast.AnnAssign
+    | ast.Assign
+    | ast.TypeAlias
+)
+
+
+def top_level_definitions(*, tree: ast.Module) -> dict[str, SymbolNode]:
+    """Map each name that the module body defines to its later definition."""
+    definitions: dict[str, SymbolNode] = {}
+    for node in tree.body:
+        if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
+            definitions[node.name] = node
+        elif isinstance(node, (ast.Assign, ast.AnnAssign)):
+            name = assign_target_name(node=node)
+            if name:
+                definitions[name] = node
+        elif isinstance(node, ast.TypeAlias):
+            definitions[node.name.id] = node
+    return definitions

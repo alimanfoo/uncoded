@@ -225,6 +225,37 @@ class TestExtractModuleFromSource:
         assert result.functions == ["zebra", "apple"]
         assert result.classes[0].methods == ["omega", "alpha"]
 
+    def test_keeps_only_the_later_symbol_when_a_name_is_redefined(self):
+        source = textwrap.dedent("""\
+            class Shape:
+                def scale(self):
+                    pass
+
+            Shape = 1
+
+            def area():
+                pass
+
+            class area:
+                def compute(self):
+                    pass
+
+            class Point:
+                x = 0
+
+            class Point:
+                y = 0
+        """)
+
+        result = extract_module(source=source, rel_path="redefined.py")
+
+        assert result.constants == ["Shape"]
+        assert [(c.name, c.attributes, c.methods) for c in result.classes] == [
+            ("area", [], ["compute"]),
+            ("Point", ["y"], []),
+        ]
+        assert result.functions == []
+
     def test_leaves_out_names_that_are_not_symbols(self):
         source = textwrap.dedent("""\
             import os

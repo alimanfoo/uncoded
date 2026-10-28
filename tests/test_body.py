@@ -304,16 +304,27 @@ class TestResolveBodyClassMember:
         with pytest.raises(SymbolNotFoundError, match="missing"):
             resolve_body(name_path=NamePath("Foo", "missing"), in_path=path)
 
-    def test_class_member_found_when_function_has_same_head_name(self, *, tmp_path):
-        # The function comes AFTER the class so a broadened predicate that
-        # wrongly matches the function would latch it as the last match,
-        # making the tail dispatch see a function instead of a class and fail.
+    @pytest.mark.parametrize(
+        "redefinition",
+        ["def Foo(): pass\n", "Foo = 1\n", "Foo: int\n", "type Foo = int\n"],
+    )
+    def test_member_of_class_that_a_later_definition_redefines_is_not_found(
+        self, *, tmp_path, redefinition
+    ):
+        source = "class Foo:\n    member = 1\n\n" + redefinition
+        path = tmp_path / "m.py"
+        path.write_text(source, encoding="utf-8")
+
+        with pytest.raises(SymbolNotFoundError, match="Foo/member"):
+            resolve_body(name_path=NamePath("Foo", "member"), in_path=path)
+
+    def test_member_found_when_class_redefines_a_function(self, *, tmp_path):
         source = textwrap.dedent("""\
+            def Foo(): pass
+
             class Foo:
                 def member(self):
                     pass
-
-            def Foo(): pass
         """)
         path = tmp_path / "m.py"
         path.write_text(source, encoding="utf-8")

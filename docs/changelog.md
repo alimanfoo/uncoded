@@ -64,6 +64,13 @@ includes it. Each entry links the pull request that made the change.
 
 ### Fixed
 
+- When a name is defined twice in one module body, the namespace map shows the
+  later symbol, and `uncoded body` and `uncoded refs` find no member of a class
+  that a later function, assignment or type alias redefines. The map showed a
+  function over a class, and a class over an assignment, whatever the order.
+  `uncoded body` and `uncoded refs` used the class.
+  [Concepts](concepts.md#redefinition) says that the later symbol replaces the
+  earlier one. ([#341](https://github.com/alimanfoo/uncoded/pull/341))
 - `uncoded refs` prints the symbol's definition and each import of it, as well
   as each use of it. It printed only the uses, so a symbol whose only reference
   was an import looked unused. The code navigation skill tells the agent to

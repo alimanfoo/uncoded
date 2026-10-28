@@ -4,17 +4,13 @@ import ast
 from pathlib import Path
 from typing import NamedTuple
 
-from uncoded.ast_helpers import assign_target_name, property_kind
-from uncoded.read_helpers import read_source_text
-
-type _SymbolNode = (
-    ast.FunctionDef
-    | ast.AsyncFunctionDef
-    | ast.ClassDef
-    | ast.AnnAssign
-    | ast.Assign
-    | ast.TypeAlias
+from uncoded.ast_helpers import (
+    SymbolNode,
+    assign_target_name,
+    property_kind,
+    top_level_definitions,
 )
+from uncoded.read_helpers import read_source_text
 
 
 class NamePath(NamedTuple):
@@ -55,7 +51,7 @@ class UnsupportedNamePathError(Exception):
     """
 
 
-def resolve_ast_node(*, name_path: NamePath, in_path: Path) -> _SymbolNode:
+def resolve_ast_node(*, name_path: NamePath, in_path: Path) -> SymbolNode:
     """Return the AST node for the symbol named by name_path in in_path.
 
     Raises SymbolNotFoundError if the symbol is not present. Lets OSError,
@@ -90,39 +86,12 @@ def resolve_name_position(*, name_path: NamePath, in_path: Path) -> tuple[int, i
     return (node.name.lineno - 1, node.name.col_offset)
 
 
-def _top_level_symbol(
-    *,
-    node: ast.stmt,
-    head: str,
-    tail: str | None,
-) -> _SymbolNode | None:
-    """Return node if it matches head as a top-level symbol, else None.
-
-    ClassDef matches regardless of tail (it is the dispatch target for
-    class-member lookups). Function, assignment, and type-alias nodes
-    match only when tail is None.
-    """
-    if isinstance(node, ast.ClassDef):
-        name = node.name
-    elif tail is not None:
-        return None
-    elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-        name = node.name
-    elif isinstance(node, (ast.Assign, ast.AnnAssign)):
-        name = assign_target_name(node=node)
-    elif isinstance(node, ast.TypeAlias):
-        name = node.name.id
-    else:
-        return None
-    return node if name == head else None
-
-
 def resolve_ast_node_from_source(
     *,
     name_path: NamePath,
     source: str,
     in_path: Path,
-) -> _SymbolNode:
+) -> SymbolNode:
     """Return the AST node for name_path given an already-read source string.
 
     The primitive that lets resolve_ast_node and resolve_body share a single
@@ -133,18 +102,8 @@ def resolve_ast_node_from_source(
     if source cannot be parsed.
     """
     tree = ast.parse(source, filename=in_path.as_posix())
-    head = name_path.head
     tail = name_path.tail
-
-    top_match: _SymbolNode | None = None
-
-    for node in tree.body:
-        symbol = _top_level_symbol(node=node, head=head, tail=tail)
-        if symbol is not None:
-            top_match = symbol
-
-    if top_match is None:
-        raise SymbolNotFoundError(f"{str(name_path)!r} not found in {in_path}")
+    top_match = top_level_definitions(tree=tree).get(name_path.head)
 
     if tail is not None and isinstance(top_match, ast.ClassDef):
         return _resolve_class_member(
@@ -153,6 +112,9 @@ def resolve_ast_node_from_source(
             class_node=top_match,
             member_name=tail,
         )
+
+    if top_match is None or tail is not None:
+        raise SymbolNotFoundError(f"{str(name_path)!r} not found in {in_path}")
 
     return top_match
 
@@ -163,8 +125,8 @@ def _resolve_class_member(
     in_path: Path,
     class_node: ast.ClassDef,
     member_name: str,
-) -> _SymbolNode:
-    match: _SymbolNode | None = None
+) -> SymbolNode:
+    match: SymbolNode | None = None
 
     for node in ast.iter_child_nodes(class_node):
         if isinstance(node, (ast.Assign, ast.AnnAssign)):

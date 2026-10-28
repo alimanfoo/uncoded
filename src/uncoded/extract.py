@@ -5,7 +5,11 @@ from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from uncoded.ast_helpers import assign_target_name, property_kind
+from uncoded.ast_helpers import (
+    assign_target_name,
+    property_kind,
+    top_level_definitions,
+)
 from uncoded.read_helpers import SkippedFile, failure_reason, read_source_text
 
 
@@ -48,24 +52,23 @@ def _extract_class_members(*, node: ast.ClassDef) -> ClassInfo:
 
 
 def extract_module(*, source: str, rel_path: str) -> ModuleInfo:
-    """Parse Python source and extract classes, functions, and constants."""
+    """Parse Python source and extract classes, functions, and constants.
+
+    A name defined more than once keeps only its later definition.
+    """
     tree = ast.parse(source)
 
     constants: list[str] = []
     classes: list[ClassInfo] = []
     functions: list[str] = []
 
-    for node in ast.iter_child_nodes(tree):
+    for name, node in top_level_definitions(tree=tree).items():
         if isinstance(node, ast.ClassDef):
             classes.append(_extract_class_members(node=node))
         elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            functions.append(node.name)
-        elif isinstance(node, (ast.Assign, ast.AnnAssign)):
-            name = assign_target_name(node=node)
-            if name:
-                constants.append(name)
-        elif isinstance(node, ast.TypeAlias):
-            constants.append(node.name.id)
+            functions.append(name)
+        else:
+            constants.append(name)
 
     return ModuleInfo(
         rel_path=rel_path,
