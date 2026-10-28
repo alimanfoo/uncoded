@@ -65,8 +65,7 @@ PYTHONWARNDEFAULTENCODING=1 uv run pytest tests/test_stubs.py --no-cov
 # Preview the documentation site at http://127.0.0.1:8000/
 uv run mkdocs serve
 
-# Build the documentation. The strict build fails on a broken link or anchor,
-# or on a page missing from the navigation
+# Build the documentation with the strict checks that mkdocs.yml sets
 uv run mkdocs build
 
 # Run the full pre-commit suite (the same checks CI runs)
