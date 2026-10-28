@@ -135,7 +135,7 @@ class TestResolveDefinitionTopLevel:
 
         assert result == "def foo():\n    return 42\n"
 
-    def test_not_found_raises_symbol_not_found(self, *, tmp_path):
+    def test_raises_when_name_path_names_no_symbol(self, *, tmp_path):
         path = tmp_path / "m.py"
         path.write_text("def other(): pass\n", encoding="utf-8", newline="")
 
@@ -256,7 +256,7 @@ class TestResolveDefinitionClassMember:
 
         assert result == "    timeout = 30\n"
 
-    def test_skips_non_function_nodes_in_class(self, *, tmp_path):
+    def test_finds_method_in_class_with_docstring(self, *, tmp_path):
         source = textwrap.dedent("""\
             class Documented:
                 \"\"\"A docstring.\"\"\"
@@ -377,7 +377,7 @@ class TestUnsupportedNamePathError:
 
 
 class TestResolveAstNode:
-    def test_returns_function_def_for_top_level_function(self, *, tmp_path):
+    def test_finds_top_level_function_definition(self, *, tmp_path):
         source = textwrap.dedent("""\
             def compute(x: int) -> int:
                 return x * 2
@@ -390,7 +390,7 @@ class TestResolveAstNode:
         assert isinstance(node, ast.FunctionDef)
         assert node.name == "compute"
 
-    def test_returns_method_node_for_class_member(self, *, tmp_path):
+    def test_finds_method_definition(self, *, tmp_path):
         source = textwrap.dedent("""\
             class Engine:
                 def start(self):
@@ -404,7 +404,7 @@ class TestResolveAstNode:
         assert isinstance(node, ast.FunctionDef)
         assert node.name == "start"
 
-    def test_raises_symbol_not_found(self, *, tmp_path):
+    def test_raises_when_name_path_names_no_symbol(self, *, tmp_path):
         path = tmp_path / "m.py"
         path.write_text("def other(): pass\n", encoding="utf-8", newline="")
 
@@ -533,7 +533,7 @@ class TestResolveNamePosition:
 
 
 class TestResolveDefinitionExactlyAsInTheFile:
-    def test_exact_source_returned(self, *, tmp_path):
+    def test_returns_the_whole_definition(self, *, tmp_path):
         definition = (
             "def compute(x: int) -> int:\n    result = x * 2\n    return result\n"
         )
