@@ -58,7 +58,6 @@ only-include = ["src"]
 source-roots = ["src", "tests"]
 doc-roots = ["README.md", "AGENTS.md", "docs", "src/uncoded"]
 
-# docs/architecture.md describes the layers.
 [tool.importlinter]
 root_package = "uncoded"
 
@@ -78,9 +77,8 @@ testpaths = ["tests"]
 addopts = "--cov -m 'not integration'"
 filterwarnings = ["error::EncodingWarning"]
 markers = ["integration: spawns real ty subprocess (requires uvx)"]
-# Fails the run on an unknown setting or marker, an xfail test that passes, or
-# two parametrized cases with one ID. A misspelled marker would otherwise put a
-# test that spawns ty into the default run.
+# A misspelled marker would otherwise put a test that spawns ty into the
+# default run.
 strict = true
 # Fails a test that hangs, such as one waiting on ty, and prints the stack of
 # every thread. CI raises the limit on macOS and Windows, which run slower.

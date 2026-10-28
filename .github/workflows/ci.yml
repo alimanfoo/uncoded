@@ -61,7 +61,7 @@ jobs:
       - run: uv run python -c "import os, sys; assert sys.version.startswith(os.environ['UV_PYTHON'] + '.'), sys.version"
         shell: bash
       # The timeout in pyproject.toml suits Linux. macOS and Windows runners are
-      # slower, so they get a longer limit, as pipx gives them.
+      # slower, so they get a longer limit.
       - if: runner.os != 'Linux'
         run: echo "PYTEST_TIMEOUT=120" >> "$GITHUB_ENV"
         shell: bash
