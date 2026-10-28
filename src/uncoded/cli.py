@@ -388,7 +388,7 @@ def main() -> int:
     - ``init`` — sets uncoded up in a project, then syncs its index.
     - ``sync`` — builds or refreshes the navigation index.
     - ``check`` — verifies the index matches what a rebuild would produce;
-      exits non-zero on drift, useful in CI.
+      exits non-zero on drift.
     - ``body`` — prints the source body of a named symbol to stdout.
     - ``refs`` — finds all references to a named symbol and prints them.
 
@@ -423,7 +423,7 @@ def main() -> int:
         "check",
         help=(
             "Verify the index is up to date without writing. Exits non-zero "
-            "if any file would change. Useful in CI."
+            "if any file would change."
         ),
     )
     check_parser.set_defaults(action=lambda: _sync(check=True))

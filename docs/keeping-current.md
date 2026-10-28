@@ -1,25 +1,25 @@
 # Keep the index current
 
-Run this after changing indexed Python code or Markdown docs, and before your
-agent navigates again:
-
-```sh
-uvx uncoded sync
-```
-
-Run it once in every fresh checkout too. The index is local and is not in Git.
+The index is local and is not in Git. Agents keep it current: the navigation
+skills tell an agent to run `uncoded sync` when the index is missing, such as in
+a fresh checkout, and after it changes indexed Python code or Markdown docs.
 
 ## Refresh on commit
 
+A pre-commit hook that runs `uncoded sync` refreshes the index on every commit,
+and fails the commit when it changes an installed skill file. Stale installed
+skill files then cannot be committed without anyone noticing.
+
 Add this entry to the `repos` list in `.pre-commit-config.yaml`, after any
-formatters that change indexed files:
+formatters that change indexed files. Replace `3.1.0` with the required version
+in your configuration file, since uncoded refuses to run at any other version:
 
 ```yaml title=".pre-commit-config.yaml"
 - repo: local
   hooks:
     - id: uncoded
       name: uncoded
-      entry: uvx uncoded sync
+      entry: uvx uncoded@3.1.0 sync
       language: system
       always_run: true
       pass_filenames: false
@@ -32,10 +32,11 @@ uvx pre-commit install
 ```
 
 `always_run` also refreshes the index when a commit only deletes files. If the
-hook updates tracked skill files, stage those files and commit again.
+hook updates installed skill files, stage those files and commit again. A CI job
+that runs the same pre-commit hooks catches what a local commit missed.
 
-The hook keeps the index current at commit time. During a task, you or your
-agent still need to run `sync` after an edit and before using the index.
+To upgrade uncoded, raise the version in the hook's `entry` and in the
+configuration file together.
 
 ## Check without writing
 
@@ -43,6 +44,10 @@ agent still need to run `sync` after an edit and before using the index.
 uvx uncoded check
 ```
 
-Exit status `0` means the generated files match a fresh build. Status `1` means
-files would change, or the configuration is invalid. Run `sync` to refresh the
-index, then check again.
+`uncoded check` reports whether the generated files are current, without
+changing anything. Exit status `0` means they match a fresh build. Status `1`
+means files would change, or the configuration is invalid.
+
+The index is never committed, so in a fresh checkout, such as CI's,
+`uncoded check` always reports it as stale. Use the pre-commit hook in CI
+instead.

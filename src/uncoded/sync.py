@@ -6,7 +6,7 @@ Every generated file routes through :func:`sync_file` or
 
 ``check=True`` is what powers ``uncoded check``: the same pipeline runs, but
 the writers never change the tree, and the CLI exits non-zero if any helper
-reports a change. That gives CI a freshness check that changes nothing.
+reports a change. That gives a freshness check that changes nothing.
 """
 
 from pathlib import Path

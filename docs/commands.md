@@ -58,7 +58,9 @@ Runs the same pipeline as `sync` without changing files.
 | `0`    | All generated files match a fresh build.                                       |
 | `1`    | A file would be created, updated, or removed, or the configuration is invalid. |
 
-Run `sync` first in a fresh checkout. The local index is not committed.
+The index is never committed, so in a fresh checkout `check` always reports it
+as stale. It is not a check for CI. See
+[Keep the index current](keeping-current.md#check-without-writing).
 
 ## `body`
 
