@@ -51,6 +51,12 @@ includes it. Each entry links the pull request that made the change.
 
 ### Fixed
 
+- When a configuration file is not valid TOML, a setting has the wrong type, or
+  `required-version` is not one exact version, every command names the file and
+  the problem in one line, exits with status `1` and writes nothing. These gave
+  a Python traceback, or a message that misled. A `pyproject.toml` on the way up
+  to the configuration file that is not valid TOML stops the command too.
+  ([#326](https://github.com/alimanfoo/uncoded/pull/326))
 - `uncoded body` and `uncoded refs` stop when two files in one directory both
   configure uncoded, as the other commands already do.
   ([#322](https://github.com/alimanfoo/uncoded/pull/322))
