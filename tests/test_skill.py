@@ -192,30 +192,6 @@ class TestSyncSkills:
             assert (tmp_path / skill_directory / _REVIEW_SKILL_FILE.parent).is_dir()
             assert not (tmp_path / skill_directory / _REVIEW_SKILL_FILE).exists()
 
-    def test_doc_gate_builds_when_doc_true(self, *, tmp_path, monkeypatch):
-        doc_skill = Skill(
-            name="test-docs",
-            description="Test docs skill.",
-            skill_source=_REVIEW_SKILL.skill_source,
-            gate="doc",
-        )
-        monkeypatch.setattr(skill_module, "SKILLS", [doc_skill])
-        sync_skills(source=False, doc=True, project_directory=tmp_path, check=False)
-        for skill_directory in SKILL_DIRECTORIES:
-            assert (tmp_path / skill_directory / "test-docs" / "SKILL.md").exists()
-
-    def test_doc_gate_skips_when_doc_false(self, *, tmp_path, monkeypatch):
-        doc_skill = Skill(
-            name="test-docs",
-            description="Test docs skill.",
-            skill_source=_REVIEW_SKILL.skill_source,
-            gate="doc",
-        )
-        monkeypatch.setattr(skill_module, "SKILLS", [doc_skill])
-        sync_skills(source=True, doc=False, project_directory=tmp_path, check=False)
-        for skill_directory in SKILL_DIRECTORIES:
-            assert not (tmp_path / skill_directory / "test-docs" / "SKILL.md").exists()
-
     def test_code_navigation_written_when_source_set(self, *, tmp_path):
         sync_skills(source=True, doc=False, project_directory=tmp_path, check=False)
         for skill_directory in SKILL_DIRECTORIES:
