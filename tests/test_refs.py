@@ -51,7 +51,9 @@ class TestFindRefs:
         (pkg / "a.py").write_text("def uncalled():\n    pass\n", encoding="utf-8")
 
         refs = find_refs(
-            name_path=NamePath("uncalled"), in_path=pkg / "a.py", project_root=tmp_path
+            name_path=NamePath("uncalled"),
+            in_path=pkg / "a.py",
+            project_directory=tmp_path,
         )
 
         assert refs == [Reference(path=pkg / "a.py", line=1, col=5)]
@@ -69,7 +71,7 @@ class TestFindRefs:
         (pkg / "c.py").write_text("from pkg.a import foo as bar\n", encoding="utf-8")
 
         refs = find_refs(
-            name_path=NamePath("foo"), in_path=pkg / "a.py", project_root=tmp_path
+            name_path=NamePath("foo"), in_path=pkg / "a.py", project_directory=tmp_path
         )
 
         assert refs == [
@@ -101,7 +103,7 @@ class TestFindRefs:
         refs = find_refs(
             name_path=NamePath("Dog", "bark"),
             in_path=pkg / "a.py",
-            project_root=tmp_path,
+            project_directory=tmp_path,
         )
 
         assert refs == [
@@ -122,7 +124,7 @@ class TestFindRefs:
         )
 
         refs = find_refs(
-            name_path=NamePath("foo"), in_path=pkg / "a.py", project_root=tmp_path
+            name_path=NamePath("foo"), in_path=pkg / "a.py", project_directory=tmp_path
         )
 
         assert refs == sorted(refs, key=lambda r: (r.path, r.line, r.col))
@@ -137,7 +139,7 @@ class TestFindRefs:
         (pkg / "b.py").write_text("from pkg.a import foo\nfoo()\n", encoding="utf-8")
 
         refs = find_refs(
-            name_path=NamePath("foo"), in_path=pkg / "a.py", project_root=tmp_path
+            name_path=NamePath("foo"), in_path=pkg / "a.py", project_directory=tmp_path
         )
 
         assert refs[-1] == Reference(path=pkg / "b.py", line=2, col=1)
@@ -152,7 +154,7 @@ class TestFindRefs:
         (root / "b.py").write_text("from a import foo\nfoo()\n", encoding="utf-8")
 
         refs = find_refs(
-            name_path=NamePath("foo"), in_path=root / "a.py", project_root=root
+            name_path=NamePath("foo"), in_path=root / "a.py", project_directory=root
         )
 
         assert refs[0].path == root / "a.py"
@@ -206,7 +208,7 @@ class TestQueryReferences:
         )
 
         refs = _query_references(
-            in_path=pkg / "a.py", position=(0, 4), project_root=tmp_path
+            in_path=pkg / "a.py", position=(0, 4), project_directory=tmp_path
         )
 
         assert sorted(refs, key=lambda r: (r.path, r.line, r.character)) == [
@@ -224,7 +226,9 @@ class TestQueryReferences:
             mock.patch("uncoded.refs.subprocess.Popen", side_effect=FileNotFoundError),
             pytest.raises(TyError, match="uvx not found"),
         ):
-            _query_references(in_path=in_path, position=(0, 4), project_root=tmp_path)
+            _query_references(
+                in_path=in_path, position=(0, 4), project_directory=tmp_path
+            )
 
     def test_uvx_that_cannot_start_raises_ty_error(self, *, tmp_path):
         in_path = tmp_path / "m.py"
@@ -240,7 +244,9 @@ class TestQueryReferences:
                 match=r"^uvx could not start: .*Permission denied$",
             ),
         ):
-            _query_references(in_path=in_path, position=(0, 4), project_root=tmp_path)
+            _query_references(
+                in_path=in_path, position=(0, 4), project_directory=tmp_path
+            )
 
     @pytest.mark.integration
     def test_returns_empty_list_when_no_references(self, *, tmp_path):
@@ -250,7 +256,7 @@ class TestQueryReferences:
         m = tmp_path / "m.py"
         m.write_text("# just a comment\ndef foo(): pass\n", encoding="utf-8")
 
-        refs = _query_references(in_path=m, position=(0, 2), project_root=tmp_path)
+        refs = _query_references(in_path=m, position=(0, 2), project_directory=tmp_path)
 
         assert refs == []
 
@@ -278,7 +284,7 @@ class TestQueryReferences:
             "uncoded.refs.subprocess.Popen", return_value=mock_proc
         ) as mock_popen:
             refs = _query_references(
-                in_path=in_path, position=(0, 4), project_root=tmp_path
+                in_path=in_path, position=(0, 4), project_directory=tmp_path
             )
 
         assert refs == [_LSPLocation(path=ref_path, line=3, character=7)]
@@ -314,7 +320,7 @@ class TestRunExchange:
                 stdout=stdout,
                 in_path=in_path,
                 position=(0, 4),
-                project_root=tmp_path,
+                project_directory=tmp_path,
             )
 
     def test_empty_result_list_returns_empty(self, *, tmp_path):
@@ -332,7 +338,7 @@ class TestRunExchange:
             stdout=stdout,
             in_path=in_path,
             position=(0, 4),
-            project_root=tmp_path,
+            project_directory=tmp_path,
         )
 
         assert refs == []
@@ -352,7 +358,7 @@ class TestRunExchange:
             stdout=stdout,
             in_path=in_path,
             position=(0, 4),
-            project_root=tmp_path,
+            project_directory=tmp_path,
         )
 
         assert refs == []
@@ -365,7 +371,7 @@ class TestTyFailures:
         in_path = tmp_path / "m.py"
         in_path.write_text("def foo(): pass\n", encoding="utf-8")
         return _query_references(
-            in_path=in_path, position=(0, 4), project_root=tmp_path
+            in_path=in_path, position=(0, 4), project_directory=tmp_path
         )
 
     def test_ty_that_exits_at_once(self, *, tmp_path, stand_in_for_ty):

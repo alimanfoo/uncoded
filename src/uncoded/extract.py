@@ -79,13 +79,13 @@ def extract_module(*, source: str, rel_path: str) -> ModuleInfo:
 
 
 def read_source_files(
-    *, source_root: Path, project_root: Path
+    *, source_root: Path, project_directory: Path
 ) -> tuple[list[tuple[str, str]], list[SkippedFile]]:
     """Read every Python file under ``source_root``, keeping those that parse.
 
     Returns the ``(source_text, rel_path)`` pair of every readable, parseable
     file, and a :class:`SkippedFile` for every other one. Each ``rel_path`` is
-    the file's path relative to ``project_root``.
+    the file's path relative to ``project_directory``.
 
     Source files are read under their declared PEP 263 encoding, UTF-8
     default. A file is skipped when it fails to read (OSError,
@@ -94,12 +94,12 @@ def read_source_files(
     and ``_generate_stubs`` trust they only receive readable, parseable source.
     """
     source_root = source_root.resolve()
-    project_root = project_root.resolve()
+    project_directory = project_directory.resolve()
 
     files: list[tuple[str, str]] = []
     skipped: list[SkippedFile] = []
     for py_file in sorted(source_root.rglob("*.py")):
-        rel_path = py_file.relative_to(project_root).as_posix()
+        rel_path = py_file.relative_to(project_directory).as_posix()
         try:
             source = read_source_text(path=py_file)
         except (OSError, UnicodeDecodeError, SyntaxError) as e:

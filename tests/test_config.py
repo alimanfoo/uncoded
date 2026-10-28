@@ -58,15 +58,15 @@ class TestReadConfig:
             '[project]\nname = "pkg"\n', encoding="utf-8"
         )
         config = read_config(start=subproject)
-        assert config.project_root == tmp_path
+        assert config.project_directory == tmp_path
         assert config.source_roots == [Path("pkg")]
 
-    def test_project_root_is_config_file_parent(self, *, tmp_path):
+    def test_project_directory_is_config_file_parent(self, *, tmp_path):
         toml = '[tool.uncoded]\nsource-roots = ["src"]\n'
         (tmp_path / "pyproject.toml").write_text(toml, encoding="utf-8")
         config = read_config(start=tmp_path)
         assert config.config_file == tmp_path / "pyproject.toml"
-        assert config.project_root == tmp_path
+        assert config.project_directory == tmp_path
 
     def test_finds_pyproject_in_parent_directory(self, *, tmp_path):
         toml = '[tool.uncoded]\nsource-roots = ["src"]\n'
@@ -74,7 +74,7 @@ class TestReadConfig:
         subdir = tmp_path / "sub"
         subdir.mkdir()
         config = read_config(start=subdir)
-        assert config.project_root == tmp_path
+        assert config.project_directory == tmp_path
 
     def test_returns_frozen_dataclass(self, *, tmp_path):
         toml = '[tool.uncoded]\nsource-roots = ["src"]\n'
@@ -99,7 +99,7 @@ class TestReadConfig:
             'doc-roots = ["docs"]\n', encoding="utf-8"
         )
         config = read_config(start=tmp_path)
-        assert config.project_root == tmp_path
+        assert config.project_directory == tmp_path
         assert config.doc_roots == [Path("docs")]
         assert config.source_roots == []
 
@@ -139,7 +139,7 @@ class TestReadConfig:
             'doc-roots = ["docs"]\n', encoding="utf-8"
         )
         config = read_config(start=tmp_path)
-        assert config.project_root == tmp_path
+        assert config.project_directory == tmp_path
         assert config.doc_roots == [Path("docs")]
 
     def test_uncoded_toml_wins_when_nearer_than_pyproject(self, *, tmp_path):
@@ -153,7 +153,7 @@ class TestReadConfig:
             'doc-roots = ["from-child"]\n', encoding="utf-8"
         )
         config = read_config(start=child)
-        assert config.project_root == child
+        assert config.project_directory == child
         assert config.doc_roots == [Path("from-child")]
 
     def test_pyproject_wins_when_nearer_than_uncoded_toml(self, *, tmp_path):
@@ -167,7 +167,7 @@ class TestReadConfig:
             '[tool.uncoded]\nsource-roots = ["from-child"]\n', encoding="utf-8"
         )
         config = read_config(start=child)
-        assert config.project_root == child
+        assert config.project_directory == child
         assert config.source_roots == [Path("from-child")]
 
     def test_uncoded_pyproject_and_uncoded_toml_in_different_dirs_no_error(
@@ -199,7 +199,7 @@ class TestReadConfig:
             '[tool.uncoded]\nsource-roots = ["src"]\n', encoding="utf-8"
         )
         config = read_config(start=uncoded_dir)
-        assert config.project_root == tmp_path
+        assert config.project_directory == tmp_path
         assert config.source_roots == [Path("src")]
 
 

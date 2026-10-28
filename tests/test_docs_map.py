@@ -107,7 +107,7 @@ class TestReadDocFiles:
     def test_single_file_root(self, *, tmp_path):
         md = tmp_path / "README.md"
         md.write_text("# Hello\n", encoding="utf-8")
-        results, _skipped = read_doc_files(doc_root=md, project_root=tmp_path)
+        results, _skipped = read_doc_files(doc_root=md, project_directory=tmp_path)
         assert len(results) == 1
         text, rel = results[0]
         assert text == "# Hello\n"
@@ -116,20 +116,26 @@ class TestReadDocFiles:
     def test_directory_walk_reads_md_files(self, *, tmp_path):
         (tmp_path / "a.md").write_text("# A\n", encoding="utf-8")
         (tmp_path / "b.md").write_text("# B\n", encoding="utf-8")
-        results, _skipped = read_doc_files(doc_root=tmp_path, project_root=tmp_path)
+        results, _skipped = read_doc_files(
+            doc_root=tmp_path, project_directory=tmp_path
+        )
         assert len(results) == 2
 
     def test_directory_walk_sorted(self, *, tmp_path):
         (tmp_path / "z.md").write_text("z", encoding="utf-8")
         (tmp_path / "a.md").write_text("a", encoding="utf-8")
-        results, _skipped = read_doc_files(doc_root=tmp_path, project_root=tmp_path)
+        results, _skipped = read_doc_files(
+            doc_root=tmp_path, project_directory=tmp_path
+        )
         names = [r[1].name for r in results]
         assert names == ["a.md", "z.md"]
 
     def test_directory_excludes_non_md(self, *, tmp_path):
         (tmp_path / "guide.md").write_text("# Guide\n", encoding="utf-8")
         (tmp_path / "notes.txt").write_text("some text", encoding="utf-8")
-        results, _skipped = read_doc_files(doc_root=tmp_path, project_root=tmp_path)
+        results, _skipped = read_doc_files(
+            doc_root=tmp_path, project_directory=tmp_path
+        )
         assert len(results) == 1
         assert results[0][1] == Path("guide.md")
 
@@ -137,19 +143,23 @@ class TestReadDocFiles:
         sub = tmp_path / "docs"
         sub.mkdir()
         (sub / "guide.md").write_text("# Guide\n", encoding="utf-8")
-        results, _skipped = read_doc_files(doc_root=tmp_path, project_root=tmp_path)
+        results, _skipped = read_doc_files(
+            doc_root=tmp_path, project_directory=tmp_path
+        )
         assert len(results) == 1
         assert results[0][1] == Path("docs/guide.md")
 
     def test_empty_directory_reads_nothing(self, *, tmp_path):
-        results, _skipped = read_doc_files(doc_root=tmp_path, project_root=tmp_path)
+        results, _skipped = read_doc_files(
+            doc_root=tmp_path, project_directory=tmp_path
+        )
         assert results == []
 
-    def test_rel_path_is_relative_to_project_root(self, *, tmp_path):
+    def test_rel_path_is_relative_to_project_directory(self, *, tmp_path):
         docs = tmp_path / "docs"
         docs.mkdir()
         (docs / "a.md").write_text("", encoding="utf-8")
-        results, _skipped = read_doc_files(doc_root=docs, project_root=tmp_path)
+        results, _skipped = read_doc_files(doc_root=docs, project_directory=tmp_path)
         assert results[0][1] == Path("docs/a.md")
 
     def test_skips_non_utf8_file(self, *, tmp_path):
@@ -160,7 +170,7 @@ class TestReadDocFiles:
         (guide / "good.md").write_text("# Good\n", encoding="utf-8")
         (guide / "bad.md").write_bytes(b"\xff\xfe not utf-8")
         results, skipped = read_doc_files(
-            doc_root=tmp_path / "docs", project_root=tmp_path
+            doc_root=tmp_path / "docs", project_directory=tmp_path
         )
         assert len(results) == 1
         assert results[0][1].name == "good.md"
@@ -172,7 +182,7 @@ class TestReadDocFiles:
         # the system's separator.
         (tmp_path / "docs" / "notes.md").mkdir(parents=True)
         results, skipped = read_doc_files(
-            doc_root=tmp_path / "docs", project_root=tmp_path
+            doc_root=tmp_path / "docs", project_directory=tmp_path
         )
         assert results == []
         assert [s.path for s in skipped] == ["docs/notes.md"]
@@ -185,7 +195,7 @@ class TestReadDocFiles:
         (tmp_path / "docs").mkdir()
         bad = tmp_path / "docs" / "bad.md"
         bad.write_bytes(b"\xff\xfe not utf-8")
-        results, skipped = read_doc_files(doc_root=bad, project_root=tmp_path)
+        results, skipped = read_doc_files(doc_root=bad, project_directory=tmp_path)
         assert results == []
         assert [s.path for s in skipped] == ["docs/bad.md"]
 
@@ -193,7 +203,9 @@ class TestReadDocFiles:
         # A UTF-8 BOM before the first heading must not suppress it.
         bom = b"\xef\xbb\xbf"
         (tmp_path / "guide.md").write_bytes(bom + b"# Guide\n")
-        results, _skipped = read_doc_files(doc_root=tmp_path, project_root=tmp_path)
+        results, _skipped = read_doc_files(
+            doc_root=tmp_path, project_directory=tmp_path
+        )
         assert len(results) == 1
         text, _rel = results[0]
         assert extract_headings(text=text) == [(1, "Guide")]

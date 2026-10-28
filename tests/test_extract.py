@@ -310,7 +310,7 @@ class TestIterAndExtract:
         (pkg / "_internal.py").write_text("def helper(): pass\n", encoding="utf-8")
         (pkg / "empty.py").write_text("# nothing here\n", encoding="utf-8")
 
-        files, _skipped = read_source_files(source_root=src, project_root=tmp_path)
+        files, _skipped = read_source_files(source_root=src, project_directory=tmp_path)
         modules = extract_modules(files=files)
 
         rel_paths = [m.rel_path for m in modules]
@@ -330,7 +330,7 @@ class TestIterAndExtract:
             "def format_output(): pass\n", encoding="utf-8"
         )
 
-        files, _skipped = read_source_files(source_root=src, project_root=tmp_path)
+        files, _skipped = read_source_files(source_root=src, project_directory=tmp_path)
         modules = extract_modules(files=files)
 
         rel_paths = [m.rel_path for m in modules]
@@ -343,7 +343,7 @@ class TestIterAndExtract:
         (pkg / "__init__.py").write_text("def create(): pass\n", encoding="utf-8")
         (pkg / "core.py").write_text("def run(): pass\n", encoding="utf-8")
 
-        files, _skipped = read_source_files(source_root=src, project_root=tmp_path)
+        files, _skipped = read_source_files(source_root=src, project_directory=tmp_path)
         modules = extract_modules(files=files)
 
         rel_paths = [m.rel_path for m in modules]
@@ -357,7 +357,7 @@ class TestIterAndExtract:
         (pkg / "__init__.py").write_text("", encoding="utf-8")
         (pkg / "core.py").write_text("def run(): pass\n", encoding="utf-8")
 
-        files, _skipped = read_source_files(source_root=src, project_root=tmp_path)
+        files, _skipped = read_source_files(source_root=src, project_directory=tmp_path)
         modules = extract_modules(files=files)
 
         rel_paths = [m.rel_path for m in modules]
@@ -371,7 +371,7 @@ class TestIterAndExtract:
         (pkg / "good.py").write_text("def works(): pass\n", encoding="utf-8")
         (pkg / "bad.py").write_text("def broken(:\n", encoding="utf-8")
 
-        files, skipped = read_source_files(source_root=src, project_root=tmp_path)
+        files, skipped = read_source_files(source_root=src, project_directory=tmp_path)
         modules = extract_modules(files=files)
 
         rel_paths = [m.rel_path for m in modules]
@@ -390,7 +390,7 @@ class TestIterAndExtract:
         # reason leaves out the error's own copy of the path.
         (tmp_path / "src" / "pkg" / "notes.py").mkdir(parents=True)
         files, skipped = read_source_files(
-            source_root=tmp_path / "src", project_root=tmp_path
+            source_root=tmp_path / "src", project_directory=tmp_path
         )
         assert files == []
         assert [s.path for s in skipped] == ["src/pkg/notes.py"]
@@ -405,7 +405,7 @@ class TestIterAndExtract:
         pkg.mkdir(parents=True)
         (pkg / "good.py").write_text("def works(): pass\n", encoding="utf-8")
         (pkg / "binary.py").write_bytes(b"\xff\xfe not utf-8")
-        files, skipped = read_source_files(source_root=src, project_root=tmp_path)
+        files, skipped = read_source_files(source_root=src, project_directory=tmp_path)
         assert [rel for _, rel in files] == ["src/mypkg/good.py"]
         assert [s.path for s in skipped] == ["src/mypkg/binary.py"]
 
@@ -418,7 +418,7 @@ class TestIterAndExtract:
         (pkg / "latin1.py").write_bytes(
             b"# -*- coding: latin-1 -*-\ndef caf\xe9(): pass\n"
         )
-        files, skipped = read_source_files(source_root=src, project_root=tmp_path)
+        files, skipped = read_source_files(source_root=src, project_directory=tmp_path)
         assert [rel for _, rel in files] == ["src/mypkg/latin1.py"]
         assert skipped == []
 

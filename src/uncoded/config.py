@@ -41,7 +41,7 @@ class Config:
     required_version: str | None
 
     @property
-    def project_root(self) -> Path:
+    def project_directory(self) -> Path:
         """The project directory, the directory of the configuration file."""
         return self.config_file.parent
 
@@ -201,13 +201,13 @@ def read_config(*, start: Path) -> Config:
     return config
 
 
-def is_inside_project(*, path: Path, project_root: Path) -> bool:
-    """Return whether ``path`` is inside ``project_root``.
+def is_inside_project(*, path: Path, project_directory: Path) -> bool:
+    """Return whether ``path`` is inside ``project_directory``.
 
-    Symbolic links are resolved first, so a link inside ``project_root`` that
+    Symbolic links are resolved first, so a link inside ``project_directory`` that
     leads out of it is outside.
     """
-    return path.resolve().is_relative_to(project_root.resolve())
+    return path.resolve().is_relative_to(project_directory.resolve())
 
 
 def validate_root(
@@ -220,7 +220,7 @@ def validate_root(
     or is not a directory or, for a doc root, a Markdown file.
     """
     resolved, problem = _resolve_root(
-        configured=configured, kind=kind, project_root=config.project_root
+        configured=configured, kind=kind, project_directory=config.project_directory
     )
     if problem is not None:
         raise _config_file_error(
@@ -231,14 +231,14 @@ def validate_root(
 
 
 def _resolve_root(
-    *, configured: Path, kind: Literal["source", "doc"], project_root: Path
+    *, configured: Path, kind: Literal["source", "doc"], project_directory: Path
 ) -> tuple[Path, str | None]:
-    """Return the configured root resolved against ``project_root``.
+    """Return the configured root resolved against ``project_directory``.
 
     Pairs it with what stops the root being used, or None when nothing does.
     """
-    resolved = (project_root / configured).resolve()
-    if not is_inside_project(path=resolved, project_root=project_root):
+    resolved = (project_directory / configured).resolve()
+    if not is_inside_project(path=resolved, project_directory=project_directory):
         return resolved, "is outside the project directory"
     if not resolved.exists():
         return resolved, "does not exist"
@@ -262,7 +262,7 @@ def render_conventional_config(*, directory: Path, required_version: str) -> str
     for kind, names in _CONVENTIONAL_ROOTS.items():
         for name in names:
             _resolved, problem = _resolve_root(
-                configured=Path(name), kind=kind, project_root=directory
+                configured=Path(name), kind=kind, project_directory=directory
             )
             if problem is None:
                 roots[kind].append(name)

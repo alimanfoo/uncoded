@@ -29,17 +29,17 @@ class TestSyncSkills:
         ] == SKILL_ROOTS
 
     def test_writes_skill_files(self, *, tmp_path):
-        sync_skills(source=True, docs=False, project_root=tmp_path, check=False)
+        sync_skills(source=True, docs=False, project_directory=tmp_path, check=False)
         for root in SKILL_ROOTS:
             assert (tmp_path / root / _REVIEW_SKILL_FILE).exists()
 
     def test_creates_parent_directories(self, *, tmp_path):
-        sync_skills(source=True, docs=False, project_root=tmp_path, check=False)
+        sync_skills(source=True, docs=False, project_directory=tmp_path, check=False)
         for root in SKILL_ROOTS:
             assert (tmp_path / root / _REVIEW_SKILL_FILE.parent).is_dir()
 
     def test_content_has_frontmatter_and_body(self, *, tmp_path):
-        sync_skills(source=True, docs=False, project_root=tmp_path, check=False)
+        sync_skills(source=True, docs=False, project_directory=tmp_path, check=False)
         skill = _REVIEW_SKILL
         content = (tmp_path / SKILL_ROOTS[0] / skill.name / "SKILL.md").read_text(
             encoding="utf-8"
@@ -69,7 +69,7 @@ class TestSyncSkills:
         assert content.endswith("\n\n# Body\n")
 
     def test_content_has_provenance_marker(self, *, tmp_path):
-        sync_skills(source=True, docs=False, project_root=tmp_path, check=False)
+        sync_skills(source=True, docs=False, project_directory=tmp_path, check=False)
         skill = _REVIEW_SKILL
         content = (tmp_path / SKILL_ROOTS[0] / skill.name / "SKILL.md").read_text(
             encoding="utf-8"
@@ -82,43 +82,47 @@ class TestSyncSkills:
 
     def test_returns_change_count_on_first_write(self, *, tmp_path):
         result = sync_skills(
-            source=True, docs=False, project_root=tmp_path, check=False
+            source=True, docs=False, project_directory=tmp_path, check=False
         )
         assert result == 4
 
     def test_returns_zero_when_already_in_sync(self, *, tmp_path):
-        sync_skills(source=True, docs=False, project_root=tmp_path, check=False)
+        sync_skills(source=True, docs=False, project_directory=tmp_path, check=False)
         assert (
-            sync_skills(source=True, docs=False, project_root=tmp_path, check=False)
+            sync_skills(
+                source=True, docs=False, project_directory=tmp_path, check=False
+            )
             == 0
         )
 
     def test_idempotent(self, *, tmp_path):
-        sync_skills(source=True, docs=False, project_root=tmp_path, check=False)
+        sync_skills(source=True, docs=False, project_directory=tmp_path, check=False)
         mtimes = [
             (tmp_path / root / _REVIEW_SKILL_FILE).stat().st_mtime_ns
             for root in SKILL_ROOTS
         ]
-        sync_skills(source=True, docs=False, project_root=tmp_path, check=False)
+        sync_skills(source=True, docs=False, project_directory=tmp_path, check=False)
         assert [
             (tmp_path / root / _REVIEW_SKILL_FILE).stat().st_mtime_ns
             for root in SKILL_ROOTS
         ] == mtimes
 
     def test_check_mode_does_not_write(self, *, tmp_path):
-        sync_skills(source=True, docs=False, project_root=tmp_path, check=True)
+        sync_skills(source=True, docs=False, project_directory=tmp_path, check=True)
         for root in SKILL_ROOTS:
             assert not (tmp_path / root / _REVIEW_SKILL_FILE).exists()
 
     def test_check_mode_reports_change_when_missing(self, *, tmp_path):
         assert (
-            sync_skills(source=True, docs=False, project_root=tmp_path, check=True) > 0
+            sync_skills(source=True, docs=False, project_directory=tmp_path, check=True)
+            > 0
         )
 
     def test_check_mode_reports_no_change_when_in_sync(self, *, tmp_path):
-        sync_skills(source=True, docs=False, project_root=tmp_path, check=False)
+        sync_skills(source=True, docs=False, project_directory=tmp_path, check=False)
         assert (
-            sync_skills(source=True, docs=False, project_root=tmp_path, check=True) == 0
+            sync_skills(source=True, docs=False, project_directory=tmp_path, check=True)
+            == 0
         )
 
     @pytest.mark.parametrize("source", [True, False])
@@ -132,15 +136,17 @@ class TestSyncSkills:
             path.parent.mkdir(parents=True)
             path.write_text("the user's own skill\n", encoding="utf-8")
 
-        sync_skills(source=source, docs=False, project_root=tmp_path, check=False)
+        sync_skills(source=source, docs=False, project_directory=tmp_path, check=False)
 
         for path in own_paths:
             assert path.read_text(encoding="utf-8") == "the user's own skill\n"
 
     def test_source_false_removes_current_skill_files(self, *, tmp_path):
-        sync_skills(source=True, docs=False, project_root=tmp_path, check=False)
+        sync_skills(source=True, docs=False, project_directory=tmp_path, check=False)
         assert (
-            sync_skills(source=False, docs=False, project_root=tmp_path, check=False)
+            sync_skills(
+                source=False, docs=False, project_directory=tmp_path, check=False
+            )
             > 0
         )
         for root in SKILL_ROOTS:
@@ -148,32 +154,37 @@ class TestSyncSkills:
 
     def test_source_false_returns_zero_when_already_absent(self, *, tmp_path):
         assert (
-            sync_skills(source=False, docs=False, project_root=tmp_path, check=False)
+            sync_skills(
+                source=False, docs=False, project_directory=tmp_path, check=False
+            )
             == 0
         )
 
     def test_source_false_check_mode_reports_without_removing(self, *, tmp_path):
-        sync_skills(source=True, docs=False, project_root=tmp_path, check=False)
+        sync_skills(source=True, docs=False, project_directory=tmp_path, check=False)
         assert (
-            sync_skills(source=False, docs=False, project_root=tmp_path, check=True) > 0
+            sync_skills(
+                source=False, docs=False, project_directory=tmp_path, check=True
+            )
+            > 0
         )
         for root in SKILL_ROOTS:
             assert (tmp_path / root / _REVIEW_SKILL_FILE).exists()
 
     def test_gate_unmet_removal_prunes_empty_directory(self, *, tmp_path):
         # After gate-not-met removal, the skill directory itself must be gone.
-        sync_skills(source=True, docs=False, project_root=tmp_path, check=False)
-        sync_skills(source=False, docs=False, project_root=tmp_path, check=False)
+        sync_skills(source=True, docs=False, project_directory=tmp_path, check=False)
+        sync_skills(source=False, docs=False, project_directory=tmp_path, check=False)
         for root in SKILL_ROOTS:
             assert not (tmp_path / root / _REVIEW_SKILL_FILE.parent).exists()
 
     def test_pruning_skipped_when_directory_has_other_files(self, *, tmp_path):
         # If extra files remain after SKILL.md removal, leave the directory.
-        sync_skills(source=True, docs=False, project_root=tmp_path, check=False)
+        sync_skills(source=True, docs=False, project_directory=tmp_path, check=False)
         for root in SKILL_ROOTS:
             extra = tmp_path / root / _REVIEW_SKILL_FILE.parent / "extra.md"
             extra.write_text("extra\n", encoding="utf-8")
-        sync_skills(source=False, docs=False, project_root=tmp_path, check=False)
+        sync_skills(source=False, docs=False, project_directory=tmp_path, check=False)
         for root in SKILL_ROOTS:
             assert (tmp_path / root / _REVIEW_SKILL_FILE.parent).is_dir()
             assert not (tmp_path / root / _REVIEW_SKILL_FILE).exists()
@@ -186,7 +197,7 @@ class TestSyncSkills:
             gate="docs",
         )
         monkeypatch.setattr(skill_module, "SKILLS", [docs_skill])
-        sync_skills(source=False, docs=True, project_root=tmp_path, check=False)
+        sync_skills(source=False, docs=True, project_directory=tmp_path, check=False)
         for root in SKILL_ROOTS:
             assert (tmp_path / root / "test-docs" / "SKILL.md").exists()
 
@@ -198,36 +209,36 @@ class TestSyncSkills:
             gate="docs",
         )
         monkeypatch.setattr(skill_module, "SKILLS", [docs_skill])
-        sync_skills(source=True, docs=False, project_root=tmp_path, check=False)
+        sync_skills(source=True, docs=False, project_directory=tmp_path, check=False)
         for root in SKILL_ROOTS:
             assert not (tmp_path / root / "test-docs" / "SKILL.md").exists()
 
     def test_code_navigation_written_when_source_set(self, *, tmp_path):
-        sync_skills(source=True, docs=False, project_root=tmp_path, check=False)
+        sync_skills(source=True, docs=False, project_directory=tmp_path, check=False)
         for root in SKILL_ROOTS:
             assert (tmp_path / root / "uncoded-code-navigation" / "SKILL.md").exists()
 
     def test_code_navigation_not_written_when_source_absent(self, *, tmp_path):
-        sync_skills(source=False, docs=False, project_root=tmp_path, check=False)
+        sync_skills(source=False, docs=False, project_directory=tmp_path, check=False)
         for root in SKILL_ROOTS:
             assert not (
                 tmp_path / root / "uncoded-code-navigation" / "SKILL.md"
             ).exists()
 
     def test_doc_navigation_written_when_docs_set(self, *, tmp_path):
-        sync_skills(source=False, docs=True, project_root=tmp_path, check=False)
+        sync_skills(source=False, docs=True, project_directory=tmp_path, check=False)
         for root in SKILL_ROOTS:
             assert (tmp_path / root / "uncoded-doc-navigation" / "SKILL.md").exists()
 
     def test_doc_navigation_not_written_when_docs_absent(self, *, tmp_path):
-        sync_skills(source=True, docs=False, project_root=tmp_path, check=False)
+        sync_skills(source=True, docs=False, project_directory=tmp_path, check=False)
         for root in SKILL_ROOTS:
             assert not (
                 tmp_path / root / "uncoded-doc-navigation" / "SKILL.md"
             ).exists()
 
     def test_doc_navigation_content_includes_orient_step(self, *, tmp_path):
-        sync_skills(source=False, docs=True, project_root=tmp_path, check=False)
+        sync_skills(source=False, docs=True, project_directory=tmp_path, check=False)
         content = (
             tmp_path / SKILL_ROOTS[0] / "uncoded-doc-navigation" / "SKILL.md"
         ).read_text(encoding="utf-8")
@@ -238,28 +249,28 @@ class TestSyncSkills:
 
 
 class TestSyncSkillsProjectRootAnchor:
-    def test_project_root_anchors_writes_independent_of_cwd(
+    def test_project_directory_anchors_writes_independent_of_cwd(
         self, *, tmp_path, monkeypatch
     ):
         sub = tmp_path / "subdir"
         sub.mkdir()
         monkeypatch.chdir(sub)
 
-        sync_skills(source=True, docs=False, project_root=tmp_path, check=False)
+        sync_skills(source=True, docs=False, project_directory=tmp_path, check=False)
 
         for root in SKILL_ROOTS:
             assert (tmp_path / root / _REVIEW_SKILL_FILE).exists()
             assert not (sub / root / _REVIEW_SKILL_FILE).exists()
 
-    def test_project_root_anchors_removal_independent_of_cwd(
+    def test_project_directory_anchors_removal_independent_of_cwd(
         self, *, tmp_path, monkeypatch
     ):
-        sync_skills(source=True, docs=False, project_root=tmp_path, check=False)
+        sync_skills(source=True, docs=False, project_directory=tmp_path, check=False)
         sub = tmp_path / "subdir"
         sub.mkdir()
         monkeypatch.chdir(sub)
 
-        sync_skills(source=False, docs=False, project_root=tmp_path, check=False)
+        sync_skills(source=False, docs=False, project_directory=tmp_path, check=False)
 
         for root in SKILL_ROOTS:
             assert not (tmp_path / root / _REVIEW_SKILL_FILE).exists()

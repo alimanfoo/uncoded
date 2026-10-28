@@ -268,12 +268,12 @@ class TestSyncApplyMode:
             "docs/": {"linked.md": {"Linked": None}}
         }
 
-    def test_anchors_reads_and_writes_at_project_root_when_cwd_is_subdir(
+    def test_anchors_reads_and_writes_at_project_directory_when_cwd_is_subdir(
         self, *, tmp_path, monkeypatch
     ):
         # Running from a subdirectory of the project must produce
-        # artefacts at the project root, not under the subdirectory.
-        # Reads (source files, pyproject) anchor at project_root; writes
+        # artefacts at the project directory, not under the subdirectory.
+        # Reads (source files, pyproject) anchor at project_directory; writes
         # (namespace, stubs, skill files) do too.
         (tmp_path / "pyproject.toml").write_text(
             textwrap.dedent(
@@ -303,7 +303,7 @@ class TestSyncApplyMode:
         assert "src/:" in content
         assert "foo.py:" in content
 
-        # Writes anchored: every artefact lands at project_root, never
+        # Writes anchored: every artefact lands at project_directory, never
         # under the subdirectory cwd.
         assert (tmp_path / ".uncoded" / "stubs" / "src" / "foo.pyi").exists()
         assert (tmp_path / ".uncoded" / ".gitignore").exists()
@@ -313,11 +313,11 @@ class TestSyncApplyMode:
         for skill_path in _SOURCE_SKILL_PATHS:
             assert not (tmp_path / "src" / skill_path).exists()
 
-    def test_artefacts_match_when_run_from_subdir_vs_project_root(
+    def test_artefacts_match_when_run_from_subdir_vs_project_directory(
         self, *, tmp_path, monkeypatch
     ):
         # Behavioural acceptance for GH84: identical artefacts in
-        # identical locations whether sync runs from the project root
+        # identical locations whether sync runs from the project directory
         # or from a subdirectory.
         def _mk_repo(*, under: Path) -> None:
             (under / "pyproject.toml").write_text(
@@ -1400,7 +1400,7 @@ class TestRefsCommand:
         with mock.patch.object(cli, "find_refs", return_value=[]) as find_refs:
             assert _refs(monkeypatch=monkeypatch, name_path="foo", in_path="m.py") == 0
 
-        assert find_refs.call_args.kwargs["project_root"] == tmp_path.resolve()
+        assert find_refs.call_args.kwargs["project_directory"] == tmp_path.resolve()
 
     def test_missing_uvx_exits_one(self, *, tmp_path, monkeypatch, capsys):
         _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)

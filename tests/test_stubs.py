@@ -25,11 +25,13 @@ def _setup(*, tmp_path):
 
 
 def _sync_root(*, source_root, out, tmp_path, check=False):
-    files, _skipped = read_source_files(source_root=source_root, project_root=tmp_path)
+    files, _skipped = read_source_files(
+        source_root=source_root, project_directory=tmp_path
+    )
     return sync_stubs(
         files=files,
         output_dir=out,
-        project_root=tmp_path,
+        project_directory=tmp_path,
         check=check,
     )
 
@@ -764,15 +766,17 @@ class TestSyncStubs:
         tests.mkdir()
         (src / "foo.py").write_text("def hello(): pass\n", encoding="utf-8")
         (tests / "test_foo.py").write_text("def test_hello(): pass\n", encoding="utf-8")
-        src_files, _skipped = read_source_files(source_root=src, project_root=tmp_path)
+        src_files, _skipped = read_source_files(
+            source_root=src, project_directory=tmp_path
+        )
         test_files, _skipped = read_source_files(
-            source_root=tests, project_root=tmp_path
+            source_root=tests, project_directory=tmp_path
         )
 
         sync_stubs(
             files=src_files + test_files,
             output_dir=out,
-            project_root=tmp_path,
+            project_directory=tmp_path,
             check=False,
         )
         assert (out / "src" / "foo.pyi").exists()
@@ -852,10 +856,10 @@ class TestSyncStubsCheckMode:
 
 
 class TestSyncStubsProjectRootAnchor:
-    def test_project_root_anchors_writes_independent_of_cwd(
+    def test_project_directory_anchors_writes_independent_of_cwd(
         self, *, tmp_path, monkeypatch
     ):
-        # output_dir is project-relative; project_root anchors the actual
+        # output_dir is project-relative; project_directory anchors the actual
         # writes under tmp_path even when cwd is elsewhere.
         sub = tmp_path / "subdir"
         sub.mkdir()
@@ -865,7 +869,7 @@ class TestSyncStubsProjectRootAnchor:
         changes = sync_stubs(
             files=[("def hello(): pass\n", "src/foo.py")],
             output_dir=out,
-            project_root=tmp_path,
+            project_directory=tmp_path,
             check=False,
         )
 
@@ -873,7 +877,7 @@ class TestSyncStubsProjectRootAnchor:
         assert (tmp_path / out / "src" / "foo.pyi").exists()
         assert not (sub / out / "src" / "foo.pyi").exists()
 
-    def test_project_root_anchors_orphan_pruning_independent_of_cwd(
+    def test_project_directory_anchors_orphan_pruning_independent_of_cwd(
         self, *, tmp_path, monkeypatch
     ):
         sub = tmp_path / "subdir"
@@ -886,7 +890,7 @@ class TestSyncStubsProjectRootAnchor:
         )
 
         changes = sync_stubs(
-            files=[], output_dir=out, project_root=tmp_path, check=False
+            files=[], output_dir=out, project_directory=tmp_path, check=False
         )
 
         assert changes == 1
@@ -910,7 +914,7 @@ class TestSyncStubsWithNoFiles:
         return sync_stubs(
             files=[],
             output_dir=Path(".uncoded/stubs"),
-            project_root=tmp_path,
+            project_directory=tmp_path,
             check=check,
         )
 

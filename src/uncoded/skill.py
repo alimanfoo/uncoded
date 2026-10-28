@@ -94,7 +94,7 @@ def _sync_one_skill(
     skill: Skill,
     source: bool,
     docs: bool,
-    project_root: Path,
+    project_directory: Path,
     check: bool,
 ) -> int:
     """Build one skill's files when its gate is met, or remove them otherwise.
@@ -108,14 +108,14 @@ def _sync_one_skill(
             changes += sync_file(
                 path=_skill_path(root=root, name=skill.name),
                 content=content,
-                project_root=project_root,
+                project_directory=project_directory,
                 check=check,
             )
     else:
         for root in SKILL_ROOTS:
             changes += remove_file(
                 path=_skill_path(root=root, name=skill.name),
-                project_root=project_root,
+                project_directory=project_directory,
                 check=check,
             )
     return changes
@@ -125,7 +125,7 @@ def sync_skills(
     *,
     source: bool,
     docs: bool,
-    project_root: Path,
+    project_directory: Path,
     check: bool,
 ) -> int:
     """Sync all registered skill files for the target repository.
@@ -142,7 +142,7 @@ def sync_skills(
             skill=skill,
             source=source,
             docs=docs,
-            project_root=project_root,
+            project_directory=project_directory,
             check=check,
         )
     return changes

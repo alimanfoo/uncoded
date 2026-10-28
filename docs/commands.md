@@ -45,8 +45,8 @@ uvx uncoded sync
 ```
 
 Builds or refreshes every configured index and navigation skill. Output lists
-files created, updated, or removed. Running it from a subdirectory produces
-output at the same project root.
+files created, updated, or removed. Running it from a subdirectory writes the
+same files, in the project directory.
 
 Files that cannot be parsed or decoded are skipped with a warning, and the
 output ends with a line that says how many files were skipped. A skipped file

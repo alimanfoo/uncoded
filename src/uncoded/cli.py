@@ -49,7 +49,7 @@ def _warn_skipped(*, skipped: list[SkippedFile]) -> None:
 
 
 def _sync_code_artefacts(
-    *, source_roots: list[Path], project_root: Path, check: bool
+    *, source_roots: list[Path], project_directory: Path, check: bool
 ) -> tuple[int, list[SkippedFile]]:
     """Build or remove the code artefacts (namespace map and stubs).
 
@@ -63,7 +63,7 @@ def _sync_code_artefacts(
     all_skipped: list[SkippedFile] = []
     for src_root in source_roots:
         root_files, skipped = read_source_files(
-            source_root=src_root, project_root=project_root
+            source_root=src_root, project_directory=project_directory
         )
         files.extend(root_files)
         all_skipped.extend(skipped)
@@ -75,22 +75,24 @@ def _sync_code_artefacts(
         n = sync_file(
             path=namespace_path,
             content=map_content,
-            project_root=project_root,
+            project_directory=project_directory,
             check=check,
         )
     else:
-        n = remove_file(path=namespace_path, project_root=project_root, check=check)
+        n = remove_file(
+            path=namespace_path, project_directory=project_directory, check=check
+        )
     n += sync_stubs(
         files=files,
         output_dir=Path(".uncoded/stubs"),
-        project_root=project_root,
+        project_directory=project_directory,
         check=check,
     )
     return n, all_skipped
 
 
 def _sync_doc_artefacts(
-    *, doc_roots: list[Path], project_root: Path, check: bool
+    *, doc_roots: list[Path], project_directory: Path, check: bool
 ) -> tuple[int, list[SkippedFile]]:
     """Build or remove the doc artefact (docs.yaml).
 
@@ -100,20 +102,24 @@ def _sync_doc_artefacts(
     """
     if not doc_roots:
         removed = remove_file(
-            path=Path(".uncoded/docs.yaml"), project_root=project_root, check=check
+            path=Path(".uncoded/docs.yaml"),
+            project_directory=project_directory,
+            check=check,
         )
         return removed, []
     all_doc_files = []
     all_skipped: list[SkippedFile] = []
     for doc_root in doc_roots:
-        files, skipped = read_doc_files(doc_root=doc_root, project_root=project_root)
+        files, skipped = read_doc_files(
+            doc_root=doc_root, project_directory=project_directory
+        )
         all_doc_files.extend(files)
         all_skipped.extend(skipped)
     docs_content = render_docs_map(mapping=build_docs_map(files=all_doc_files))
     changed = sync_file(
         path=Path(".uncoded/docs.yaml"),
         content=docs_content,
-        project_root=project_root,
+        project_directory=project_directory,
         check=check,
     )
     return changed, all_skipped
@@ -123,7 +129,7 @@ def _sync(*, config: Config, check: bool = False) -> int:
     """Sync (or verify) the index artefacts of the project that config configures.
 
     Every writer anchors the project-relative paths that it reads or writes at
-    ``config.project_root``, so running from a subdirectory of the project
+    ``config.project_directory``, so running from a subdirectory of the project
     produces artefacts in the same locations as running from the project
     directory.
 
@@ -148,7 +154,7 @@ def _sync(*, config: Config, check: bool = False) -> int:
             "or as top-level keys in .uncoded.toml."
         )
 
-    project_root = config.project_root
+    project_directory = config.project_directory
     source_roots = [
         validate_root(configured=configured, kind="source", config=config)
         for configured in config.source_roots
@@ -160,22 +166,22 @@ def _sync(*, config: Config, check: bool = False) -> int:
     changes = sync_file(
         path=Path(".uncoded/.gitignore"),
         content=f"# {GENERATED_MARKER}\n*\n",
-        project_root=project_root,
+        project_directory=project_directory,
         check=check,
     )
 
     code_changes, code_skipped = _sync_code_artefacts(
-        source_roots=source_roots, project_root=project_root, check=check
+        source_roots=source_roots, project_directory=project_directory, check=check
     )
     changes += code_changes
     changes += sync_skills(
         source=bool(source_roots),
         docs=bool(doc_roots),
-        project_root=project_root,
+        project_directory=project_directory,
         check=check,
     )
     doc_changes, doc_skipped = _sync_doc_artefacts(
-        doc_roots=doc_roots, project_root=project_root, check=check
+        doc_roots=doc_roots, project_directory=project_directory, check=check
     )
     changes += doc_changes
     _warn_skipped(skipped=code_skipped + doc_skipped)
@@ -205,11 +211,11 @@ def _init(*, config: Config | None) -> int:
         content = render_conventional_config(
             directory=start, required_version=__version__
         )
-        sync_file(path=Path(UNCODED_TOML), content=content, project_root=start)
+        sync_file(path=Path(UNCODED_TOML), content=content, project_directory=start)
         config = read_config(start=start)
     else:
         print(
-            f"Found the configuration file in {config.project_root.as_posix()}, "
+            f"Found the configuration file in {config.project_directory.as_posix()}, "
             "and left it as it is."
         )
 
@@ -234,12 +240,12 @@ class _OutsideProjectError(Exception):
     """Raised when an ``--in`` file is outside the project directory."""
 
 
-def _project_file(*, in_path: str, project_root: Path) -> Path:
+def _project_file(*, in_path: str, project_directory: Path) -> Path:
     """Return the ``--in`` file, or raise _OutsideProjectError when it is outside."""
     target = Path(in_path)
-    if not is_inside_project(path=target, project_root=project_root):
+    if not is_inside_project(path=target, project_directory=project_directory):
         raise _OutsideProjectError(
-            f"outside the project directory {project_root.as_posix()}."
+            f"outside the project directory {project_directory.as_posix()}."
         )
     return target
 
@@ -283,7 +289,9 @@ def _body(*, config: Config, name_path: str, in_path: str) -> int:
     undecodable), or if the source has a syntax error.
     """
     try:
-        target = _project_file(in_path=in_path, project_root=config.project_root)
+        target = _project_file(
+            in_path=in_path, project_directory=config.project_directory
+        )
         body = resolve_body(name_path=NamePath.parse(raw=name_path), in_path=target)
     except _LOOKUP_ERRORS as e:
         return _report_lookup_error(exc=e, name_path=name_path, in_path=in_path)
@@ -315,8 +323,10 @@ def _refs(*, config: Config, name_path: str, in_path: str) -> int:
     try:
         refs = find_refs(
             name_path=NamePath.parse(raw=name_path),
-            in_path=_project_file(in_path=in_path, project_root=config.project_root),
-            project_root=config.project_root,
+            in_path=_project_file(
+                in_path=in_path, project_directory=config.project_directory
+            ),
+            project_directory=config.project_directory,
         )
     except TyError as e:
         print(f"Error: {e}", file=sys.stderr)

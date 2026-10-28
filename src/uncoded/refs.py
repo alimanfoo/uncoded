@@ -40,12 +40,12 @@ class Reference:
 
 
 def find_refs(
-    *, name_path: NamePath, in_path: Path, project_root: Path
+    *, name_path: NamePath, in_path: Path, project_directory: Path
 ) -> list[Reference]:
     """Return every reference to the symbol named by name_path in in_path.
 
     Resolves the symbol's name-token position, queries ty's LSP server for
-    references, with project_root as its workspace, and returns results with
+    references, with project_directory as its workspace, and returns results with
     1-indexed line/col sorted by (path, line, col). path is relative to the
     current working directory when possible; otherwise absolute.
     Raises TyError when ty cannot be started or fails before it answers.
@@ -55,7 +55,7 @@ def find_refs(
     """
     position = resolve_name_position(name_path=name_path, in_path=in_path)
     raw_refs = _query_references(
-        in_path=in_path, position=position, project_root=project_root
+        in_path=in_path, position=position, project_directory=project_directory
     )
     result = [
         Reference(
@@ -70,7 +70,7 @@ def find_refs(
 
 
 def _query_references(
-    *, in_path: Path, position: tuple[int, int], project_root: Path
+    *, in_path: Path, position: tuple[int, int], project_directory: Path
 ) -> list[_LSPLocation]:
     """Return raw LSP reference locations for the symbol at position in in_path.
 
@@ -86,7 +86,7 @@ def _query_references(
             return _run_ty(
                 in_path=in_path,
                 position=position,
-                project_root=project_root,
+                project_directory=project_directory,
                 stderr=ty_stderr,
             )
         except TyError as exc:
@@ -102,7 +102,11 @@ def _query_references(
 
 
 def _run_ty(
-    *, in_path: Path, position: tuple[int, int], project_root: Path, stderr: IO[bytes]
+    *,
+    in_path: Path,
+    position: tuple[int, int],
+    project_directory: Path,
+    stderr: IO[bytes],
 ) -> list[_LSPLocation]:
     try:
         proc = subprocess.Popen(
@@ -123,7 +127,7 @@ def _run_ty(
             stdout=cast("IO[bytes]", proc.stdout),
             in_path=in_path,
             position=position,
-            project_root=project_root,
+            project_directory=project_directory,
         )
     finally:
         _terminate(proc=proc)
@@ -165,11 +169,11 @@ def _run_exchange(
     stdout: IO[bytes],
     in_path: Path,
     position: tuple[int, int],
-    project_root: Path,
+    project_directory: Path,
 ) -> list[_LSPLocation]:
     in_path = in_path.resolve()
-    project_root = project_root.resolve()
-    root_uri = project_root.as_uri()
+    project_directory = project_directory.resolve()
+    root_uri = project_directory.as_uri()
     file_uri = in_path.as_uri()
 
     _write_message(
@@ -181,7 +185,7 @@ def _run_exchange(
             "params": {
                 "processId": os.getpid(),
                 "rootUri": root_uri,
-                "workspaceFolders": [{"uri": root_uri, "name": project_root.name}],
+                "workspaceFolders": [{"uri": root_uri, "name": project_directory.name}],
                 "capabilities": {},
             },
         },
