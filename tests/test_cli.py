@@ -427,6 +427,11 @@ def _tree(*, root):
     return sorted(p.relative_to(root) for p in root.rglob("*"))
 
 
+def _contents(*, root):
+    """Return the contents of every file beneath ``root``, keyed by its path."""
+    return {p.relative_to(root): p.read_bytes() for p in root.rglob("*") if p.is_file()}
+
+
 class TestRequiredVersion:
     @pytest.mark.parametrize("command", _COMMANDS)
     def test_refuses_at_another_version(
@@ -541,6 +546,10 @@ _UNUSABLE_ROOTS = [
         "source-roots names ../outside, which is outside the project directory",
     ),
     (
+        'source-roots = ["link"]\n',
+        "source-roots names link, which is outside the project directory",
+    ),
+    (
         'source-roots = ["src"]\ndoc-roots = ["nope"]\n',
         "doc-roots names nope, which does not exist",
     ),
@@ -566,16 +575,24 @@ class TestRootThatCannotBeUsed:
         project = tmp_path / "project"
         (project / "src").mkdir(parents=True)
         (project / "src" / "foo.py").write_text("def fn(): pass\n", encoding="utf-8")
+        (project / "docs").mkdir()
+        (project / "docs" / "guide.md").write_text("# Guide\n", encoding="utf-8")
         (project / "setup.py").write_text("", encoding="utf-8")
         (project / "readme.rst").write_text("= Title\n", encoding="utf-8")
+        (project / "link").symlink_to(tmp_path / "outside", target_is_directory=True)
         config_file = project / ".uncoded.toml"
-        config_file.write_text(toml, encoding="utf-8")
+        config_file.write_text(
+            'source-roots = ["src"]\ndoc-roots = ["docs"]\n', encoding="utf-8"
+        )
         monkeypatch.chdir(project)
-        before = _tree(root=tmp_path)
+        assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 0
+        config_file.write_text(toml, encoding="utf-8")
+        before = _contents(root=tmp_path)
+        capsys.readouterr()
 
         assert _run(monkeypatch=monkeypatch, arguments=[command]) == 1
 
-        assert _tree(root=tmp_path) == before
+        assert _contents(root=tmp_path) == before
         captured = capsys.readouterr()
         assert captured.out == ""
         assert captured.err == (

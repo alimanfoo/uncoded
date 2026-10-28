@@ -220,20 +220,20 @@ def validate_root(
     directory or, for a doc root, a Markdown file.
     """
     project_root = config_file.parent
-    problem = _root_problem(configured=configured, kind=kind, project_root=project_root)
+    resolved = (project_root / configured).resolve()
+    problem = _root_problem(resolved=resolved, kind=kind, project_root=project_root)
     if problem is not None:
         raise _config_file_error(
             path=config_file,
             problem=f"{kind}-roots names {configured.as_posix()}, which {problem}",
         )
-    return (project_root / configured).resolve()
+    return resolved
 
 
 def _root_problem(
-    *, configured: Path, kind: Literal["source", "doc"], project_root: Path
+    *, resolved: Path, kind: Literal["source", "doc"], project_root: Path
 ) -> str | None:
-    """Return what stops the configured root being used, or None when nothing does."""
-    resolved = (project_root / configured).resolve()
+    """Return what stops the resolved root being used, or None when nothing does."""
     if not is_inside_project(path=resolved, project_root=project_root):
         return "is outside the project directory"
     if not resolved.exists():
@@ -258,7 +258,11 @@ def render_conventional_config(*, directory: Path, required_version: str) -> str
         kind: [
             name
             for name in names
-            if _root_problem(configured=Path(name), kind=kind, project_root=directory)
+            if _root_problem(
+                resolved=(directory / name).resolve(),
+                kind=kind,
+                project_root=directory,
+            )
             is None
         ]
         for kind, names in _CONVENTIONAL_ROOTS.items()
