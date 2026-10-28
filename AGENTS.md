@@ -31,8 +31,9 @@ The index files, generated from the roots:
 3. **Docs map** (`.uncoded/docs.yaml`). The headings of every Markdown file
    under the doc roots. Each file nests its `#`-prefixed headings as keys.
    Agents load this to orient to the documentation, then navigate to a heading
-   with `Read` or `grep`. uncoded generates it only when `doc-roots` is set.
-   Headings only. No `uncoded body`, `uncoded refs`, or stubs for Markdown.
+   with `Read` or `grep`. uncoded generates it only when `doc-roots` names a
+   root. Headings only. No `uncoded body`, `uncoded refs`, or stubs for
+   Markdown.
 
 Alongside the index, uncoded ships `uncoded body` to read a symbol's definition
 and `uncoded refs` to find all references.
