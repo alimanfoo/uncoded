@@ -2,20 +2,13 @@
 
 This page lists every conditional under `src` whose condition names a particular
 situation, rather than applies a general rule, with the cause of each. It is the
-ledger that [the standard](standard.md)'s "Rules not cases" criterion measures.
-
-A cause should lie outside uncoded, in Python, the operating system or a
-protocol that uncoded speaks. A conditional that exists because of a choice
-uncoded made is replaced by a general rule instead of being listed. The last
-entry on this page is the one exception, as the note under it explains.
+ledger that [the standard](standard.md)'s "Rules not cases" criterion measures,
+and the standard sets the bar for each entry's cause.
 
 Conditionals that apply a general rule are not listed. Examples are the parsing
 of CommonMark headings and code fences in `docs_map.py`, the parameter syntax in
 `extract.py`, and the rules that the [concepts page](concepts.md) and the
 [stories](stories.md) state, such as a doc root that is a Markdown file.
-
-When a change adds a conditional that names a situation, it adds an entry here
-in the same pull request. When a change removes one, it removes the entry.
 
 ## Python files
 

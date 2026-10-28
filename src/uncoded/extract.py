@@ -17,8 +17,8 @@ from uncoded.read_helpers import SkippedFile, failure_reason, read_source_text
 class Parameter:
     """A function parameter with its name and any annotation.
 
-    ``/`` and ``*`` stand for the separators before keyword-only and after
-    positional-only parameters.
+    ``/`` stands for the separator after positional-only parameters, and ``*``
+    for the separator before keyword-only parameters.
     """
 
     name: str
