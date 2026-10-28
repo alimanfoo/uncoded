@@ -32,7 +32,7 @@ def read_source_text(*, path: Path) -> str:
     that form of its path.
     """
     with tokenize.open(path.as_posix()) as f:
-        # Decode the bytes under the text layer, which would turn every line
+        # Decode the bytes here, because the text layer would turn every line
         # ending into "\n".
         return f.buffer.read().decode(f.encoding)
 

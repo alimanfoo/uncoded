@@ -516,7 +516,7 @@ class TestResolveNamePosition:
         ) == (1, 8)
 
 
-class TestResolveBodyByteIdentical:
+class TestResolveBodyExactlyAsInTheFile:
     def test_exact_source_returned(self, *, tmp_path):
         body = "def compute(x: int) -> int:\n    result = x * 2\n    return result\n"
         source = f"# header\n\n{body}\n# footer\n"
