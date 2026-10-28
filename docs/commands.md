@@ -224,7 +224,7 @@ first call may download it. `uvx` must be on `PATH`.
 uvx uncoded --version
 ```
 
-Prints `uncoded` and the installed version, such as `uncoded 3.0.1`.
+Prints `uncoded` and the installed version, such as `uncoded <version>`.
 
 ## Lookup errors
 
