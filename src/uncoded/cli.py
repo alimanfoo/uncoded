@@ -129,11 +129,13 @@ def _sync(*, config: Config, check: bool = False) -> int:
 
     project_root = config.project_root
     source_roots = [
-        validate_root(configured=configured, kind="source", project_root=project_root)
+        validate_root(
+            configured=configured, kind="source", config_file=config.config_file
+        )
         for configured in config.source_roots
     ]
     doc_roots = [
-        validate_root(configured=configured, kind="doc", project_root=project_root)
+        validate_root(configured=configured, kind="doc", config_file=config.config_file)
         for configured in config.doc_roots
     ]
     changes = sync_file(

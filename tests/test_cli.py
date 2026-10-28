@@ -115,60 +115,6 @@ class TestSyncApplyMode:
         assert "set uncoded up with uncoded init" in err
         assert str(tmp_path) not in err
 
-    def test_error_when_source_root_outside_project_root(
-        self, *, tmp_path, monkeypatch, capsys
-    ):
-        project = tmp_path / "project"
-        project.mkdir()
-        outside = tmp_path / "outside"
-        outside.mkdir()
-        (project / "pyproject.toml").write_text(
-            textwrap.dedent(
-                """\
-                [project]
-                name = "demo"
-
-                [tool.uncoded]
-                source-roots = ["../outside"]
-                """
-            ),
-            encoding="utf-8",
-        )
-        monkeypatch.chdir(project)
-        assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 1
-        err = capsys.readouterr().err
-        assert "Error: source root ../outside" in err
-        assert "outside the project directory" in err
-
-    def test_error_when_source_root_missing(self, *, tmp_path, monkeypatch, capsys):
-        # The message must (a) report the source-root path as the user
-        # typed it in source-roots, not the resolved absolute path (which
-        # leaks the developer's filesystem layout), and (b) include a
-        # recovery hint that names the config file.
-        (tmp_path / "pyproject.toml").write_text(
-            textwrap.dedent(
-                """\
-                [project]
-                name = "demo"
-
-                [tool.uncoded]
-                source-roots = ["nope"]
-                """
-            ),
-            encoding="utf-8",
-        )
-        monkeypatch.chdir(tmp_path)
-        before = _tree(root=tmp_path)
-
-        assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 1
-        assert _tree(root=tmp_path) == before
-
-        err = capsys.readouterr().err
-        assert "Error: source root nope is not a directory." in err
-        assert "source-roots" in err
-        assert "config" in err
-        assert str(tmp_path) not in err
-
     def test_error_when_configuration_names_no_roots(
         self, *, tmp_path, monkeypatch, capsys
     ):
@@ -575,6 +521,60 @@ class TestConfigFileThatCannotBeUsed:
             assert cli.main() == 1
 
         find_refs.assert_not_called()
+        assert _tree(root=tmp_path) == before
+        captured = capsys.readouterr()
+        assert captured.out == ""
+        assert captured.err == (
+            f"Error: {config_file.resolve().as_posix()}: {problem}\n"
+        )
+
+
+# Each setting naming a root that cannot be used, with the problem it reports.
+_UNUSABLE_ROOTS = [
+    ('source-roots = ["nope"]\n', "source-roots names nope, which does not exist"),
+    (
+        'source-roots = ["setup.py"]\n',
+        "source-roots names setup.py, which is not a directory",
+    ),
+    (
+        'source-roots = ["../outside"]\n',
+        "source-roots names ../outside, which is outside the project directory",
+    ),
+    (
+        'source-roots = ["src"]\ndoc-roots = ["nope"]\n',
+        "doc-roots names nope, which does not exist",
+    ),
+    (
+        'doc-roots = ["readme.rst"]\n',
+        "doc-roots names readme.rst, which is not a directory or a Markdown file",
+    ),
+    (
+        'doc-roots = ["../outside"]\n',
+        "doc-roots names ../outside, which is outside the project directory",
+    ),
+]
+
+
+class TestRootThatCannotBeUsed:
+    @pytest.mark.parametrize("command", ["sync", "check"])
+    @pytest.mark.parametrize("unusable_root", _UNUSABLE_ROOTS)
+    def test_stops_before_writing(
+        self, *, tmp_path, monkeypatch, capsys, command, unusable_root
+    ):
+        toml, problem = unusable_root
+        (tmp_path / "outside").mkdir()
+        project = tmp_path / "project"
+        (project / "src").mkdir(parents=True)
+        (project / "src" / "foo.py").write_text("def fn(): pass\n", encoding="utf-8")
+        (project / "setup.py").write_text("", encoding="utf-8")
+        (project / "readme.rst").write_text("= Title\n", encoding="utf-8")
+        config_file = project / ".uncoded.toml"
+        config_file.write_text(toml, encoding="utf-8")
+        monkeypatch.chdir(project)
+        before = _tree(root=tmp_path)
+
+        assert _run(monkeypatch=monkeypatch, arguments=[command]) == 1
+
         assert _tree(root=tmp_path) == before
         captured = capsys.readouterr()
         assert captured.out == ""
@@ -1169,72 +1169,6 @@ class TestSyncDocRoots:
         assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 0
         docs_yaml = (tmp_path / ".uncoded" / "docs.yaml").read_text(encoding="utf-8")
         assert "README.md" in docs_yaml
-
-    def test_error_when_doc_root_missing(self, *, tmp_path, monkeypatch, capsys):
-        (tmp_path / "pyproject.toml").write_text(
-            textwrap.dedent(
-                """\
-                [project]
-                name = "demo"
-
-                [tool.uncoded]
-                source-roots = ["src"]
-                doc-roots = ["nope"]
-                """
-            ),
-            encoding="utf-8",
-        )
-        (tmp_path / "src").mkdir()
-        (tmp_path / "src" / "foo.py").write_text(
-            "def hello(): pass\n", encoding="utf-8"
-        )
-        monkeypatch.chdir(tmp_path)
-        before = _tree(root=tmp_path)
-        assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 1
-        assert _tree(root=tmp_path) == before
-        err = capsys.readouterr().err
-        assert "Error: doc root nope" in err
-        assert "doc-roots" in err
-
-    def test_error_when_doc_root_is_non_md_file(self, *, tmp_path, monkeypatch, capsys):
-        rst_file = tmp_path / "readme.rst"
-        rst_file.write_text("= Title\n", encoding="utf-8")
-        (tmp_path / "pyproject.toml").write_text(
-            '[project]\nname = "demo"\n\n[tool.uncoded]\ndoc-roots = ["readme.rst"]\n',
-            encoding="utf-8",
-        )
-        monkeypatch.chdir(tmp_path)
-        assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 1
-        err = capsys.readouterr().err
-        assert "Error: doc root readme.rst" in err
-
-    def test_error_when_doc_root_outside_project_root(
-        self, *, tmp_path, monkeypatch, capsys
-    ):
-        # A doc-root that resolves outside the project root must produce a
-        # clear error, not an unhandled ValueError from relative_to.
-        project = tmp_path / "project"
-        project.mkdir()
-        shared = tmp_path / "shared-docs"
-        shared.mkdir()
-        (shared / "guide.md").write_text("# Guide\n", encoding="utf-8")
-        (project / "pyproject.toml").write_text(
-            textwrap.dedent(
-                """\
-                [project]
-                name = "demo"
-
-                [tool.uncoded]
-                doc-roots = ["../shared-docs"]
-                """
-            ),
-            encoding="utf-8",
-        )
-        monkeypatch.chdir(project)
-        assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 1
-        err = capsys.readouterr().err
-        assert "Error: doc root ../shared-docs" in err
-        assert "outside the project directory" in err
 
     def test_both_roots_writes_both_artefacts(self, *, tmp_path, monkeypatch):
         (tmp_path / "pyproject.toml").write_text(
