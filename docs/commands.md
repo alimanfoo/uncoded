@@ -124,5 +124,6 @@ Prints `uncoded` and the installed version, such as `uncoded 3.0.1`.
 
 `body` and `refs` exit with status `1` if the `--in` file is outside the project
 directory, the source cannot be read or parsed, the symbol is missing, or its
-name path is unsupported. A reference lookup also fails if the language server
-fails. Missing required arguments exit with status `2`.
+name path is unsupported. `refs` also exits with status `1` if ty fails, and
+passes on what ty and `uvx` wrote about why. Missing required arguments exit
+with status `2`.
