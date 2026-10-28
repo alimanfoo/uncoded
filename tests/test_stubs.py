@@ -11,8 +11,7 @@ from uncoded.extract import (
     PythonFile,
     TypeAliasSymbol,
     _extract_python_file,
-    extract_python_files,
-    read_source_files,
+    read_python_files,
 )
 from uncoded.markers import GENERATED_MARKER
 from uncoded.stubs import _render_stub, sync_stubs
@@ -26,11 +25,11 @@ def _setup(*, tmp_path):
 
 
 def _sync_root(*, source_root, out, tmp_path, check=False):
-    files, _skipped = read_source_files(
+    python_files, _skipped = read_python_files(
         source_root=source_root, project_directory=tmp_path
     )
     return sync_stubs(
-        python_files=extract_python_files(files=files),
+        python_files=python_files,
         output_dir=out,
         project_directory=tmp_path,
         check=check,
@@ -418,15 +417,15 @@ class TestSyncStubs:
         tests.mkdir()
         (src / "foo.py").write_text("def hello(): pass\n", encoding="utf-8")
         (tests / "test_foo.py").write_text("def test_hello(): pass\n", encoding="utf-8")
-        src_files, _skipped = read_source_files(
+        src_files, _skipped = read_python_files(
             source_root=src, project_directory=tmp_path
         )
-        test_files, _skipped = read_source_files(
+        test_files, _skipped = read_python_files(
             source_root=tests, project_directory=tmp_path
         )
 
         sync_stubs(
-            python_files=extract_python_files(files=src_files + test_files),
+            python_files=src_files + test_files,
             output_dir=out,
             project_directory=tmp_path,
             check=False,

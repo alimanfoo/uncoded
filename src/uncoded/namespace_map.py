@@ -1,13 +1,6 @@
 """Generate a YAML namespace map from extracted symbols."""
 
-from uncoded.extract import (
-    AssignmentSymbol,
-    ClassSymbol,
-    FunctionSymbol,
-    PythonFile,
-    Symbol,
-    TypeAliasSymbol,
-)
+from uncoded.extract import ClassSymbol, PythonFile
 from uncoded.markers import GENERATED_MARKER
 from uncoded.yaml_tree import nest_by_path, render_yaml_tree
 
@@ -23,19 +16,12 @@ _HEADER = f"""\
 """
 
 
-# The kinds of symbol in the order that the map lists them under a file.
-_KIND_ORDER = (AssignmentSymbol | TypeAliasSymbol, ClassSymbol, FunctionSymbol)
+def _members(*, cls: ClassSymbol) -> dict | None:
+    """Return the map entry under ``cls``: its members, or None when it has none.
 
-
-def _members(*, symbol: Symbol) -> dict | None:
-    """Return the map entry under ``symbol``: a class's members, or None.
-
-    A class with no members maps to None, as every other symbol does. A name
-    defined more than once in the class body is listed once.
+    A name defined more than once in the class body is listed once.
     """
-    if not isinstance(symbol, ClassSymbol):
-        return None
-    members = [s.name for s in symbol.attributes] + [s.name for s in symbol.methods]
+    members = [s.name for s in cls.attributes] + [s.name for s in cls.methods]
     return dict.fromkeys(members) or None
 
 
@@ -46,12 +32,12 @@ def _file_entry(*, python_file: PythonFile) -> dict:
     than once in the module body is listed once, where it is first defined, as
     the kind of its later definition.
     """
-    symbols = {symbol.name: symbol for symbol in python_file.symbols}.values()
+    later = {symbol.name: symbol for symbol in python_file.symbols}
+    symbols = PythonFile(rel_path=python_file.rel_path, symbols=list(later.values()))
     return {
-        symbol.name: _members(symbol=symbol)
-        for kind in _KIND_ORDER
-        for symbol in symbols
-        if isinstance(symbol, kind)
+        **dict.fromkeys(s.name for s in symbols.assignments),
+        **{cls.name: _members(cls=cls) for cls in symbols.classes},
+        **dict.fromkeys(s.name for s in symbols.functions),
     }
 
 

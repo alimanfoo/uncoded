@@ -1,7 +1,6 @@
 """Extract symbols from Python source files using the AST."""
 
 import ast
-from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -233,26 +232,25 @@ def _extract_python_file(*, source: str, rel_path: str) -> PythonFile:
     )
 
 
-def read_source_files(
+def read_python_files(
     *, source_root: Path, project_directory: Path
-) -> tuple[list[tuple[str, str]], list[SkippedFile]]:
-    """Read every Python file under ``source_root``, keeping those that parse.
+) -> tuple[list[PythonFile], list[SkippedFile]]:
+    """Read and extract every Python file under ``source_root`` that has symbols.
 
-    Returns the ``(source_text, rel_path)`` pair of every readable, parseable
-    file, and a :class:`SkippedFile` for every other one. Each ``rel_path`` is
-    the file's path relative to ``project_directory``.
+    Returns the :class:`PythonFile` of every readable, parseable file that has
+    symbols, and a :class:`SkippedFile` for every file that cannot be read or
+    parsed. Each ``rel_path`` is the file's path relative to
+    ``project_directory``.
 
     Source files are read under their declared PEP 263 encoding, UTF-8
     default. A file is skipped when it fails to read (OSError,
     UnicodeDecodeError, or a SyntaxError from a malformed encoding cookie) or
-    fails to parse (SyntaxError). Deciding this here lets
-    ``extract_python_files`` trust that it only receives readable, parseable
-    source.
+    fails to parse (SyntaxError).
     """
     source_root = source_root.resolve()
     project_directory = project_directory.resolve()
 
-    files: list[tuple[str, str]] = []
+    python_files: list[PythonFile] = []
     skipped: list[SkippedFile] = []
     for py_file in sorted(source_root.rglob("*.py")):
         rel_path = py_file.relative_to(project_directory).as_posix()
@@ -262,25 +260,11 @@ def read_source_files(
             skipped.append(SkippedFile(path=rel_path, reason=failure_reason(error=e)))
             continue
         try:
-            ast.parse(source, rel_path)
+            python_file = _extract_python_file(source=source, rel_path=rel_path)
         except SyntaxError as e:
             reason = f"SyntaxError at line {e.lineno}: {e.msg}"
             skipped.append(SkippedFile(path=rel_path, reason=reason))
             continue
-        files.append((source, rel_path))
-    return files, skipped
-
-
-def extract_python_files(*, files: Iterable[tuple[str, str]]) -> list[PythonFile]:
-    """Extract a :class:`PythonFile` for each file in *files* that has symbols.
-
-    *files* holds the readable files from :func:`read_source_files`, as
-    ``(source, rel_path)`` pairs where the source has already been
-    confirmed parseable. Pure transformation: no IO, no warnings, no
-    parsing decisions.
-    """
-    python_files = [
-        _extract_python_file(source=source, rel_path=rel_path)
-        for source, rel_path in files
-    ]
-    return [python_file for python_file in python_files if python_file.symbols]
+        if python_file.symbols:
+            python_files.append(python_file)
+    return python_files, skipped

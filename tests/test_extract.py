@@ -7,8 +7,7 @@ from uncoded.extract import (
     Parameter,
     TypeAliasSymbol,
     _extract_python_file,
-    extract_python_files,
-    read_source_files,
+    read_python_files,
 )
 from uncoded.read_helpers import SkippedFile
 
@@ -190,8 +189,9 @@ class TestReadAndExtract:
         (pkg / "_internal.py").write_text("def helper(): pass\n", encoding="utf-8")
         (pkg / "empty.py").write_text("# nothing here\n", encoding="utf-8")
 
-        files, _skipped = read_source_files(source_root=src, project_directory=tmp_path)
-        modules = extract_python_files(files=files)
+        modules, _skipped = read_python_files(
+            source_root=src, project_directory=tmp_path
+        )
 
         rel_paths = [m.rel_path for m in modules]
         assert "src/mypackage/core.py" in rel_paths
@@ -210,8 +210,9 @@ class TestReadAndExtract:
             "def format_output(): pass\n", encoding="utf-8"
         )
 
-        files, _skipped = read_source_files(source_root=src, project_directory=tmp_path)
-        modules = extract_python_files(files=files)
+        modules, _skipped = read_python_files(
+            source_root=src, project_directory=tmp_path
+        )
 
         rel_paths = [m.rel_path for m in modules]
         assert "src/mypackage/utils/formatting.py" in rel_paths
@@ -223,8 +224,9 @@ class TestReadAndExtract:
         (pkg / "__init__.py").write_text("def create(): pass\n", encoding="utf-8")
         (pkg / "core.py").write_text("def run(): pass\n", encoding="utf-8")
 
-        files, _skipped = read_source_files(source_root=src, project_directory=tmp_path)
-        modules = extract_python_files(files=files)
+        modules, _skipped = read_python_files(
+            source_root=src, project_directory=tmp_path
+        )
 
         rel_paths = [m.rel_path for m in modules]
         assert "src/mypackage/__init__.py" in rel_paths
@@ -237,8 +239,9 @@ class TestReadAndExtract:
         (pkg / "__init__.py").write_text("", encoding="utf-8")
         (pkg / "core.py").write_text("def run(): pass\n", encoding="utf-8")
 
-        files, _skipped = read_source_files(source_root=src, project_directory=tmp_path)
-        modules = extract_python_files(files=files)
+        modules, _skipped = read_python_files(
+            source_root=src, project_directory=tmp_path
+        )
 
         rel_paths = [m.rel_path for m in modules]
         assert not any("__init__.py" in p for p in rel_paths)
@@ -251,8 +254,9 @@ class TestReadAndExtract:
         (pkg / "good.py").write_text("def works(): pass\n", encoding="utf-8")
         (pkg / "bad.py").write_text("def broken(:\n", encoding="utf-8")
 
-        files, skipped = read_source_files(source_root=src, project_directory=tmp_path)
-        modules = extract_python_files(files=files)
+        modules, skipped = read_python_files(
+            source_root=src, project_directory=tmp_path
+        )
 
         rel_paths = [m.rel_path for m in modules]
         assert "src/mypackage/good.py" in rel_paths
@@ -269,7 +273,7 @@ class TestReadAndExtract:
         # A directory whose name ends in .py cannot be read as a file. The
         # reason leaves out the error's own copy of the path.
         (tmp_path / "src" / "pkg" / "notes.py").mkdir(parents=True)
-        files, skipped = read_source_files(
+        files, skipped = read_python_files(
             source_root=tmp_path / "src", project_directory=tmp_path
         )
         assert files == []
@@ -285,8 +289,8 @@ class TestReadAndExtract:
         pkg.mkdir(parents=True)
         (pkg / "good.py").write_text("def works(): pass\n", encoding="utf-8")
         (pkg / "binary.py").write_bytes(b"\xff\xfe not utf-8")
-        files, skipped = read_source_files(source_root=src, project_directory=tmp_path)
-        assert [rel for _, rel in files] == ["src/mypkg/good.py"]
+        files, skipped = read_python_files(source_root=src, project_directory=tmp_path)
+        assert [f.rel_path for f in files] == ["src/mypkg/good.py"]
         assert [s.path for s in skipped] == ["src/mypkg/binary.py"]
 
     def test_reads_latin1_declared_file(self, *, tmp_path):
@@ -298,52 +302,35 @@ class TestReadAndExtract:
         (pkg / "latin1.py").write_bytes(
             b"# -*- coding: latin-1 -*-\ndef caf\xe9(): pass\n"
         )
-        files, skipped = read_source_files(source_root=src, project_directory=tmp_path)
-        assert [rel for _, rel in files] == ["src/mypkg/latin1.py"]
+        files, skipped = read_python_files(source_root=src, project_directory=tmp_path)
+        assert [f.rel_path for f in files] == ["src/mypkg/latin1.py"]
         assert skipped == []
 
 
-class TestExtractPythonFiles:
-    def test_extracts_the_symbols_of_each_file(self):
-        files = [
-            ("def foo(): pass\n", "src/a.py"),
-            ("class Bar: pass\n", "src/b.py"),
-        ]
+class TestReadPythonFilesKeepsFilesWithSymbols:
+    def test_keeps_a_file_with_only_assignments(self, *, tmp_path):
+        pkg = tmp_path / "src" / "mypackage"
+        pkg.mkdir(parents=True)
+        (pkg / "__init__.py").write_text('__version__ = "1.0"\n', encoding="utf-8")
 
-        modules = extract_python_files(files=files)
-
-        assert [m.rel_path for m in modules] == ["src/a.py", "src/b.py"]
-        assert _names(symbols=modules[0].functions) == ["foo"]
-        assert modules[1].classes[0].name == "Bar"
-
-    def test_preserves_source_order(self):
-        files = [
-            ("def a(): pass\n", "src/a.py"),
-            ("def b(): pass\n", "src/b.py"),
-            ("def c(): pass\n", "src/c.py"),
-        ]
-
-        modules = extract_python_files(files=files)
-
-        assert [m.rel_path for m in modules] == ["src/a.py", "src/b.py", "src/c.py"]
-
-    def test_module_with_only_assignments_is_kept(self):
-        files = [('__version__ = "1.0"\n', "src/mypackage/__init__.py")]
-
-        modules = extract_python_files(files=files)
+        modules, _skipped = read_python_files(
+            source_root=tmp_path / "src", project_directory=tmp_path
+        )
 
         assert [m.rel_path for m in modules] == ["src/mypackage/__init__.py"]
 
-    def test_skips_files_with_no_symbols(self):
-        files = [
-            ("def foo(): pass\n", "src/a.py"),
-            ("# nothing here\n", "src/empty.py"),
-            ("class Bar: pass\n", "src/b.py"),
-        ]
+    def test_lists_files_in_path_order(self, *, tmp_path):
+        src = tmp_path / "src"
+        src.mkdir()
+        for name in ("c", "a", "b"):
+            (src / f"{name}.py").write_text(f"def {name}(): pass\n", encoding="utf-8")
 
-        modules = extract_python_files(files=files)
+        modules, _skipped = read_python_files(
+            source_root=src, project_directory=tmp_path
+        )
 
-        assert [m.rel_path for m in modules] == ["src/a.py", "src/b.py"]
+        assert [m.rel_path for m in modules] == ["src/a.py", "src/b.py", "src/c.py"]
+        assert _names(symbols=modules[0].functions) == ["a"]
 
 
 class TestExtractPythonFile:
