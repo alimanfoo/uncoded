@@ -134,14 +134,12 @@ repos:
         language: system
         always_run: true
         pass_filenames: false
-      # Checks that the stubs that the uncoded hook has just written match the
+      # Checks the stubs that the uncoded hook has just written against the
       # standard stub style, so a ruff release that changes that style fails
       # here. .uncoded/.gitignore ignores the whole index, so ruff must not
       # respect it, or it finds no files. A stub keeps the quotes that
       # ast.unparse writes and one line for each signature, so the hook
-      # preserves quotes, and sets the longest line length that ruff allows so
-      # that ruff does not wrap a long signature. A stub line longer than 320
-      # characters fails the hook.
+      # preserves quotes and stops ruff from wrapping long lines.
       - id: stub-style
         name: check the stubs' style
         entry: uv run ruff format --check --no-respect-gitignore --line-length 320 --config 'format.quote-style="preserve"' .uncoded/stubs
