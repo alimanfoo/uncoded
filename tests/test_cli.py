@@ -13,7 +13,7 @@ from unittest import mock
 
 import pytest
 
-from uncoded import cli
+from uncoded import __version__, cli
 from uncoded.skill import SKILL_ROOTS, SKILLS, _skill_path
 
 # Paths split by gate so tests can assert the right subset.
@@ -426,6 +426,13 @@ class TestMainDispatch:
         with pytest.raises(SystemExit):
             cli.main()
 
+    def test_version_flag_prints_version(self, monkeypatch, capsys):
+        monkeypatch.setattr(sys, "argv", ["uncoded", "--version"])
+        with pytest.raises(SystemExit) as exc_info:
+            cli.main()
+        assert exc_info.value.code == 0
+        assert capsys.readouterr().out == f"uncoded {__version__}\n"
+
     def test_unknown_subcommand_is_an_error(self, tmp_path, monkeypatch):
         _init_repo(tmp_path, monkeypatch)
         monkeypatch.setattr(sys, "argv", ["uncoded", "nonsense"])
@@ -469,8 +476,23 @@ class TestBodyCommand:
     def test_file_not_found_exits_one(self, tmp_path, monkeypatch, capsys):
         _init_repo(tmp_path, monkeypatch)
 
-        assert cli._body(name_path="fn", in_path="src/nonexistent.py") == 1
-        assert "nonexistent.py" in capsys.readouterr().err
+        # The --in path is given with the system's separator, and the message
+        # shows it with /, on Windows too.
+        in_path = str(Path("src") / "nonexistent.py")
+        assert cli._body(name_path="fn", in_path=in_path) == 1
+        assert capsys.readouterr().err == "Error: src/nonexistent.py: file not found.\n"
+
+    def test_unreadable_file_names_it_with_slashes(self, tmp_path, monkeypatch, capsys):
+        # A directory cannot be read as a source file. The error that the
+        # system gives names it, and that name uses / on Windows too.
+        _init_repo(tmp_path, monkeypatch)
+        (tmp_path / "src" / "pkg").mkdir()
+
+        in_path = str(Path("src") / "pkg")
+        assert cli._body(name_path="fn", in_path=in_path) == 1
+        err = capsys.readouterr().err
+        assert err.startswith("Error: src/pkg: ")
+        assert "\\" not in err
 
     def test_syntax_error_exits_one(self, tmp_path, monkeypatch, capsys):
         _init_repo(tmp_path, monkeypatch)

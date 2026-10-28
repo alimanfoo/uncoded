@@ -20,10 +20,25 @@ includes it. Each entry links the pull request that made the change.
 
 ## Unreleased
 
+### Breaking
+
+- On Windows, the paths that `uncoded refs` prints and the path comment in each
+  stub use `/` to separate directories, as the namespace map and the docs map
+  already do. So does every path in a message or a warning.
+  ([#312](https://github.com/alimanfoo/uncoded/pull/312))
+
+### Added
+
+- `uncoded --version` prints the installed version.
+  ([#312](https://github.com/alimanfoo/uncoded/pull/312))
+
 ### Fixed
 
 - `uncoded refs` runs ty 0.0.92, in place of 0.0.53, and finds references that
   the older ty missed. ([#308](https://github.com/alimanfoo/uncoded/pull/308))
+- `uncoded refs` on Windows prints each reference's path relative to the current
+  directory, in place of a path that names no file.
+  ([#312](https://github.com/alimanfoo/uncoded/pull/312))
 
 ## [3.0.1](https://github.com/alimanfoo/uncoded/releases/tag/v3.0.1) — 2026-10-09
 

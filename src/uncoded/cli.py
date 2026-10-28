@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 from typing import Literal
 
+from uncoded import __version__
 from uncoded.body import resolve_body
 from uncoded.config import ConfigError, read_config
 from uncoded.docs_map import build_docs_map, iter_doc_files, render_docs_map
@@ -32,10 +33,11 @@ def _validate_root(
     is not a valid target. When accepts_md_file is True, a lone .md file is
     also valid. kind selects the noun used in the error messages.
     """
+    root_label = f"{kind} root {configured.as_posix()}"
     resolved = (project_root / configured).resolve()
     if not resolved.is_relative_to(resolved_project_root):
         raise ConfigError(
-            f"{kind} root {configured} is outside the project root. "
+            f"{root_label} is outside the project root. "
             f"Check {kind}-roots in your uncoded config file."
         )
     is_valid = resolved.is_dir() or (
@@ -44,11 +46,11 @@ def _validate_root(
     if not is_valid:
         if accepts_md_file:
             raise ConfigError(
-                f"{kind} root {configured} is not a directory or .md file. "
+                f"{root_label} is not a directory or .md file. "
                 f"Check {kind}-roots in your uncoded config file."
             )
         raise ConfigError(
-            f"{kind} root {configured} is not a directory. "
+            f"{root_label} is not a directory. "
             f"Check {kind}-roots in your uncoded config file."
         )
     return resolved
@@ -233,14 +235,15 @@ def _report_lookup_error(exc: Exception, *, name_path: str, in_path: str) -> int
     path, symbol not found, file not found, and read/parse error.
     FileNotFoundError is checked before OSError because it subclasses it.
     """
+    shown_path = Path(in_path).as_posix()
     if isinstance(exc, UnsupportedNamePathError):
         print(f"Error: {exc}", file=sys.stderr)
     elif isinstance(exc, SymbolNotFoundError):
-        print(f"Error: {name_path!r} not found in {in_path}", file=sys.stderr)
+        print(f"Error: {name_path!r} not found in {shown_path}", file=sys.stderr)
     elif isinstance(exc, FileNotFoundError):
-        print(f"Error: {in_path}: file not found.", file=sys.stderr)
+        print(f"Error: {shown_path}: file not found.", file=sys.stderr)
     else:
-        print(f"Error: {in_path}: {exc}", file=sys.stderr)
+        print(f"Error: {shown_path}: {exc}", file=sys.stderr)
     return 1
 
 
@@ -293,7 +296,7 @@ def _refs(*, name_path: str, in_path: str) -> int:
         return _report_lookup_error(e, name_path=name_path, in_path=in_path)
 
     for ref in refs:
-        print(f"{ref.path}:{ref.line}:{ref.col}")
+        print(f"{ref.path.as_posix()}:{ref.line}:{ref.col}")
     return 0
 
 
@@ -317,6 +320,9 @@ def main() -> int:
     parser = argparse.ArgumentParser(
         prog="uncoded",
         description="Build a navigation index for AI coding agents.",
+    )
+    parser.add_argument(
+        "--version", action="version", version=f"%(prog)s {__version__}"
     )
     subparsers = parser.add_subparsers(required=True)
 

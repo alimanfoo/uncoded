@@ -375,9 +375,11 @@ Settled in #261:
   remove a generated file, it says which file and why, in place of a Python
   traceback. Two `uncoded sync` runs at once can meet this, and uncoded adds no
   lock to prevent it: nobody has reported the race, and a lock is new machinery.
-- **Paths use `/` on every system** (**Breaking**). `uncoded refs` output,
-  `uncoded sync` messages and warnings, and the path comment in each stub use
-  `/` on Windows too, as the namespace map and docs map already do.
+- **Paths use `/` on every system** (**Breaking**). `uncoded refs` output, the
+  path comment in each stub, and every path in a message or a warning use `/` on
+  Windows too, as the namespace map and docs map already do. Stage 7 built this
+  in #312, which also found that `uncoded refs` on Windows turned each of ty's
+  file URIs into a path that named no file, and fixed it.
 - **Messages point to `uncoded init`** where a configuration file is missing.
 - **Only the current skills are removed** (**Changed**). `uncoded sync` stops
   removing the skill names of earlier versions of uncoded, `coherence-review`,

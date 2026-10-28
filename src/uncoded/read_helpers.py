@@ -13,15 +13,15 @@ def read_source_text(path: Path) -> str:
     UnicodeDecodeError if the bytes don't match the declared or default
     encoding, and SyntaxError if the coding cookie is malformed or names an
     unknown codec (tokenize.open re-raises codec lookup failures as
-    SyntaxError).
+    SyntaxError). The OSError and the SyntaxError name the file with ``/``
+    separators, on Windows too, because the file is opened by that form of
+    its path.
     """
-    with tokenize.open(path) as f:
+    with tokenize.open(path.as_posix()) as f:
         return f.read()
 
 
-def read_source_text_or_warn(
-    path: Path, *, warning_path: Path | str | None = None
-) -> str | None:
+def read_source_text_or_warn(path: Path, *, warning_path: str) -> str | None:
     """Read a Python source file, returning None and warning to stderr on failure.
 
     Wraps read_source_text and catches OSError, UnicodeDecodeError, and
@@ -29,21 +29,18 @@ def read_source_text_or_warn(
     stderr and returns None so callers can skip-and-continue without aborting
     the whole sync.
 
-    warning_path overrides the path shown in the warning message; pass a
-    project-relative path so the warning matches the format used for other
-    skip messages in the same iterator.
+    warning_path is the path shown in the warning message. Pass the
+    project-relative path with ``/`` separators, so the warning matches the
+    other skip messages in the same iterator.
     """
     try:
         return read_source_text(path)
     except (OSError, UnicodeDecodeError, SyntaxError) as e:
-        label = warning_path if warning_path is not None else path
-        print(f"warning: skipping {label}: {e}", file=sys.stderr)
+        print(f"warning: skipping {warning_path}: {_reason(e)}", file=sys.stderr)
         return None
 
 
-def read_doc_text_or_warn(
-    path: Path, *, warning_path: Path | str | None = None
-) -> str | None:
+def read_doc_text_or_warn(path: Path, *, warning_path: str) -> str | None:
     """Read a Markdown document as UTF-8, returning None and warning on failure.
 
     Strips a leading UTF-8 BOM on read. Files without a BOM are unaffected.
@@ -52,13 +49,21 @@ def read_doc_text_or_warn(
     unreadable or contains non-UTF-8 bytes, so callers can skip-and-continue
     without aborting the whole sync.
 
-    warning_path overrides the path shown in the warning message; pass a
-    project-relative path so the warning matches the format used for other
-    skip messages in the same iterator.
+    warning_path is the path shown in the warning message. Pass the
+    project-relative path with ``/`` separators, so the warning matches the
+    other skip messages in the same iterator.
     """
     try:
         return path.read_text(encoding="utf-8-sig")
     except (UnicodeDecodeError, OSError) as e:
-        label = warning_path if warning_path is not None else path
-        print(f"warning: skipping {label}: {e}", file=sys.stderr)
+        print(f"warning: skipping {warning_path}: {_reason(e)}", file=sys.stderr)
         return None
+
+
+def _reason(error: Exception) -> str:
+    # The warning names the file already. An OSError from the system names it
+    # again, by its absolute path in the system's form, so give only the
+    # reason. An OSError without one has only its own text.
+    if isinstance(error, OSError):
+        return error.strerror or str(error)
+    return str(error)

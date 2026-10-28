@@ -147,7 +147,9 @@ Private symbols (underscore-prefixed) and test code are exempt.
 ## Testing
 
 The test suite enforces 100% branch coverage. The threshold is set in
-`[tool.coverage.report]` in `pyproject.toml`.
+`[tool.coverage.report]` in `pyproject.toml`. In CI, the coverage job in
+`.github/workflows/ci.yml` applies it to the coverage of every test job
+combined.
 
 Cover both arms of every branch. If an arm looks unreachable, the branch is dead
 code. Remove or restructure it rather than reach for a coverage pragma. The repo

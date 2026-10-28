@@ -32,7 +32,7 @@ dev = [
     "pytest>=8.0",
     "pytest-cov>=6.0",
     "ruff==0.15.19",
-    "ty>=0.0.53",
+    "ty>=0.0.93",
 ]
 
 [project.scripts]
@@ -47,6 +47,12 @@ Discussions = "https://github.com/alimanfoo/uncoded/discussions"
 [tool.hatch.version]
 source = "vcs"
 
+# The sdist carries the package alone, beside the files that hatchling reads
+# itself, such as README.md and LICENSE. The tests, documentation, specs and
+# agent skills stay in the repository, as no downstream packager is supported.
+[tool.hatch.build.targets.sdist]
+only-include = ["src"]
+
 [tool.uncoded]
 source-roots = ["src", "tests"]
 doc-roots = ["README.md", "AGENTS.md", "docs", "src/uncoded"]
@@ -60,6 +66,7 @@ markers = ["integration: spawns real ty subprocess (requires uvx)"]
 [tool.coverage.run]
 source = ["src"]
 branch = true
+relative_files = true
 
 [tool.coverage.report]
 show_missing = true

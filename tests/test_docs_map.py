@@ -155,23 +155,37 @@ class TestIterDocFiles:
     def test_skips_non_utf8_file_with_warning(self, tmp_path, capsys):
         # A file with invalid UTF-8 bytes must be skipped with a warning;
         # other files in the same directory must still yield.
-        (tmp_path / "good.md").write_text("# Good\n", encoding="utf-8")
-        (tmp_path / "bad.md").write_bytes(b"\xff\xfe not utf-8")
-        results = list(iter_doc_files(tmp_path, tmp_path))
+        guide = tmp_path / "docs" / "guide"
+        guide.mkdir(parents=True)
+        (guide / "good.md").write_text("# Good\n", encoding="utf-8")
+        (guide / "bad.md").write_bytes(b"\xff\xfe not utf-8")
+        results = list(iter_doc_files(tmp_path / "docs", tmp_path))
         assert len(results) == 1
         assert results[0][1].name == "good.md"
         err = capsys.readouterr().err
-        assert "warning: skipping bad.md" in err
+        assert "warning: skipping docs/guide/bad.md" in err
+
+    def test_skips_unreadable_file_with_reason(self, tmp_path, capsys):
+        # A directory whose name ends in .md cannot be read as a file. The
+        # warning gives the reason without the error's own copy of the path,
+        # which would use the system's separator.
+        (tmp_path / "docs" / "notes.md").mkdir(parents=True)
+        results = list(iter_doc_files(tmp_path / "docs", tmp_path))
+        assert results == []
+        err = capsys.readouterr().err
+        assert err.startswith("warning: skipping docs/notes.md: ")
+        assert str(tmp_path) not in err
 
     def test_single_file_root_unreadable_yields_nothing(self, tmp_path, capsys):
         # When the single-file root itself is unreadable, the iterator yields
         # nothing and emits a warning with the project-relative path.
-        bad = tmp_path / "bad.md"
+        (tmp_path / "docs").mkdir()
+        bad = tmp_path / "docs" / "bad.md"
         bad.write_bytes(b"\xff\xfe not utf-8")
         results = list(iter_doc_files(bad, tmp_path))
         assert results == []
         err = capsys.readouterr().err
-        assert "warning: skipping bad.md" in err
+        assert "warning: skipping docs/bad.md" in err
 
     def test_bom_prefixed_file_heading_appears(self, tmp_path):
         # A UTF-8 BOM before the first heading must not suppress it.

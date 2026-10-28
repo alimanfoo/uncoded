@@ -104,17 +104,18 @@ class TestSyncFileProjectRootAnchor:
         self, tmp_path, monkeypatch, capsys
     ):
         monkeypatch.chdir(tmp_path)
-        rel = Path("out.txt")
+        rel = Path("nested/out.txt")
         sync_file(rel, "hello", project_root=tmp_path)
         out = capsys.readouterr().out
-        # Display stays project-relative; absolute path does not leak in.
-        assert f"Wrote {rel}" in out
+        # Display stays project-relative, with / on every system; absolute
+        # path does not leak in.
+        assert "Wrote nested/out.txt" in out
         assert str(tmp_path) not in out
 
 
 class TestRemoveFileProjectRootAnchor:
     def test_project_root_anchors_removal_independent_of_cwd(
-        self, tmp_path, monkeypatch
+        self, tmp_path, monkeypatch, capsys
     ):
         sub = tmp_path / "subdir"
         sub.mkdir()
@@ -128,3 +129,4 @@ class TestRemoveFileProjectRootAnchor:
         changed = remove_file(rel, project_root=tmp_path)
         assert changed is True
         assert not target.exists()
+        assert "Removed nested/out.txt" in capsys.readouterr().out
