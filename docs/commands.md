@@ -1,7 +1,6 @@
 # Commands
 
-Run uncoded with `uvx uncoded`. In a checkout of uncoded itself,
-`uv run uncoded` runs the code in the checkout.
+Run uncoded with `uvx uncoded`.
 
 | To…                                   | Use                                        |
 | ------------------------------------- | ------------------------------------------ |

@@ -62,22 +62,9 @@ that fails one needs a strong reason.
 ## Commands
 
 This project uses [uv](https://docs.astral.sh/uv/). Run all commands via
-`uv run`. `uvx uncoded` runs the published PyPI release, not the local editable
-install, which may have different behaviour.
+`uv run`.
 
 ```sh
-# Generate or update the index and the skills
-uv run uncoded sync
-
-# Verify the generated files without writing. It exits non-zero if any would change
-uv run uncoded check
-
-# Print the definition of a named symbol to stdout
-uv run uncoded body <name_path> --in <relative_path>
-
-# Find references to a symbol
-uv run uncoded refs <name_path> --in <relative_path>
-
 # Run tests. PYTHONWARNDEFAULTENCODING=1 arms the EncodingWarning gate.
 # pytest enforces branch coverage. See [tool.coverage.report] in pyproject.toml.
 PYTHONWARNDEFAULTENCODING=1 uv run pytest
@@ -106,14 +93,8 @@ Clone and install dev dependencies:
 git clone https://github.com/alimanfoo/uncoded
 cd uncoded
 uv sync
-uv run uncoded sync
 uv run pre-commit install
 ```
-
-This repo uses uncoded on itself. The pre-commit hook runs `uv run uncoded sync`
-on each commit. The local `.uncoded/` index is ignored. If the hook modifies a
-tracked generated skill file, the commit fails. Re-stage the skill file and
-commit again.
 
 ### Windows
 
@@ -237,9 +218,7 @@ applies a general rule, has an entry in
 it.
 
 **Index local.** `uncoded sync` writes `.uncoded/.gitignore`, which keeps the
-whole index out of Git. Run `uv run uncoded sync` after every indexed source or
-documentation change and before using the index again. The pre-commit hook is a
-final refresh. See [Commands](#commands) and [Dev setup](#dev-setup).
+whole index out of Git.
 
 ## Releasing
 
