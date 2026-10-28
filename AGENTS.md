@@ -163,14 +163,24 @@ Cover both arms of every branch. If an arm looks unreachable, the branch is dead
 code. Remove or restructure it rather than reach for a coverage pragma. The repo
 carries no coverage pragmas.
 
-## Concepts and stories
+## Enduring documents
 
-[docs/concepts.md](docs/concepts.md) says what the words mean. Use its words and
-no others.
+These documents hold uncoded to account. Read them before you work.
 
-[docs/stories.md](docs/stories.md) says what users do with uncoded and what they
-see, including what happens when things go wrong. Behaviour that contradicts a
-story is a bug.
+- [docs/concepts.md](docs/concepts.md) says what the words mean. Use its words
+  and no others.
+- [docs/stories.md](docs/stories.md) says what users do with uncoded and what
+  they see, including what happens when things go wrong. Behaviour that
+  contradicts a story is a bug.
+- [docs/architecture.md](docs/architecture.md) says where each thing lives in
+  the code.
+- [docs/standard.md](docs/standard.md) says how good the work has to be and how
+  we tell.
+
+Give every pull request description a section headed "Definition of done". In
+it, answer each question of
+[the standard's definition of done](docs/standard.md#definition-of-done) by its
+title, in bold, followed by the evidence.
 
 ## Conventions
 
