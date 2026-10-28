@@ -78,7 +78,7 @@ def _make_index_stale(*, tmp_path, monkeypatch):
 
 
 class TestSyncApplyMode:
-    def test_syncs_code_navigation_artefacts(self, *, tmp_path, monkeypatch):
+    def test_syncs_code_index_and_skills(self, *, tmp_path, monkeypatch):
         _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "src" / "foo.py").write_text(
             "def hello(): pass\n", encoding="utf-8"
@@ -106,7 +106,7 @@ class TestSyncApplyMode:
         )
         skill_mtimes = [(tmp_path / p).stat().st_mtime_ns for p in _SOURCE_SKILL_PATHS]
 
-        # A second run with no source changes must not rewrite any artifact.
+        # A second run with no source changes must not rewrite any generated file.
         assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 0
         assert (tmp_path / ".uncoded" / ".gitignore").stat().st_mtime_ns == ignore_mtime
         assert (tmp_path / ".uncoded" / "namespace.yaml").stat().st_mtime_ns == ns_mtime
@@ -272,7 +272,7 @@ class TestSyncApplyMode:
         self, *, tmp_path, monkeypatch
     ):
         # Running from a subdirectory of the project must produce
-        # artefacts at the project directory, not under the subdirectory.
+        # generated files in the project directory, not under the subdirectory.
         # Reads (source files, pyproject) anchor at project_directory; writes
         # (namespace, stubs, skill files) do too.
         (tmp_path / "pyproject.toml").write_text(
@@ -303,7 +303,7 @@ class TestSyncApplyMode:
         assert "src/:" in content
         assert "foo.py:" in content
 
-        # Writes anchored: every artefact lands at project_directory, never
+        # Writes anchored: every generated file lands in project_directory, never
         # under the subdirectory cwd.
         assert (tmp_path / ".uncoded" / "stubs" / "src" / "foo.pyi").exists()
         assert (tmp_path / ".uncoded" / ".gitignore").exists()
@@ -313,10 +313,10 @@ class TestSyncApplyMode:
         for skill_path in _SOURCE_SKILL_PATHS:
             assert not (tmp_path / "src" / skill_path).exists()
 
-    def test_artefacts_match_when_run_from_subdir_vs_project_directory(
+    def test_generated_files_match_when_run_from_subdir_vs_project_directory(
         self, *, tmp_path, monkeypatch
     ):
-        # Behavioural acceptance for GH84: identical artefacts in
+        # Behavioural acceptance for GH84: identical generated files in
         # identical locations whether sync runs from the project directory
         # or from a subdirectory.
         def _mk_repo(*, under: Path) -> None:
@@ -370,7 +370,7 @@ class TestSyncCheckMode:
         )
 
         assert _run(monkeypatch=monkeypatch, arguments=["check"]) == 1
-        # No artifacts written.
+        # No generated files written.
         assert not (tmp_path / ".uncoded").exists()
 
     def test_returns_zero_when_index_is_up_to_date(self, *, tmp_path, monkeypatch):
@@ -452,7 +452,7 @@ class TestMainDispatch:
         monkeypatch.setattr(sys, "argv", ["uncoded", "check"])
 
         assert cli.main() == 1
-        # No artifacts written in check mode.
+        # No generated files written in check mode.
         assert not (tmp_path / ".uncoded").exists()
 
     def test_check_subcommand_returns_zero_on_fresh_index(
@@ -1465,7 +1465,7 @@ def _init_doc_repo(*, tmp_path, monkeypatch, doc_roots=("docs",)):
 
 
 class TestSyncDocRoots:
-    def test_syncs_doc_navigation_artefacts(self, *, tmp_path, monkeypatch):
+    def test_syncs_documentation_index_and_skill(self, *, tmp_path, monkeypatch):
         _init_doc_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
         assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 0
         assert (tmp_path / ".uncoded" / ".gitignore").exists()
@@ -1493,7 +1493,7 @@ class TestSyncDocRoots:
         docs_yaml = (tmp_path / ".uncoded" / "docs.yaml").read_text(encoding="utf-8")
         assert "README.md" in docs_yaml
 
-    def test_both_roots_writes_both_artefacts(self, *, tmp_path, monkeypatch):
+    def test_both_kinds_of_root_write_both_indexes(self, *, tmp_path, monkeypatch):
         (tmp_path / "pyproject.toml").write_text(
             textwrap.dedent(
                 """\
@@ -1520,7 +1520,7 @@ class TestSyncDocRoots:
         assert (tmp_path / ".uncoded" / "namespace.yaml").exists()
         assert (tmp_path / ".uncoded" / "docs.yaml").exists()
 
-    def test_source_root_removal_cleans_code_artefacts(self, *, tmp_path, monkeypatch):
+    def test_source_root_removal_removes_code_index(self, *, tmp_path, monkeypatch):
         # First sync with source-roots; then reconfigure to doc-only.
         # namespace.yaml and stubs must be removed.
         (tmp_path / "pyproject.toml").write_text(
@@ -1570,7 +1570,9 @@ class TestSyncDocRoots:
         for path in _SOURCE_SKILL_PATHS:
             assert not (tmp_path / path).exists()
 
-    def test_doc_root_removal_cleans_doc_artefacts(self, *, tmp_path, monkeypatch):
+    def test_doc_root_removal_removes_documentation_index(
+        self, *, tmp_path, monkeypatch
+    ):
         # First sync with doc-roots; then drop them.
         (tmp_path / "pyproject.toml").write_text(
             textwrap.dedent(

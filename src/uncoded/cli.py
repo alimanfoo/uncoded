@@ -48,10 +48,10 @@ def _warn_skipped(*, skipped: list[SkippedFile]) -> None:
         print(f"warning: skipped {len(skipped)} file(s)", file=sys.stderr)
 
 
-def _sync_code_artefacts(
+def _sync_code_index(
     *, source_roots: list[Path], project_directory: Path, check: bool
 ) -> tuple[int, list[SkippedFile]]:
-    """Build or remove the code artefacts (namespace map and stubs).
+    """Build or remove the code index: the namespace map and the stubs.
 
     Collects the source files beneath the resolved ``source_roots`` and writes
     the namespace map and the stub files, removing every stub that those files
@@ -91,10 +91,10 @@ def _sync_code_artefacts(
     return n, all_skipped
 
 
-def _sync_doc_artefacts(
+def _sync_documentation_index(
     *, doc_roots: list[Path], project_directory: Path, check: bool
 ) -> tuple[int, list[SkippedFile]]:
-    """Build or remove the doc artefact (docs.yaml).
+    """Build or remove the documentation index, the docs map.
 
     With no doc roots, removes docs.yaml. Otherwise collects the Markdown files
     in the resolved ``doc_roots`` and writes docs.yaml. Returns the change
@@ -126,17 +126,16 @@ def _sync_doc_artefacts(
 
 
 def _sync(*, config: Config, check: bool = False) -> int:
-    """Sync (or verify) the index artefacts of the project that config configures.
+    """Sync (or verify) the generated files of the project that config configures.
 
     Every writer anchors the project-relative paths that it reads or writes at
     ``config.project_directory``, so running from a subdirectory of the project
-    produces artefacts in the same locations as running from the project
-    directory.
+    writes the same files as running from the project directory.
 
-    source-roots drive code artefacts (namespace.yaml, stubs); doc-roots
-    drive doc artefacts (docs.yaml). Each root type is independent: when
-    a root type is absent its artefacts are removed. Every root is checked
-    before anything is written. Before writing any index artefact, sync writes
+    The source roots drive the code index (namespace.yaml, stubs), and the doc
+    roots drive the documentation index (docs.yaml). Each part is independent:
+    with no roots of its kind, its files are removed. Every root is checked
+    before anything is written. Before writing any file of the index, sync writes
     .uncoded/.gitignore so the index stays local by default. Raises ConfigError
     when the configuration names no roots or a root cannot be used, and
     FileSyncError when a generated file cannot be read, written or removed. A
@@ -170,7 +169,7 @@ def _sync(*, config: Config, check: bool = False) -> int:
         check=check,
     )
 
-    code_changes, code_skipped = _sync_code_artefacts(
+    code_changes, code_skipped = _sync_code_index(
         source_roots=source_roots, project_directory=project_directory, check=check
     )
     changes += code_changes
@@ -180,7 +179,7 @@ def _sync(*, config: Config, check: bool = False) -> int:
         project_directory=project_directory,
         check=check,
     )
-    doc_changes, doc_skipped = _sync_doc_artefacts(
+    doc_changes, doc_skipped = _sync_documentation_index(
         doc_roots=doc_roots, project_directory=project_directory, check=check
     )
     changes += doc_changes
@@ -388,7 +387,7 @@ def main() -> int:
 
     sync_parser = subparsers.add_parser(
         "sync",
-        help="Build or refresh generated navigation artefacts.",
+        help="Build or refresh the index and the skills.",
     )
     sync_parser.set_defaults(
         find_project=read_config,

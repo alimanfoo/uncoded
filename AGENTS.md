@@ -16,7 +16,7 @@ A static, pre-computed index gives agents a top-down view of a codebase. The
 agent loads the index at the start of a task. It sees the full vocabulary of the
 code and navigates directly to what it needs, without guessing or grepping.
 
-Index artefacts, generated from the configured roots:
+The index files, generated from the roots:
 
 1. **Namespace map** (`.uncoded/namespace.yaml`). A hierarchical YAML file
    listing all symbols: directories, files, classes (with attributes and
@@ -64,7 +64,7 @@ This project uses [uv](https://docs.astral.sh/uv/). Run all commands via
 install, which may have different behaviour.
 
 ```sh
-# Generate or update the navigation artefacts
+# Generate or update the index and the skills
 uv run uncoded sync
 
 # Verify the index without writing. It exits non-zero if any file would change
