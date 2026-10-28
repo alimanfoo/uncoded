@@ -158,9 +158,10 @@ class TestSyncApplyMode:
             encoding="utf-8",
         )
         monkeypatch.chdir(tmp_path)
+        before = _tree(root=tmp_path)
 
         assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 1
-        assert (tmp_path / ".uncoded" / ".gitignore").exists()
+        assert _tree(root=tmp_path) == before
 
         err = capsys.readouterr().err
         assert "Error: source root nope is not a directory." in err
@@ -1188,8 +1189,9 @@ class TestSyncDocRoots:
             "def hello(): pass\n", encoding="utf-8"
         )
         monkeypatch.chdir(tmp_path)
+        before = _tree(root=tmp_path)
         assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 1
-        assert (tmp_path / ".uncoded" / ".gitignore").exists()
+        assert _tree(root=tmp_path) == before
         err = capsys.readouterr().err
         assert "Error: doc root nope" in err
         assert "doc-roots" in err
