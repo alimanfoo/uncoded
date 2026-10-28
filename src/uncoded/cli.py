@@ -254,16 +254,14 @@ _LOOKUP_ERRORS = (
 )
 
 
-def _report_lookup_error(*, exc: Exception, name_path: str, in_path: str) -> int:
+def _report_lookup_error(*, exc: Exception, in_path: str) -> int:
     """Print the CLI error message for a lookup failure and return 1.
 
     Covers the error arms that _body and _refs share.
     """
     shown_path = Path(in_path).as_posix()
-    if isinstance(exc, UnsupportedNamePathError):
+    if isinstance(exc, UnsupportedNamePathError | SymbolNotFoundError):
         print(f"Error: {exc}", file=sys.stderr)
-    elif isinstance(exc, SymbolNotFoundError):
-        print(f"Error: {name_path!r} not found in {shown_path}", file=sys.stderr)
     else:
         print(f"Error: {shown_path}: {failure_reason(error=exc)}", file=sys.stderr)
     return 1
@@ -285,7 +283,7 @@ def _body(*, config: Config, name_path: str, in_path: str) -> int:
             name_path=NamePath.parse(raw=name_path), in_path=target
         )
     except _LOOKUP_ERRORS as e:
-        return _report_lookup_error(exc=e, name_path=name_path, in_path=in_path)
+        return _report_lookup_error(exc=e, in_path=in_path)
 
     # Write through a wrapper that encodes as standard output does, but does
     # not turn each "\n" into "\r\n", as standard output does on Windows.
@@ -323,7 +321,7 @@ def _refs(*, config: Config, name_path: str, in_path: str) -> int:
         print(f"Error: {e}", file=sys.stderr)
         return 1
     except _LOOKUP_ERRORS as e:
-        return _report_lookup_error(exc=e, name_path=name_path, in_path=in_path)
+        return _report_lookup_error(exc=e, in_path=in_path)
 
     for ref in refs:
         print(f"{ref.path.as_posix()}:{ref.line}:{ref.col}")
