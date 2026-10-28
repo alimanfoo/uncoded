@@ -25,7 +25,6 @@ classifiers = [
 [dependency-groups]
 dev = [
     "complexipy==5.6.1",
-    "hypothesis>=6.0",
     "import-linter==2.15",
     "mkdocs==1.6.1",
     "mkdocs-material==9.7.7",
