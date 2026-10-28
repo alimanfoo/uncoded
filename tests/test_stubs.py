@@ -59,7 +59,7 @@ class TestRenderStub:
                 FunctionSymbol(name="run"),
                 ClassSymbol(
                     name="Worker",
-                    methods=[
+                    members=[
                         FunctionSymbol(
                             name="work",
                             params=[Parameter("self")],
@@ -164,7 +164,7 @@ class TestRenderStub:
             symbols=[
                 ClassSymbol(
                     name="Record",
-                    attributes=[AssignmentSymbol("name", annotation="str")],
+                    members=[AssignmentSymbol("name", annotation="str")],
                 )
             ],
         )
@@ -176,7 +176,7 @@ class TestRenderStub:
             symbols=[
                 ClassSymbol(
                     name="Foo",
-                    methods=[
+                    members=[
                         FunctionSymbol(
                             name="bar",
                             params=[Parameter("self")],
@@ -258,7 +258,7 @@ class TestRenderStub:
             symbols=[
                 ClassSymbol(
                     name="Registry",
-                    attributes=[AssignmentSymbol("items", value="[]")],
+                    members=[AssignmentSymbol("items", value="[]")],
                 )
             ],
         )
@@ -360,21 +360,61 @@ class TestRenderStub:
 
         assert output.endswith("def area(width): ...\ndef area(width, height): ...\n")
 
+    def test_writes_a_redefinition_after_the_definition_it_redefines(self):
+        source = textwrap.dedent("""\
+            class A:
+                x = 1
+
+            A = 5
+        """)
+
+        output = _render_stub(
+            python_file=_extract_python_file(source=source, rel_path="m.py")
+        )
+
+        assert output.endswith("class A:\n    x = 1\n\nA = 5\n")
+
+    def test_writes_a_class_body_in_source_order(self):
+        source = textwrap.dedent("""\
+            class C:
+                def x(self): pass
+                x = 1
+                @property
+                def y(self) -> int: pass
+                def z(self): pass
+        """)
+
+        output = _render_stub(
+            python_file=_extract_python_file(source=source, rel_path="m.py")
+        )
+
+        assert output.endswith(
+            "class C:\n"
+            "    def x(self): ...\n"
+            "    x = 1\n"
+            "    y: int\n"
+            "    def z(self): ...\n"
+        )
+
     def test_separates_blocks_by_blank_lines_as_ruff_does(self):
         source = textwrap.dedent("""\
             import os
             X = 1
-            type T = int
             def f(): pass
-            async def g(): pass
+            Y = 2
+            type T = int
             class A: pass
             class B: pass
+            def g(): pass
+            async def h(): pass
             class C:
-                x: int
+                x = 1
                 def m(self): pass
-                def n(self): pass
-            class D: pass
+                y: int
+            class D:
+                z = 2
             class E: pass
+            W = 3
         """)
 
         output = _render_stub(
@@ -388,21 +428,29 @@ class TestRenderStub:
             "import os\n"
             "\n"
             "X = 1\n"
-            "type T = int\n"
             "\n"
             "def f(): ...\n"
-            "async def g(): ...\n"
+            "\n"
+            "Y = 2\n"
+            "type T = int\n"
             "\n"
             "class A: ...\n"
             "class B: ...\n"
             "\n"
-            "class C:\n"
-            "    x: int\n"
-            "    def m(self): ...\n"
-            "    def n(self): ...\n"
+            "def g(): ...\n"
+            "async def h(): ...\n"
             "\n"
-            "class D: ...\n"
+            "class C:\n"
+            "    x = 1\n"
+            "    def m(self): ...\n"
+            "    y: int\n"
+            "\n"
+            "class D:\n"
+            "    z = 2\n"
+            "\n"
             "class E: ...\n"
+            "\n"
+            "W = 3\n"
         )
 
 

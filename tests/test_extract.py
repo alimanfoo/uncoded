@@ -123,8 +123,12 @@ class TestWhichStatementsAreSymbols:
                 def omega(self):
                     pass
 
+                beta = 1
+
                 def alpha(self):
                     pass
+
+            ZETA = 1
 
             def apple():
                 pass
@@ -132,8 +136,8 @@ class TestWhichStatementsAreSymbols:
 
         result = _extract_python_file(source=source, rel_path="ordering.py")
 
-        assert _names(symbols=result.functions) == ["zebra", "apple"]
-        assert _names(symbols=result.classes[0].methods) == ["omega", "alpha"]
+        assert _names(symbols=result.symbols) == ["zebra", "Alpha", "ZETA", "apple"]
+        assert _names(symbols=result.classes[0].members) == ["omega", "beta", "alpha"]
 
     def test_leaves_out_names_that_are_not_symbols(self):
         source = textwrap.dedent("""\

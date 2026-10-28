@@ -38,6 +38,10 @@ includes it. Each entry links the pull request that made the change.
   that ends with `...`. No blank line separates consecutive functions, the
   members of a class, or consecutive classes with no members.
   ([#366](https://github.com/alimanfoo/uncoded/pull/366))
+- A stub lists the symbols of each module body and class body in the order that
+  the Python file defines them, not grouped by kind, so it shows which of two
+  definitions of a name comes later.
+  ([#367](https://github.com/alimanfoo/uncoded/pull/367))
 
 ### Added
 
