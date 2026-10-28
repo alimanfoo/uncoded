@@ -51,6 +51,17 @@ includes it. Each entry links the pull request that made the change.
   agents to load the navigation skills.
   ([#323](https://github.com/alimanfoo/uncoded/pull/323))
 
+### Changed
+
+- `uncoded sync` no longer removes skills under the names that earlier versions
+  of uncoded gave them: `coherence-review`, `uncoded-coherence-review` and
+  `uncoded-review`. It removed them on every run, so it deleted a skill of the
+  user's own with one of those names. It removes only the skills that the
+  current version generates, when the roots they belong with are gone. A project
+  that still has a skill under an old name deletes it by hand, as
+  [Upgrading](upgrading.md) says.
+  ([#337](https://github.com/alimanfoo/uncoded/pull/337))
+
 ### Fixed
 
 - `uncoded refs` prints the symbol's definition and each import of it, as well

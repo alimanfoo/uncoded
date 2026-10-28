@@ -9,9 +9,6 @@ from uncoded.skill import SKILL_ROOTS, SKILLS, Skill, agent_instructions, sync_s
 
 _REVIEW_SKILL = SKILLS[0]
 _REVIEW_SKILL_FILE = Path(_REVIEW_SKILL.name) / "SKILL.md"
-_LEGACY_REVIEW_FILES = tuple(
-    Path(name) / "SKILL.md" for name in _REVIEW_SKILL.legacy_names
-)
 
 
 class TestSyncSkills:
@@ -22,17 +19,10 @@ class TestSyncSkills:
         assert "uncoded-doc-navigation" in names
         assert _REVIEW_SKILL.name == "uncoded-consistency-review"
         assert _REVIEW_SKILL.gate == "source"
-        assert set(_REVIEW_SKILL.legacy_names) == {
-            "uncoded-coherence-review",
-            "coherence-review",
-            "uncoded-review",
-        }
         code_nav = next(s for s in SKILLS if s.name == "uncoded-code-navigation")
         assert code_nav.gate == "source"
-        assert code_nav.legacy_names == ()
         doc_nav = next(s for s in SKILLS if s.name == "uncoded-doc-navigation")
         assert doc_nav.gate == "docs"
-        assert doc_nav.legacy_names == ()
         assert [
             Path(".claude/skills"),
             Path(".agents/skills"),
@@ -131,60 +121,30 @@ class TestSyncSkills:
             sync_skills(source=True, docs=False, project_root=tmp_path, check=True) == 0
         )
 
-    def test_removes_legacy_skill_files(self, *, tmp_path):
-        # All former names are removed when the current skill is written.
-        legacy_paths = [
-            tmp_path / root / legacy_file
-            for legacy_file in _LEGACY_REVIEW_FILES
-            for root in SKILL_ROOTS
+    @pytest.mark.parametrize("source", [True, False])
+    def test_leaves_a_skill_of_the_users_own_in_place(self, *, tmp_path, source):
+        # coherence-review was the skill's name before uncoded 2.0. A skill of
+        # that name now belongs to the user, whichever roots the project has.
+        own_paths = [
+            tmp_path / root / "coherence-review" / "SKILL.md" for root in SKILL_ROOTS
         ]
-        for path in legacy_paths:
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text("old skill\n", encoding="utf-8")
+        for path in own_paths:
+            path.parent.mkdir(parents=True)
+            path.write_text("the user's own skill\n", encoding="utf-8")
 
-        assert (
-            sync_skills(source=True, docs=False, project_root=tmp_path, check=False) > 0
-        )
-        for path in legacy_paths:
-            assert not path.parent.exists()
+        sync_skills(source=source, docs=False, project_root=tmp_path, check=False)
 
-    def test_check_mode_reports_legacy_files_without_removing(self, *, tmp_path):
+        for path in own_paths:
+            assert path.read_text(encoding="utf-8") == "the user's own skill\n"
+
+    def test_source_false_removes_current_skill_files(self, *, tmp_path):
         sync_skills(source=True, docs=False, project_root=tmp_path, check=False)
-        legacy_paths = [
-            tmp_path / root / legacy_file
-            for legacy_file in _LEGACY_REVIEW_FILES
-            for root in SKILL_ROOTS
-        ]
-        for path in legacy_paths:
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text("old skill\n", encoding="utf-8")
-
-        assert sync_skills(
-            source=True, docs=False, project_root=tmp_path, check=True
-        ) == len(legacy_paths)
-        for path in legacy_paths:
-            assert path.exists()
-
-    def test_source_false_removes_current_and_legacy_skill_files(self, *, tmp_path):
-        sync_skills(source=True, docs=False, project_root=tmp_path, check=False)
-        legacy_paths = [
-            tmp_path / root / legacy_file
-            for legacy_file in _LEGACY_REVIEW_FILES
-            for root in SKILL_ROOTS
-        ]
-        for path in legacy_paths:
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text("old skill\n", encoding="utf-8")
-        for root in SKILL_ROOTS:
-            assert (tmp_path / root / _REVIEW_SKILL_FILE).exists()
         assert (
             sync_skills(source=False, docs=False, project_root=tmp_path, check=False)
             > 0
         )
         for root in SKILL_ROOTS:
             assert not (tmp_path / root / _REVIEW_SKILL_FILE).exists()
-        for path in legacy_paths:
-            assert not path.parent.exists()
 
     def test_source_false_returns_zero_when_already_absent(self, *, tmp_path):
         assert (
@@ -242,20 +202,6 @@ class TestSyncSkills:
         for root in SKILL_ROOTS:
             assert not (tmp_path / root / "test-docs" / "SKILL.md").exists()
 
-    def test_no_legacy_names_skips_legacy_removal(self, *, tmp_path, monkeypatch):
-        # A skill with empty legacy_names should generate exactly 2 writes.
-        no_legacy_skill = Skill(
-            name="no-legacy",
-            description="A skill with no legacy names.",
-            body_file=_REVIEW_SKILL.body_file,
-            gate="source",
-        )
-        monkeypatch.setattr(skill_module, "SKILLS", [no_legacy_skill])
-        result = sync_skills(
-            source=True, docs=False, project_root=tmp_path, check=False
-        )
-        assert result == 2
-
     def test_code_navigation_written_when_source_set(self, *, tmp_path):
         sync_skills(source=True, docs=False, project_root=tmp_path, check=False)
         for root in SKILL_ROOTS:
@@ -305,24 +251,18 @@ class TestSyncSkillsProjectRootAnchor:
             assert (tmp_path / root / _REVIEW_SKILL_FILE).exists()
             assert not (sub / root / _REVIEW_SKILL_FILE).exists()
 
-    def test_project_root_anchors_legacy_removal_independent_of_cwd(
+    def test_project_root_anchors_removal_independent_of_cwd(
         self, *, tmp_path, monkeypatch
     ):
+        sync_skills(source=True, docs=False, project_root=tmp_path, check=False)
         sub = tmp_path / "subdir"
         sub.mkdir()
         monkeypatch.chdir(sub)
 
-        for root in SKILL_ROOTS:
-            for legacy_file in _LEGACY_REVIEW_FILES:
-                legacy_path = tmp_path / root / legacy_file
-                legacy_path.parent.mkdir(parents=True, exist_ok=True)
-                legacy_path.write_text("old skill\n", encoding="utf-8")
-
-        sync_skills(source=True, docs=False, project_root=tmp_path, check=False)
+        sync_skills(source=False, docs=False, project_root=tmp_path, check=False)
 
         for root in SKILL_ROOTS:
-            for legacy_file in _LEGACY_REVIEW_FILES:
-                assert not (tmp_path / root / legacy_file).exists()
+            assert not (tmp_path / root / _REVIEW_SKILL_FILE).exists()
 
 
 class TestAgentInstructions:
