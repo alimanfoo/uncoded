@@ -84,6 +84,9 @@ PYTHONWARNDEFAULTENCODING=1 uv run pytest
 # Run a subset of tests without the coverage gate
 PYTHONWARNDEFAULTENCODING=1 uv run pytest tests/test_stubs.py --no-cov
 
+# Run every test, the integration tests that spawn ty included, as CI does
+PYTHONWARNDEFAULTENCODING=1 uv run pytest -m "integration or not integration"
+
 # Preview the documentation site at http://127.0.0.1:8000/
 uv run mkdocs serve
 
@@ -147,6 +150,9 @@ Public symbols need a pep257 plain-prose docstring. Magic methods are included.
 Private symbols (underscore-prefixed) and test code are exempt.
 
 ## Testing
+
+[docs/testing.md](docs/testing.md) says what each kind of test establishes, when
+to run the integration tests, and what CI runs.
 
 The test suite enforces 100% branch coverage. The threshold is set in
 `[tool.coverage.report]` in `pyproject.toml`. In CI, the coverage job in
