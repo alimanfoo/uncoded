@@ -8,6 +8,7 @@ from uncoded.extract import (
     FunctionSymbol,
     Parameter,
     PythonFile,
+    Symbol,
     TypeAliasSymbol,
 )
 from uncoded.markers import GENERATED_MARKER
@@ -68,30 +69,57 @@ def _join_blocks(*, blocks: list[list[str]]) -> list[str]:
     return lines
 
 
+def _render_line(
+    *, symbol: AssignmentSymbol | TypeAliasSymbol | FunctionSymbol, indent: str = ""
+) -> str:
+    """Render a symbol that is not a class as a stub line."""
+    if isinstance(symbol, FunctionSymbol):
+        return _render_function(func=symbol, indent=indent)
+    return _render_assignment(assignment=symbol, indent=indent)
+
+
 def _render_class(*, cls: ClassSymbol) -> list[str]:
     bases_str = f"({', '.join(cls.bases)})" if cls.bases else ""
     header = f"class {cls.name}{bases_str}:"
-    if not cls.attributes and not cls.methods:
+    if not cls.members:
         return [f"{header} ..."]
     return [
         header,
-        *(
-            _render_assignment(assignment=attr, indent="    ")
-            for attr in cls.attributes
-        ),
-        *(_render_function(func=method, indent="    ") for method in cls.methods),
+        *(_render_line(symbol=member, indent="    ") for member in cls.members),
     ]
 
 
-def _class_blocks(*, classes: list[ClassSymbol]) -> list[list[str]]:
-    """Render classes as blocks, one block for each run of one-line classes."""
-    blocks: list[list[str]] = [[]]
-    for cls in classes:
-        lines = _render_class(cls=cls)
-        if len(lines) == 1:
+def _render_symbol(*, symbol: Symbol) -> list[str]:
+    """Render a symbol of a module body as stub lines."""
+    if isinstance(symbol, ClassSymbol):
+        return _render_class(cls=symbol)
+    return [_render_line(symbol=symbol)]
+
+
+def _block_kind(*, symbol: Symbol) -> str | None:
+    """Return the kind of a one-line definition, or None for a class with members.
+
+    Consecutive one-line definitions of one kind share a block.
+    """
+    if isinstance(symbol, ClassSymbol):
+        return None if symbol.members else "class"
+    if isinstance(symbol, FunctionSymbol):
+        return "function"
+    return "assignment"
+
+
+def _symbol_blocks(*, symbols: list[Symbol]) -> list[list[str]]:
+    """Render symbols in order as blocks of stub lines."""
+    blocks: list[list[str]] = []
+    previous_kind = None
+    for symbol in symbols:
+        kind = _block_kind(symbol=symbol)
+        lines = _render_symbol(symbol=symbol)
+        if kind is not None and kind == previous_kind:
             blocks[-1].extend(lines)
         else:
-            blocks.extend([lines, []])
+            blocks.append(lines)
+        previous_kind = kind
     return blocks
 
 
@@ -99,19 +127,15 @@ def _render_stub(*, python_file: PythonFile) -> str:
     """Render a PythonFile as a .pyi file string, in the standard stub style.
 
     The standard stub style is the one that ruff and Black write for .pyi files.
-    Each definition is one line, except a class with members. A blank line
-    separates each two blocks: the header, the imports, each run of one-line
-    definitions of one kind, and each class with members.
+    Symbols keep their source order. Each definition is one line, except a class
+    with members. A blank line separates each two blocks: the header, the
+    imports, each run of one-line definitions of one kind, and each class with
+    members.
     """
     blocks = [
         [f"# {GENERATED_MARKER}", f"# {python_file.rel_path}"],
         python_file.imports,
-        [
-            _render_assignment(assignment=assignment)
-            for assignment in python_file.assignments
-        ],
-        [_render_function(func=func) for func in python_file.functions],
-        *_class_blocks(classes=python_file.classes),
+        *_symbol_blocks(symbols=python_file.symbols),
     ]
     return "\n".join(_join_blocks(blocks=blocks)) + "\n"
 

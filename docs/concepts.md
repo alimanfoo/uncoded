@@ -170,9 +170,10 @@ Replaces: "doc map", "heading map", "heading outline".
 A **stub** is a `.pyi` file in Python's stub syntax that uncoded writes, for
 agents to read, for one Python file that has symbols. It holds the file's
 imports from its module body, each class's bases, each function's and method's
-signature, and each assignment's annotation and, when short, its value. It sits
-at the Python file's path relative to the project directory, under
-`.uncoded/stubs/`.
+signature, and each assignment's annotation and, when short, its value. It lists
+the symbols of each module body and class body in the order that the Python file
+defines them. It sits at the Python file's path relative to the project
+directory, under `.uncoded/stubs/`.
 
 A stub is laid out in the **standard stub style**, the layout that ruff and
 Black write for `.pyi` files.
