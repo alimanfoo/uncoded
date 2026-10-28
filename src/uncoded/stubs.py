@@ -43,26 +43,21 @@ def _render_function(*, func: FunctionSymbol, indent: str = "") -> list[str]:
     return lines
 
 
-def _format_assignment(*, assignment: AssignmentSymbol | TypeAliasSymbol) -> str:
-    """Render the 'name [: type] [= value]' portion of an assignment."""
+def _render_assignment(
+    *, assignment: AssignmentSymbol | TypeAliasSymbol, indent: str = ""
+) -> str:
+    """Render an assignment, at module level or in a class body, as a stub line."""
     if isinstance(assignment, TypeAliasSymbol):
-        return f"type {assignment.name} = {_render_value(value=assignment.value)}"
+        value = _render_value(value=assignment.value)
+        return f"{indent}type {assignment.name} = {value}"
     head = (
         f"{assignment.name}: {assignment.annotation}"
         if assignment.annotation
         else assignment.name
     )
     if assignment.value is None:
-        return head
-    return f"{head} = {_render_value(value=assignment.value)}"
-
-
-def _render_assignment(
-    *, assignment: AssignmentSymbol | TypeAliasSymbol, indent: str = ""
-) -> str:
-    """Render an assignment, at module level or in a class body, as a stub line."""
-    line = _format_assignment(assignment=assignment)
-    return f"{indent}{line}"
+        return f"{indent}{head}"
+    return f"{indent}{head} = {_render_value(value=assignment.value)}"
 
 
 def _render_class(*, cls: ClassSymbol) -> list[str]:

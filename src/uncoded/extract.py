@@ -66,7 +66,7 @@ class ClassSymbol:
     methods: list[FunctionSymbol] = field(default_factory=list)
 
 
-type Symbol = AssignmentSymbol | TypeAliasSymbol | ClassSymbol | FunctionSymbol
+type _Symbol = AssignmentSymbol | TypeAliasSymbol | ClassSymbol | FunctionSymbol
 
 
 @dataclass
@@ -78,7 +78,7 @@ class PythonFile:
 
     rel_path: str
     imports: list[str] = field(default_factory=list)
-    symbols: list[Symbol] = field(default_factory=list)
+    symbols: list[_Symbol] = field(default_factory=list)
 
     @property
     def assignments(self) -> list[AssignmentSymbol | TypeAliasSymbol]:
@@ -204,8 +204,8 @@ def _extract_class(*, node: ast.ClassDef) -> ClassSymbol:
     )
 
 
-def _extract_symbol(*, name: str, node: SymbolNode) -> Symbol:
-    """Build the Symbol that ``node`` defines as ``name`` in a module body."""
+def _extract_symbol(*, name: str, node: SymbolNode) -> _Symbol:
+    """Build the symbol that ``node`` defines as ``name`` in a module body."""
     if isinstance(node, ast.ClassDef):
         return _extract_class(node=node)
     if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
