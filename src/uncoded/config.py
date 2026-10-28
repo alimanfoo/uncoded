@@ -127,6 +127,15 @@ def read_config(*, start: Path) -> Config:
     return config
 
 
+def is_inside_project(*, path: Path, project_root: Path) -> bool:
+    """Return whether ``path`` is inside ``project_root``.
+
+    Symbolic links are resolved first, so a link inside ``project_root`` that
+    leads out of it is outside.
+    """
+    return path.resolve().is_relative_to(project_root.resolve())
+
+
 def validate_root(
     *, configured: Path, kind: Literal["source", "doc"], project_root: Path
 ) -> Path:
@@ -138,7 +147,7 @@ def validate_root(
     """
     root_label = f"{kind} root {configured.as_posix()}"
     resolved = (project_root / configured).resolve()
-    if not resolved.is_relative_to(project_root.resolve()):
+    if not is_inside_project(path=resolved, project_root=project_root):
         raise ConfigError(
             f"{root_label} is outside the project root. "
             f"Check {kind}-roots in your uncoded config file."
