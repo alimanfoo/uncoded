@@ -28,9 +28,10 @@ and its required version is the version of uncoded that is running. If none of
 them exist, `init` writes nothing and exits with status `1`. A configuration
 file that `init` finds is left as it is.
 
-After `sync`, `init` says which files to commit, and prints the lines to add to
-`AGENTS.md` or `CLAUDE.md` that tell agents to load the navigation skills. It
-does not edit those files or `pyproject.toml`. Running it again does no harm.
+If `sync` fails, `init` stops there with exit status `1`. After `sync`, `init`
+says which files to commit, and prints the lines to add to `AGENTS.md` or
+`CLAUDE.md` that tell agents to load the navigation skills. It does not edit
+those files or `pyproject.toml`. Running it again does no harm.
 
 ## `sync`
 
