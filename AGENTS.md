@@ -177,10 +177,8 @@ These documents hold uncoded to account. Read them before you work.
 - [docs/standard.md](docs/standard.md) says how good the work has to be and how
   we tell.
 
-Give every pull request description a section headed "Definition of done". In
-it, answer each question of
-[the standard's definition of done](docs/standard.md#definition-of-done) by its
-title, in bold, followed by the evidence.
+Answer [the definition of done](docs/standard.md#definition-of-done) in every
+pull request description, in the form that the standard gives.
 
 ## Conventions
 
