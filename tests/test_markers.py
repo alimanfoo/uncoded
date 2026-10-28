@@ -16,7 +16,7 @@ class TestMarkerCompleteness:
         assert GENERATED_MARKER in render_docs_map(mapping={})
 
     def test_stub_carries_marker(self):
-        assert GENERATED_MARKER in render_stub(module=PythonFile(rel_path="x.py"))
+        assert GENERATED_MARKER in render_stub(python_file=PythonFile(rel_path="x.py"))
 
     def test_skill_carries_marker(self):
         assert GENERATED_MARKER in _render_content(skill=SKILLS[0])

@@ -1,6 +1,5 @@
 """Generate .pyi stub files for agent navigation."""
 
-from collections.abc import Iterable
 from pathlib import Path
 
 from uncoded.extract import (
@@ -10,7 +9,6 @@ from uncoded.extract import (
     Parameter,
     PythonFile,
     TypeAliasSymbol,
-    extract_python_file,
 )
 from uncoded.markers import GENERATED_MARKER
 from uncoded.sync import remove_file, sync_file
@@ -87,45 +85,29 @@ def _render_class(*, cls: ClassSymbol) -> list[str]:
     return lines
 
 
-def render_stub(*, module: PythonFile) -> str:
+def render_stub(*, python_file: PythonFile) -> str:
     """Render a PythonFile as a .pyi file string."""
-    lines: list[str] = [f"# {GENERATED_MARKER}", f"# {module.rel_path}", ""]
+    lines: list[str] = [f"# {GENERATED_MARKER}", f"# {python_file.rel_path}", ""]
 
-    if module.imports:
-        lines.extend(module.imports)
+    if python_file.imports:
+        lines.extend(python_file.imports)
         lines.append("")
 
     lines.extend(
-        _render_assignment(assignment=assignment) for assignment in module.assignments
+        _render_assignment(assignment=assignment)
+        for assignment in python_file.assignments
     )
-    if module.assignments:
+    if python_file.assignments:
         lines.append("")
 
-    for func in module.functions:
+    for func in python_file.functions:
         lines.extend(_render_function(func=func))
         lines.append("")
 
-    for cls in module.classes:
+    for cls in python_file.classes:
         lines.extend(_render_class(cls=cls))
 
     return "\n".join(lines).rstrip() + "\n"
-
-
-def _generate_stubs(*, files: Iterable[tuple[str, str]]) -> dict[Path, str]:
-    """Return a mapping from stub relative paths to rendered stub content.
-
-    *files* holds the readable files from :func:`read_source_files`, as
-    ``(source, rel_path)`` pairs. Pure transformation: no IO, no
-    warnings, no parsing decisions. Modules with no symbols are
-    skipped.
-    """
-    result: dict[Path, str] = {}
-    for source, rel_path in files:
-        module = extract_python_file(source=source, rel_path=rel_path)
-        if not module.symbols:
-            continue
-        result[Path(rel_path).with_suffix(".pyi")] = render_stub(module=module)
-    return result
 
 
 def _remove_orphan_stubs(
@@ -150,25 +132,19 @@ def _remove_orphan_stubs(
 
 def sync_stubs(
     *,
-    files: Iterable[tuple[str, str]],
+    python_files: list[PythonFile],
     output_dir: Path,
     project_directory: Path,
     check: bool,
 ) -> int:
-    """Write the stub of each file in ``files``, and remove every other stub.
+    """Write the stub of each of ``python_files``, and remove every other stub.
 
-    ``files`` holds ``(source, rel_path)`` pairs from :func:`read_source_files`.
-    Every ``.pyi`` file under ``output_dir`` that ``files`` does not generate is
-    removed, so ``files`` holds every file that keeps a stub.
+    Every ``.pyi`` file under ``output_dir`` that ``python_files`` does not
+    generate is removed, so ``python_files`` holds every file that keeps a stub.
 
-    ``project_directory`` is the anchor for both ends of the pipeline:
-    source paths in ``files`` are already relative to it (so each
-    stub's rendered ``rel_path`` header matches :func:`read_source_files`
-    and the namespace map), and each stub is written to
-    ``project_directory / output_dir / <rel>``. The same ``project_directory``
-    must therefore be passed to :func:`read_source_files` (for
-    relativising) and to ``sync_stubs`` (for writing); mismatched
-    anchors silently produce wrong-looking stub paths.
+    Each stub is written to ``project_directory / output_dir / <rel_path>``, with
+    the ``.pyi`` suffix, where ``rel_path`` is the Python file's path relative to
+    ``project_directory``.
 
     When ``check=True``, the on-disk tree is not mutated; instead,
     prospective writes and removals are reported and counted. Returns
@@ -177,11 +153,11 @@ def sync_stubs(
     project_directory = project_directory.resolve()
     changes = 0
     expected: set[Path] = set()
-    for rel_stub_path, content in _generate_stubs(files=files).items():
-        stub_path = output_dir / rel_stub_path
+    for python_file in python_files:
+        stub_path = output_dir / Path(python_file.rel_path).with_suffix(".pyi")
         changes += sync_file(
             path=stub_path,
-            content=content,
+            content=render_stub(python_file=python_file),
             project_directory=project_directory,
             check=check,
         )

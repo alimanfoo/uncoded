@@ -6,15 +6,18 @@ from uncoded.extract import (
     AssignmentSymbol,
     Parameter,
     TypeAliasSymbol,
-    extract_module,
-    extract_modules,
     extract_python_file,
+    extract_python_files,
     read_source_files,
 )
 from uncoded.read_helpers import SkippedFile
 
 
-class TestExtractModule:
+def _names(*, symbols):
+    return [symbol.name for symbol in symbols]
+
+
+class TestWhichStatementsAreSymbols:
     def test_classes_and_functions(self):
         source = textwrap.dedent("""\
             class MyClass:
@@ -35,15 +38,21 @@ class TestExtractModule:
                 pass
         """)
 
-        result = extract_module(source=source, rel_path="module.py")
+        result = extract_python_file(source=source, rel_path="module.py")
 
         assert result.rel_path == "module.py"
         assert len(result.classes) == 2
         assert result.classes[0].name == "MyClass"
-        assert result.classes[0].methods == ["public_method", "_private_method"]
+        assert _names(symbols=result.classes[0].methods) == [
+            "public_method",
+            "_private_method",
+        ]
         assert result.classes[1].name == "_PrivateClass"
-        assert result.classes[1].methods == ["method"]
-        assert result.functions == ["public_function", "_private_function"]
+        assert _names(symbols=result.classes[1].methods) == ["method"]
+        assert _names(symbols=result.functions) == [
+            "public_function",
+            "_private_function",
+        ]
 
     def test_async_functions_and_methods(self):
         source = textwrap.dedent("""\
@@ -58,17 +67,17 @@ class TestExtractModule:
                     pass
         """)
 
-        result = extract_module(source=source, rel_path="async_module.py")
+        result = extract_python_file(source=source, rel_path="async_module.py")
 
-        assert result.functions == ["fetch_data"]
+        assert _names(symbols=result.functions) == ["fetch_data"]
         assert result.classes[0].name == "Client"
-        assert result.classes[0].methods == ["connect", "disconnect"]
+        assert _names(symbols=result.classes[0].methods) == ["connect", "disconnect"]
 
     def test_empty_module(self):
-        result = extract_module(source="", rel_path="empty.py")
+        result = extract_python_file(source="", rel_path="empty.py")
 
         assert result.classes == []
-        assert result.functions == []
+        assert _names(symbols=result.functions) == []
 
     def test_module_level_assignments(self):
         source = textwrap.dedent("""\
@@ -77,128 +86,20 @@ class TestExtractModule:
             __version__ = "1.0.0"
         """)
 
-        result = extract_module(source=source, rel_path="const.py")
+        result = extract_python_file(source=source, rel_path="const.py")
 
-        assert result.assignments == ["TIMEOUT", "MAX_RETRIES", "__version__"]
-
-    def test_type_alias_classic(self):
-        source = textwrap.dedent("""\
-            from typing import TypeAlias
-            UserId: TypeAlias = int
-        """)
-
-        result = extract_module(source=source, rel_path="aliases.py")
-
-        assert result.assignments == ["UserId"]
-
-    def test_type_alias_pep695(self):
-        source = textwrap.dedent("""\
-            type UserId = int
-            type InternalId = int
-        """)
-
-        result = extract_module(source=source, rel_path="aliases.py")
-
-        assert result.assignments == ["UserId", "InternalId"]
-
-    def test_tuple_unpacking_skipped(self):
-        source = textwrap.dedent("""\
-            X, Y = 1, 2
-        """)
-
-        result = extract_module(source=source, rel_path="tuple.py")
-
-        assert result.assignments == []
+        assert _names(symbols=result.assignments) == [
+            "TIMEOUT",
+            "MAX_RETRIES",
+            "__version__",
+        ]
 
     def test_chained_assignment_skipped(self):
         source = "x = y = 1\n"
 
-        result = extract_module(source=source, rel_path="chain.py")
+        result = extract_python_file(source=source, rel_path="chain.py")
 
-        assert result.assignments == []
-
-    def test_unannotated_class_variable(self):
-        source = textwrap.dedent("""\
-            class Registry:
-                items = []
-                _cache = {}
-                count: int = 0
-        """)
-
-        result = extract_module(source=source, rel_path="reg.py")
-
-        cls = result.classes[0]
-        assert cls.attributes == ["items", "_cache", "count"]
-
-    def test_class_tuple_unpacking_skipped(self):
-        source = textwrap.dedent("""\
-            class C:
-                a, b = 1, 2
-        """)
-
-        result = extract_module(source=source, rel_path="c.py")
-
-        assert result.classes[0].attributes == []
-
-    def test_annotated_attributes(self):
-        source = textwrap.dedent("""\
-            from dataclasses import dataclass
-
-            @dataclass
-            class Record:
-                name: str
-                value: int
-                _internal: float
-
-                def process(self):
-                    pass
-        """)
-
-        result = extract_module(source=source, rel_path="record.py")
-
-        cls = result.classes[0]
-        assert cls.name == "Record"
-        assert cls.attributes == ["name", "value", "_internal"]
-        assert cls.methods == ["process"]
-
-    def test_property_classified_as_attribute(self):
-        source = textwrap.dedent("""\
-            class Config:
-                @property
-                def path(self):
-                    return self._path
-
-                def save(self):
-                    pass
-        """)
-
-        result = extract_module(source=source, rel_path="config.py")
-
-        cls = result.classes[0]
-        assert cls.attributes == ["path"]
-        assert cls.methods == ["save"]
-
-    def test_property_setter_and_deleter_suppressed(self):
-        source = textwrap.dedent("""\
-            class Config:
-                @property
-                def path(self):
-                    return self._path
-
-                @path.setter
-                def path(self, value):
-                    self._path = value
-
-                @path.deleter
-                def path(self):
-                    del self._path
-        """)
-
-        result = extract_module(source=source, rel_path="config.py")
-
-        cls = result.classes[0]
-        assert cls.attributes == ["path"]
-        assert cls.methods == []
+        assert _names(symbols=result.assignments) == []
 
     def test_non_property_decorator_classified_as_method(self):
         source = textwrap.dedent("""\
@@ -208,11 +109,11 @@ class TestExtractModule:
                     pass
         """)
 
-        result = extract_module(source=source, rel_path="util.py")
+        result = extract_python_file(source=source, rel_path="util.py")
 
         cls = result.classes[0]
-        assert cls.methods == ["helper"]
-        assert cls.attributes == []
+        assert _names(symbols=cls.methods) == ["helper"]
+        assert _names(symbols=cls.attributes) == []
 
     def test_preserves_source_order(self):
         source = textwrap.dedent("""\
@@ -230,41 +131,10 @@ class TestExtractModule:
                 pass
         """)
 
-        result = extract_module(source=source, rel_path="ordering.py")
+        result = extract_python_file(source=source, rel_path="ordering.py")
 
-        assert result.functions == ["zebra", "apple"]
-        assert result.classes[0].methods == ["omega", "alpha"]
-
-    def test_keeps_only_the_later_symbol_when_a_name_is_redefined(self):
-        source = textwrap.dedent("""\
-            class Shape:
-                def scale(self):
-                    pass
-
-            Shape = 1
-
-            def area():
-                pass
-
-            class area:
-                def compute(self):
-                    pass
-
-            class Point:
-                x = 0
-
-            class Point:
-                y = 0
-        """)
-
-        result = extract_module(source=source, rel_path="redefined.py")
-
-        assert result.assignments == ["Shape"]
-        assert [(c.name, c.attributes, c.methods) for c in result.classes] == [
-            ("area", [], ["compute"]),
-            ("Point", ["y"], []),
-        ]
-        assert result.functions == []
+        assert _names(symbols=result.functions) == ["zebra", "apple"]
+        assert _names(symbols=result.classes[0].methods) == ["omega", "alpha"]
 
     def test_leaves_out_names_that_are_not_symbols(self):
         source = textwrap.dedent("""\
@@ -290,13 +160,13 @@ class TestExtractModule:
                 FALLBACK = True
         """)
 
-        result = extract_module(source=source, rel_path="names.py")
+        result = extract_python_file(source=source, rel_path="names.py")
 
-        assert result.assignments == []
-        assert [(c.name, c.attributes, c.methods) for c in result.classes] == [
-            ("Registry", [], ["__init__"])
-        ]
-        assert result.functions == ["run"]
+        assert _names(symbols=result.assignments) == []
+        assert _names(symbols=result.classes) == ["Registry"]
+        assert _names(symbols=result.classes[0].attributes) == []
+        assert _names(symbols=result.classes[0].methods) == ["__init__"]
+        assert _names(symbols=result.functions) == ["run"]
 
 
 class TestReadAndExtract:
@@ -321,7 +191,7 @@ class TestReadAndExtract:
         (pkg / "empty.py").write_text("# nothing here\n", encoding="utf-8")
 
         files, _skipped = read_source_files(source_root=src, project_directory=tmp_path)
-        modules = extract_modules(files=files)
+        modules = extract_python_files(files=files)
 
         rel_paths = [m.rel_path for m in modules]
         assert "src/mypackage/core.py" in rel_paths
@@ -341,7 +211,7 @@ class TestReadAndExtract:
         )
 
         files, _skipped = read_source_files(source_root=src, project_directory=tmp_path)
-        modules = extract_modules(files=files)
+        modules = extract_python_files(files=files)
 
         rel_paths = [m.rel_path for m in modules]
         assert "src/mypackage/utils/formatting.py" in rel_paths
@@ -354,7 +224,7 @@ class TestReadAndExtract:
         (pkg / "core.py").write_text("def run(): pass\n", encoding="utf-8")
 
         files, _skipped = read_source_files(source_root=src, project_directory=tmp_path)
-        modules = extract_modules(files=files)
+        modules = extract_python_files(files=files)
 
         rel_paths = [m.rel_path for m in modules]
         assert "src/mypackage/__init__.py" in rel_paths
@@ -368,7 +238,7 @@ class TestReadAndExtract:
         (pkg / "core.py").write_text("def run(): pass\n", encoding="utf-8")
 
         files, _skipped = read_source_files(source_root=src, project_directory=tmp_path)
-        modules = extract_modules(files=files)
+        modules = extract_python_files(files=files)
 
         rel_paths = [m.rel_path for m in modules]
         assert not any("__init__.py" in p for p in rel_paths)
@@ -382,7 +252,7 @@ class TestReadAndExtract:
         (pkg / "bad.py").write_text("def broken(:\n", encoding="utf-8")
 
         files, skipped = read_source_files(source_root=src, project_directory=tmp_path)
-        modules = extract_modules(files=files)
+        modules = extract_python_files(files=files)
 
         rel_paths = [m.rel_path for m in modules]
         assert "src/mypackage/good.py" in rel_paths
@@ -433,17 +303,17 @@ class TestReadAndExtract:
         assert skipped == []
 
 
-class TestExtractModules:
+class TestExtractPythonFiles:
     def test_extracts_the_symbols_of_each_file(self):
         files = [
             ("def foo(): pass\n", "src/a.py"),
             ("class Bar: pass\n", "src/b.py"),
         ]
 
-        modules = extract_modules(files=files)
+        modules = extract_python_files(files=files)
 
         assert [m.rel_path for m in modules] == ["src/a.py", "src/b.py"]
-        assert modules[0].functions == ["foo"]
+        assert _names(symbols=modules[0].functions) == ["foo"]
         assert modules[1].classes[0].name == "Bar"
 
     def test_preserves_source_order(self):
@@ -453,14 +323,14 @@ class TestExtractModules:
             ("def c(): pass\n", "src/c.py"),
         ]
 
-        modules = extract_modules(files=files)
+        modules = extract_python_files(files=files)
 
         assert [m.rel_path for m in modules] == ["src/a.py", "src/b.py", "src/c.py"]
 
     def test_module_with_only_assignments_is_kept(self):
         files = [('__version__ = "1.0"\n', "src/mypackage/__init__.py")]
 
-        modules = extract_modules(files=files)
+        modules = extract_python_files(files=files)
 
         assert [m.rel_path for m in modules] == ["src/mypackage/__init__.py"]
 
@@ -471,7 +341,7 @@ class TestExtractModules:
             ("class Bar: pass\n", "src/b.py"),
         ]
 
-        modules = extract_modules(files=files)
+        modules = extract_python_files(files=files)
 
         assert [m.rel_path for m in modules] == ["src/a.py", "src/b.py"]
 
@@ -661,17 +531,6 @@ class TestExtractPythonFile:
     def test_syntax_error_raises(self):
         with pytest.raises(SyntaxError):
             extract_python_file(source="def broken(:\n", rel_path="pkg/bad.py")
-
-    def test_source_order_preserved(self):
-        source = textwrap.dedent("""\
-            def zebra(): pass
-            class Alpha: pass
-            def apple(): pass
-        """)
-        module = extract_python_file(source=source, rel_path="pkg/mixed.py")
-        assert module.functions[0].name == "zebra"
-        assert module.functions[1].name == "apple"
-        assert module.classes[0].name == "Alpha"
 
     def test_assignment_annotated_with_value(self):
         source = textwrap.dedent("""\

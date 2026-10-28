@@ -5,11 +5,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from uncoded.ast_helpers import (
-    assign_target_name,
-    property_kind,
-    top_level_definitions,
-)
+from uncoded.ast_helpers import property_kind
 from uncoded.read_helpers import SkippedFile, failure_reason, read_source_text
 
 
@@ -98,72 +94,6 @@ class PythonFile:
     def functions(self) -> list[FunctionSymbol]:
         """The functions, in order."""
         return [s for s in self.symbols if isinstance(s, FunctionSymbol)]
-
-
-@dataclass
-class ClassInfo:
-    """A class with its attributes and methods."""
-
-    name: str
-    attributes: list[str] = field(default_factory=list)
-    methods: list[str] = field(default_factory=list)
-
-
-@dataclass
-class ModuleInfo:
-    """Symbols found in a single Python module."""
-
-    rel_path: str
-    assignments: list[str] = field(default_factory=list)
-    classes: list[ClassInfo] = field(default_factory=list)
-    functions: list[str] = field(default_factory=list)
-
-
-def _extract_class_members(*, node: ast.ClassDef) -> ClassInfo:
-    attributes: list[str] = []
-    methods: list[str] = []
-    for n in ast.iter_child_nodes(node):
-        if isinstance(n, (ast.AnnAssign, ast.Assign)):
-            name = assign_target_name(node=n)
-            if name:
-                attributes.append(name)
-        elif isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            kind = property_kind(node=n)
-            if kind in {"setter", "deleter"}:
-                continue
-            if kind == "property":
-                attributes.append(n.name)
-            else:
-                methods.append(n.name)
-    return ClassInfo(name=node.name, attributes=attributes, methods=methods)
-
-
-def extract_module(*, source: str, rel_path: str) -> ModuleInfo:
-    """Parse Python source and extract classes, functions, and assignments.
-
-    A name defined more than once in the module body keeps only its later
-    definition.
-    """
-    tree = ast.parse(source)
-
-    assignments: list[str] = []
-    classes: list[ClassInfo] = []
-    functions: list[str] = []
-
-    for name, node in top_level_definitions(tree=tree).items():
-        if isinstance(node, ast.ClassDef):
-            classes.append(_extract_class_members(node=node))
-        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            functions.append(name)
-        else:
-            assignments.append(name)
-
-    return ModuleInfo(
-        rel_path=rel_path,
-        assignments=assignments,
-        classes=classes,
-        functions=functions,
-    )
 
 
 def _unparse_or_none(*, node: ast.expr | None) -> str | None:
@@ -323,8 +253,9 @@ def read_source_files(
     Source files are read under their declared PEP 263 encoding, UTF-8
     default. A file is skipped when it fails to read (OSError,
     UnicodeDecodeError, or a SyntaxError from a malformed encoding cookie) or
-    fails to parse (SyntaxError). Deciding this here lets ``extract_modules``
-    and ``_generate_stubs`` trust they only receive readable, parseable source.
+    fails to parse (SyntaxError). Deciding this here lets
+    ``extract_python_files`` trust that it only receives readable, parseable
+    source.
     """
     source_root = source_root.resolve()
     project_directory = project_directory.resolve()
@@ -348,17 +279,16 @@ def read_source_files(
     return files, skipped
 
 
-def extract_modules(*, files: Iterable[tuple[str, str]]) -> list[ModuleInfo]:
-    """Extract a :class:`ModuleInfo` for each file in *files*.
+def extract_python_files(*, files: Iterable[tuple[str, str]]) -> list[PythonFile]:
+    """Extract a :class:`PythonFile` for each file in *files* that has symbols.
 
     *files* holds the readable files from :func:`read_source_files`, as
     ``(source, rel_path)`` pairs where the source has already been
     confirmed parseable. Pure transformation: no IO, no warnings, no
-    parsing decisions. Skips files with no symbols.
+    parsing decisions.
     """
-    modules: list[ModuleInfo] = []
-    for source, rel_path in files:
-        module = extract_module(source=source, rel_path=rel_path)
-        if module.classes or module.functions or module.assignments:
-            modules.append(module)
-    return modules
+    python_files = [
+        extract_python_file(source=source, rel_path=rel_path)
+        for source, rel_path in files
+    ]
+    return [python_file for python_file in python_files if python_file.symbols]

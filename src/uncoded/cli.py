@@ -19,7 +19,7 @@ from uncoded.config import (
     validate_root,
 )
 from uncoded.docs_map import build_docs_map, read_doc_files, render_docs_map
-from uncoded.extract import extract_modules, read_source_files
+from uncoded.extract import extract_python_files, read_source_files
 from uncoded.markers import GENERATED_MARKER
 from uncoded.namespace_map import build_map, render_map
 from uncoded.read_helpers import SkippedFile
@@ -67,11 +67,10 @@ def _sync_code_index(
         )
         files.extend(root_files)
         all_skipped.extend(skipped)
+    python_files = extract_python_files(files=files)
     namespace_path = Path(".uncoded/namespace.yaml")
     if source_roots:
-        map_content = render_map(
-            namespace=build_map(modules=extract_modules(files=files))
-        )
+        map_content = render_map(namespace=build_map(python_files=python_files))
         n = sync_file(
             path=namespace_path,
             content=map_content,
@@ -83,7 +82,7 @@ def _sync_code_index(
             path=namespace_path, project_directory=project_directory, check=check
         )
     n += sync_stubs(
-        files=files,
+        python_files=python_files,
         output_dir=Path(".uncoded/stubs"),
         project_directory=project_directory,
         check=check,

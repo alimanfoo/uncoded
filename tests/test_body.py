@@ -142,6 +142,14 @@ class TestResolveDefinitionTopLevel:
         with pytest.raises(SymbolNotFoundError, match="missing"):
             resolve_definition(name_path=NamePath("missing"), in_path=path)
 
+    @pytest.mark.parametrize("source", ["x, y = 1, 2\n", "x = y = 1\n"])
+    def test_name_bound_with_others_is_not_found(self, *, tmp_path, source):
+        path = tmp_path / "m.py"
+        path.write_text(source, encoding="utf-8", newline="")
+
+        with pytest.raises(SymbolNotFoundError):
+            resolve_definition(name_path=NamePath("x"), in_path=path)
+
     def test_raises_when_the_file_is_missing(self, *, tmp_path):
         path = tmp_path / "nonexistent.py"
 

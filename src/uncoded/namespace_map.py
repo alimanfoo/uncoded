@@ -2,7 +2,14 @@
 
 from pathlib import Path
 
-from uncoded.extract import ModuleInfo
+from uncoded.extract import (
+    AssignmentSymbol,
+    ClassSymbol,
+    FunctionSymbol,
+    PythonFile,
+    Symbol,
+    TypeAliasSymbol,
+)
 from uncoded.markers import GENERATED_MARKER
 from uncoded.yaml_tree import render_yaml_tree
 
@@ -18,17 +25,35 @@ HEADER = f"""\
 """
 
 
-def build_map(*, modules: list[ModuleInfo]) -> dict:
+# The kinds of symbol in the order that the map lists them under a file.
+_KIND_ORDER = (AssignmentSymbol | TypeAliasSymbol, ClassSymbol, FunctionSymbol)
+
+
+def _members(*, symbol: Symbol) -> dict | None:
+    """Return the map entry under ``symbol``: a class's members, or None.
+
+    A class with no members maps to None, as every other symbol does. A name
+    defined more than once in the class body is listed once.
+    """
+    if not isinstance(symbol, ClassSymbol):
+        return None
+    members = [s.name for s in symbol.attributes] + [s.name for s in symbol.methods]
+    return dict.fromkeys(members) or None
+
+
+def build_map(*, python_files: list[PythonFile]) -> dict:
     """Build a nested dict representing the namespace.
 
     Keys are paths relative to the project directory. Directory keys have a
-    trailing slash.
-    Symbols sit directly under their file key.
+    trailing slash. Symbols sit directly under their file key, assignments
+    first, then classes, then functions. A name defined more than once in the
+    module body is listed once, where it is first defined, as the kind of its
+    later definition.
     """
     root: dict = {}
 
-    for module in modules:
-        parts = Path(module.rel_path).parts
+    for python_file in python_files:
+        parts = Path(python_file.rel_path).parts
         node = root
 
         # Create intermediate directory entries
@@ -38,22 +63,13 @@ def build_map(*, modules: list[ModuleInfo]) -> dict:
                 node[key] = {}
             node = node[key]
 
-        # Build the file entry — symbols directly under the file key.
-        # Each class maps to its members, or to None when it has none.
-        # Functions and assignments map to None.
-        file_entry: dict = {}
-
-        for assignment in module.assignments:
-            file_entry[assignment] = None
-
-        for cls in module.classes:
-            members = cls.attributes + cls.methods
-            file_entry[cls.name] = dict.fromkeys(members) if members else None
-
-        for func in module.functions:
-            file_entry[func] = None
-
-        node[parts[-1]] = file_entry
+        symbols = {symbol.name: symbol for symbol in python_file.symbols}.values()
+        node[parts[-1]] = {
+            symbol.name: _members(symbol=symbol)
+            for kind in _KIND_ORDER
+            for symbol in symbols
+            if isinstance(symbol, kind)
+        }
 
     return root
 
