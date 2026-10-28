@@ -85,10 +85,10 @@ Use one name for a top-level function, class, module assignment, or Python 3.12
 `type` alias. Use `Class/member` for a method or class attribute. Deeper paths
 and empty segments are unsupported.
 
-The `--in` path is relative to your current directory, not the configuration
+The `--in` path is relative to the current directory, not the configuration
 file. It must be inside the project directory, once symbolic links are resolved.
-Run `body` from the project directory, so that you can pass the namespace map's
-paths to `--in` unchanged.
+Run `body` from the project directory, so that the namespace map's paths can be
+passed to `--in` unchanged.
 
 ## `refs`
 

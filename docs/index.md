@@ -5,9 +5,9 @@ hide:
 
 <div class="home-intro" markdown="1">
 
-# Give your agent a map of your codebase
+# Give the agent a map of the codebase
 
-uncoded indexes Python code and Markdown docs. It gives your agent progressively
+uncoded indexes Python code and Markdown docs. It gives the agent progressively
 deeper views of Python code:
 
 1. A map shows the code symbols
@@ -30,7 +30,7 @@ and location.
 
 <div markdown="1">
 
-### Your source
+### The source
 
 ```python title="src/greetings.py"
 def greet(name: str) -> str:
@@ -75,5 +75,5 @@ at the stub.
 Before a rename, `uncoded refs` finds the references to check and update.
 Markdown docs get a separate map of files and headings.
 
-The index stays local. The generated navigation skills are committed with your
+The index stays local. The generated navigation skills are committed with the
 project so agents know how to use it.

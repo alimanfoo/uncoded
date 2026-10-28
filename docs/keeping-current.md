@@ -13,7 +13,7 @@ skill files then cannot be committed without anyone noticing.
 
 Add this entry to the `repos` list in `.pre-commit-config.yaml`, after any
 formatters that change indexed files. Replace `3.1.0` with the required version
-in your configuration file, since uncoded refuses to run at any other version:
+in the configuration file, since uncoded refuses to run at any other version:
 
 ```yaml title=".pre-commit-config.yaml"
 - repo: local

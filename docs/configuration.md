@@ -1,9 +1,9 @@
 # Configuration
 
-Use one configuration file in your project directory. Choose the directories
+Use one configuration file in the project directory. Choose the directories
 containing Python code and the files or directories containing Markdown docs.
-[`uncoded init`](getting-started.md) writes `.uncoded.toml` for you, and you can
-edit it afterwards.
+[`uncoded init`](getting-started.md) writes `.uncoded.toml`, and the developer
+can edit it afterwards.
 
 ## Choose a configuration file
 
@@ -22,8 +22,8 @@ source-roots = ["src", "tests"]
 doc-roots = ["README.md", "docs"]
 ```
 
-Both formats work in Python and non-Python repositories. At least one root list
-must be non-empty. You can configure either type on its own.
+Both formats work in Python and non-Python projects. At least one root list must
+be non-empty. Either kind of root can be configured on its own.
 
 ## Settings
 

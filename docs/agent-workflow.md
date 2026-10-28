@@ -1,8 +1,8 @@
 # Agent workflow
 
-The generated skills tell your agent when to load the index, read source, and
-check references. Once you have [set up the repository](getting-started.md), the
-agent follows this workflow during a coding task.
+The uncoded skills tell the agent when to load the index, read source, and check
+references. Once the developer has [set uncoded up](getting-started.md), the
+agent follows this workflow during a task.
 
 ## Start a task
 

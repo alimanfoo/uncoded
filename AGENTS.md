@@ -43,7 +43,7 @@ that fails one needs a strong reason.
 
 1. **Purpose.** How does it serve uncoded's goal, to raise the recall and
    precision of agents' code reading? Judge a change against the whole project,
-   not only the issue or bug report in front of you.
+   not only the issue or bug report at hand.
 2. **Value.** What does it gain a user, and is the gain real? A problem nobody
    has met is not yet a reason.
 3. **Less, not more.** Could the same goal be reached by removing code rather
@@ -128,8 +128,8 @@ for tracked generated skill files.
 Never commit with `--no-verify`. CI runs `pre-commit run --all-files` on every
 pull request and will fail a build where a hook was skipped.
 
-Do not pass `--unsafe-fixes` unless a specific violation needs it and you have
-reviewed the change.
+Do not pass `--unsafe-fixes` unless a specific violation needs it. Review every
+change that it makes.
 
 A complexity-check violation means a function is too complex to pass. Refactor
 or flatten it. Never suppress a complexity violation with an ignore comment and

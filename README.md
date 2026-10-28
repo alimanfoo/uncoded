@@ -14,5 +14,5 @@ files.
 Read the [documentation](https://alimanfoo.github.io/uncoded/) for installation,
 configuration, command reference, and upgrades.
 
-If you have an idea, suggestion or question about uncoded, please start a
+To share an idea, suggestion or question about uncoded, start a
 [discussion](https://github.com/alimanfoo/uncoded/discussions).
