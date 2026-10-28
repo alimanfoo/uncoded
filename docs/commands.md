@@ -49,8 +49,8 @@ output at the same project root.
 
 Files that cannot be parsed or decoded are skipped with a warning, and the
 output ends with a line that says how many files were skipped. A skipped file
-does not change the exit status. Invalid configuration or roots cause exit
-status `1`.
+does not change the exit status. Invalid configuration or roots, or a generated
+file that cannot be read, written or removed, cause exit status `1`.
 
 ## `check`
 
@@ -60,10 +60,10 @@ uvx uncoded check
 
 Runs the same pipeline as `sync` without changing files.
 
-| Status | Meaning                                                                        |
-| ------ | ------------------------------------------------------------------------------ |
-| `0`    | All generated files match a fresh build.                                       |
-| `1`    | A file would be created, updated, or removed, or the configuration is invalid. |
+| Status | Meaning                                                                                                         |
+| ------ | --------------------------------------------------------------------------------------------------------------- |
+| `0`    | All generated files match a fresh build.                                                                        |
+| `1`    | A file would be created, updated, or removed, the configuration is invalid, or a generated file cannot be read. |
 
 The index is never committed, so in a fresh checkout `check` always reports it
 as stale. It is not a check for CI. See

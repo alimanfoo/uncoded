@@ -71,6 +71,10 @@ includes it. Each entry links the pull request that made the change.
   not exist, is the wrong kind, or is outside the project directory. A root that
   did not exist was reported as "not a directory".
   ([#328](https://github.com/alimanfoo/uncoded/pull/328))
+- When `uncoded sync` or `uncoded check` cannot read, write or remove a
+  generated file, it says in one line which file, what it could not do, and why,
+  and exits with status `1`. This gave a Python traceback.
+  ([#331](https://github.com/alimanfoo/uncoded/pull/331))
 - `uncoded body` and `uncoded refs` stop when two files in one directory both
   configure uncoded, as the other commands already do.
   ([#322](https://github.com/alimanfoo/uncoded/pull/322))
