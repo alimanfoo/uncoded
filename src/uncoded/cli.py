@@ -22,7 +22,7 @@ from uncoded.docs_map import build_docs_map, read_doc_files, render_docs_map
 from uncoded.extract import PythonFile, read_python_files
 from uncoded.markers import GENERATED_MARKER
 from uncoded.namespace_map import build_map, render_map
-from uncoded.read_helpers import SkippedFile
+from uncoded.read_helpers import SkippedFile, failure_reason
 from uncoded.refs import TyError, find_refs
 from uncoded.resolver import NamePath, SymbolNotFoundError, UnsupportedNamePathError
 from uncoded.skill import SKILL_DIRECTORIES, agent_instructions, sync_skills
@@ -266,10 +266,8 @@ def _report_lookup_error(*, exc: Exception, name_path: str, in_path: str) -> int
         print(f"Error: {exc}", file=sys.stderr)
     elif isinstance(exc, SymbolNotFoundError):
         print(f"Error: {name_path!r} not found in {shown_path}", file=sys.stderr)
-    elif isinstance(exc, FileNotFoundError):
-        print(f"Error: {shown_path}: file not found.", file=sys.stderr)
     else:
-        print(f"Error: {shown_path}: {exc}", file=sys.stderr)
+        print(f"Error: {shown_path}: {failure_reason(error=exc)}", file=sys.stderr)
     return 1
 
 

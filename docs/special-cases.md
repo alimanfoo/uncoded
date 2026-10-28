@@ -30,10 +30,3 @@ of CommonMark headings and code fences in `docs_map.py`, the parameter syntax in
 | `refs._read_response`        | A message from ty that does not answer the request is passed over.                 | The Language Server Protocol lets a server send notifications and requests of its own between a request and its response.       |
 | `refs._run_exchange`         | ty answers a references request with `null`, which uncoded reads as no references. | The Language Server Protocol allows `null` as the result of a references request.                                               |
 | `sync._remove_empty_parents` | A symbolic link to a directory stops the removal of empty directories.             | `rmdir` fails on a symbolic link on Linux and macOS, and on Windows it removes the link, which the developer made, not uncoded. |
-| `cli._report_lookup_error`   | An `--in` file that does not exist gets its own message.                           | uncoded chose its own wording for a missing file. See the note below.                                                           |
-
-The last entry's cause is a choice uncoded made, the wording of one message,
-where a general rule exists: `read_helpers.failure_reason` gives the reason a
-file could not be read without naming it again, and `uncoded sync` already uses
-it. Applying it to `uncoded body` and `uncoded refs` would change the messages
-they print, which is the product owner's decision.
