@@ -181,7 +181,9 @@ version generates.
 Until someone raises the version in the hook, it holds. A new release never
 reaches the committed files unannounced. An agent or a developer that runs
 another version of uncoded changes only the index, which is local, and the
-installed skill files, which the hook writes back at the next commit.
+installed skill files, which the hook writes back at the next commit. A project
+without a pre-commit hook pins no version, so each run of `uncoded sync` writes
+the installed skill files that its own version generates.
 
 The value to the developer is that upgrading is one deliberate change, visible
 in a pull request, and that two projects on one machine can use different

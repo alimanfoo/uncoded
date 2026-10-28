@@ -13,7 +13,8 @@ skill files then cannot be committed without anyone noticing.
 
 Add this entry to the `repos` list in `.pre-commit-config.yaml`, after any
 formatters that change indexed files. Replace `<version>` with the release of
-uncoded that the project uses, as `uvx uncoded --version` prints it:
+uncoded that the project is to use, such as the latest, which
+`uvx uncoded@latest --version` prints after `uncoded`:
 
 ```yaml title=".pre-commit-config.yaml"
 - repo: local
