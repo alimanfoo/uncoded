@@ -5,9 +5,9 @@ from pathlib import Path
 
 from uncoded.markers import GENERATED_MARKER
 from uncoded.read_helpers import SkippedFile, failure_reason
-from uncoded.yaml_tree import render_yaml_tree
+from uncoded.yaml_tree import nest_by_path, render_yaml_tree
 
-DOCS_HEADER = f"""\
+_DOCS_HEADER = f"""\
 # Documentation index of this codebase, for agent orientation.
 # {GENERATED_MARKER}
 #
@@ -39,7 +39,7 @@ def _parse_atx_heading(*, line: str) -> tuple[int, str] | None:
     return (level, title) if title else None
 
 
-def extract_headings(*, text: str) -> list[tuple[int, str]]:
+def _extract_headings(*, text: str) -> list[tuple[int, str]]:
     """Return the ATX headings in ``text`` as ordered (level, title) pairs.
 
     Recognises ATX headings only: 1-6 ``#`` followed by a space and a
@@ -100,7 +100,7 @@ def _collapse_empty(*, mapping: dict) -> dict | None:
 
 def read_doc_files(
     *, doc_root: Path, project_directory: Path
-) -> tuple[list[tuple[str, Path]], list[SkippedFile]]:
+) -> tuple[list[tuple[str, str]], list[SkippedFile]]:
     """Read the Markdown files of ``doc_root``, keeping those that read as UTF-8.
 
     If ``doc_root`` is a directory, reads every ``*.md`` file found by rglob,
@@ -109,65 +109,61 @@ def read_doc_files(
 
     Returns the ``(text, rel_path)`` pair of every file that reads, and a
     :class:`SkippedFile` for every file that is unreadable or not UTF-8.
-    ``rel_path`` is relative to ``project_directory``.
+    Each ``rel_path`` is the file's path relative to ``project_directory``, with
+    ``/`` separators on every platform.
     """
     doc_root = doc_root.resolve()
     project_directory = project_directory.resolve()
     md_files = [doc_root] if doc_root.is_file() else sorted(doc_root.rglob("*.md"))
 
-    files: list[tuple[str, Path]] = []
+    files: list[tuple[str, str]] = []
     skipped: list[SkippedFile] = []
     for md_file in md_files:
-        rel = md_file.relative_to(project_directory)
+        rel_path = md_file.relative_to(project_directory).as_posix()
         try:
             text = md_file.read_text(encoding="utf-8-sig")
         except (UnicodeDecodeError, OSError) as e:
-            reason = failure_reason(error=e)
-            skipped.append(SkippedFile(path=rel.as_posix(), reason=reason))
+            skipped.append(SkippedFile(path=rel_path, reason=failure_reason(error=e)))
             continue
-        files.append((text, rel))
+        files.append((text, rel_path))
     return files, skipped
 
 
-def build_docs_map(*, files: Iterable[tuple[str, Path]]) -> dict:
-    """Build a nested dict from ``(text, rel_path)`` doc-file pairs.
+def _file_headings(*, text: str) -> dict | None:
+    """Return the docs map entry of a Markdown file's ``text``: its headings.
 
-    Top-level keys are directory names (trailing "/") and file names.
     Headings nest under the nearest preceding heading of a smaller level;
     level skips attach to the nearest shallower heading. Duplicate sibling
     headings are disambiguated with " (2)", " (3)", … A file with no
-    headings maps to null.
+    headings maps to None.
     """
-    root: dict = {}
+    file_dict: dict = {}
+    # Stack of (level, children_dict) — the active path from file root.
+    stack: list[tuple[int, dict]] = [(0, file_dict)]
 
-    for text, rel_path in files:
-        parts = rel_path.parts
-        node = root
+    for level, title in _extract_headings(text=text):
+        while stack[-1][0] >= level:
+            stack.pop()
+        parent_dict = stack[-1][1]
+        key = _unique_key(parent=parent_dict, title=title)
+        heading_dict: dict = {}
+        parent_dict[key] = heading_dict
+        stack.append((level, heading_dict))
 
-        for dir_part in parts[:-1]:
-            dir_key = dir_part + "/"
-            if dir_key not in node:
-                node[dir_key] = {}
-            node = node[dir_key]
+    return _collapse_empty(mapping=file_dict)
 
-        file_dict: dict = {}
-        # Stack of (level, children_dict) — the active path from file root.
-        stack: list[tuple[int, dict]] = [(0, file_dict)]
 
-        for level, title in extract_headings(text=text):
-            while stack[-1][0] >= level:
-                stack.pop()
-            parent_dict = stack[-1][1]
-            key = _unique_key(parent=parent_dict, title=title)
-            heading_dict: dict = {}
-            parent_dict[key] = heading_dict
-            stack.append((level, heading_dict))
+def build_docs_map(*, files: Iterable[tuple[str, str]]) -> dict:
+    """Build a nested dict from ``(text, rel_path)`` doc-file pairs.
 
-        node[parts[-1]] = _collapse_empty(mapping=file_dict)
-
-    return root
+    Top-level keys are directory names (trailing "/") and file names, and each
+    file maps to its headings.
+    """
+    return nest_by_path(
+        entries=((rel_path, _file_headings(text=text)) for text, rel_path in files)
+    )
 
 
 def render_docs_map(*, mapping: dict) -> str:
     """Render a docs map dict as a YAML string with an explanatory header."""
-    return render_yaml_tree(header=DOCS_HEADER, mapping=mapping)
+    return render_yaml_tree(header=_DOCS_HEADER, mapping=mapping)

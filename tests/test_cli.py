@@ -17,18 +17,18 @@ import pytest
 import yaml
 
 from uncoded import __version__, cli
-from uncoded.skill import SKILL_DIRECTORIES, SKILLS, _skill_path
+from uncoded.skill import _SKILLS, SKILL_DIRECTORIES, _skill_path
 
 # Paths split by gate so tests can assert the right subset.
 _SOURCE_SKILL_PATHS = [
     _skill_path(skill_directory=skill_directory, name=skill.name)
-    for skill in SKILLS
+    for skill in _SKILLS
     if skill.gate == "source"
     for skill_directory in SKILL_DIRECTORIES
 ]
 _DOC_SKILL_PATHS = [
     _skill_path(skill_directory=skill_directory, name=skill.name)
-    for skill in SKILLS
+    for skill in _SKILLS
     if skill.gate == "doc"
     for skill_directory in SKILL_DIRECTORIES
 ]

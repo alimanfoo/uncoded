@@ -8,14 +8,14 @@ from unittest import mock
 import pytest
 
 from uncoded.refs import (
-    TY_VERSION,
-    Reference,
+    _TY_VERSION,
     TyError,
     _LSPLocation,
     _path_for_display,
     _query_references,
     _read_message,
     _read_response,
+    _Reference,
     _run_exchange,
     _terminate,
     find_refs,
@@ -56,7 +56,7 @@ class TestFindRefs:
             project_directory=tmp_path,
         )
 
-        assert refs == [Reference(path=pkg / "a.py", line=1, col=5)]
+        assert refs == [_Reference(path=pkg / "a.py", line=1, col=5)]
 
     def test_finds_definition_imports_and_uses_across_files(self, *, tmp_path):
         pkg = tmp_path / "pkg"
@@ -75,11 +75,11 @@ class TestFindRefs:
         )
 
         assert refs == [
-            Reference(path=pkg / "a.py", line=1, col=5),
-            Reference(path=pkg / "b.py", line=1, col=19),
-            Reference(path=pkg / "b.py", line=2, col=10),
-            Reference(path=pkg / "b.py", line=3, col=9),
-            Reference(path=pkg / "c.py", line=1, col=19),
+            _Reference(path=pkg / "a.py", line=1, col=5),
+            _Reference(path=pkg / "b.py", line=1, col=19),
+            _Reference(path=pkg / "b.py", line=2, col=10),
+            _Reference(path=pkg / "b.py", line=3, col=9),
+            _Reference(path=pkg / "c.py", line=1, col=19),
         ]
 
     def test_finds_each_reference_to_a_method(self, *, tmp_path):
@@ -107,9 +107,9 @@ class TestFindRefs:
         )
 
         assert refs == [
-            Reference(path=pkg / "a.py", line=2, col=9),
-            Reference(path=pkg / "b.py", line=3, col=3),
-            Reference(path=pkg / "b.py", line=4, col=3),
+            _Reference(path=pkg / "a.py", line=2, col=9),
+            _Reference(path=pkg / "b.py", line=3, col=3),
+            _Reference(path=pkg / "b.py", line=4, col=3),
         ]
 
     def test_results_are_sorted(self, *, tmp_path):
@@ -142,7 +142,7 @@ class TestFindRefs:
             name_path=NamePath("foo"), in_path=pkg / "a.py", project_directory=tmp_path
         )
 
-        assert refs[-1] == Reference(path=pkg / "b.py", line=2, col=1)
+        assert refs[-1] == _Reference(path=pkg / "b.py", line=2, col=1)
 
     def test_path_with_spaces_is_not_percent_encoded(self, *, tmp_path):
         project_directory = tmp_path / "my project"
@@ -295,7 +295,7 @@ class TestQueryReferences:
 
         assert refs == [_LSPLocation(path=ref_path, line=3, character=7)]
         mock_popen.assert_called_once_with(
-            ["uvx", "--from", f"ty=={TY_VERSION}", "ty", "server"],
+            ["uvx", "--from", f"ty=={_TY_VERSION}", "ty", "server"],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=mock.ANY,

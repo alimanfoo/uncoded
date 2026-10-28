@@ -8,7 +8,7 @@ from uncoded.resolver import (
     NamePath,
     SymbolNotFoundError,
     UnsupportedNamePathError,
-    resolve_ast_node,
+    _resolve_ast_node,
     resolve_name_position,
 )
 
@@ -141,6 +141,14 @@ class TestResolveDefinitionTopLevel:
 
         with pytest.raises(SymbolNotFoundError, match="missing"):
             resolve_definition(name_path=NamePath("missing"), in_path=path)
+
+    @pytest.mark.parametrize("source", ["x, y = 1, 2\n", "x = y = 1\n"])
+    def test_name_bound_with_others_is_not_found(self, *, tmp_path, source):
+        path = tmp_path / "m.py"
+        path.write_text(source, encoding="utf-8", newline="")
+
+        with pytest.raises(SymbolNotFoundError):
+            resolve_definition(name_path=NamePath("x"), in_path=path)
 
     def test_raises_when_the_file_is_missing(self, *, tmp_path):
         path = tmp_path / "nonexistent.py"
@@ -377,7 +385,7 @@ class TestResolveAstNode:
         path = tmp_path / "m.py"
         path.write_text(source, encoding="utf-8", newline="")
 
-        node = resolve_ast_node(name_path=NamePath("compute"), in_path=path)
+        node = _resolve_ast_node(name_path=NamePath("compute"), in_path=path)
 
         assert isinstance(node, ast.FunctionDef)
         assert node.name == "compute"
@@ -391,7 +399,7 @@ class TestResolveAstNode:
         path = tmp_path / "m.py"
         path.write_text(source, encoding="utf-8", newline="")
 
-        node = resolve_ast_node(name_path=NamePath("Engine", "start"), in_path=path)
+        node = _resolve_ast_node(name_path=NamePath("Engine", "start"), in_path=path)
 
         assert isinstance(node, ast.FunctionDef)
         assert node.name == "start"
@@ -401,7 +409,7 @@ class TestResolveAstNode:
         path.write_text("def other(): pass\n", encoding="utf-8", newline="")
 
         with pytest.raises(SymbolNotFoundError, match="missing"):
-            resolve_ast_node(name_path=NamePath("missing"), in_path=path)
+            _resolve_ast_node(name_path=NamePath("missing"), in_path=path)
 
     def test_raises_unsupported_name_path(self):
         with pytest.raises(UnsupportedNamePathError):
@@ -409,7 +417,7 @@ class TestResolveAstNode:
 
     def test_raises_when_the_file_is_missing(self, *, tmp_path):
         with pytest.raises(FileNotFoundError):
-            resolve_ast_node(
+            _resolve_ast_node(
                 name_path=NamePath("foo"), in_path=tmp_path / "nonexistent.py"
             )
 
@@ -418,7 +426,7 @@ class TestResolveAstNode:
         path.write_text("def broken(:\n", encoding="utf-8", newline="")
 
         with pytest.raises(SyntaxError):
-            resolve_ast_node(name_path=NamePath("broken"), in_path=path)
+            _resolve_ast_node(name_path=NamePath("broken"), in_path=path)
 
 
 class TestResolveNamePosition:

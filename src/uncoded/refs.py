@@ -21,7 +21,7 @@ from uncoded.resolver import NamePath, resolve_name_position
 # on ty. It is pinned exactly because any ty release can change what
 # `uncoded refs` reports. Before you raise it, compare `uncoded refs` output on
 # this repository under the old and the new version.
-TY_VERSION = "0.0.92"
+_TY_VERSION = "0.0.92"
 
 _TY_STOPPED = "ty failed: it stopped before it answered."
 
@@ -31,7 +31,7 @@ class TyError(Exception):
 
 
 @dataclass(frozen=True)
-class Reference:
+class _Reference:
     """A reference location with 1-indexed line and column."""
 
     path: Path
@@ -41,7 +41,7 @@ class Reference:
 
 def find_refs(
     *, name_path: NamePath, in_path: Path, project_directory: Path
-) -> list[Reference]:
+) -> list[_Reference]:
     """Return every reference to the symbol named by name_path in in_path.
 
     Resolves the symbol's name-token position, queries ty's LSP server for
@@ -58,7 +58,7 @@ def find_refs(
         in_path=in_path, position=position, project_directory=project_directory
     )
     result = [
-        Reference(
+        _Reference(
             path=_path_for_display(path=ref.path),
             line=ref.line + 1,
             col=ref.character + 1,
@@ -110,7 +110,7 @@ def _run_ty(
 ) -> list[_LSPLocation]:
     try:
         proc = subprocess.Popen(
-            ["uvx", "--from", f"ty=={TY_VERSION}", "ty", "server"],
+            ["uvx", "--from", f"ty=={_TY_VERSION}", "ty", "server"],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=stderr,

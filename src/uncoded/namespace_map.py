@@ -1,12 +1,10 @@
 """Generate a YAML namespace map from extracted symbols."""
 
-from pathlib import Path
-
-from uncoded.extract import ModuleInfo
+from uncoded.extract import ClassSymbol, PythonFile
 from uncoded.markers import GENERATED_MARKER
-from uncoded.yaml_tree import render_yaml_tree
+from uncoded.yaml_tree import nest_by_path, render_yaml_tree
 
-HEADER = f"""\
+_HEADER = f"""\
 # Namespace map of this codebase, for agent navigation.
 # {GENERATED_MARKER}
 #
@@ -18,46 +16,45 @@ HEADER = f"""\
 """
 
 
-def build_map(*, modules: list[ModuleInfo]) -> dict:
+def _members(*, cls: ClassSymbol) -> dict | None:
+    """Return the map entry under ``cls``: its members, or None when it has none.
+
+    A name defined more than once in the class body is listed once.
+    """
+    members = [s.name for s in cls.attributes] + [s.name for s in cls.methods]
+    return dict.fromkeys(members) or None
+
+
+def _file_entry(*, python_file: PythonFile) -> dict:
+    """Return the map entry of ``python_file``: its symbols, by kind.
+
+    Lists assignments first, then classes, then functions. A name defined more
+    than once in the module body is listed once, where it is first defined, as
+    the kind of its later definition.
+    """
+    later = {symbol.name: symbol for symbol in python_file.symbols}
+    symbols = PythonFile(rel_path=python_file.rel_path, symbols=list(later.values()))
+    return {
+        **dict.fromkeys(s.name for s in symbols.assignments),
+        **{cls.name: _members(cls=cls) for cls in symbols.classes},
+        **dict.fromkeys(s.name for s in symbols.functions),
+    }
+
+
+def build_map(*, python_files: list[PythonFile]) -> dict:
     """Build a nested dict representing the namespace.
 
     Keys are paths relative to the project directory. Directory keys have a
-    trailing slash.
-    Symbols sit directly under their file key.
+    trailing slash. Symbols sit directly under their file key.
     """
-    root: dict = {}
-
-    for module in modules:
-        parts = Path(module.rel_path).parts
-        node = root
-
-        # Create intermediate directory entries
-        for dir_part in parts[:-1]:
-            key = dir_part + "/"
-            if key not in node:
-                node[key] = {}
-            node = node[key]
-
-        # Build the file entry — symbols directly under the file key.
-        # Each class maps to its members, or to None when it has none.
-        # Functions and assignments map to None.
-        file_entry: dict = {}
-
-        for assignment in module.assignments:
-            file_entry[assignment] = None
-
-        for cls in module.classes:
-            members = cls.attributes + cls.methods
-            file_entry[cls.name] = dict.fromkeys(members) if members else None
-
-        for func in module.functions:
-            file_entry[func] = None
-
-        node[parts[-1]] = file_entry
-
-    return root
+    return nest_by_path(
+        entries=(
+            (python_file.rel_path, _file_entry(python_file=python_file))
+            for python_file in python_files
+        )
+    )
 
 
 def render_map(*, namespace: dict) -> str:
     """Render a namespace map dict as a YAML string with an explanatory header."""
-    return render_yaml_tree(header=HEADER, mapping=namespace)
+    return render_yaml_tree(header=_HEADER, mapping=namespace)

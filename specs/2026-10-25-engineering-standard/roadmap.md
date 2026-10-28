@@ -152,7 +152,7 @@ version, keeping the `pypi` environment and the attestations Trusted Publishing
 makes by default; `hatchling` and `hatch-vcs` pinned exactly in
 `[build-system] requires`; zizmor and actionlint in pre-commit, frozen to
 commits; and `.github/dependabot.yml` for uv, pre-commit and GitHub Actions,
-grouped and with a cooldown. This settles #223. `TY_VERSION` stays apart from
+grouped and with a cooldown. This settles #223. `_TY_VERSION` stays apart from
 the dev dependency, as the design says.
 
 Proof: zizmor and actionlint pass with no ignores, and CI is green. The stage

@@ -19,7 +19,7 @@ from uncoded.config import (
     validate_root,
 )
 from uncoded.docs_map import build_docs_map, read_doc_files, render_docs_map
-from uncoded.extract import extract_modules, read_source_files
+from uncoded.extract import PythonFile, read_python_files
 from uncoded.markers import GENERATED_MARKER
 from uncoded.namespace_map import build_map, render_map
 from uncoded.read_helpers import SkippedFile
@@ -53,42 +53,38 @@ def _sync_code_index(
 ) -> tuple[int, list[SkippedFile]]:
     """Build or remove the code index: the namespace map and the stubs.
 
-    Collects the source files beneath the resolved ``source_roots`` and writes
-    the namespace map and the stub files, removing every stub that those files
-    do not generate. With no source roots, removes namespace.yaml and every
-    stub. Returns the change count and the files that could not be read or
-    parsed.
+    Reads the Python files under the resolved ``source_roots``, writes the
+    namespace map, or removes it when there are no source roots, and writes
+    their stubs, removing every other stub. Returns the change count and the
+    files that could not be read or parsed.
     """
-    files: list[tuple[str, str]] = []
-    all_skipped: list[SkippedFile] = []
-    for src_root in source_roots:
-        root_files, skipped = read_source_files(
-            source_root=src_root, project_directory=project_directory
+    python_files: list[PythonFile] = []
+    skipped: list[SkippedFile] = []
+    for source_root in source_roots:
+        root_files, root_skipped = read_python_files(
+            source_root=source_root, project_directory=project_directory
         )
-        files.extend(root_files)
-        all_skipped.extend(skipped)
+        python_files.extend(root_files)
+        skipped.extend(root_skipped)
     namespace_path = Path(".uncoded/namespace.yaml")
     if source_roots:
-        map_content = render_map(
-            namespace=build_map(modules=extract_modules(files=files))
-        )
-        n = sync_file(
+        changes = sync_file(
             path=namespace_path,
-            content=map_content,
+            content=render_map(namespace=build_map(python_files=python_files)),
             project_directory=project_directory,
             check=check,
         )
     else:
-        n = remove_file(
+        changes = remove_file(
             path=namespace_path, project_directory=project_directory, check=check
         )
-    n += sync_stubs(
-        files=files,
+    changes += sync_stubs(
+        python_files=python_files,
         output_dir=Path(".uncoded/stubs"),
         project_directory=project_directory,
         check=check,
     )
-    return n, all_skipped
+    return changes, skipped
 
 
 def _sync_documentation_index(
@@ -96,33 +92,31 @@ def _sync_documentation_index(
 ) -> tuple[int, list[SkippedFile]]:
     """Build or remove the documentation index, the docs map.
 
-    With no doc roots, removes docs.yaml. Otherwise collects the Markdown files
-    in the resolved ``doc_roots`` and writes docs.yaml. Returns the change
-    count and the files that could not be read.
+    Reads the Markdown files in the resolved ``doc_roots`` and writes the docs
+    map, or removes it when there are no doc roots. Returns the change count
+    and the files that could not be read.
     """
-    if not doc_roots:
-        removed = remove_file(
-            path=Path(".uncoded/docs.yaml"),
+    files: list[tuple[str, str]] = []
+    skipped: list[SkippedFile] = []
+    for doc_root in doc_roots:
+        root_files, root_skipped = read_doc_files(
+            doc_root=doc_root, project_directory=project_directory
+        )
+        files.extend(root_files)
+        skipped.extend(root_skipped)
+    docs_path = Path(".uncoded/docs.yaml")
+    if doc_roots:
+        changes = sync_file(
+            path=docs_path,
+            content=render_docs_map(mapping=build_docs_map(files=files)),
             project_directory=project_directory,
             check=check,
         )
-        return removed, []
-    all_doc_files = []
-    all_skipped: list[SkippedFile] = []
-    for doc_root in doc_roots:
-        files, skipped = read_doc_files(
-            doc_root=doc_root, project_directory=project_directory
+    else:
+        changes = remove_file(
+            path=docs_path, project_directory=project_directory, check=check
         )
-        all_doc_files.extend(files)
-        all_skipped.extend(skipped)
-    docs_content = render_docs_map(mapping=build_docs_map(files=all_doc_files))
-    changed = sync_file(
-        path=Path(".uncoded/docs.yaml"),
-        content=docs_content,
-        project_directory=project_directory,
-        check=check,
-    )
-    return changed, all_skipped
+    return changes, skipped
 
 
 def _sync(*, config: Config, check: bool = False) -> int:
@@ -266,7 +260,6 @@ def _report_lookup_error(*, exc: Exception, name_path: str, in_path: str) -> int
     """Print the CLI error message for a lookup failure and return 1.
 
     Covers the error arms that _body and _refs share.
-    FileNotFoundError is checked before OSError because it subclasses it.
     """
     shown_path = Path(in_path).as_posix()
     if isinstance(exc, UnsupportedNamePathError):
@@ -409,20 +402,24 @@ def main() -> int:
         action=lambda *, config: _sync(config=config, check=True),
     )
 
-    body_parser = subparsers.add_parser(
-        "body",
-        help="Print the definition of a named symbol to stdout.",
-    )
-    body_parser.add_argument(
+    # The arguments of a lookup, which `uncoded body` and `uncoded refs` share.
+    lookup_parser = argparse.ArgumentParser(add_help=False)
+    lookup_parser.add_argument(
         "name_path",
         help="Name path: one segment for top-level, two for Class/member.",
     )
-    body_parser.add_argument(
+    lookup_parser.add_argument(
         "--in",
         dest="in_path",
         required=True,
         metavar="PATH",
         help="Source file path (relative to current directory).",
+    )
+
+    body_parser = subparsers.add_parser(
+        "body",
+        parents=[lookup_parser],
+        help="Print the definition of a named symbol to stdout.",
     )
     body_parser.set_defaults(
         find_project=read_config,
@@ -433,18 +430,8 @@ def main() -> int:
 
     refs_parser = subparsers.add_parser(
         "refs",
+        parents=[lookup_parser],
         help="Find all references to a named symbol and print them to stdout.",
-    )
-    refs_parser.add_argument(
-        "name_path",
-        help="Name path: one segment for top-level, two for Class/member.",
-    )
-    refs_parser.add_argument(
-        "--in",
-        dest="in_path",
-        required=True,
-        metavar="PATH",
-        help="Source file path (relative to current directory).",
     )
     refs_parser.set_defaults(
         find_project=read_config,

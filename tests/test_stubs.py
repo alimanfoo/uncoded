@@ -3,18 +3,18 @@ from pathlib import Path
 
 import pytest
 
-from uncoded.extract import read_source_files
-from uncoded.markers import GENERATED_MARKER
-from uncoded.stubs import (
-    StubAssignment,
-    StubClass,
-    StubFunction,
-    StubModule,
-    StubParam,
-    extract_stub,
-    render_stub,
-    sync_stubs,
+from uncoded.extract import (
+    AssignmentSymbol,
+    ClassSymbol,
+    FunctionSymbol,
+    Parameter,
+    PythonFile,
+    TypeAliasSymbol,
+    _extract_python_file,
+    read_python_files,
 )
+from uncoded.markers import GENERATED_MARKER
+from uncoded.stubs import _render_stub, sync_stubs
 
 
 def _setup(*, tmp_path):
@@ -25,520 +25,172 @@ def _setup(*, tmp_path):
 
 
 def _sync_root(*, source_root, out, tmp_path, check=False):
-    files, _skipped = read_source_files(
+    python_files, _skipped = read_python_files(
         source_root=source_root, project_directory=tmp_path
     )
     return sync_stubs(
-        files=files,
+        python_files=python_files,
         output_dir=out,
         project_directory=tmp_path,
         check=check,
     )
 
 
-class TestExtractStub:
-    def test_simple_function(self):
-        source = textwrap.dedent("""\
-            def greet(name: str) -> str:
-                '''Say hello.'''
-                return f"Hello, {name}"
-        """)
-        module = extract_stub(source=source, rel_path="pkg/greet.py")
-        assert len(module.functions) == 1
-        f = module.functions[0]
-        assert f.name == "greet"
-        assert f.params == [StubParam("name", "str")]
-        assert f.return_annotation == "str"
-
-    def test_function_no_annotations(self):
-        source = textwrap.dedent("""\
-            def run(x, y):
-                pass
-        """)
-        module = extract_stub(source=source, rel_path="pkg/run.py")
-        f = module.functions[0]
-        assert f.params == [StubParam("x"), StubParam("y")]
-        assert f.return_annotation is None
-
-    def test_async_function(self):
-        source = textwrap.dedent("""\
-            async def fetch(url: str) -> bytes:
-                pass
-        """)
-        module = extract_stub(source=source, rel_path="pkg/net.py")
-        f = module.functions[0]
-        assert f.is_async is True
-        assert f.name == "fetch"
-
-    def test_private_function_included(self):
-        source = textwrap.dedent("""\
-            def public(): pass
-            def _private(): pass
-        """)
-        module = extract_stub(source=source, rel_path="pkg/mod.py")
-        assert len(module.functions) == 2
-        assert module.functions[0].name == "public"
-        assert module.functions[1].name == "_private"
-
-    def test_class_with_attributes_and_methods(self):
-        source = textwrap.dedent("""\
-            class Record:
-                '''Stores a named value.'''
-                name: str
-                value: int
-                _internal: float
-
-                def save(self) -> None:
-                    '''Persist the record.'''
-                    pass
-
-                def _validate(self) -> bool:
-                    pass
-        """)
-        module = extract_stub(source=source, rel_path="pkg/models.py")
-        assert len(module.classes) == 1
-        cls = module.classes[0]
-        assert cls.name == "Record"
-        assert [(a.name, a.annotation) for a in cls.attributes] == [
-            ("name", "str"),
-            ("value", "int"),
-            ("_internal", "float"),
-        ]
-        assert [m.name for m in cls.methods] == ["save", "_validate"]
-
-    def test_class_with_bases(self):
-        source = textwrap.dedent("""\
-            class Dog(Animal, Domestic):
-                pass
-        """)
-        module = extract_stub(source=source, rel_path="pkg/animals.py")
-        assert module.classes[0].bases == ["Animal", "Domestic"]
-
-    def test_class_no_bases(self):
-        source = textwrap.dedent("""\
-            class Plain:
-                pass
-        """)
-        module = extract_stub(source=source, rel_path="pkg/plain.py")
-        assert module.classes[0].bases == []
-
-    @pytest.mark.parametrize(
-        ("source", "expected"),
-        [
-            pytest.param(
-                "def f(x): pass\n",
-                [StubParam("x")],
-                id="regular_positional_bare",
-            ),
-            pytest.param(
-                "def f(x: str): pass\n",
-                [StubParam("x", "str")],
-                id="regular_positional_annotated",
-            ),
-            pytest.param(
-                "def f(x: int = 0): pass\n",
-                [StubParam("x", "int")],
-                id="defaults_dropped_positional",
-            ),
-            pytest.param(
-                "def f(*args): pass\n",
-                [StubParam("*args")],
-                id="varargs_bare",
-            ),
-            pytest.param(
-                "def f(*args: str): pass\n",
-                [StubParam("*args", "str")],
-                id="varargs_annotated",
-            ),
-            pytest.param(
-                "def f(**kwargs): pass\n",
-                [StubParam("**kwargs")],
-                id="kwargs_bare",
-            ),
-            pytest.param(
-                "def f(**kwargs: int): pass\n",
-                [StubParam("**kwargs", "int")],
-                id="kwargs_annotated",
-            ),
-            pytest.param(
-                "def f(x, /): pass\n",
-                [StubParam("x"), StubParam("/")],
-                id="posonly_bare",
-            ),
-            pytest.param(
-                "def f(x: str, /): pass\n",
-                [StubParam("x", "str"), StubParam("/")],
-                id="posonly_annotated",
-            ),
-            pytest.param(
-                "def f(*, x): pass\n",
-                [StubParam("*"), StubParam("x")],
-                id="kwonly_bare",
-            ),
-            pytest.param(
-                "def f(*, x: str): pass\n",
-                [StubParam("*"), StubParam("x", "str")],
-                id="kwonly_annotated",
-            ),
-            pytest.param(
-                "def f(*, x: int = 0): pass\n",
-                [StubParam("*"), StubParam("x", "int")],
-                id="defaults_dropped_kwonly",
-            ),
-            pytest.param(
-                "def f(*args, x): pass\n",
-                [StubParam("*args"), StubParam("x")],
-                id="vararg_with_kwonly",
-            ),
-            pytest.param(
-                "def f(*args, **kwargs): pass\n",
-                [StubParam("*args"), StubParam("**kwargs")],
-                id="vararg_with_kwarg",
-            ),
-        ],
-    )
-    def test_extracts_each_kind_of_parameter(self, *, source, expected):
-        module = extract_stub(source=source, rel_path="pkg/f.py")
-        f = module.functions[0]
-        assert f.params == expected
-
-    def test_imports_collected(self):
-        source = textwrap.dedent("""\
-            import os
-            from pathlib import Path
-            from typing import Optional
-
-            def run(p: Path) -> Optional[str]:
-                pass
-        """)
-        module = extract_stub(source=source, rel_path="pkg/run.py")
-        assert module.imports == [
-            "import os",
-            "from pathlib import Path",
-            "from typing import Optional",
-        ]
-
-    def test_syntax_error_raises(self):
-        with pytest.raises(SyntaxError):
-            extract_stub(source="def broken(:\n", rel_path="pkg/bad.py")
-
-    def test_source_order_preserved(self):
-        source = textwrap.dedent("""\
-            def zebra(): pass
-            class Alpha: pass
-            def apple(): pass
-        """)
-        module = extract_stub(source=source, rel_path="pkg/mixed.py")
-        assert module.functions[0].name == "zebra"
-        assert module.functions[1].name == "apple"
-        assert module.classes[0].name == "Alpha"
-
-    def test_assignment_annotated_with_value(self):
-        source = textwrap.dedent("""\
-            MAX_RETRIES: int = 3
-        """)
-        module = extract_stub(source=source, rel_path="pkg/mod.py")
-        c = module.assignments[0]
-        assert c.name == "MAX_RETRIES"
-        assert c.annotation == "int"
-        assert c.value_source == "3"
-        assert c.is_pep695_alias is False
-
-    def test_assignment_unannotated_with_value(self):
-        source = textwrap.dedent("""\
-            TIMEOUT = 30
-        """)
-        module = extract_stub(source=source, rel_path="pkg/mod.py")
-        c = module.assignments[0]
-        assert c.name == "TIMEOUT"
-        assert c.annotation is None
-        assert c.value_source == "30"
-
-    def test_assignment_bare_annotation(self):
-        source = textwrap.dedent("""\
-            FOO: int
-        """)
-        module = extract_stub(source=source, rel_path="pkg/mod.py")
-        c = module.assignments[0]
-        assert c.annotation == "int"
-        assert c.value_source is None
-
-    def test_assignment_value_too_long_elided(self):
-        long_list = "[" + ", ".join(f'"item{i}"' for i in range(50)) + "]"
-        source = f"BIG = {long_list}\n"
-        module = extract_stub(source=source, rel_path="pkg/mod.py")
-        c = module.assignments[0]
-        assert c.name == "BIG"
-        assert c.value_source == "..."
-
-    def test_assignment_private_included(self):
-        source = textwrap.dedent("""\
-            _INTERNAL = 42
-        """)
-        module = extract_stub(source=source, rel_path="pkg/mod.py")
-        assert module.assignments[0].name == "_INTERNAL"
-
-    def test_type_alias_classic(self):
-        source = textwrap.dedent("""\
-            from typing import TypeAlias
-            UserId: TypeAlias = int
-        """)
-        module = extract_stub(source=source, rel_path="pkg/mod.py")
-        c = module.assignments[0]
-        assert c.name == "UserId"
-        assert c.annotation == "TypeAlias"
-        assert c.value_source == "int"
-        assert c.is_pep695_alias is False
-
-    def test_type_alias_pep695(self):
-        source = textwrap.dedent("""\
-            type UserId = int
-        """)
-        module = extract_stub(source=source, rel_path="pkg/mod.py")
-        c = module.assignments[0]
-        assert c.name == "UserId"
-        assert c.is_pep695_alias is True
-        assert c.value_source == "int"
-
-    def test_tuple_unpacking_skipped(self):
-        source = textwrap.dedent("""\
-            X, Y = 1, 2
-        """)
-        module = extract_stub(source=source, rel_path="pkg/mod.py")
-        assert module.assignments == []
-
-    def test_annotation_whose_target_is_not_a_bare_name_skipped(self):
-        source = "obj.x: int = 1\n"
-        module = extract_stub(source=source, rel_path="pkg/mod.py")
-        assert module.assignments == []
-
-    def test_class_tuple_unpacking_skipped(self):
-        source = textwrap.dedent("""\
-            class C:
-                a, b = 1, 2
-        """)
-        module = extract_stub(source=source, rel_path="pkg/mod.py")
-        assert module.classes[0].attributes == []
-
-    def test_class_with_unannotated_attribute(self):
-        source = textwrap.dedent("""\
-            class Registry:
-                items = []
-                count: int = 0
-        """)
-        module = extract_stub(source=source, rel_path="pkg/mod.py")
-        cls = module.classes[0]
-        names = [(a.name, a.annotation, a.value_source) for a in cls.attributes]
-        assert names == [
-            ("items", None, "[]"),
-            ("count", "int", "0"),
-        ]
-
-    def test_property_rendered_as_attribute(self):
-        source = textwrap.dedent("""\
-            class Config:
-                @property
-                def path(self) -> Path:
-                    '''Return the configuration file path.'''
-                    return self._path
-        """)
-        module = extract_stub(source=source, rel_path="pkg/cfg.py")
-        cls = module.classes[0]
-        assert cls.methods == []
-        assert len(cls.attributes) == 1
-        attr = cls.attributes[0]
-        assert attr.name == "path"
-        assert attr.annotation == "Path"
-        assert attr.value_source is None
-
-    def test_property_without_return_annotation(self):
-        source = textwrap.dedent("""\
-            class Config:
-                @property
-                def path(self):
-                    return self._path
-        """)
-        module = extract_stub(source=source, rel_path="pkg/cfg.py")
-        cls = module.classes[0]
-        assert cls.attributes[0].name == "path"
-        assert cls.attributes[0].annotation is None
-
-    def test_property_setter_and_deleter_suppressed(self):
-        source = textwrap.dedent("""\
-            class Config:
-                @property
-                def path(self) -> Path:
-                    return self._path
-
-                @path.setter
-                def path(self, value: Path) -> None:
-                    self._path = value
-
-                @path.deleter
-                def path(self) -> None:
-                    del self._path
-        """)
-        module = extract_stub(source=source, rel_path="pkg/cfg.py")
-        cls = module.classes[0]
-        assert [a.name for a in cls.attributes] == ["path"]
-        assert cls.methods == []
-
-
 class TestRenderStub:
     def test_header_contains_path(self):
-        module = StubModule(rel_path="src/pkg/mod.py")
-        lines = render_stub(module=module).splitlines()
+        module = PythonFile(rel_path="src/pkg/mod.py")
+        lines = _render_stub(python_file=module).splitlines()
         assert lines[0] == f"# {GENERATED_MARKER}"
         assert lines[1] == "# src/pkg/mod.py"
 
     def test_imports_rendered(self):
-        module = StubModule(
+        module = PythonFile(
             rel_path="pkg/mod.py",
             imports=["import os", "from pathlib import Path"],
         )
-        output = render_stub(module=module)
+        output = _render_stub(python_file=module)
         assert "import os\nfrom pathlib import Path\n" in output
 
     def test_rendered_stub_has_no_line_range_comments(self):
-        module = StubModule(
+        module = PythonFile(
             rel_path="pkg/mod.py",
-            assignments=[StubAssignment(name="VALUE", value_source="1")],
-            functions=[StubFunction(name="run")],
-            classes=[
-                StubClass(
+            symbols=[
+                AssignmentSymbol(name="VALUE", value="1"),
+                FunctionSymbol(name="run"),
+                ClassSymbol(
                     name="Worker",
                     methods=[
-                        StubFunction(
+                        FunctionSymbol(
                             name="work",
-                            params=[StubParam("self")],
+                            params=[Parameter("self")],
                         )
                     ],
-                )
+                ),
             ],
         )
-        output = render_stub(module=module)
+        output = _render_stub(python_file=module)
         assert "VALUE = 1\n" in output
         assert "def run():\n    ...\n" in output
         assert "class Worker:\n    def work(self):\n        ...\n" in output
         assert "# L" not in output
 
     def test_async_function_prefix(self):
-        module = StubModule(
+        module = PythonFile(
             rel_path="pkg/mod.py",
-            functions=[StubFunction(name="fetch", is_async=True)],
+            symbols=[FunctionSymbol(name="fetch", is_async=True)],
         )
-        assert "async def fetch():\n    ...\n" in render_stub(module=module)
+        assert "async def fetch():\n    ...\n" in _render_stub(python_file=module)
 
     @pytest.mark.parametrize(
         ("params", "expected"),
         [
             pytest.param(
-                [StubParam("x")],
+                [Parameter("x")],
                 "def f(x):",
                 id="regular_positional_bare",
             ),
             pytest.param(
-                [StubParam("x", "str")],
+                [Parameter("x", "str")],
                 "def f(x: str):",
                 id="regular_positional_annotated",
             ),
             pytest.param(
-                [StubParam("*args")],
+                [Parameter("*args")],
                 "def f(*args):",
                 id="varargs_bare",
             ),
             pytest.param(
-                [StubParam("*args", "str")],
+                [Parameter("*args", "str")],
                 "def f(*args: str):",
                 id="varargs_annotated",
             ),
             pytest.param(
-                [StubParam("**kwargs")],
+                [Parameter("**kwargs")],
                 "def f(**kwargs):",
                 id="kwargs_bare",
             ),
             pytest.param(
-                [StubParam("**kwargs", "int")],
+                [Parameter("**kwargs", "int")],
                 "def f(**kwargs: int):",
                 id="kwargs_annotated",
             ),
             pytest.param(
-                [StubParam("/")],
+                [Parameter("/")],
                 "def f(/):",
                 id="positional_only_separator",
             ),
             pytest.param(
-                [StubParam("*")],
+                [Parameter("*")],
                 "def f(*):",
                 id="keyword_only_separator",
             ),
         ],
     )
     def test_renders_each_kind_of_parameter(self, *, params, expected):
-        module = StubModule(
+        module = PythonFile(
             rel_path="pkg/mod.py",
-            functions=[StubFunction(name="f", params=params)],
+            symbols=[FunctionSymbol(name="f", params=params)],
         )
-        assert expected in render_stub(module=module)
+        assert expected in _render_stub(python_file=module)
 
     def test_return_annotation_rendered(self):
-        module = StubModule(
+        module = PythonFile(
             rel_path="pkg/mod.py",
-            functions=[StubFunction(name="f", return_annotation="str")],
+            symbols=[FunctionSymbol(name="f", return_annotation="str")],
         )
-        assert "def f() -> str:" in render_stub(module=module)
+        assert "def f() -> str:" in _render_stub(python_file=module)
 
     def test_class_with_bases(self):
-        module = StubModule(
+        module = PythonFile(
             rel_path="pkg/mod.py",
-            classes=[StubClass(name="Dog", bases=["Animal"])],
+            symbols=[ClassSymbol(name="Dog", bases=["Animal"])],
         )
-        assert "class Dog(Animal):\n    ...\n" in render_stub(module=module)
+        assert "class Dog(Animal):\n    ...\n" in _render_stub(python_file=module)
 
     def test_class_with_no_members_renders_body(self):
         # A class with no attributes and no methods needs an explicit
         # body so the rendered stub is valid Python.
-        module = StubModule(
+        module = PythonFile(
             rel_path="pkg/mod.py",
-            classes=[StubClass(name="Sentinel")],
+            symbols=[ClassSymbol(name="Sentinel")],
         )
-        output = render_stub(module=module)
+        output = _render_stub(python_file=module)
         assert "class Sentinel:\n    ...\n" in output
         compile(output, "pkg/mod.pyi", "exec")
 
     def test_attribute_with_annotation(self):
-        module = StubModule(
+        module = PythonFile(
             rel_path="pkg/mod.py",
-            classes=[
-                StubClass(
+            symbols=[
+                ClassSymbol(
                     name="Record",
-                    attributes=[StubAssignment("name", annotation="str")],
+                    attributes=[AssignmentSymbol("name", annotation="str")],
                 )
             ],
         )
-        assert "class Record:\n    name: str\n" in render_stub(module=module)
+        assert "class Record:\n    name: str\n" in _render_stub(python_file=module)
 
     def test_method_indented(self):
-        module = StubModule(
+        module = PythonFile(
             rel_path="pkg/mod.py",
-            classes=[
-                StubClass(
+            symbols=[
+                ClassSymbol(
                     name="Foo",
                     methods=[
-                        StubFunction(
+                        FunctionSymbol(
                             name="bar",
-                            params=[StubParam("self")],
+                            params=[Parameter("self")],
                         )
                     ],
                 )
             ],
         )
-        output = render_stub(module=module)
+        output = _render_stub(python_file=module)
         assert "class Foo:\n    def bar(self):\n        ...\n" in output
 
     def test_ends_with_newline(self):
-        module = StubModule(rel_path="pkg/mod.py")
-        assert render_stub(module=module).endswith("\n")
+        module = PythonFile(rel_path="pkg/mod.py")
+        assert _render_stub(python_file=module).endswith("\n")
 
     def test_property_rendered_as_class_attribute(self):
         source = textwrap.dedent("""\
@@ -551,71 +203,66 @@ class TestRenderStub:
                 def path(self, value: Path) -> None:
                     self._path = value
         """)
-        module = extract_stub(source=source, rel_path="pkg/cfg.py")
-        output = render_stub(module=module)
+        module = _extract_python_file(source=source, rel_path="pkg/cfg.py")
+        output = _render_stub(python_file=module)
         assert "class Config:\n    path: Path\n" in output
         assert "def path" not in output
 
     def test_assignment_with_value_rendered(self):
-        module = StubModule(
+        module = PythonFile(
             rel_path="pkg/mod.py",
-            assignments=[StubAssignment(name="TIMEOUT", value_source="30")],
+            symbols=[AssignmentSymbol(name="TIMEOUT", value="30")],
         )
-        assert "TIMEOUT = 30\n" in render_stub(module=module)
+        assert "TIMEOUT = 30\n" in _render_stub(python_file=module)
 
     def test_assignment_annotated_with_value_rendered(self):
-        module = StubModule(
+        module = PythonFile(
             rel_path="pkg/mod.py",
-            assignments=[
-                StubAssignment(
+            symbols=[
+                AssignmentSymbol(
                     name="MAX",
                     annotation="int",
-                    value_source="3",
+                    value="3",
                 )
             ],
         )
-        assert "MAX: int = 3\n" in render_stub(module=module)
+        assert "MAX: int = 3\n" in _render_stub(python_file=module)
 
-    def test_assignment_elided_rendered(self):
-        module = StubModule(
+    def test_assignment_value_too_long_elided(self):
+        long_list = "[" + ", ".join(f'"item{i}"' for i in range(50)) + "]"
+        module = PythonFile(
             rel_path="pkg/mod.py",
-            assignments=[StubAssignment(name="BIG", value_source="...")],
+            symbols=[AssignmentSymbol(name="BIG", value=long_list)],
         )
-        assert "BIG = ...\n" in render_stub(module=module)
+        assert "BIG = ...\n" in _render_stub(python_file=module)
 
     def test_assignment_bare_annotation_rendered(self):
-        module = StubModule(
+        module = PythonFile(
             rel_path="pkg/mod.py",
-            assignments=[StubAssignment(name="FOO", annotation="int")],
+            symbols=[AssignmentSymbol(name="FOO", annotation="int")],
         )
-        output = render_stub(module=module)
+        output = _render_stub(python_file=module)
         assert "FOO: int\n" in output
         assert "FOO: int = " not in output
 
     def test_type_alias_pep695_rendered(self):
-        module = StubModule(
+        module = PythonFile(
             rel_path="pkg/mod.py",
-            assignments=[
-                StubAssignment(
-                    name="UserId",
-                    value_source="int",
-                    is_pep695_alias=True,
-                )
-            ],
+            symbols=[TypeAliasSymbol(name="UserId", value="int")],
         )
-        assert "type UserId = int\n" in render_stub(module=module)
+        assert "type UserId = int\n" in _render_stub(python_file=module)
 
     def test_unannotated_class_attribute_rendered(self):
-        module = StubModule(
+        module = PythonFile(
             rel_path="pkg/mod.py",
-            classes=[
-                StubClass(
+            symbols=[
+                ClassSymbol(
                     name="Registry",
-                    attributes=[StubAssignment("items", value_source="[]")],
+                    attributes=[AssignmentSymbol("items", value="[]")],
                 )
             ],
         )
-        output = render_stub(module=module)
+        output = _render_stub(python_file=module)
         assert "class Registry:\n    items = []\n" in output
         assert "# L" not in output
 
@@ -663,8 +310,8 @@ class TestRenderStub:
             class Dog(Animal):
                 pass
         """)
-        module = extract_stub(source=source, rel_path="pkg/representative.py")
-        output = render_stub(module=module)
+        module = _extract_python_file(source=source, rel_path="pkg/representative.py")
+        output = _render_stub(python_file=module)
         compile(output, "pkg/representative.pyi", "exec")
 
     def test_leaves_out_decorators_docstrings_and_bodies(self):
@@ -685,7 +332,9 @@ class TestRenderStub:
                     return Shape()
         """)
 
-        output = render_stub(module=extract_stub(source=source, rel_path="pkg/m.py"))
+        output = _render_stub(
+            python_file=_extract_python_file(source=source, rel_path="pkg/m.py")
+        )
 
         assert output == (
             f"# {GENERATED_MARKER}\n"
@@ -707,7 +356,9 @@ class TestRenderStub:
             def area(width, height): ...
         """)
 
-        output = render_stub(module=extract_stub(source=source, rel_path="m.py"))
+        output = _render_stub(
+            python_file=_extract_python_file(source=source, rel_path="m.py")
+        )
 
         assert output.endswith(
             "def area(width):\n    ...\n\ndef area(width, height):\n    ...\n"
@@ -766,15 +417,15 @@ class TestSyncStubs:
         tests.mkdir()
         (src / "foo.py").write_text("def hello(): pass\n", encoding="utf-8")
         (tests / "test_foo.py").write_text("def test_hello(): pass\n", encoding="utf-8")
-        src_files, _skipped = read_source_files(
+        src_files, _skipped = read_python_files(
             source_root=src, project_directory=tmp_path
         )
-        test_files, _skipped = read_source_files(
+        test_files, _skipped = read_python_files(
             source_root=tests, project_directory=tmp_path
         )
 
         sync_stubs(
-            files=src_files + test_files,
+            python_files=src_files + test_files,
             output_dir=out,
             project_directory=tmp_path,
             check=False,
@@ -867,7 +518,11 @@ class TestSyncStubsProjectDirectoryAnchor:
         out = Path("stubs")
 
         changes = sync_stubs(
-            files=[("def hello(): pass\n", "src/foo.py")],
+            python_files=[
+                _extract_python_file(
+                    source="def hello(): pass\n", rel_path="src/foo.py"
+                )
+            ],
             output_dir=out,
             project_directory=tmp_path,
             check=False,
@@ -890,7 +545,7 @@ class TestSyncStubsProjectDirectoryAnchor:
         )
 
         changes = sync_stubs(
-            files=[], output_dir=out, project_directory=tmp_path, check=False
+            python_files=[], output_dir=out, project_directory=tmp_path, check=False
         )
 
         assert changes == 1
@@ -912,7 +567,7 @@ class TestSyncStubsWithNoFiles:
 
     def _sync(self, *, tmp_path, check=False):
         return sync_stubs(
-            files=[],
+            python_files=[],
             output_dir=Path(".uncoded/stubs"),
             project_directory=tmp_path,
             check=check,
