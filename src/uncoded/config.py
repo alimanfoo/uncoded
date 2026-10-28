@@ -33,12 +33,17 @@ class ConfigError(Exception):
 
 @dataclass(frozen=True)
 class Config:
-    """Uncoded configuration loaded from a project's config file."""
+    """Uncoded configuration loaded from a project's configuration file."""
 
-    project_root: Path
+    config_file: Path
     source_roots: list[Path]
     doc_roots: list[Path]
     required_version: str | None
+
+    @property
+    def project_root(self) -> Path:
+        """The project directory, the directory of the configuration file."""
+        return self.config_file.parent
 
 
 def _pyproject_settings(*, pyproject_path: Path) -> dict | None:
@@ -139,7 +144,7 @@ def find_config(*, start: Path) -> Config | None:
         return None
     config_file, settings = found
     return Config(
-        project_root=config_file.parent,
+        config_file=config_file,
         source_roots=_roots(
             settings=settings, setting="source-roots", config_file=config_file
         ),
@@ -206,47 +211,44 @@ def is_inside_project(*, path: Path, project_root: Path) -> bool:
 
 
 def validate_root(
-    *, configured: Path, kind: Literal["source", "doc"], project_root: Path
+    *, configured: Path, kind: Literal["source", "doc"], config: Config
 ) -> Path:
-    """Resolve the configured root against ``project_root`` and return it.
+    """Resolve the configured root against the project directory and return it.
 
-    Raises :exc:`ConfigError` when the root resolves outside ``project_root``,
-    or is not a directory or, for a doc root, a Markdown file. ``kind`` also
-    selects the noun used in the error messages.
+    Raises :exc:`ConfigError`, naming the configuration file and the ``kind``
+    of root, when the root is outside the project directory, does not exist,
+    or is not a directory or, for a doc root, a Markdown file.
     """
-    root_label = f"{kind} root {configured.as_posix()}"
-    resolved = (project_root / configured).resolve()
-    if not is_inside_project(path=resolved, project_root=project_root):
-        raise ConfigError(
-            f"{root_label} is outside the project directory. "
-            f"Check {kind}-roots in your uncoded config file."
-        )
-    accepts_md_file = kind == "doc"
-    is_valid = resolved.is_dir() or (
-        accepts_md_file and resolved.is_file() and resolved.suffix == ".md"
+    resolved, problem = _resolve_root(
+        configured=configured, kind=kind, project_root=config.project_root
     )
-    if not is_valid:
-        if accepts_md_file:
-            raise ConfigError(
-                f"{root_label} is not a directory or .md file. "
-                f"Check {kind}-roots in your uncoded config file."
-            )
-        raise ConfigError(
-            f"{root_label} is not a directory. "
-            f"Check {kind}-roots in your uncoded config file."
+    if problem is not None:
+        raise _config_file_error(
+            path=config.config_file,
+            problem=f"{kind}-roots names {configured.as_posix()}, which {problem}",
         )
     return resolved
 
 
-def _is_valid_root(
+def _resolve_root(
     *, configured: Path, kind: Literal["source", "doc"], project_root: Path
-) -> bool:
-    """Return whether :func:`validate_root` accepts the configured root."""
-    try:
-        validate_root(configured=configured, kind=kind, project_root=project_root)
-    except ConfigError:
-        return False
-    return True
+) -> tuple[Path, str | None]:
+    """Return the configured root resolved against ``project_root``.
+
+    Pairs it with what stops the root being used, or None when nothing does.
+    """
+    resolved = (project_root / configured).resolve()
+    if not is_inside_project(path=resolved, project_root=project_root):
+        return resolved, "is outside the project directory"
+    if not resolved.exists():
+        return resolved, "does not exist"
+    if resolved.is_dir():
+        return resolved, None
+    if kind == "source":
+        return resolved, "is not a directory"
+    if resolved.is_file() and resolved.suffix == ".md":
+        return resolved, None
+    return resolved, "is not a directory or a Markdown file"
 
 
 def render_conventional_config(*, directory: Path, required_version: str) -> str:
@@ -256,14 +258,14 @@ def render_conventional_config(*, directory: Path, required_version: str) -> str
     ``directory`` are valid roots, and sets ``required_version``. Raises
     :exc:`ConfigError` when none of them are.
     """
-    roots = {
-        kind: [
-            name
-            for name in names
-            if _is_valid_root(configured=Path(name), kind=kind, project_root=directory)
-        ]
-        for kind, names in _CONVENTIONAL_ROOTS.items()
-    }
+    roots: dict[str, list[str]] = {kind: [] for kind in _CONVENTIONAL_ROOTS}
+    for kind, names in _CONVENTIONAL_ROOTS.items():
+        for name in names:
+            _resolved, problem = _resolve_root(
+                configured=Path(name), kind=kind, project_root=directory
+            )
+            if problem is None:
+                roots[kind].append(name)
     if not any(roots.values()):
         raise ConfigError(
             "found none of the source roots "

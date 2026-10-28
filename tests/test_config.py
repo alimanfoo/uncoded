@@ -65,6 +65,7 @@ class TestReadConfig:
         toml = '[tool.uncoded]\nsource-roots = ["src"]\n'
         (tmp_path / "pyproject.toml").write_text(toml, encoding="utf-8")
         config = read_config(start=tmp_path)
+        assert config.config_file == tmp_path / "pyproject.toml"
         assert config.project_root == tmp_path
 
     def test_finds_pyproject_in_parent_directory(self, *, tmp_path):

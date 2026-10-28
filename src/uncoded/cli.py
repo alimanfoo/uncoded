@@ -29,20 +29,15 @@ from uncoded.sync import remove_file, sync_file
 
 
 def _sync_code_artefacts(
-    *,
-    build: bool,
-    configured_source_roots: list[Path],
-    project_root: Path,
-    check: bool,
+    *, source_roots: list[Path], project_root: Path, check: bool
 ) -> int:
     """Build or remove the code artefacts (namespace map and stubs).
 
-    When build is False, removes namespace.yaml and all stubs and returns the
-    change count. When build is True, validates, collects source files, and
-    writes the namespace map and stub files. Returns the change count. Raises
-    ConfigError on a validation failure.
+    With no source roots, removes namespace.yaml and all stubs. Otherwise
+    collects the source files beneath the resolved ``source_roots`` and writes
+    the namespace map and stub files. Returns the change count.
     """
-    if not build:
+    if not source_roots:
         n = remove_file(
             path=Path(".uncoded/namespace.yaml"), project_root=project_root, check=check
         )
@@ -50,11 +45,6 @@ def _sync_code_artefacts(
             output_dir=Path(".uncoded/stubs"), project_root=project_root, check=check
         )
         return n
-
-    source_roots = [
-        validate_root(configured=configured, kind="source", project_root=project_root)
-        for configured in configured_source_roots
-    ]
 
     roots_with_files = [
         (
@@ -85,26 +75,18 @@ def _sync_code_artefacts(
 
 
 def _sync_doc_artefacts(
-    *,
-    build: bool,
-    configured_doc_roots: list[Path],
-    project_root: Path,
-    check: bool,
+    *, doc_roots: list[Path], project_root: Path, check: bool
 ) -> int:
     """Build or remove the doc artefact (docs.yaml).
 
-    When build is False, removes docs.yaml and returns the change count. When
-    build is True, validates, collects doc files, and writes docs.yaml. Returns
-    the change count. Raises ConfigError on a validation failure.
+    With no doc roots, removes docs.yaml. Otherwise collects the Markdown files
+    in the resolved ``doc_roots`` and writes docs.yaml. Returns the change
+    count.
     """
-    if not build:
+    if not doc_roots:
         return remove_file(
             path=Path(".uncoded/docs.yaml"), project_root=project_root, check=check
         )
-    doc_roots = [
-        validate_root(configured=configured, kind="doc", project_root=project_root)
-        for configured in configured_doc_roots
-    ]
     all_doc_files = [
         f
         for dr in doc_roots
@@ -129,10 +111,10 @@ def _sync(*, config: Config, check: bool = False) -> int:
 
     source-roots drive code artefacts (namespace.yaml, stubs); doc-roots
     drive doc artefacts (docs.yaml). Each root type is independent: when
-    a root type is absent its artefacts are removed. Before writing any index
-    artefact, sync writes .uncoded/.gitignore so the index stays local by
-    default. Raises ConfigError when the configuration names no roots or a
-    root cannot be used.
+    a root type is absent its artefacts are removed. Every root is checked
+    before anything is written. Before writing any index artefact, sync writes
+    .uncoded/.gitignore so the index stays local by default. Raises ConfigError
+    when the configuration names no roots or a root cannot be used.
 
     When ``check=True``, the on-disk tree is not mutated; the function
     reports each prospective write or removal, returns 1 if anything
@@ -146,6 +128,14 @@ def _sync(*, config: Config, check: bool = False) -> int:
         )
 
     project_root = config.project_root
+    source_roots = [
+        validate_root(configured=configured, kind="source", config=config)
+        for configured in config.source_roots
+    ]
+    doc_roots = [
+        validate_root(configured=configured, kind="doc", config=config)
+        for configured in config.doc_roots
+    ]
     changes = sync_file(
         path=Path(".uncoded/.gitignore"),
         content=f"# {GENERATED_MARKER}\n*\n",
@@ -153,25 +143,17 @@ def _sync(*, config: Config, check: bool = False) -> int:
         check=check,
     )
 
-    # Code artefacts — build when source_roots configured, else remove.
     changes += _sync_code_artefacts(
-        build=bool(config.source_roots),
-        configured_source_roots=config.source_roots,
-        project_root=project_root,
-        check=check,
+        source_roots=source_roots, project_root=project_root, check=check
     )
     changes += sync_skills(
-        source=bool(config.source_roots),
-        docs=bool(config.doc_roots),
+        source=bool(source_roots),
+        docs=bool(doc_roots),
         project_root=project_root,
         check=check,
     )
-    # Doc artefacts — build when doc_roots configured, else remove.
     changes += _sync_doc_artefacts(
-        build=bool(config.doc_roots),
-        configured_doc_roots=config.doc_roots,
-        project_root=project_root,
-        check=check,
+        doc_roots=doc_roots, project_root=project_root, check=check
     )
 
     if check:
