@@ -14,10 +14,9 @@ makes.
 
 If the release is major or minor, do this. A patch release skips it.
 
-1. Run the consistency review, the `uncoded-consistency-review` skill, over
-   `src`, `tests`, `README.md`, `AGENTS.md`, `docs` and the skill sources, with
-   [the concepts page](concepts.md) as the authority. Fix what is quick to fix,
-   and file an issue for each other finding.
+1. Run the consistency review, as the method on
+   [the measurement](measurement.md) says. Fix what is quick to fix, and file an
+   issue for each other finding.
 2. Triage the open issues against the measure of
    [Accurate tracker](standard.md#accurate-tracker). Rewrite or close each issue
    that falls short, and say why.
@@ -69,8 +68,8 @@ If the release is major or minor, do this too. A patch release skips it.
 2. If the release is major, add a section to [Upgrading](upgrading.md) that
    takes a project from the previous major version, and link it from the top of
    the version's section in the changelog, as 3.0.0 does.
-3. Merge these changes, and the measurement, in one pull request. Then wait for
-   CI to pass on `main`.
+3. Merge these changes, and the measurement if the release has one, in one pull
+   request. Then wait for CI to pass on `main`.
 
 ## Publish
 
