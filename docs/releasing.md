@@ -102,6 +102,4 @@ for:
 ## Upgrade this repository
 
 Once the publish workflow ends, upgrade this repository to the new release, as
-[Upgrading](upgrading.md) says. That raises the version in `.uncoded.toml` and
-in the `entry` of the `uncoded` hook in `.pre-commit-config.yaml`. Merge the
-upgrade in a pull request of its own.
+[Upgrading](upgrading.md) says. Merge the upgrade in a pull request of its own.
