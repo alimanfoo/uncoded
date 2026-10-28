@@ -9,6 +9,47 @@ To upgrade a project to a new release of uncoded:
 3. Run `uvx uncoded@<version> sync`, where `<version>` is the new release, and
    commit every installed skill file that it writes, rewrites or removes.
 
+## From version 3 to version 4
+
+Version 4 adds `uncoded init` and a required version, runs `body` and `refs`
+only inside a project, and lays stubs out in the standard stub style.
+
+1. Run version 4, which rewrites every stub in the new layout:
+
+   ```sh
+   uvx uncoded@4.0.0 sync
+   ```
+
+   Commit every installed skill file that it writes or rewrites.
+
+2. Pin the project to version 4, so that every machine runs the same uncoded.
+   Add this setting to the configuration file:
+
+   ```toml
+   required-version = "4.0.0"
+   ```
+
+   If a pre-commit hook runs uncoded, name the same version in its `entry`, as
+   `uvx uncoded@4.0.0 sync`, since uncoded refuses any other version.
+
+3. Delete any skill that an earlier version of uncoded wrote under a name it no
+   longer uses, since version 4 no longer removes them:
+
+   ```sh
+   rm -rf .agents/skills/coherence-review .claude/skills/coherence-review
+   rm -rf .agents/skills/uncoded-coherence-review .claude/skills/uncoded-coherence-review
+   rm -rf .agents/skills/uncoded-review .claude/skills/uncoded-review
+   ```
+
+   Check first that none of them is a skill of the project's own.
+
+4. Run `uncoded body` and `uncoded refs` from inside the project. They now stop
+   outside a project, and when the `--in` file is outside the project directory.
+   A script that ran them from elsewhere changes directory first.
+
+5. On Windows, expect `/` between directories in the paths that `uncoded refs`
+   prints. A script that read them with `\` changes to match.
+
 ## From version 2 to version 3
 
 Version 3 keeps generated indexes local, renames the semantic consistency
