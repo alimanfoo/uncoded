@@ -10,9 +10,6 @@ permissions:
   contents: read
 
 jobs:
-  # Runs every hook on Linux and on Windows, where the uncoded hook proves that
-  # sync writes the same skill files. uncoded check then proves that a second
-  # run finds the index current.
   lint:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -35,7 +32,6 @@ jobs:
       - run: uv run pre-commit run --all-files
         env:
           PYTHONIOENCODING: utf-8
-      - run: uv run uncoded check
 
   # The test job runs on every supported operating system, and on every
   # released Python from the requires-python floor up, because the standard

@@ -55,10 +55,6 @@ source = "vcs"
 [tool.hatch.build.targets.sdist]
 only-include = ["src"]
 
-[tool.uncoded]
-source-roots = ["src", "tests"]
-doc-roots = ["README.md", "AGENTS.md", "docs", "src/uncoded"]
-
 [tool.importlinter]
 root_package = "uncoded"
 

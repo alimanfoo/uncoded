@@ -1,8 +1,8 @@
 # Releasing
 
-The maintainer decides when to release. This page lists what to do before and
-when publishing a release. The package takes its version from the Git tag, so
-creating the tag is the only version change.
+The maintainer decides when to release. This page lists what to do before, when
+and after publishing a release. The package takes its version from the Git tag,
+so creating the tag is the only version change.
 
 ## Choose the version
 
@@ -98,3 +98,8 @@ for:
 - Repository: `uncoded`
 - Workflow: `publish.yml`
 - Environment: `pypi`
+
+## Upgrade this repository
+
+Once the publish workflow ends, upgrade this repository to the new release, as
+[Upgrading](upgrading.md) says. Merge the upgrade in a pull request of its own.
