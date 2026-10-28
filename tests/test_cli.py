@@ -153,26 +153,55 @@ class TestSyncApplyMode:
         assert "pyproject.toml" in err
         assert ".uncoded.toml" in err
 
-    def test_skip_warning_emitted_once_per_broken_file(
+    def test_skipped_files_are_warned_about_and_counted(
         self, *, tmp_path, monkeypatch, capsys
     ):
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        (tmp_path / ".uncoded.toml").write_text(
+            'source-roots = ["src"]\ndoc-roots = ["docs"]\n', encoding="utf-8"
+        )
+        (tmp_path / "src").mkdir()
         (tmp_path / "src" / "good.py").write_text(
             "def hello(): pass\n", encoding="utf-8"
         )
         (tmp_path / "src" / "broken.py").write_text("def bad(:\n", encoding="utf-8")
+        (tmp_path / "docs").mkdir()
+        (tmp_path / "docs" / "bad.md").write_bytes(b"\xff\xfe not utf-8")
+        monkeypatch.chdir(tmp_path)
 
         assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 0
 
-        skip_warnings = [
-            line
-            for line in capsys.readouterr().err.splitlines()
-            if "skipping" in line and "broken.py" in line
-        ]
-        assert len(skip_warnings) == 1
-        assert skip_warnings[0].startswith("warning: skipping src/broken.py")
-        assert "SyntaxError" in skip_warnings[0]
+        err_lines = capsys.readouterr().err.splitlines()
+        assert len(err_lines) == 3
+        assert err_lines[0] == (
+            "warning: skipping src/broken.py: SyntaxError at line 1: invalid syntax"
+        )
+        assert err_lines[1].startswith("warning: skipping docs/bad.md: ")
+        assert err_lines[2] == "warning: skipped 2 file(s)"
         assert (tmp_path / ".uncoded" / "stubs" / "src" / "good.pyi").exists()
+
+    def test_check_counts_skipped_files_and_exits_0_when_current(
+        self, *, tmp_path, monkeypatch, capsys
+    ):
+        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        (tmp_path / "src" / "broken.py").write_text("def bad(:\n", encoding="utf-8")
+        assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 0
+        capsys.readouterr()
+
+        assert _run(monkeypatch=monkeypatch, arguments=["check"]) == 0
+
+        captured = capsys.readouterr()
+        assert captured.err.splitlines()[-1] == "warning: skipped 1 file(s)"
+        assert captured.out == "Index is up to date.\n"
+
+    def test_no_count_when_nothing_is_skipped(self, *, tmp_path, monkeypatch, capsys):
+        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        (tmp_path / "src" / "good.py").write_text(
+            "def hello(): pass\n", encoding="utf-8"
+        )
+
+        assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 0
+
+        assert capsys.readouterr().err == ""
 
     def test_anchors_reads_and_writes_at_project_root_when_cwd_is_subdir(
         self, *, tmp_path, monkeypatch
