@@ -61,20 +61,21 @@ def remove_file(
 
     As :func:`sync_file` creates each missing parent directory, the
     removal removes each parent directory that it leaves empty, up to
-    but not including ``project_root``.
+    but not including ``project_root``. It stops at a symbolic link.
 
     The file removed is ``project_root / path``. The log line still
     names ``path`` as given, so messages stay project-relative
     regardless of where the caller is running from.
     """
     target = project_root / path
+    parents = target.relative_to(project_root).parents[:-1]
     if not target.exists():
         return False
     if not check:
         target.unlink()
-        for parent in target.relative_to(project_root).parents[:-1]:
+        for parent in parents:
             directory = project_root / parent
-            if any(directory.iterdir()):
+            if directory.is_symlink() or any(directory.iterdir()):
                 break
             directory.rmdir()
     print(f"{'Would remove' if check else 'Removed'} {path.as_posix()}")

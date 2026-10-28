@@ -347,6 +347,8 @@ def _remove_orphan_stubs(
     check: bool,
 ) -> int:
     changes = 0
+    # The walk finishes before the first removal, because remove_file also
+    # removes the directories that it leaves empty.
     for existing in list(abs_stubs_root.rglob("*.pyi")):
         if existing.resolve() in expected:
             continue
