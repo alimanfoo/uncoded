@@ -52,7 +52,7 @@ class TestSyncFile:
         assert changed is True
         assert path.read_text(encoding="utf-8") == "old"
 
-    def test_check_mode_reports_noop_when_clean(self, *, tmp_path):
+    def test_check_mode_reports_noop_when_current(self, *, tmp_path):
         path = tmp_path / "out.txt"
         path.write_text("same", encoding="utf-8")
         changed = sync_file(

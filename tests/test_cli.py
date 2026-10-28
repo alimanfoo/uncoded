@@ -93,7 +93,7 @@ class TestSyncApplyMode:
         for skill_path in _SOURCE_SKILL_PATHS:
             assert (tmp_path / skill_path).exists()
 
-    def test_idempotent_second_run(self, *, tmp_path, monkeypatch):
+    def test_second_run_changes_nothing(self, *, tmp_path, monkeypatch):
         _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "src" / "foo.py").write_text(
             "def hello(): pass\n", encoding="utf-8"
@@ -1722,7 +1722,7 @@ class TestSyncDocRoots:
         for path in _SKILL_PATHS:
             assert (tmp_path / path).exists()
 
-    def test_idempotent_doc_only(self, *, tmp_path, monkeypatch):
+    def test_doc_only_second_run_changes_nothing(self, *, tmp_path, monkeypatch):
         _init_doc_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         _run(monkeypatch=monkeypatch, arguments=["sync"])
         docs_mtime = (tmp_path / ".uncoded" / "docs.yaml").stat().st_mtime_ns

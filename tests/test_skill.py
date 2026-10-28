@@ -92,14 +92,14 @@ class TestSyncSkills:
         )
         assert result == 4
 
-    def test_returns_zero_when_already_in_sync(self, *, tmp_path):
+    def test_returns_zero_when_current(self, *, tmp_path):
         sync_skills(source=True, doc=False, project_directory=tmp_path, check=False)
         assert (
             sync_skills(source=True, doc=False, project_directory=tmp_path, check=False)
             == 0
         )
 
-    def test_idempotent(self, *, tmp_path):
+    def test_second_run_changes_nothing(self, *, tmp_path):
         sync_skills(source=True, doc=False, project_directory=tmp_path, check=False)
         mtimes = [
             (tmp_path / skill_directory / _REVIEW_SKILL_FILE).stat().st_mtime_ns
@@ -122,7 +122,7 @@ class TestSyncSkills:
             > 0
         )
 
-    def test_check_mode_reports_no_change_when_in_sync(self, *, tmp_path):
+    def test_check_mode_reports_no_change_when_current(self, *, tmp_path):
         sync_skills(source=True, doc=False, project_directory=tmp_path, check=False)
         assert (
             sync_skills(source=True, doc=False, project_directory=tmp_path, check=True)
