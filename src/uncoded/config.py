@@ -33,17 +33,17 @@ class ConfigError(Exception):
 
 @dataclass(frozen=True)
 class Config:
-    """Uncoded configuration loaded from a project's configuration file."""
+    """The uncoded settings loaded from a project's configuration file."""
 
-    config_file: Path
+    configuration_file: Path
     source_roots: list[Path]
     doc_roots: list[Path]
     required_version: str | None
 
     @property
-    def project_root(self) -> Path:
+    def project_directory(self) -> Path:
         """The project directory, the directory of the configuration file."""
-        return self.config_file.parent
+        return self.configuration_file.parent
 
 
 def _pyproject_settings(*, pyproject_path: Path) -> dict | None:
@@ -58,10 +58,12 @@ def _pyproject_settings(*, pyproject_path: Path) -> dict | None:
         return None
     tool = data.get("tool", {})
     if not isinstance(tool, dict):
-        raise _config_file_error(path=pyproject_path, problem="tool is not a table")
+        raise _configuration_file_error(
+            path=pyproject_path, problem="tool is not a table"
+        )
     settings = tool.get("uncoded")
     if settings is not None and not isinstance(settings, dict):
-        raise _config_file_error(
+        raise _configuration_file_error(
             path=pyproject_path, problem="tool.uncoded is not a table"
         )
     return settings
@@ -79,17 +81,21 @@ def _load_toml(*, path: Path) -> dict | None:
     except FileNotFoundError:
         return None
     except OSError as e:
-        raise _config_file_error(path=path, problem=failure_reason(error=e)) from e
+        raise _configuration_file_error(
+            path=path, problem=failure_reason(error=e)
+        ) from e
     except (tomllib.TOMLDecodeError, UnicodeDecodeError) as e:
-        raise _config_file_error(path=path, problem=f"not valid TOML: {e}") from e
+        raise _configuration_file_error(
+            path=path, problem=f"not valid TOML: {e}"
+        ) from e
 
 
-def _config_file_error(*, path: Path, problem: str) -> ConfigError:
+def _configuration_file_error(*, path: Path, problem: str) -> ConfigError:
     """Return the error for the configuration file at ``path`` and its problem."""
     return ConfigError(f"{path.as_posix()}: {problem}")
 
 
-def _config_file_at(*, directory: Path) -> tuple[Path, dict] | None:
+def _configuration_file_at(*, directory: Path) -> tuple[Path, dict] | None:
     """Return the configuration file in ``directory`` and its settings, or None.
 
     A ``pyproject.toml`` without a ``[tool.uncoded]`` table is not a
@@ -115,7 +121,7 @@ def _config_file_at(*, directory: Path) -> tuple[Path, dict] | None:
     return None
 
 
-def _find_config_file(*, start: Path) -> tuple[Path, dict] | None:
+def _find_configuration_file(*, start: Path) -> tuple[Path, dict] | None:
     """Return the nearest configuration file and its settings, from ``start`` up.
 
     The nearest directory with a result wins. Ambiguity is a same-directory
@@ -124,7 +130,7 @@ def _find_config_file(*, start: Path) -> tuple[Path, dict] | None:
     """
     start_resolved = start.resolve()
     for directory in [start_resolved, *start_resolved.parents]:
-        result = _config_file_at(directory=directory)
+        result = _configuration_file_at(directory=directory)
         if result is not None:
             return result
     return None
@@ -139,40 +145,46 @@ def find_config(*, start: Path) -> Config | None:
     the same directory both configure uncoded, or when a file that the search
     reads cannot be used.
     """
-    found = _find_config_file(start=start)
+    found = _find_configuration_file(start=start)
     if found is None:
         return None
-    config_file, settings = found
+    configuration_file, settings = found
     return Config(
-        config_file=config_file,
+        configuration_file=configuration_file,
         source_roots=_roots(
-            settings=settings, setting="source-roots", config_file=config_file
+            settings=settings,
+            setting="source-roots",
+            configuration_file=configuration_file,
         ),
         doc_roots=_roots(
-            settings=settings, setting="doc-roots", config_file=config_file
+            settings=settings,
+            setting="doc-roots",
+            configuration_file=configuration_file,
         ),
-        required_version=_required_version(settings=settings, config_file=config_file),
+        required_version=_required_version(
+            settings=settings, configuration_file=configuration_file
+        ),
     )
 
 
-def _roots(*, settings: dict, setting: str, config_file: Path) -> list[Path]:
+def _roots(*, settings: dict, setting: str, configuration_file: Path) -> list[Path]:
     """Return the roots that ``setting`` lists, or no roots when it is unset.
 
-    Raises :exc:`ConfigError`, naming ``config_file``, when the setting is not
+    Raises :exc:`ConfigError`, naming ``configuration_file``, when the setting is not
     a list of strings.
     """
     roots = settings.get(setting, [])
     if not isinstance(roots, list) or not all(isinstance(r, str) for r in roots):
-        raise _config_file_error(
-            path=config_file, problem=f"{setting} is not a list of strings"
+        raise _configuration_file_error(
+            path=configuration_file, problem=f"{setting} is not a list of strings"
         )
     return [Path(r) for r in roots]
 
 
-def _required_version(*, settings: dict, config_file: Path) -> str | None:
+def _required_version(*, settings: dict, configuration_file: Path) -> str | None:
     """Return the ``required-version`` setting, or None when it is unset.
 
-    Raises :exc:`ConfigError`, naming ``config_file``, when the setting is not
+    Raises :exc:`ConfigError`, naming ``configuration_file``, when the setting is not
     one exact version.
     """
     version = settings.get("required-version")
@@ -180,8 +192,8 @@ def _required_version(*, settings: dict, config_file: Path) -> str | None:
         isinstance(version, str) and _EXACT_VERSION.fullmatch(version)
     ):
         return version
-    raise _config_file_error(
-        path=config_file,
+    raise _configuration_file_error(
+        path=configuration_file,
         problem='required-version is not one exact version, such as "3.1.0"',
     )
 
@@ -201,13 +213,13 @@ def read_config(*, start: Path) -> Config:
     return config
 
 
-def is_inside_project(*, path: Path, project_root: Path) -> bool:
-    """Return whether ``path`` is inside ``project_root``.
+def is_inside_project(*, path: Path, project_directory: Path) -> bool:
+    """Return whether ``path`` is inside ``project_directory``.
 
-    Symbolic links are resolved first, so a link inside ``project_root`` that
+    Symbolic links are resolved first, so a link inside ``project_directory`` that
     leads out of it is outside.
     """
-    return path.resolve().is_relative_to(project_root.resolve())
+    return path.resolve().is_relative_to(project_directory.resolve())
 
 
 def validate_root(
@@ -220,25 +232,25 @@ def validate_root(
     or is not a directory or, for a doc root, a Markdown file.
     """
     resolved, problem = _resolve_root(
-        configured=configured, kind=kind, project_root=config.project_root
+        configured=configured, kind=kind, project_directory=config.project_directory
     )
     if problem is not None:
-        raise _config_file_error(
-            path=config.config_file,
+        raise _configuration_file_error(
+            path=config.configuration_file,
             problem=f"{kind}-roots names {configured.as_posix()}, which {problem}",
         )
     return resolved
 
 
 def _resolve_root(
-    *, configured: Path, kind: Literal["source", "doc"], project_root: Path
+    *, configured: Path, kind: Literal["source", "doc"], project_directory: Path
 ) -> tuple[Path, str | None]:
-    """Return the configured root resolved against ``project_root``.
+    """Return the configured root resolved against ``project_directory``.
 
     Pairs it with what stops the root being used, or None when nothing does.
     """
-    resolved = (project_root / configured).resolve()
-    if not is_inside_project(path=resolved, project_root=project_root):
+    resolved = (project_directory / configured).resolve()
+    if not is_inside_project(path=resolved, project_directory=project_directory):
         return resolved, "is outside the project directory"
     if not resolved.exists():
         return resolved, "does not exist"
@@ -262,7 +274,7 @@ def render_conventional_config(*, directory: Path, required_version: str) -> str
     for kind, names in _CONVENTIONAL_ROOTS.items():
         for name in names:
             _resolved, problem = _resolve_root(
-                configured=Path(name), kind=kind, project_root=directory
+                configured=Path(name), kind=kind, project_directory=directory
             )
             if problem is None:
                 roots[kind].append(name)

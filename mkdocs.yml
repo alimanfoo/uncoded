@@ -1,5 +1,5 @@
 site_name: uncoded
-site_description: Give your coding agent a map of your codebase. Index Python code and Markdown docs with uncoded.
+site_description: Give an agent a map of its codebase. Index Python code and Markdown docs with uncoded.
 site_url: https://alimanfoo.github.io/uncoded/
 repo_url: https://github.com/alimanfoo/uncoded
 repo_name: alimanfoo/uncoded

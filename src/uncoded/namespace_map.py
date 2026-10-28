@@ -7,7 +7,7 @@ from uncoded.markers import GENERATED_MARKER
 from uncoded.yaml_tree import render_yaml_tree
 
 HEADER = f"""\
-# Symbol index of this codebase, for agent navigation.
+# Namespace map of this codebase, for agent navigation.
 # {GENERATED_MARKER}
 #
 # Pure key hierarchy (no lists, no values); indent to zoom in.
@@ -21,29 +21,30 @@ HEADER = f"""\
 def build_map(*, modules: list[ModuleInfo]) -> dict:
     """Build a nested dict representing the namespace.
 
-    Keys are repo-relative paths. Directory keys have a trailing slash.
+    Keys are paths relative to the project directory. Directory keys have a
+    trailing slash.
     Symbols sit directly under their file key.
     """
     root: dict = {}
 
     for module in modules:
         parts = Path(module.rel_path).parts
-        current = root
+        node = root
 
         # Create intermediate directory entries
         for dir_part in parts[:-1]:
             key = dir_part + "/"
-            if key not in current:
-                current[key] = {}
-            current = current[key]
+            if key not in node:
+                node[key] = {}
+            node = node[key]
 
         # Build the file entry — symbols directly under the file key.
-        # Classes with methods map to their method list.
-        # Classes without methods, bare functions, and constants map to None.
+        # Each class maps to its members, or to None when it has none.
+        # Functions and assignments map to None.
         file_entry: dict = {}
 
-        for const in module.constants:
-            file_entry[const] = None
+        for assignment in module.assignments:
+            file_entry[assignment] = None
 
         for cls in module.classes:
             members = cls.attributes + cls.methods
@@ -52,7 +53,7 @@ def build_map(*, modules: list[ModuleInfo]) -> dict:
         for func in module.functions:
             file_entry[func] = None
 
-        current[parts[-1]] = file_entry
+        node[parts[-1]] = file_entry
 
     return root
 

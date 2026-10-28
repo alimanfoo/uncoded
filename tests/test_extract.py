@@ -60,7 +60,7 @@ class TestExtractModuleFromSource:
         assert result.classes == []
         assert result.functions == []
 
-    def test_module_level_constants(self):
+    def test_module_level_assignments(self):
         source = textwrap.dedent("""\
             TIMEOUT = 30
             MAX_RETRIES: int = 3
@@ -69,7 +69,7 @@ class TestExtractModuleFromSource:
 
         result = extract_module(source=source, rel_path="const.py")
 
-        assert result.constants == ["TIMEOUT", "MAX_RETRIES", "__version__"]
+        assert result.assignments == ["TIMEOUT", "MAX_RETRIES", "__version__"]
 
     def test_type_alias_classic(self):
         source = textwrap.dedent("""\
@@ -79,7 +79,7 @@ class TestExtractModuleFromSource:
 
         result = extract_module(source=source, rel_path="aliases.py")
 
-        assert result.constants == ["UserId"]
+        assert result.assignments == ["UserId"]
 
     def test_type_alias_pep695(self):
         source = textwrap.dedent("""\
@@ -89,7 +89,7 @@ class TestExtractModuleFromSource:
 
         result = extract_module(source=source, rel_path="aliases.py")
 
-        assert result.constants == ["UserId", "InternalId"]
+        assert result.assignments == ["UserId", "InternalId"]
 
     def test_tuple_unpacking_skipped(self):
         source = textwrap.dedent("""\
@@ -98,14 +98,14 @@ class TestExtractModuleFromSource:
 
         result = extract_module(source=source, rel_path="tuple.py")
 
-        assert result.constants == []
+        assert result.assignments == []
 
     def test_chained_assignment_skipped(self):
         source = "x = y = 1\n"
 
         result = extract_module(source=source, rel_path="chain.py")
 
-        assert result.constants == []
+        assert result.assignments == []
 
     def test_unannotated_class_variable(self):
         source = textwrap.dedent("""\
@@ -249,7 +249,7 @@ class TestExtractModuleFromSource:
 
         result = extract_module(source=source, rel_path="redefined.py")
 
-        assert result.constants == ["Shape"]
+        assert result.assignments == ["Shape"]
         assert [(c.name, c.attributes, c.methods) for c in result.classes] == [
             ("area", [], ["compute"]),
             ("Point", ["y"], []),
@@ -282,7 +282,7 @@ class TestExtractModuleFromSource:
 
         result = extract_module(source=source, rel_path="names.py")
 
-        assert result.constants == []
+        assert result.assignments == []
         assert [(c.name, c.attributes, c.methods) for c in result.classes] == [
             ("Registry", [], ["__init__"])
         ]
@@ -291,7 +291,7 @@ class TestExtractModuleFromSource:
 
 class TestIterAndExtract:
     def test_basic_walk(self, *, tmp_path):
-        # Simulate repo structure: src/mypackage/...
+        # Simulate project structure: src/mypackage/...
         src = tmp_path / "src"
         pkg = src / "mypackage"
         pkg.mkdir(parents=True)
@@ -310,7 +310,7 @@ class TestIterAndExtract:
         (pkg / "_internal.py").write_text("def helper(): pass\n", encoding="utf-8")
         (pkg / "empty.py").write_text("# nothing here\n", encoding="utf-8")
 
-        files, _skipped = read_source_files(source_root=src, project_root=tmp_path)
+        files, _skipped = read_source_files(source_root=src, project_directory=tmp_path)
         modules = extract_modules(files=files)
 
         rel_paths = [m.rel_path for m in modules]
@@ -330,7 +330,7 @@ class TestIterAndExtract:
             "def format_output(): pass\n", encoding="utf-8"
         )
 
-        files, _skipped = read_source_files(source_root=src, project_root=tmp_path)
+        files, _skipped = read_source_files(source_root=src, project_directory=tmp_path)
         modules = extract_modules(files=files)
 
         rel_paths = [m.rel_path for m in modules]
@@ -343,7 +343,7 @@ class TestIterAndExtract:
         (pkg / "__init__.py").write_text("def create(): pass\n", encoding="utf-8")
         (pkg / "core.py").write_text("def run(): pass\n", encoding="utf-8")
 
-        files, _skipped = read_source_files(source_root=src, project_root=tmp_path)
+        files, _skipped = read_source_files(source_root=src, project_directory=tmp_path)
         modules = extract_modules(files=files)
 
         rel_paths = [m.rel_path for m in modules]
@@ -357,7 +357,7 @@ class TestIterAndExtract:
         (pkg / "__init__.py").write_text("", encoding="utf-8")
         (pkg / "core.py").write_text("def run(): pass\n", encoding="utf-8")
 
-        files, _skipped = read_source_files(source_root=src, project_root=tmp_path)
+        files, _skipped = read_source_files(source_root=src, project_directory=tmp_path)
         modules = extract_modules(files=files)
 
         rel_paths = [m.rel_path for m in modules]
@@ -371,7 +371,7 @@ class TestIterAndExtract:
         (pkg / "good.py").write_text("def works(): pass\n", encoding="utf-8")
         (pkg / "bad.py").write_text("def broken(:\n", encoding="utf-8")
 
-        files, skipped = read_source_files(source_root=src, project_root=tmp_path)
+        files, skipped = read_source_files(source_root=src, project_directory=tmp_path)
         modules = extract_modules(files=files)
 
         rel_paths = [m.rel_path for m in modules]
@@ -390,7 +390,7 @@ class TestIterAndExtract:
         # reason leaves out the error's own copy of the path.
         (tmp_path / "src" / "pkg" / "notes.py").mkdir(parents=True)
         files, skipped = read_source_files(
-            source_root=tmp_path / "src", project_root=tmp_path
+            source_root=tmp_path / "src", project_directory=tmp_path
         )
         assert files == []
         assert [s.path for s in skipped] == ["src/pkg/notes.py"]
@@ -405,7 +405,7 @@ class TestIterAndExtract:
         pkg.mkdir(parents=True)
         (pkg / "good.py").write_text("def works(): pass\n", encoding="utf-8")
         (pkg / "binary.py").write_bytes(b"\xff\xfe not utf-8")
-        files, skipped = read_source_files(source_root=src, project_root=tmp_path)
+        files, skipped = read_source_files(source_root=src, project_directory=tmp_path)
         assert [rel for _, rel in files] == ["src/mypkg/good.py"]
         assert [s.path for s in skipped] == ["src/mypkg/binary.py"]
 
@@ -418,7 +418,7 @@ class TestIterAndExtract:
         (pkg / "latin1.py").write_bytes(
             b"# -*- coding: latin-1 -*-\ndef caf\xe9(): pass\n"
         )
-        files, skipped = read_source_files(source_root=src, project_root=tmp_path)
+        files, skipped = read_source_files(source_root=src, project_directory=tmp_path)
         assert [rel for _, rel in files] == ["src/mypkg/latin1.py"]
         assert skipped == []
 
@@ -447,7 +447,7 @@ class TestExtractModulesFromFiles:
 
         assert [m.rel_path for m in modules] == ["src/a.py", "src/b.py", "src/c.py"]
 
-    def test_module_with_only_constants_is_kept(self):
+    def test_module_with_only_assignments_is_kept(self):
         files = [('__version__ = "1.0"\n', "src/mypackage/__init__.py")]
 
         modules = extract_modules(files=files)

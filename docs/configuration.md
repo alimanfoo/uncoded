@@ -1,9 +1,9 @@
 # Configuration
 
-Use one configuration file in your project directory. Choose the directories
+Use one configuration file in the project directory. Choose the directories
 containing Python code and the files or directories containing Markdown docs.
-[`uncoded init`](getting-started.md) writes `.uncoded.toml` for you, and you can
-edit it afterwards.
+[`uncoded init`](getting-started.md) writes `.uncoded.toml`, and the developer
+can edit it afterwards.
 
 ## Choose a configuration file
 
@@ -22,8 +22,8 @@ source-roots = ["src", "tests"]
 doc-roots = ["README.md", "docs"]
 ```
 
-Both formats work in Python and non-Python repositories. At least one root list
-must be non-empty. You can configure either type on its own.
+Both formats work in Python and non-Python projects. At least one root list must
+be non-empty. Either kind of root can be configured on its own.
 
 ## Settings
 
@@ -72,9 +72,9 @@ such as `uvx uncoded@3.1.0 sync`. To upgrade, raise the version in both places.
 | Code navigation and consistency review skills | `source-roots` is set. | Yes.       |
 | Documentation navigation skill                | `doc-roots` is set.    | Yes.       |
 
-The index's generated `.gitignore` keeps `.uncoded/` out of Git. Skills are
+The generated `.uncoded/.gitignore` keeps `.uncoded/` out of Git. Skills are
 written to both `.agents/skills/` and `.claude/skills/`.
 
-When you remove a root type and run `sync`, uncoded removes that type's index
-and skills. Every generated file has a provenance marker. Change generated files
-by running `sync`, rather than editing them by hand.
+When every root of one kind is removed, `sync` removes that part of the index,
+and its skills. Every generated file has a provenance marker. Change generated
+files by running `sync`, rather than editing them by hand.

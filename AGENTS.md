@@ -16,25 +16,26 @@ A static, pre-computed index gives agents a top-down view of a codebase. The
 agent loads the index at the start of a task. It sees the full vocabulary of the
 code and navigates directly to what it needs, without guessing or grepping.
 
-Index artefacts, generated from the configured roots:
+The index files, generated from the roots:
 
 1. **Namespace map** (`.uncoded/namespace.yaml`). A hierarchical YAML file
-   listing all symbols: directories, files, classes (with attributes and
-   methods), and functions. It covers both source and tests. The agent loads it
-   into context before any task begins. The map gives the agent a world view.
+   listing all symbols, beneath the directories and files that hold them:
+   classes (with their methods, properties and assignments), functions and
+   assignments. It covers both source and tests. The agent loads it into context
+   before any task begins. The map gives the agent a world view.
 
-2. **Stub files** (`.uncoded/stubs/`). One `.pyi` per source file. It includes
-   imports, full signatures (parameter names, types, return types), module
-   constants, and class attributes.
+2. **Stub files** (`.uncoded/stubs/`). One `.pyi` for each Python file that has
+   symbols. It includes imports, full signatures (parameter names, types, return
+   types), and the assignments in module and class bodies.
 
-3. **Doc map** (`.uncoded/docs.yaml`). A heading outline of every Markdown file
-   in configured `doc-roots`. Each file nests its `#`-prefixed headings as keys.
+3. **Docs map** (`.uncoded/docs.yaml`). The headings of every Markdown file
+   under the doc roots. Each file nests its `#`-prefixed headings as keys.
    Agents load this to orient to the documentation, then navigate to a heading
    with `Read` or `grep`. uncoded generates it only when `doc-roots` is set.
-   Outline only. No `uncoded body`, `uncoded refs`, or stubs for Markdown.
+   Headings only. No `uncoded body`, `uncoded refs`, or stubs for Markdown.
 
-Alongside the index, uncoded ships `uncoded body` to read symbol bodies and
-`uncoded refs` to find all references.
+Alongside the index, uncoded ships `uncoded body` to read a symbol's definition
+and `uncoded refs` to find all references.
 
 ## How we decide
 
@@ -43,7 +44,7 @@ that fails one needs a strong reason.
 
 1. **Purpose.** How does it serve uncoded's goal, to raise the recall and
    precision of agents' code reading? Judge a change against the whole project,
-   not only the issue or bug report in front of you.
+   not only the issue or bug report at hand.
 2. **Value.** What does it gain a user, and is the gain real? A problem nobody
    has met is not yet a reason.
 3. **Less, not more.** Could the same goal be reached by removing code rather
@@ -64,13 +65,13 @@ This project uses [uv](https://docs.astral.sh/uv/). Run all commands via
 install, which may have different behaviour.
 
 ```sh
-# Generate or update the navigation artefacts
+# Generate or update the index and the skills
 uv run uncoded sync
 
-# Verify the index without writing. It exits non-zero if any file would change
+# Verify the generated files without writing. It exits non-zero if any would change
 uv run uncoded check
 
-# Print the source body of a named symbol to stdout
+# Print the definition of a named symbol to stdout
 uv run uncoded body <name_path> --in <relative_path>
 
 # Find references to a symbol
@@ -128,8 +129,8 @@ for tracked generated skill files.
 Never commit with `--no-verify`. CI runs `pre-commit run --all-files` on every
 pull request and will fail a build where a hook was skipped.
 
-Do not pass `--unsafe-fixes` unless a specific violation needs it and you have
-reviewed the change.
+Do not pass `--unsafe-fixes` unless a specific violation needs it. Review every
+change that it makes.
 
 A complexity-check violation means a function is too complex to pass. Refactor
 or flatten it. Never suppress a complexity violation with an ignore comment and

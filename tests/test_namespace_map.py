@@ -99,11 +99,11 @@ class TestBuildMap:
 
         assert result["src/"]["pkg/"]["types.py"]["Marker"] is None
 
-    def test_module_level_constants(self):
+    def test_module_level_assignments(self):
         modules = [
             ModuleInfo(
                 rel_path="src/pkg/settings.py",
-                constants=["TIMEOUT", "MAX_RETRIES"],
+                assignments=["TIMEOUT", "MAX_RETRIES"],
                 classes=[],
                 functions=[],
             ),

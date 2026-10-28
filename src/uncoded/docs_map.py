@@ -1,4 +1,4 @@
-"""Build a YAML doc map from Markdown files for agent orientation."""
+"""Build the docs map, in YAML, from Markdown files for agent orientation."""
 
 from collections.abc import Iterable
 from pathlib import Path
@@ -14,8 +14,8 @@ DOCS_HEADER = f"""\
 # Pure key hierarchy (no lists, no values); indent to zoom in.
 # Directory keys end with "/". Leaf headings map to null.
 #
-# A " (N)" suffix marks the Nth occurrence of a repeated heading at that level.
-# To navigate to it, grep the base heading text and take the Nth match.
+# A " (N)" suffix marks the Nth heading with the same text and level under one
+# parent. The suffix is not in the file: read the parent's section to find it.
 """
 
 
@@ -99,7 +99,7 @@ def _collapse_empty(*, mapping: dict) -> dict | None:
 
 
 def read_doc_files(
-    *, doc_root: Path, project_root: Path
+    *, doc_root: Path, project_directory: Path
 ) -> tuple[list[tuple[str, Path]], list[SkippedFile]]:
     """Read the Markdown files of ``doc_root``, keeping those that read as UTF-8.
 
@@ -109,16 +109,16 @@ def read_doc_files(
 
     Returns the ``(text, rel_path)`` pair of every file that reads, and a
     :class:`SkippedFile` for every file that is unreadable or not UTF-8.
-    ``rel_path`` is relative to ``project_root``.
+    ``rel_path`` is relative to ``project_directory``.
     """
     doc_root = doc_root.resolve()
-    project_root = project_root.resolve()
+    project_directory = project_directory.resolve()
     md_files = [doc_root] if doc_root.is_file() else sorted(doc_root.rglob("*.md"))
 
     files: list[tuple[str, Path]] = []
     skipped: list[SkippedFile] = []
     for md_file in md_files:
-        rel = md_file.relative_to(project_root)
+        rel = md_file.relative_to(project_directory)
         try:
             text = md_file.read_text(encoding="utf-8-sig")
         except (UnicodeDecodeError, OSError) as e:
@@ -142,13 +142,13 @@ def build_docs_map(*, files: Iterable[tuple[str, Path]]) -> dict:
 
     for text, rel_path in files:
         parts = rel_path.parts
-        current = root
+        node = root
 
         for dir_part in parts[:-1]:
             dir_key = dir_part + "/"
-            if dir_key not in current:
-                current[dir_key] = {}
-            current = current[dir_key]
+            if dir_key not in node:
+                node[dir_key] = {}
+            node = node[dir_key]
 
         file_dict: dict = {}
         # Stack of (level, children_dict) — the active path from file root.
@@ -163,7 +163,7 @@ def build_docs_map(*, files: Iterable[tuple[str, Path]]) -> dict:
             parent_dict[key] = heading_dict
             stack.append((level, heading_dict))
 
-        current[parts[-1]] = _collapse_empty(mapping=file_dict)
+        node[parts[-1]] = _collapse_empty(mapping=file_dict)
 
     return root
 

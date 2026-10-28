@@ -27,7 +27,7 @@ class ModuleInfo:
     """Symbols found in a single Python module."""
 
     rel_path: str
-    constants: list[str] = field(default_factory=list)
+    assignments: list[str] = field(default_factory=list)
     classes: list[ClassInfo] = field(default_factory=list)
     functions: list[str] = field(default_factory=list)
 
@@ -52,13 +52,14 @@ def _extract_class_members(*, node: ast.ClassDef) -> ClassInfo:
 
 
 def extract_module(*, source: str, rel_path: str) -> ModuleInfo:
-    """Parse Python source and extract classes, functions, and constants.
+    """Parse Python source and extract classes, functions, and assignments.
 
-    A name defined more than once keeps only its later definition.
+    A name defined more than once in the module body keeps only its later
+    definition.
     """
     tree = ast.parse(source)
 
-    constants: list[str] = []
+    assignments: list[str] = []
     classes: list[ClassInfo] = []
     functions: list[str] = []
 
@@ -68,24 +69,24 @@ def extract_module(*, source: str, rel_path: str) -> ModuleInfo:
         elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             functions.append(name)
         else:
-            constants.append(name)
+            assignments.append(name)
 
     return ModuleInfo(
         rel_path=rel_path,
-        constants=constants,
+        assignments=assignments,
         classes=classes,
         functions=functions,
     )
 
 
 def read_source_files(
-    *, source_root: Path, project_root: Path
+    *, source_root: Path, project_directory: Path
 ) -> tuple[list[tuple[str, str]], list[SkippedFile]]:
     """Read every Python file under ``source_root``, keeping those that parse.
 
     Returns the ``(source_text, rel_path)`` pair of every readable, parseable
     file, and a :class:`SkippedFile` for every other one. Each ``rel_path`` is
-    the file's path relative to ``project_root``.
+    the file's path relative to ``project_directory``.
 
     Source files are read under their declared PEP 263 encoding, UTF-8
     default. A file is skipped when it fails to read (OSError,
@@ -94,12 +95,12 @@ def read_source_files(
     and ``_generate_stubs`` trust they only receive readable, parseable source.
     """
     source_root = source_root.resolve()
-    project_root = project_root.resolve()
+    project_directory = project_directory.resolve()
 
     files: list[tuple[str, str]] = []
     skipped: list[SkippedFile] = []
     for py_file in sorted(source_root.rglob("*.py")):
-        rel_path = py_file.relative_to(project_root).as_posix()
+        rel_path = py_file.relative_to(project_directory).as_posix()
         try:
             source = read_source_text(path=py_file)
         except (OSError, UnicodeDecodeError, SyntaxError) as e:
@@ -126,6 +127,6 @@ def extract_modules(*, files: Iterable[tuple[str, str]]) -> list[ModuleInfo]:
     modules: list[ModuleInfo] = []
     for source, rel_path in files:
         module = extract_module(source=source, rel_path=rel_path)
-        if module.classes or module.functions or module.constants:
+        if module.classes or module.functions or module.assignments:
             modules.append(module)
     return modules

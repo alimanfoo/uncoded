@@ -13,7 +13,7 @@ skill files then cannot be committed without anyone noticing.
 
 Add this entry to the `repos` list in `.pre-commit-config.yaml`, after any
 formatters that change indexed files. Replace `3.1.0` with the required version
-in your configuration file, since uncoded refuses to run at any other version:
+in the configuration file, since uncoded refuses to run at any other version:
 
 ```yaml title=".pre-commit-config.yaml"
 - repo: local
@@ -46,8 +46,9 @@ uvx uncoded check
 ```
 
 `uncoded check` reports whether the generated files are current, without
-changing anything. Exit status `0` means they match a fresh build. Status `1`
-means files would change, or the configuration is invalid.
+changing anything. Exit status `0` means they are current. Status `1` means
+files would change, the configuration is invalid, or a generated file cannot be
+read.
 
 The index is never committed, so in a fresh checkout, such as CI's,
 `uncoded check` always reports it as stale. Use the pre-commit hook in CI

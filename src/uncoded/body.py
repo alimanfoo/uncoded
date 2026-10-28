@@ -1,4 +1,4 @@
-"""Retrieve the source body of a named symbol in a Python file."""
+"""Retrieve the definition of a named symbol in a Python file."""
 
 import ast
 import io
@@ -8,7 +8,7 @@ from uncoded.read_helpers import read_source_text
 from uncoded.resolver import NamePath, resolve_ast_node_from_source
 
 
-def resolve_body(*, name_path: NamePath, in_path: Path) -> str:
+def resolve_definition(*, name_path: NamePath, in_path: Path) -> str:
     """Return the source text for the symbol named by name_path in in_path.
 
     Raises SymbolNotFoundError if the symbol is not present. Lets OSError,
@@ -22,10 +22,10 @@ def resolve_body(*, name_path: NamePath, in_path: Path) -> str:
     # also breaks at characters such as a form feed, which would shift every
     # line after it away from the node's line numbers.
     lines = io.StringIO(source, newline="").readlines()
-    return _extract_body(node=node, lines=lines)
+    return _definition_text(node=node, lines=lines)
 
 
-def _extract_body(*, node: ast.stmt, lines: list[str]) -> str:
+def _definition_text(*, node: ast.stmt, lines: list[str]) -> str:
     if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
         if node.decorator_list:
             start = min(node.decorator_list[0].lineno, node.lineno)

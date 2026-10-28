@@ -59,11 +59,11 @@ class StubClass:
 
 @dataclass
 class StubModule:
-    """All symbols extracted from a single Python module."""
+    """What a stub holds for one Python file: its imports and its symbols."""
 
     rel_path: str
     imports: list[str] = field(default_factory=list)
-    constants: list[StubAssignment] = field(default_factory=list)
+    assignments: list[StubAssignment] = field(default_factory=list)
     classes: list[StubClass] = field(default_factory=list)
     functions: list[StubFunction] = field(default_factory=list)
 
@@ -214,10 +214,10 @@ def _extract_class(*, node: ast.ClassDef) -> StubClass:
 
 
 def extract_stub(*, source: str, rel_path: str) -> StubModule:
-    """Parse Python source and extract imports, constants, classes, and functions."""
+    """Parse Python source and extract imports, assignments, classes, and functions."""
     tree = ast.parse(source)
     imports: list[str] = []
-    constants: list[StubAssignment] = []
+    assignments: list[StubAssignment] = []
     classes: list[StubClass] = []
     functions: list[StubFunction] = []
 
@@ -231,12 +231,12 @@ def extract_stub(*, source: str, rel_path: str) -> StubModule:
         elif isinstance(node, (ast.Assign, ast.AnnAssign, ast.TypeAlias)):
             assignment = _extract_assignment(node=node)
             if assignment is not None:
-                constants.append(assignment)
+                assignments.append(assignment)
 
     return StubModule(
         rel_path=rel_path,
         imports=imports,
-        constants=constants,
+        assignments=assignments,
         classes=classes,
         functions=functions,
     )
@@ -261,7 +261,7 @@ def _render_function(*, func: StubFunction, indent: str = "") -> list[str]:
     return lines
 
 
-def _format_assignment_body(*, assignment: StubAssignment) -> str:
+def _format_assignment(*, assignment: StubAssignment) -> str:
     """Render the 'name [: type] [= value]' portion of an assignment."""
     if assignment.is_pep695_alias:
         return f"type {assignment.name} = {assignment.value_source}"
@@ -276,9 +276,9 @@ def _format_assignment_body(*, assignment: StubAssignment) -> str:
 
 
 def _render_assignment(*, assignment: StubAssignment, indent: str = "") -> str:
-    """Render a module-level assignment as a stub line."""
-    body = _format_assignment_body(assignment=assignment)
-    return f"{indent}{body}"
+    """Render an assignment, at module level or in a class body, as a stub line."""
+    line = _format_assignment(assignment=assignment)
+    return f"{indent}{line}"
 
 
 def _render_class(*, cls: StubClass) -> list[str]:
@@ -307,8 +307,10 @@ def render_stub(*, module: StubModule) -> str:
         lines.extend(module.imports)
         lines.append("")
 
-    lines.extend(_render_assignment(assignment=const) for const in module.constants)
-    if module.constants:
+    lines.extend(
+        _render_assignment(assignment=assignment) for assignment in module.assignments
+    )
+    if module.assignments:
         lines.append("")
 
     for func in module.functions:
@@ -332,7 +334,7 @@ def _generate_stubs(*, files: Iterable[tuple[str, str]]) -> dict[Path, str]:
     result: dict[Path, str] = {}
     for source, rel_path in files:
         module = extract_stub(source=source, rel_path=rel_path)
-        if not module.classes and not module.functions and not module.constants:
+        if not module.classes and not module.functions and not module.assignments:
             continue
         result[Path(rel_path).with_suffix(".pyi")] = render_stub(module=module)
     return result
@@ -342,7 +344,7 @@ def _remove_orphan_stubs(
     *,
     expected: set[Path],
     stubs_dir: Path,
-    project_root: Path,
+    project_directory: Path,
     check: bool,
 ) -> int:
     changes = 0
@@ -351,8 +353,10 @@ def _remove_orphan_stubs(
     for existing in sorted(stubs_dir.rglob("*.pyi")):
         if existing.resolve() in expected:
             continue
-        display = existing.relative_to(project_root)
-        changes += remove_file(path=display, project_root=project_root, check=check)
+        display = existing.relative_to(project_directory)
+        changes += remove_file(
+            path=display, project_directory=project_directory, check=check
+        )
     return changes
 
 
@@ -360,7 +364,7 @@ def sync_stubs(
     *,
     files: Iterable[tuple[str, str]],
     output_dir: Path,
-    project_root: Path,
+    project_directory: Path,
     check: bool,
 ) -> int:
     """Write the stub of each file in ``files``, and remove every other stub.
@@ -369,11 +373,11 @@ def sync_stubs(
     Every ``.pyi`` file under ``output_dir`` that ``files`` does not generate is
     removed, so ``files`` holds every file that keeps a stub.
 
-    ``project_root`` is the anchor for both ends of the pipeline:
+    ``project_directory`` is the anchor for both ends of the pipeline:
     source paths in ``files`` are already relative to it (so each
     stub's rendered ``rel_path`` header matches :func:`read_source_files`
     and the namespace map), and each stub is written to
-    ``project_root / output_dir / <rel>``. The same ``project_root``
+    ``project_directory / output_dir / <rel>``. The same ``project_directory``
     must therefore be passed to :func:`read_source_files` (for
     relativising) and to ``sync_stubs`` (for writing); mismatched
     anchors silently produce wrong-looking stub paths.
@@ -382,19 +386,22 @@ def sync_stubs(
     prospective writes and removals are reported and counted. Returns
     the number of changes (or prospective changes).
     """
-    project_root = project_root.resolve()
+    project_directory = project_directory.resolve()
     changes = 0
     expected: set[Path] = set()
     for rel_stub_path, content in _generate_stubs(files=files).items():
         stub_path = output_dir / rel_stub_path
         changes += sync_file(
-            path=stub_path, content=content, project_root=project_root, check=check
+            path=stub_path,
+            content=content,
+            project_directory=project_directory,
+            check=check,
         )
-        expected.add((project_root / stub_path).resolve())
+        expected.add((project_directory / stub_path).resolve())
     changes += _remove_orphan_stubs(
         expected=expected,
-        stubs_dir=project_root / output_dir,
-        project_root=project_root,
+        stubs_dir=project_directory / output_dir,
+        project_directory=project_directory,
         check=check,
     )
     return changes

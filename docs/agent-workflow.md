@@ -1,8 +1,8 @@
 # Agent workflow
 
-The generated skills tell your agent when to load the index, read source, and
-check references. Once you have [set up the repository](getting-started.md), the
-agent follows this workflow during a coding task.
+The uncoded skills tell the agent when to load the index, read source, and check
+references. Once the developer has [set uncoded up](getting-started.md), the
+agent follows this workflow during a task.
 
 ## Start a task
 
@@ -23,9 +23,9 @@ that matter.
 1. The namespace map shows every indexed symbol and its file. It is often enough
    for questions about structure or where a feature lives.
 2. The file's stub under `.uncoded/stubs/` adds imports, parameter names and
-   annotations, return types, constants, and attributes. It omits parameter
-   defaults, decorators, docstrings, and function bodies. It is often enough for
-   questions about names and types.
+   annotations, return types, and assignments. It omits parameter defaults,
+   decorators, docstrings, and function bodies. It is often enough for questions
+   about names and types.
 3. `uncoded body` returns one symbol's exact source when the task needs it:
 
 ```sh

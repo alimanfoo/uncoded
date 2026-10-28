@@ -12,14 +12,14 @@ from uncoded.config import (
 
 
 class TestFindConfig:
-    def test_returns_none_when_no_config_file(self, *, tmp_path):
+    def test_returns_none_when_no_configuration_file(self, *, tmp_path):
         assert find_config(start=tmp_path) is None
 
 
 class TestReadConfig:
     # --- pyproject.toml ---
 
-    def test_raises_when_no_config_file(self, *, tmp_path):
+    def test_raises_when_no_configuration_file(self, *, tmp_path):
         with pytest.raises(ConfigError, match=r"No configuration file found"):
             read_config(start=tmp_path)
 
@@ -58,15 +58,15 @@ class TestReadConfig:
             '[project]\nname = "pkg"\n', encoding="utf-8"
         )
         config = read_config(start=subproject)
-        assert config.project_root == tmp_path
+        assert config.project_directory == tmp_path
         assert config.source_roots == [Path("pkg")]
 
-    def test_project_root_is_config_file_parent(self, *, tmp_path):
+    def test_project_directory_is_configuration_file_parent(self, *, tmp_path):
         toml = '[tool.uncoded]\nsource-roots = ["src"]\n'
         (tmp_path / "pyproject.toml").write_text(toml, encoding="utf-8")
         config = read_config(start=tmp_path)
-        assert config.config_file == tmp_path / "pyproject.toml"
-        assert config.project_root == tmp_path
+        assert config.configuration_file == tmp_path / "pyproject.toml"
+        assert config.project_directory == tmp_path
 
     def test_finds_pyproject_in_parent_directory(self, *, tmp_path):
         toml = '[tool.uncoded]\nsource-roots = ["src"]\n'
@@ -74,7 +74,7 @@ class TestReadConfig:
         subdir = tmp_path / "sub"
         subdir.mkdir()
         config = read_config(start=subdir)
-        assert config.project_root == tmp_path
+        assert config.project_directory == tmp_path
 
     def test_returns_frozen_dataclass(self, *, tmp_path):
         toml = '[tool.uncoded]\nsource-roots = ["src"]\n'
@@ -99,7 +99,7 @@ class TestReadConfig:
             'doc-roots = ["docs"]\n', encoding="utf-8"
         )
         config = read_config(start=tmp_path)
-        assert config.project_root == tmp_path
+        assert config.project_directory == tmp_path
         assert config.doc_roots == [Path("docs")]
         assert config.source_roots == []
 
@@ -139,7 +139,7 @@ class TestReadConfig:
             'doc-roots = ["docs"]\n', encoding="utf-8"
         )
         config = read_config(start=tmp_path)
-        assert config.project_root == tmp_path
+        assert config.project_directory == tmp_path
         assert config.doc_roots == [Path("docs")]
 
     def test_uncoded_toml_wins_when_nearer_than_pyproject(self, *, tmp_path):
@@ -153,7 +153,7 @@ class TestReadConfig:
             'doc-roots = ["from-child"]\n', encoding="utf-8"
         )
         config = read_config(start=child)
-        assert config.project_root == child
+        assert config.project_directory == child
         assert config.doc_roots == [Path("from-child")]
 
     def test_pyproject_wins_when_nearer_than_uncoded_toml(self, *, tmp_path):
@@ -167,7 +167,7 @@ class TestReadConfig:
             '[tool.uncoded]\nsource-roots = ["from-child"]\n', encoding="utf-8"
         )
         config = read_config(start=child)
-        assert config.project_root == child
+        assert config.project_directory == child
         assert config.source_roots == [Path("from-child")]
 
     def test_uncoded_pyproject_and_uncoded_toml_in_different_dirs_no_error(
@@ -186,24 +186,24 @@ class TestReadConfig:
         config = read_config(start=child)
         assert config.doc_roots == [Path("from-child")]
 
-    def test_skips_uncoded_directory_as_config_home(self, *, tmp_path):
+    def test_skips_uncoded_directory_as_configuration_file_home(self, *, tmp_path):
         # A .uncoded.toml sitting inside a .uncoded/ directory is not a
-        # config home — the walk skips any directory named .uncoded.
+        # configuration file's home — the walk skips any directory named .uncoded.
         uncoded_dir = tmp_path / ".uncoded"
         uncoded_dir.mkdir()
         (uncoded_dir / ".uncoded.toml").write_text(
             'doc-roots = ["docs"]\n', encoding="utf-8"
         )
-        # The real config is one level up.
+        # The real configuration file is one level up.
         (tmp_path / "pyproject.toml").write_text(
             '[tool.uncoded]\nsource-roots = ["src"]\n', encoding="utf-8"
         )
         config = read_config(start=uncoded_dir)
-        assert config.project_root == tmp_path
+        assert config.project_directory == tmp_path
         assert config.source_roots == [Path("src")]
 
 
-class TestConfigFileThatCannotBeUsed:
+class TestConfigurationFileThatCannotBeUsed:
     def test_not_valid_toml(self, *, tmp_path):
         (tmp_path / ".uncoded.toml").write_text("source-roots\n", encoding="utf-8")
         with pytest.raises(ConfigError) as exc_info:

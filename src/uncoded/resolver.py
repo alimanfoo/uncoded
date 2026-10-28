@@ -94,7 +94,7 @@ def resolve_ast_node_from_source(
 ) -> SymbolNode:
     """Return the AST node for name_path given an already-read source string.
 
-    The primitive that lets resolve_ast_node and resolve_body share a single
+    The primitive that lets resolve_ast_node and resolve_definition share a single
     file read. Callers that already have the source string call this directly
     to avoid reading in_path again. in_path is used only for ast.parse's
     filename argument and for error messages.

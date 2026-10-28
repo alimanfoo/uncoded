@@ -25,11 +25,13 @@ def _setup(*, tmp_path):
 
 
 def _sync_root(*, source_root, out, tmp_path, check=False):
-    files, _skipped = read_source_files(source_root=source_root, project_root=tmp_path)
+    files, _skipped = read_source_files(
+        source_root=source_root, project_directory=tmp_path
+    )
     return sync_stubs(
         files=files,
         output_dir=out,
-        project_root=tmp_path,
+        project_directory=tmp_path,
         check=check,
     )
 
@@ -231,50 +233,50 @@ class TestExtractStub:
         assert module.functions[1].name == "apple"
         assert module.classes[0].name == "Alpha"
 
-    def test_constant_annotated_with_value(self):
+    def test_assignment_annotated_with_value(self):
         source = textwrap.dedent("""\
             MAX_RETRIES: int = 3
         """)
         module = extract_stub(source=source, rel_path="pkg/mod.py")
-        c = module.constants[0]
+        c = module.assignments[0]
         assert c.name == "MAX_RETRIES"
         assert c.annotation == "int"
         assert c.value_source == "3"
         assert c.is_pep695_alias is False
 
-    def test_constant_unannotated_with_value(self):
+    def test_assignment_unannotated_with_value(self):
         source = textwrap.dedent("""\
             TIMEOUT = 30
         """)
         module = extract_stub(source=source, rel_path="pkg/mod.py")
-        c = module.constants[0]
+        c = module.assignments[0]
         assert c.name == "TIMEOUT"
         assert c.annotation is None
         assert c.value_source == "30"
 
-    def test_constant_bare_annotation(self):
+    def test_assignment_bare_annotation(self):
         source = textwrap.dedent("""\
             FOO: int
         """)
         module = extract_stub(source=source, rel_path="pkg/mod.py")
-        c = module.constants[0]
+        c = module.assignments[0]
         assert c.annotation == "int"
         assert c.value_source is None
 
-    def test_constant_value_too_long_elided(self):
+    def test_assignment_value_too_long_elided(self):
         long_list = "[" + ", ".join(f'"item{i}"' for i in range(50)) + "]"
         source = f"BIG = {long_list}\n"
         module = extract_stub(source=source, rel_path="pkg/mod.py")
-        c = module.constants[0]
+        c = module.assignments[0]
         assert c.name == "BIG"
         assert c.value_source == "..."
 
-    def test_constant_private_included(self):
+    def test_assignment_private_included(self):
         source = textwrap.dedent("""\
             _INTERNAL = 42
         """)
         module = extract_stub(source=source, rel_path="pkg/mod.py")
-        assert module.constants[0].name == "_INTERNAL"
+        assert module.assignments[0].name == "_INTERNAL"
 
     def test_type_alias_classic(self):
         source = textwrap.dedent("""\
@@ -282,7 +284,7 @@ class TestExtractStub:
             UserId: TypeAlias = int
         """)
         module = extract_stub(source=source, rel_path="pkg/mod.py")
-        c = module.constants[0]
+        c = module.assignments[0]
         assert c.name == "UserId"
         assert c.annotation == "TypeAlias"
         assert c.value_source == "int"
@@ -293,7 +295,7 @@ class TestExtractStub:
             type UserId = int
         """)
         module = extract_stub(source=source, rel_path="pkg/mod.py")
-        c = module.constants[0]
+        c = module.assignments[0]
         assert c.name == "UserId"
         assert c.is_pep695_alias is True
         assert c.value_source == "int"
@@ -303,12 +305,12 @@ class TestExtractStub:
             X, Y = 1, 2
         """)
         module = extract_stub(source=source, rel_path="pkg/mod.py")
-        assert module.constants == []
+        assert module.assignments == []
 
     def test_ann_assign_non_name_target_skipped(self):
         source = "obj.x: int = 1\n"
         module = extract_stub(source=source, rel_path="pkg/mod.py")
-        assert module.constants == []
+        assert module.assignments == []
 
     def test_class_tuple_unpacking_skipped(self):
         source = textwrap.dedent("""\
@@ -337,7 +339,7 @@ class TestExtractStub:
             class Config:
                 @property
                 def path(self) -> Path:
-                    '''Return the config file path.'''
+                    '''Return the configuration file path.'''
                     return self._path
         """)
         module = extract_stub(source=source, rel_path="pkg/cfg.py")
@@ -400,7 +402,7 @@ class TestRenderStub:
     def test_rendered_stub_has_no_line_range_comments(self):
         module = StubModule(
             rel_path="pkg/mod.py",
-            constants=[StubAssignment(name="VALUE", value_source="1")],
+            assignments=[StubAssignment(name="VALUE", value_source="1")],
             functions=[StubFunction(name="run")],
             classes=[
                 StubClass(
@@ -554,17 +556,17 @@ class TestRenderStub:
         assert "class Config:\n    path: Path\n" in output
         assert "def path" not in output
 
-    def test_constant_with_value_rendered(self):
+    def test_assignment_with_value_rendered(self):
         module = StubModule(
             rel_path="pkg/mod.py",
-            constants=[StubAssignment(name="TIMEOUT", value_source="30")],
+            assignments=[StubAssignment(name="TIMEOUT", value_source="30")],
         )
         assert "TIMEOUT = 30\n" in render_stub(module=module)
 
-    def test_constant_annotated_with_value_rendered(self):
+    def test_assignment_annotated_with_value_rendered(self):
         module = StubModule(
             rel_path="pkg/mod.py",
-            constants=[
+            assignments=[
                 StubAssignment(
                     name="MAX",
                     annotation="int",
@@ -574,17 +576,17 @@ class TestRenderStub:
         )
         assert "MAX: int = 3\n" in render_stub(module=module)
 
-    def test_constant_elided_rendered(self):
+    def test_assignment_elided_rendered(self):
         module = StubModule(
             rel_path="pkg/mod.py",
-            constants=[StubAssignment(name="BIG", value_source="...")],
+            assignments=[StubAssignment(name="BIG", value_source="...")],
         )
         assert "BIG = ...\n" in render_stub(module=module)
 
-    def test_constant_bare_annotation_rendered(self):
+    def test_assignment_bare_annotation_rendered(self):
         module = StubModule(
             rel_path="pkg/mod.py",
-            constants=[StubAssignment(name="FOO", annotation="int")],
+            assignments=[StubAssignment(name="FOO", annotation="int")],
         )
         output = render_stub(module=module)
         assert "FOO: int\n" in output
@@ -593,7 +595,7 @@ class TestRenderStub:
     def test_type_alias_pep695_rendered(self):
         module = StubModule(
             rel_path="pkg/mod.py",
-            constants=[
+            assignments=[
                 StubAssignment(
                     name="UserId",
                     value_source="int",
@@ -764,15 +766,17 @@ class TestSyncStubs:
         tests.mkdir()
         (src / "foo.py").write_text("def hello(): pass\n", encoding="utf-8")
         (tests / "test_foo.py").write_text("def test_hello(): pass\n", encoding="utf-8")
-        src_files, _skipped = read_source_files(source_root=src, project_root=tmp_path)
+        src_files, _skipped = read_source_files(
+            source_root=src, project_directory=tmp_path
+        )
         test_files, _skipped = read_source_files(
-            source_root=tests, project_root=tmp_path
+            source_root=tests, project_directory=tmp_path
         )
 
         sync_stubs(
             files=src_files + test_files,
             output_dir=out,
-            project_root=tmp_path,
+            project_directory=tmp_path,
             check=False,
         )
         assert (out / "src" / "foo.pyi").exists()
@@ -851,11 +855,11 @@ class TestSyncStubsCheckMode:
         assert (out / "src" / "bar.pyi").exists()
 
 
-class TestSyncStubsProjectRootAnchor:
-    def test_project_root_anchors_writes_independent_of_cwd(
+class TestSyncStubsProjectDirectoryAnchor:
+    def test_project_directory_anchors_writes_independent_of_cwd(
         self, *, tmp_path, monkeypatch
     ):
-        # output_dir is project-relative; project_root anchors the actual
+        # output_dir is project-relative; project_directory anchors the actual
         # writes under tmp_path even when cwd is elsewhere.
         sub = tmp_path / "subdir"
         sub.mkdir()
@@ -865,7 +869,7 @@ class TestSyncStubsProjectRootAnchor:
         changes = sync_stubs(
             files=[("def hello(): pass\n", "src/foo.py")],
             output_dir=out,
-            project_root=tmp_path,
+            project_directory=tmp_path,
             check=False,
         )
 
@@ -873,7 +877,7 @@ class TestSyncStubsProjectRootAnchor:
         assert (tmp_path / out / "src" / "foo.pyi").exists()
         assert not (sub / out / "src" / "foo.pyi").exists()
 
-    def test_project_root_anchors_orphan_pruning_independent_of_cwd(
+    def test_project_directory_anchors_orphan_pruning_independent_of_cwd(
         self, *, tmp_path, monkeypatch
     ):
         sub = tmp_path / "subdir"
@@ -886,7 +890,7 @@ class TestSyncStubsProjectRootAnchor:
         )
 
         changes = sync_stubs(
-            files=[], output_dir=out, project_root=tmp_path, check=False
+            files=[], output_dir=out, project_directory=tmp_path, check=False
         )
 
         assert changes == 1
@@ -910,7 +914,7 @@ class TestSyncStubsWithNoFiles:
         return sync_stubs(
             files=[],
             output_dir=Path(".uncoded/stubs"),
-            project_root=tmp_path,
+            project_directory=tmp_path,
             check=check,
         )
 

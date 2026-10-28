@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 from uncoded import __version__
-from uncoded.body import resolve_body
+from uncoded.body import resolve_definition
 from uncoded.config import (
     UNCODED_TOML,
     Config,
@@ -25,7 +25,7 @@ from uncoded.namespace_map import build_map, render_map
 from uncoded.read_helpers import SkippedFile
 from uncoded.refs import TyError, find_refs
 from uncoded.resolver import NamePath, SymbolNotFoundError, UnsupportedNamePathError
-from uncoded.skill import SKILL_ROOTS, agent_instructions, sync_skills
+from uncoded.skill import SKILL_DIRECTORIES, agent_instructions, sync_skills
 from uncoded.stubs import sync_stubs
 from uncoded.sync import FileSyncError, remove_file, sync_file
 
@@ -48,10 +48,10 @@ def _warn_skipped(*, skipped: list[SkippedFile]) -> None:
         print(f"warning: skipped {len(skipped)} file(s)", file=sys.stderr)
 
 
-def _sync_code_artefacts(
-    *, source_roots: list[Path], project_root: Path, check: bool
+def _sync_code_index(
+    *, source_roots: list[Path], project_directory: Path, check: bool
 ) -> tuple[int, list[SkippedFile]]:
-    """Build or remove the code artefacts (namespace map and stubs).
+    """Build or remove the code index: the namespace map and the stubs.
 
     Collects the source files beneath the resolved ``source_roots`` and writes
     the namespace map and the stub files, removing every stub that those files
@@ -63,7 +63,7 @@ def _sync_code_artefacts(
     all_skipped: list[SkippedFile] = []
     for src_root in source_roots:
         root_files, skipped = read_source_files(
-            source_root=src_root, project_root=project_root
+            source_root=src_root, project_directory=project_directory
         )
         files.extend(root_files)
         all_skipped.extend(skipped)
@@ -75,24 +75,26 @@ def _sync_code_artefacts(
         n = sync_file(
             path=namespace_path,
             content=map_content,
-            project_root=project_root,
+            project_directory=project_directory,
             check=check,
         )
     else:
-        n = remove_file(path=namespace_path, project_root=project_root, check=check)
+        n = remove_file(
+            path=namespace_path, project_directory=project_directory, check=check
+        )
     n += sync_stubs(
         files=files,
         output_dir=Path(".uncoded/stubs"),
-        project_root=project_root,
+        project_directory=project_directory,
         check=check,
     )
     return n, all_skipped
 
 
-def _sync_doc_artefacts(
-    *, doc_roots: list[Path], project_root: Path, check: bool
+def _sync_documentation_index(
+    *, doc_roots: list[Path], project_directory: Path, check: bool
 ) -> tuple[int, list[SkippedFile]]:
-    """Build or remove the doc artefact (docs.yaml).
+    """Build or remove the documentation index, the docs map.
 
     With no doc roots, removes docs.yaml. Otherwise collects the Markdown files
     in the resolved ``doc_roots`` and writes docs.yaml. Returns the change
@@ -100,37 +102,41 @@ def _sync_doc_artefacts(
     """
     if not doc_roots:
         removed = remove_file(
-            path=Path(".uncoded/docs.yaml"), project_root=project_root, check=check
+            path=Path(".uncoded/docs.yaml"),
+            project_directory=project_directory,
+            check=check,
         )
         return removed, []
     all_doc_files = []
     all_skipped: list[SkippedFile] = []
     for doc_root in doc_roots:
-        files, skipped = read_doc_files(doc_root=doc_root, project_root=project_root)
+        files, skipped = read_doc_files(
+            doc_root=doc_root, project_directory=project_directory
+        )
         all_doc_files.extend(files)
         all_skipped.extend(skipped)
     docs_content = render_docs_map(mapping=build_docs_map(files=all_doc_files))
     changed = sync_file(
         path=Path(".uncoded/docs.yaml"),
         content=docs_content,
-        project_root=project_root,
+        project_directory=project_directory,
         check=check,
     )
     return changed, all_skipped
 
 
 def _sync(*, config: Config, check: bool = False) -> int:
-    """Sync (or verify) the index artefacts of the project that config configures.
+    """Sync (or verify) the generated files of the project that config configures.
 
     Every writer anchors the project-relative paths that it reads or writes at
-    ``config.project_root``, so running from a subdirectory of the project
-    produces artefacts in the same locations as running from the project
-    directory.
+    ``config.project_directory``, so running from a subdirectory of the project
+    writes the same files as running from the project directory.
 
-    source-roots drive code artefacts (namespace.yaml, stubs); doc-roots
-    drive doc artefacts (docs.yaml). Each root type is independent: when
-    a root type is absent its artefacts are removed. Every root is checked
-    before anything is written. Before writing any index artefact, sync writes
+    The source roots drive the code index (namespace.yaml, stubs), and the doc
+    roots drive the documentation index (docs.yaml). Each part is independent:
+    with no source roots, the code index's files are removed, and with no doc
+    roots, the documentation index's file is removed. Every root is checked
+    before anything is written. Before writing any file of the index, sync writes
     .uncoded/.gitignore so the index stays local by default. Raises ConfigError
     when the configuration names no roots or a root cannot be used, and
     FileSyncError when a generated file cannot be read, written or removed. A
@@ -148,7 +154,7 @@ def _sync(*, config: Config, check: bool = False) -> int:
             "or as top-level keys in .uncoded.toml."
         )
 
-    project_root = config.project_root
+    project_directory = config.project_directory
     source_roots = [
         validate_root(configured=configured, kind="source", config=config)
         for configured in config.source_roots
@@ -160,31 +166,31 @@ def _sync(*, config: Config, check: bool = False) -> int:
     changes = sync_file(
         path=Path(".uncoded/.gitignore"),
         content=f"# {GENERATED_MARKER}\n*\n",
-        project_root=project_root,
+        project_directory=project_directory,
         check=check,
     )
 
-    code_changes, code_skipped = _sync_code_artefacts(
-        source_roots=source_roots, project_root=project_root, check=check
+    code_changes, code_skipped = _sync_code_index(
+        source_roots=source_roots, project_directory=project_directory, check=check
     )
     changes += code_changes
     changes += sync_skills(
         source=bool(source_roots),
-        docs=bool(doc_roots),
-        project_root=project_root,
+        doc=bool(doc_roots),
+        project_directory=project_directory,
         check=check,
     )
-    doc_changes, doc_skipped = _sync_doc_artefacts(
-        doc_roots=doc_roots, project_root=project_root, check=check
+    doc_changes, doc_skipped = _sync_documentation_index(
+        doc_roots=doc_roots, project_directory=project_directory, check=check
     )
     changes += doc_changes
     _warn_skipped(skipped=code_skipped + doc_skipped)
 
     if check:
         if changes:
-            print(f"Index out of date: {changes} file(s) would change.")
+            print(f"Generated files are stale: {changes} file(s) would change.")
             return 1
-        print("Index is up to date.")
+        print("Generated files are current.")
         return 0
     return 0
 
@@ -205,19 +211,19 @@ def _init(*, config: Config | None) -> int:
         content = render_conventional_config(
             directory=start, required_version=__version__
         )
-        sync_file(path=Path(UNCODED_TOML), content=content, project_root=start)
+        sync_file(path=Path(UNCODED_TOML), content=content, project_directory=start)
         config = read_config(start=start)
     else:
         print(
-            f"Found the configuration file in {config.project_root.as_posix()}, "
+            f"Found the configuration file in {config.project_directory.as_posix()}, "
             "and left it as it is."
         )
 
     _sync(config=config)
 
-    skill_dirs = " and ".join(root.as_posix() for root in SKILL_ROOTS)
+    skill_dirs = " and ".join(directory.as_posix() for directory in SKILL_DIRECTORIES)
     instructions = agent_instructions(
-        source=bool(config.source_roots), docs=bool(config.doc_roots)
+        source=bool(config.source_roots), doc=bool(config.doc_roots)
     )
     print(
         f"\nCommit the configuration file and the installed skill files in "
@@ -234,12 +240,12 @@ class _OutsideProjectError(Exception):
     """Raised when an ``--in`` file is outside the project directory."""
 
 
-def _project_file(*, in_path: str, project_root: Path) -> Path:
+def _project_file(*, in_path: str, project_directory: Path) -> Path:
     """Return the ``--in`` file, or raise _OutsideProjectError when it is outside."""
     target = Path(in_path)
-    if not is_inside_project(path=target, project_root=project_root):
+    if not is_inside_project(path=target, project_directory=project_directory):
         raise _OutsideProjectError(
-            f"outside the project directory {project_root.as_posix()}."
+            f"outside the project directory {project_directory.as_posix()}."
         )
     return target
 
@@ -275,7 +281,7 @@ def _report_lookup_error(*, exc: Exception, name_path: str, in_path: str) -> int
 
 
 def _body(*, config: Config, name_path: str, in_path: str) -> int:
-    """Print the source body of name_path in in_path to stdout.
+    """Print the definition of name_path in in_path to stdout.
 
     Returns 0 on success. Returns 1 if in_path is outside the project
     directory of ``config``, if name_path is unsupported, if name_path is not
@@ -283,8 +289,12 @@ def _body(*, config: Config, name_path: str, in_path: str) -> int:
     undecodable), or if the source has a syntax error.
     """
     try:
-        target = _project_file(in_path=in_path, project_root=config.project_root)
-        body = resolve_body(name_path=NamePath.parse(raw=name_path), in_path=target)
+        target = _project_file(
+            in_path=in_path, project_directory=config.project_directory
+        )
+        definition = resolve_definition(
+            name_path=NamePath.parse(raw=name_path), in_path=target
+        )
     except _LOOKUP_ERRORS as e:
         return _report_lookup_error(exc=e, name_path=name_path, in_path=in_path)
 
@@ -296,7 +306,7 @@ def _body(*, config: Config, name_path: str, in_path: str) -> int:
         errors=sys.stdout.errors,
         newline="",
     )
-    stdout.write(body)
+    stdout.write(definition)
     stdout.detach()
     return 0
 
@@ -315,8 +325,10 @@ def _refs(*, config: Config, name_path: str, in_path: str) -> int:
     try:
         refs = find_refs(
             name_path=NamePath.parse(raw=name_path),
-            in_path=_project_file(in_path=in_path, project_root=config.project_root),
-            project_root=config.project_root,
+            in_path=_project_file(
+                in_path=in_path, project_directory=config.project_directory
+            ),
+            project_directory=config.project_directory,
         )
     except TyError as e:
         print(f"Error: {e}", file=sys.stderr)
@@ -352,10 +364,10 @@ def main() -> int:
     Five subcommands:
 
     - ``init`` — sets uncoded up in a project, then syncs its index.
-    - ``sync`` — builds or refreshes the navigation index.
-    - ``check`` — verifies the index matches what a rebuild would produce;
-      exits non-zero on drift.
-    - ``body`` — prints the source body of a named symbol to stdout.
+    - ``sync`` — builds or refreshes the index and the skills.
+    - ``check`` — verifies that the generated files are current; exits
+      non-zero when they are stale.
+    - ``body`` — prints the definition of a named symbol to stdout.
     - ``refs`` — finds all references to a named symbol and prints them.
 
     Each subparser binds how it finds the configuration and the action it
@@ -363,7 +375,7 @@ def main() -> int:
     """
     parser = argparse.ArgumentParser(
         prog="uncoded",
-        description="Build a navigation index for AI coding agents.",
+        description="Build an index of a codebase for AI coding agents.",
     )
     parser.add_argument(
         "--version", action="version", version=f"%(prog)s {__version__}"
@@ -378,7 +390,7 @@ def main() -> int:
 
     sync_parser = subparsers.add_parser(
         "sync",
-        help="Build or refresh generated navigation artefacts.",
+        help="Build or refresh the index and the skills.",
     )
     sync_parser.set_defaults(
         find_project=read_config,
@@ -388,8 +400,8 @@ def main() -> int:
     check_parser = subparsers.add_parser(
         "check",
         help=(
-            "Verify the index is up to date without writing. Exits non-zero "
-            "if any file would change."
+            "Verify that the generated files are current, without writing. Exits "
+            "non-zero if any file would change."
         ),
     )
     check_parser.set_defaults(
@@ -399,11 +411,11 @@ def main() -> int:
 
     body_parser = subparsers.add_parser(
         "body",
-        help="Print the source body of a named symbol to stdout.",
+        help="Print the definition of a named symbol to stdout.",
     )
     body_parser.add_argument(
         "name_path",
-        help="Symbol path: one segment for top-level, two for Class/member.",
+        help="Name path: one segment for top-level, two for Class/member.",
     )
     body_parser.add_argument(
         "--in",
@@ -425,7 +437,7 @@ def main() -> int:
     )
     refs_parser.add_argument(
         "name_path",
-        help="Symbol path: one segment for top-level, two for Class/member.",
+        help="Name path: one segment for top-level, two for Class/member.",
     )
     refs_parser.add_argument(
         "--in",

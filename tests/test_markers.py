@@ -1,4 +1,4 @@
-"""Marker completeness: every generated-artefact family carries GENERATED_MARKER."""
+"""Marker completeness: the maps, the stubs and the skills carry GENERATED_MARKER."""
 
 from uncoded.docs_map import render_docs_map
 from uncoded.markers import GENERATED_MARKER

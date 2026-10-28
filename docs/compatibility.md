@@ -23,9 +23,9 @@ The contract covers:
 The contract does not cover the messages that a command prints, or their
 wording, wherever the command prints them. These include the lines in which
 `uncoded sync` names the files it wrote, the line in which `uncoded check` says
-whether the index is current, and the warnings about files that `uncoded sync`
-skipped. Nor does it cover uncoded's Python modules. Run uncoded through its
-commands, not by importing it.
+whether the generated files are current, and the warnings about files that
+`uncoded sync` skipped. Nor does it cover uncoded's Python modules. Run uncoded
+through its commands, not by importing it.
 
 ## Versions
 

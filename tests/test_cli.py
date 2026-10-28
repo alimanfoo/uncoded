@@ -17,26 +17,26 @@ import pytest
 import yaml
 
 from uncoded import __version__, cli
-from uncoded.skill import SKILL_ROOTS, SKILLS, _skill_path
+from uncoded.skill import SKILL_DIRECTORIES, SKILLS, _skill_path
 
 # Paths split by gate so tests can assert the right subset.
 _SOURCE_SKILL_PATHS = [
-    _skill_path(root=root, name=skill.name)
+    _skill_path(skill_directory=skill_directory, name=skill.name)
     for skill in SKILLS
     if skill.gate == "source"
-    for root in SKILL_ROOTS
+    for skill_directory in SKILL_DIRECTORIES
 ]
 _DOC_SKILL_PATHS = [
-    _skill_path(root=root, name=skill.name)
+    _skill_path(skill_directory=skill_directory, name=skill.name)
     for skill in SKILLS
-    if skill.gate == "docs"
-    for root in SKILL_ROOTS
+    if skill.gate == "doc"
+    for skill_directory in SKILL_DIRECTORIES
 ]
 _SKILL_PATHS = _SOURCE_SKILL_PATHS + _DOC_SKILL_PATHS
 
 
-def _init_repo(*, tmp_path, monkeypatch, source_roots=("src",)):
-    """Set up a minimal repo: pyproject.toml + source root + chdir.
+def _init_source_project(*, tmp_path, monkeypatch, source_roots=("src",)):
+    """Set up a minimal project: pyproject.toml + source root + chdir.
 
     Uses ``monkeypatch.chdir`` (rather than bare ``os.chdir``) so cwd is
     restored on teardown — including when the test fails — preventing
@@ -67,8 +67,8 @@ def _run(*, monkeypatch, arguments):
 
 
 def _make_index_stale(*, tmp_path, monkeypatch):
-    """Sync a repo, then change, add and delete one Python file each."""
-    _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+    """Sync a project, then change, add and delete one Python file each."""
+    _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
     (tmp_path / "src" / "foo.py").write_text("def foo(): pass\n", encoding="utf-8")
     (tmp_path / "src" / "bar.py").write_text("def bar(): pass\n", encoding="utf-8")
     _run(monkeypatch=monkeypatch, arguments=["sync"])
@@ -78,8 +78,8 @@ def _make_index_stale(*, tmp_path, monkeypatch):
 
 
 class TestSyncApplyMode:
-    def test_syncs_code_navigation_artefacts(self, *, tmp_path, monkeypatch):
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+    def test_syncs_code_index_and_skills(self, *, tmp_path, monkeypatch):
+        _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "src" / "foo.py").write_text(
             "def hello(): pass\n", encoding="utf-8"
         )
@@ -94,7 +94,7 @@ class TestSyncApplyMode:
             assert (tmp_path / skill_path).exists()
 
     def test_idempotent_second_run(self, *, tmp_path, monkeypatch):
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "src" / "foo.py").write_text(
             "def hello(): pass\n", encoding="utf-8"
         )
@@ -106,7 +106,7 @@ class TestSyncApplyMode:
         )
         skill_mtimes = [(tmp_path / p).stat().st_mtime_ns for p in _SOURCE_SKILL_PATHS]
 
-        # A second run with no source changes must not rewrite any artifact.
+        # A second run with no source changes must not rewrite any generated file.
         assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 0
         assert (tmp_path / ".uncoded" / ".gitignore").stat().st_mtime_ns == ignore_mtime
         assert (tmp_path / ".uncoded" / "namespace.yaml").stat().st_mtime_ns == ns_mtime
@@ -136,7 +136,9 @@ class TestSyncApplyMode:
     def test_removes_the_stubs_of_a_source_root_left_out(
         self, *, tmp_path, monkeypatch, capsys
     ):
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch, source_roots=("a", "b"))
+        _init_source_project(
+            tmp_path=tmp_path, monkeypatch=monkeypatch, source_roots=("a", "b")
+        )
         (tmp_path / "a" / "m.py").write_text("def f(): pass\n", encoding="utf-8")
         (tmp_path / "b" / "n.py").write_text("def g(): pass\n", encoding="utf-8")
         _run(monkeypatch=monkeypatch, arguments=["sync"])
@@ -153,7 +155,7 @@ class TestSyncApplyMode:
         assert not (tmp_path / ".uncoded" / "stubs" / "b").exists()
         assert (tmp_path / ".uncoded" / "stubs" / "a" / "m.pyi").exists()
 
-    def test_error_when_no_config_file_points_to_init(
+    def test_error_when_no_configuration_file_points_to_init(
         self, *, tmp_path, monkeypatch, capsys
     ):
         monkeypatch.chdir(tmp_path)
@@ -168,7 +170,7 @@ class TestSyncApplyMode:
     def test_writes_back_a_hand_edited_skill_file(
         self, *, tmp_path, monkeypatch, capsys
     ):
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         _run(monkeypatch=monkeypatch, arguments=["sync"])
         skill_path = _SOURCE_SKILL_PATHS[0]
         generated = (tmp_path / skill_path).read_text(encoding="utf-8")
@@ -213,7 +215,7 @@ class TestSyncApplyMode:
     def test_check_counts_skipped_files_and_exits_0_when_current(
         self, *, tmp_path, monkeypatch, capsys
     ):
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "src" / "broken.py").write_text("def bad(:\n", encoding="utf-8")
         assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 0
         capsys.readouterr()
@@ -222,10 +224,10 @@ class TestSyncApplyMode:
 
         captured = capsys.readouterr()
         assert captured.err.splitlines()[-1] == "warning: skipped 1 file(s)"
-        assert captured.out == "Index is up to date.\n"
+        assert captured.out == "Generated files are current.\n"
 
     def test_no_count_when_nothing_is_skipped(self, *, tmp_path, monkeypatch, capsys):
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "src" / "good.py").write_text(
             "def hello(): pass\n", encoding="utf-8"
         )
@@ -268,12 +270,12 @@ class TestSyncApplyMode:
             "docs/": {"linked.md": {"Linked": None}}
         }
 
-    def test_anchors_reads_and_writes_at_project_root_when_cwd_is_subdir(
+    def test_anchors_reads_and_writes_at_project_directory_when_cwd_is_subdir(
         self, *, tmp_path, monkeypatch
     ):
         # Running from a subdirectory of the project must produce
-        # artefacts at the project root, not under the subdirectory.
-        # Reads (source files, pyproject) anchor at project_root; writes
+        # generated files in the project directory, not under the subdirectory.
+        # Reads (source files, pyproject) anchor at project_directory; writes
         # (namespace, stubs, skill files) do too.
         (tmp_path / "pyproject.toml").write_text(
             textwrap.dedent(
@@ -303,7 +305,7 @@ class TestSyncApplyMode:
         assert "src/:" in content
         assert "foo.py:" in content
 
-        # Writes anchored: every artefact lands at project_root, never
+        # Writes anchored: every generated file lands in project_directory, never
         # under the subdirectory cwd.
         assert (tmp_path / ".uncoded" / "stubs" / "src" / "foo.pyi").exists()
         assert (tmp_path / ".uncoded" / ".gitignore").exists()
@@ -313,13 +315,13 @@ class TestSyncApplyMode:
         for skill_path in _SOURCE_SKILL_PATHS:
             assert not (tmp_path / "src" / skill_path).exists()
 
-    def test_artefacts_match_when_run_from_subdir_vs_project_root(
+    def test_generated_files_match_when_run_from_subdir_vs_project_directory(
         self, *, tmp_path, monkeypatch
     ):
-        # Behavioural acceptance for GH84: identical artefacts in
-        # identical locations whether sync runs from the project root
+        # Behavioural acceptance for GH84: identical generated files in
+        # identical locations whether sync runs from the project directory
         # or from a subdirectory.
-        def _mk_repo(*, under: Path) -> None:
+        def _make_project(*, under: Path) -> None:
             (under / "pyproject.toml").write_text(
                 textwrap.dedent(
                     """\
@@ -337,44 +339,48 @@ class TestSyncApplyMode:
                 "def hello(): pass\n", encoding="utf-8"
             )
 
-        from_root = tmp_path / "from_root"
+        from_project_directory = tmp_path / "from_project_directory"
         from_subdir = tmp_path / "from_subdir"
-        from_root.mkdir()
+        from_project_directory.mkdir()
         from_subdir.mkdir()
-        _mk_repo(under=from_root)
-        _mk_repo(under=from_subdir)
+        _make_project(under=from_project_directory)
+        _make_project(under=from_subdir)
 
-        monkeypatch.chdir(from_root)
+        monkeypatch.chdir(from_project_directory)
         assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 0
 
         monkeypatch.chdir(from_subdir / "src")
         assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 0
 
-        def _file_contents(*, root: Path) -> dict[Path, str]:
+        def _file_contents(*, project_directory: Path) -> dict[Path, str]:
             return {
-                path.relative_to(root): path.read_text(encoding="utf-8")
-                for path in root.rglob("*")
+                path.relative_to(project_directory): path.read_text(encoding="utf-8")
+                for path in project_directory.rglob("*")
                 if path.is_file()
             }
 
-        assert _file_contents(root=from_root) == _file_contents(root=from_subdir)
+        assert _file_contents(
+            project_directory=from_project_directory
+        ) == _file_contents(project_directory=from_subdir)
 
 
 class TestSyncCheckMode:
-    def test_returns_one_and_does_not_write_on_empty_repo(
+    def test_returns_one_and_does_not_write_on_empty_project(
         self, *, tmp_path, monkeypatch
     ):
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "src" / "foo.py").write_text(
             "def hello(): pass\n", encoding="utf-8"
         )
 
         assert _run(monkeypatch=monkeypatch, arguments=["check"]) == 1
-        # No artifacts written.
+        # No generated files written.
         assert not (tmp_path / ".uncoded").exists()
 
-    def test_returns_zero_when_index_is_up_to_date(self, *, tmp_path, monkeypatch):
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+    def test_returns_zero_when_generated_files_are_current(
+        self, *, tmp_path, monkeypatch
+    ):
+        _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "src" / "foo.py").write_text(
             "def hello(): pass\n", encoding="utf-8"
         )
@@ -384,7 +390,7 @@ class TestSyncCheckMode:
     def test_returns_one_without_recreating_missing_index_ignore(
         self, *, tmp_path, monkeypatch
     ):
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "src" / "foo.py").write_text(
             "def hello(): pass\n", encoding="utf-8"
         )
@@ -399,24 +405,24 @@ class TestSyncCheckMode:
         self, *, tmp_path, monkeypatch, capsys
     ):
         _make_index_stale(tmp_path=tmp_path, monkeypatch=monkeypatch)
-        before = _contents(root=tmp_path)
+        before = _contents(project_directory=tmp_path)
         capsys.readouterr()
 
         assert _run(monkeypatch=monkeypatch, arguments=["check"]) == 1
 
-        assert _contents(root=tmp_path) == before
+        assert _contents(project_directory=tmp_path) == before
         assert capsys.readouterr().out == (
             "Would update .uncoded/namespace.yaml\n"
             "Would update .uncoded/stubs/src/foo.pyi\n"
             "Would write .uncoded/stubs/src/new.pyi\n"
             "Would remove .uncoded/stubs/src/bar.pyi\n"
-            "Index out of date: 4 file(s) would change.\n"
+            "Generated files are stale: 4 file(s) would change.\n"
         )
 
     def test_returns_zero_from_a_subdirectory_when_current(
         self, *, tmp_path, monkeypatch, capsys
     ):
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "src" / "foo.py").write_text("def foo(): pass\n", encoding="utf-8")
         _run(monkeypatch=monkeypatch, arguments=["sync"])
         monkeypatch.chdir(tmp_path / "src")
@@ -424,7 +430,7 @@ class TestSyncCheckMode:
 
         assert _run(monkeypatch=monkeypatch, arguments=["check"]) == 0
 
-        assert capsys.readouterr().out == "Index is up to date.\n"
+        assert capsys.readouterr().out == "Generated files are current.\n"
 
     def test_error_still_returns_one(self, *, tmp_path, monkeypatch, capsys):
         # Config error: check mode should report non-zero the same as apply mode.
@@ -435,7 +441,7 @@ class TestSyncCheckMode:
 
 class TestMainDispatch:
     def test_sync_subcommand_runs_in_apply_mode(self, *, tmp_path, monkeypatch):
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "src" / "foo.py").write_text(
             "def hello(): pass\n", encoding="utf-8"
         )
@@ -445,20 +451,18 @@ class TestMainDispatch:
         assert (tmp_path / ".uncoded" / "namespace.yaml").exists()
 
     def test_check_subcommand_runs_in_check_mode(self, *, tmp_path, monkeypatch):
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "src" / "foo.py").write_text(
             "def hello(): pass\n", encoding="utf-8"
         )
         monkeypatch.setattr(sys, "argv", ["uncoded", "check"])
 
         assert cli.main() == 1
-        # No artifacts written in check mode.
+        # No generated files written in check mode.
         assert not (tmp_path / ".uncoded").exists()
 
-    def test_check_subcommand_returns_zero_on_fresh_index(
-        self, *, tmp_path, monkeypatch
-    ):
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+    def test_check_subcommand_returns_zero_when_current(self, *, tmp_path, monkeypatch):
+        _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "src" / "foo.py").write_text(
             "def hello(): pass\n", encoding="utf-8"
         )
@@ -504,10 +508,10 @@ class TestCommandUsedWrongly:
 
 _BODY = ["body", "fn", "--in", "src/foo.py"]
 
-# Each command, with the exit status it gives when it runs in a fresh repo.
+# Each command, with the exit status it gives when it runs in a fresh project.
 _RUNS = [
     (["sync"], 0),
-    # The fresh repo has no index, so check reports it as stale.
+    # The fresh project has no index, so check reports it as stale.
     (["check"], 1),
     (_BODY, 0),
     (["refs", "fn", "--in", "src/foo.py"], 0),
@@ -517,8 +521,8 @@ _COMMANDS = [command for command, _status in _RUNS]
 _EVERY_COMMAND = [["init"], *_COMMANDS]
 
 
-def _init_versioned_repo(*, tmp_path, monkeypatch, required_version):
-    """Set up a repo whose configuration sets ``required_version``, if given."""
+def _init_versioned_project(*, tmp_path, monkeypatch, required_version):
+    """Set up a project whose configuration sets ``required_version``, if given."""
     setting = (
         "" if required_version is None else f'required-version = "{required_version}"\n'
     )
@@ -530,11 +534,11 @@ def _init_versioned_repo(*, tmp_path, monkeypatch, required_version):
     monkeypatch.chdir(tmp_path)
 
 
-def _contents(*, root):
-    """Map every path beneath ``root`` to its bytes, or to None for a directory."""
+def _contents(*, project_directory):
+    """Map each path in ``project_directory`` to its bytes, or None for a directory."""
     return {
-        p.relative_to(root): p.read_bytes() if p.is_file() else None
-        for p in root.rglob("*")
+        p.relative_to(project_directory): p.read_bytes() if p.is_file() else None
+        for p in project_directory.rglob("*")
     }
 
 
@@ -543,17 +547,17 @@ class TestRequiredVersion:
     def test_refuses_at_another_version(
         self, *, tmp_path, monkeypatch, capsys, command
     ):
-        _init_versioned_repo(
+        _init_versioned_project(
             tmp_path=tmp_path, monkeypatch=monkeypatch, required_version="0.0.0"
         )
-        before = _contents(root=tmp_path)
+        before = _contents(project_directory=tmp_path)
         monkeypatch.setattr(sys, "argv", ["uncoded", *command])
 
         with mock.patch.object(cli, "find_refs") as find_refs:
             assert cli.main() == 1
 
         find_refs.assert_not_called()
-        assert _contents(root=tmp_path) == before
+        assert _contents(project_directory=tmp_path) == before
         captured = capsys.readouterr()
         assert captured.out == ""
         assert captured.err == (
@@ -568,7 +572,7 @@ class TestRequiredVersion:
         self, *, tmp_path, monkeypatch, capsys, required_version, run
     ):
         command, status = run
-        _init_versioned_repo(
+        _init_versioned_project(
             tmp_path=tmp_path,
             monkeypatch=monkeypatch,
             required_version=required_version,
@@ -585,19 +589,19 @@ class TestRequiredVersion:
 class TestTwoConfigurationFiles:
     @pytest.mark.parametrize("command", _EVERY_COMMAND)
     def test_every_command_refuses(self, *, tmp_path, monkeypatch, capsys, command):
-        _init_versioned_repo(
+        _init_versioned_project(
             tmp_path=tmp_path, monkeypatch=monkeypatch, required_version=None
         )
         (tmp_path / "pyproject.toml").write_text(
             '[tool.uncoded]\nsource-roots = ["src"]\n', encoding="utf-8"
         )
-        before = _contents(root=tmp_path)
+        before = _contents(project_directory=tmp_path)
 
         with mock.patch.object(cli, "find_refs") as find_refs:
             assert _run(monkeypatch=monkeypatch, arguments=command) == 1
 
         find_refs.assert_not_called()
-        assert _contents(root=tmp_path) == before
+        assert _contents(project_directory=tmp_path) == before
         captured = capsys.readouterr()
         assert captured.out == ""
         assert captured.err == (
@@ -616,11 +620,11 @@ class TestConfigurationThatNamesNoRoots:
         )
         (tmp_path / "src").mkdir()
         monkeypatch.chdir(tmp_path)
-        before = _contents(root=tmp_path)
+        before = _contents(project_directory=tmp_path)
 
         assert _run(monkeypatch=monkeypatch, arguments=command) == 1
 
-        assert _contents(root=tmp_path) == before
+        assert _contents(project_directory=tmp_path) == before
         captured = capsys.readouterr()
         assert "Commit" not in captured.out
         assert captured.err == (
@@ -657,30 +661,30 @@ _UNUSABLE_CONFIGS = [
 ]
 
 
-class TestConfigFileThatCannotBeUsed:
+class TestConfigurationFileThatCannotBeUsed:
     @pytest.mark.parametrize("command", _EVERY_COMMAND)
     @pytest.mark.parametrize("unusable_config", _UNUSABLE_CONFIGS)
     def test_stops_with_one_line(
         self, *, tmp_path, monkeypatch, capsys, command, unusable_config
     ):
         toml, problem = unusable_config
-        _init_versioned_repo(
+        _init_versioned_project(
             tmp_path=tmp_path, monkeypatch=monkeypatch, required_version=None
         )
-        config_file = tmp_path / ".uncoded.toml"
-        config_file.write_text(toml, encoding="utf-8")
-        before = _contents(root=tmp_path)
+        configuration_file = tmp_path / ".uncoded.toml"
+        configuration_file.write_text(toml, encoding="utf-8")
+        before = _contents(project_directory=tmp_path)
         monkeypatch.setattr(sys, "argv", ["uncoded", *command])
 
         with mock.patch.object(cli, "find_refs") as find_refs:
             assert cli.main() == 1
 
         find_refs.assert_not_called()
-        assert _contents(root=tmp_path) == before
+        assert _contents(project_directory=tmp_path) == before
         captured = capsys.readouterr()
         assert captured.out == ""
         assert captured.err == (
-            f"Error: {config_file.resolve().as_posix()}: {problem}\n"
+            f"Error: {configuration_file.resolve().as_posix()}: {problem}\n"
         )
 
 
@@ -730,23 +734,23 @@ class TestRootThatCannotBeUsed:
         (project / "setup.py").write_text("", encoding="utf-8")
         (project / "readme.rst").write_text("= Title\n", encoding="utf-8")
         (project / "link").symlink_to(tmp_path / "outside", target_is_directory=True)
-        config_file = project / ".uncoded.toml"
-        config_file.write_text(
+        configuration_file = project / ".uncoded.toml"
+        configuration_file.write_text(
             'source-roots = ["src"]\ndoc-roots = ["docs"]\n', encoding="utf-8"
         )
         monkeypatch.chdir(project)
         assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 0
-        config_file.write_text(toml, encoding="utf-8")
-        before = _contents(root=tmp_path)
+        configuration_file.write_text(toml, encoding="utf-8")
+        before = _contents(project_directory=tmp_path)
         capsys.readouterr()
 
         assert _run(monkeypatch=monkeypatch, arguments=[command]) == 1
 
-        assert _contents(root=tmp_path) == before
+        assert _contents(project_directory=tmp_path) == before
         captured = capsys.readouterr()
         assert captured.out == ""
         assert captured.err == (
-            f"Error: {config_file.resolve().as_posix()}: {problem}\n"
+            f"Error: {configuration_file.resolve().as_posix()}: {problem}\n"
         )
 
 
@@ -766,7 +770,7 @@ class TestGeneratedFileThatCannotBeUsed:
     ):
         # A file where the stubs directory should be fails on every system,
         # with a reason that differs between them.
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "src" / "mod.py").write_text("def f(): pass\n", encoding="utf-8")
         (tmp_path / ".uncoded").mkdir()
         (tmp_path / ".uncoded" / "stubs").write_text("", encoding="utf-8")
@@ -787,7 +791,7 @@ class TestGeneratedFileThatCannotBeUsed:
     def test_stops_with_one_line_when_a_file_is_not_utf8(
         self, *, tmp_path, monkeypatch, capsys, command
     ):
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         _run(monkeypatch=monkeypatch, arguments=["sync"])
         (tmp_path / ".uncoded" / "namespace.yaml").write_bytes(b"\xff")
         capsys.readouterr()
@@ -804,7 +808,7 @@ class TestGeneratedFileThatCannotBeUsed:
     ):
         # Removing a directory as a file fails on every system, with a reason
         # that differs between them.
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / ".uncoded" / "stubs" / "src" / "orphan.pyi").mkdir(parents=True)
 
         assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 1
@@ -903,7 +907,7 @@ class TestInitCommand:
     def test_uses_the_configuration_file_above_a_subdirectory(
         self, *, tmp_path, monkeypatch, capsys
     ):
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "src" / "docs").mkdir()
         monkeypatch.chdir(tmp_path / "src")
 
@@ -924,7 +928,7 @@ class TestInitCommand:
 
         assert _run(monkeypatch=monkeypatch, arguments=["init"]) == 1
 
-        assert _contents(root=tmp_path) == {Path("lib"): None}
+        assert _contents(project_directory=tmp_path) == {Path("lib"): None}
         captured = capsys.readouterr()
         assert captured.out == ""
         assert captured.err.startswith(
@@ -936,7 +940,7 @@ class TestInitCommand:
     def test_leaves_an_existing_configuration_file_as_it_is(
         self, *, tmp_path, monkeypatch, capsys
     ):
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "docs").mkdir()
         pyproject = (tmp_path / "pyproject.toml").read_text(encoding="utf-8")
 
@@ -980,7 +984,7 @@ class TestInitCommand:
         with mock.patch.object(Path, "write_text", side_effect=failure):
             assert _run(monkeypatch=monkeypatch, arguments=["init"]) == 1
 
-        assert _contents(root=tmp_path) == {Path("src"): None}
+        assert _contents(project_directory=tmp_path) == {Path("src"): None}
         captured = capsys.readouterr()
         assert captured.out == ""
         assert captured.err == (
@@ -998,13 +1002,13 @@ class TestOutsideAProject:
             "def fn():\n    pass\n", encoding="utf-8"
         )
         monkeypatch.chdir(tmp_path)
-        before = _contents(root=tmp_path)
+        before = _contents(project_directory=tmp_path)
 
         with mock.patch.object(cli, "find_refs") as find_refs:
             assert _run(monkeypatch=monkeypatch, arguments=command) == 1
 
         find_refs.assert_not_called()
-        assert _contents(root=tmp_path) == before
+        assert _contents(project_directory=tmp_path) == before
         captured = capsys.readouterr()
         assert captured.out == ""
         assert captured.err == (
@@ -1020,7 +1024,7 @@ class TestInFileOutsideTheProject:
     def test_refuses_the_file(self, *, tmp_path, monkeypatch, capsys, command, is_link):
         project = tmp_path / "project"
         project.mkdir()
-        _init_repo(tmp_path=project, monkeypatch=monkeypatch)
+        _init_source_project(tmp_path=project, monkeypatch=monkeypatch)
         (tmp_path / "m.py").write_text("def fn():\n    pass\n", encoding="utf-8")
         in_path = "../m.py"
         if is_link:
@@ -1051,8 +1055,8 @@ def _refs(*, monkeypatch, name_path, in_path):
     return _run(monkeypatch=monkeypatch, arguments=["refs", name_path, "--in", in_path])
 
 
-def _init_pkg_repo(*, tmp_path, monkeypatch):
-    """Set up a repo configured at ``tmp_path`` with a ``pkg`` package, and chdir."""
+def _init_package_project(*, tmp_path, monkeypatch):
+    """Set up a project configured at ``tmp_path`` with a ``pkg`` package, and chdir."""
     (tmp_path / "pyproject.toml").write_text(
         '[tool.uncoded]\nsource-roots = ["pkg"]\n', encoding="utf-8"
     )
@@ -1064,7 +1068,7 @@ def _init_pkg_repo(*, tmp_path, monkeypatch):
 
 class TestBodyCommand:
     def test_happy_path_dispatch(self, *, tmp_path, monkeypatch, capsys):
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "src" / "foo.py").write_text(
             "def fn():\n    pass\n", encoding="utf-8", newline=""
         )
@@ -1073,7 +1077,7 @@ class TestBodyCommand:
         assert capsys.readouterr().out == "def fn():\n    pass\n"
 
     def test_class_method_form(self, *, tmp_path, monkeypatch, capsys):
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "src" / "foo.py").write_text(
             "class Dog:\n    def bark(self):\n        pass\n",
             encoding="utf-8",
@@ -1087,7 +1091,7 @@ class TestBodyCommand:
         assert capsys.readouterr().out == "    def bark(self):\n        pass\n"
 
     def test_symbol_not_found_exits_one(self, *, tmp_path, monkeypatch, capsys):
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "src" / "foo.py").write_text(
             "def other(): pass\n", encoding="utf-8", newline=""
         )
@@ -1102,7 +1106,7 @@ class TestBodyCommand:
         assert "foo.py" in err
 
     def test_file_not_found_exits_one(self, *, tmp_path, monkeypatch, capsys):
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
 
         # The --in path is given with the system's separator, and the message
         # shows it with /, on Windows too.
@@ -1115,7 +1119,7 @@ class TestBodyCommand:
     ):
         # A directory cannot be read as a source file. The error that the
         # system gives names it, and that name uses / on Windows too.
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "src" / "pkg").mkdir()
 
         in_path = str(Path("src") / "pkg")
@@ -1125,7 +1129,7 @@ class TestBodyCommand:
         assert "\\" not in err
 
     def test_syntax_error_exits_one(self, *, tmp_path, monkeypatch, capsys):
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "src" / "foo.py").write_text(
             "def broken(:\n", encoding="utf-8", newline=""
         )
@@ -1137,7 +1141,7 @@ class TestBodyCommand:
         assert "foo.py" in capsys.readouterr().err
 
     def test_undecodable_file_exits_one(self, *, tmp_path, monkeypatch, capsys):
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "src" / "m.py").write_bytes(b"\xff\xfe not utf-8")
 
         assert _body(monkeypatch=monkeypatch, name_path="fn", in_path="src/m.py") == 1
@@ -1146,7 +1150,7 @@ class TestBodyCommand:
         assert "m.py" in err
 
     def test_unknown_encoding_exits_one(self, *, tmp_path, monkeypatch, capsys):
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "src" / "m.py").write_bytes(
             b"# -*- coding: fake-encoding -*-\ndef fn(): pass\n"
         )
@@ -1157,7 +1161,7 @@ class TestBodyCommand:
         assert "m.py" in err
 
     def test_in_path_resolves_relative_to_cwd(self, *, tmp_path, monkeypatch, capsys):
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "src" / "foo.py").write_text(
             "def fn():\n    pass\n", encoding="utf-8", newline=""
         )
@@ -1171,7 +1175,7 @@ class TestBodyCommand:
         assert capsys.readouterr().out == "def fn():\n    pass\n"
 
     @pytest.mark.parametrize(
-        ("in_path", "body"),
+        ("in_path", "definition"),
         [
             pytest.param("m.py", "def fn():\n    pass\n", id="outside the roots"),
             pytest.param(
@@ -1182,11 +1186,11 @@ class TestBodyCommand:
         ],
     )
     def test_reads_any_python_file_in_the_project(
-        self, *, tmp_path, monkeypatch, capsys, in_path, body
+        self, *, tmp_path, monkeypatch, capsys, in_path, definition
     ):
         # Both files hold the platform's line endings, as the stub that sync
         # writes does.
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "src" / "foo.py").write_text(
             "def fn(x: int) -> int:\n    return x\n", encoding="utf-8"
         )
@@ -1195,12 +1199,12 @@ class TestBodyCommand:
         capsys.readouterr()
 
         assert _body(monkeypatch=monkeypatch, name_path="fn", in_path=in_path) == 0
-        assert capsys.readouterr().out == body.replace("\n", os.linesep)
+        assert capsys.readouterr().out == definition.replace("\n", os.linesep)
 
-    def test_stdout_is_exact_body(self, *, tmp_path, monkeypatch, capsys):
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
-        body = "def compute(x: int) -> int:\n    return x * 2\n"
-        source = f"# header\n\n{body}\n# footer\n"
+    def test_stdout_is_exact_definition(self, *, tmp_path, monkeypatch, capsys):
+        _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        definition = "def compute(x: int) -> int:\n    return x * 2\n"
+        source = f"# header\n\n{definition}\n# footer\n"
         (tmp_path / "src" / "foo.py").write_text(source, encoding="utf-8", newline="")
 
         assert (
@@ -1209,7 +1213,7 @@ class TestBodyCommand:
         )
 
         out, err = capsys.readouterr()
-        assert out == body
+        assert out == definition
         assert err == ""
 
     def test_stdout_keeps_line_endings_where_the_stream_translates_them(
@@ -1220,16 +1224,18 @@ class TestBodyCommand:
         written = io.BytesIO()
         stdout = io.TextIOWrapper(written, encoding="utf-8", newline="\r\n")
         monkeypatch.setattr(sys, "stdout", stdout)
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
-        body = "def compute(x: int) -> int:\n    return x * 2\n"
-        (tmp_path / "src" / "foo.py").write_text(body, encoding="utf-8", newline="")
+        _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        definition = "def compute(x: int) -> int:\n    return x * 2\n"
+        (tmp_path / "src" / "foo.py").write_text(
+            definition, encoding="utf-8", newline=""
+        )
 
         assert (
             _body(monkeypatch=monkeypatch, name_path="compute", in_path="src/foo.py")
             == 0
         )
 
-        assert written.getvalue() == body.encode("utf-8")
+        assert written.getvalue() == definition.encode("utf-8")
 
     def test_stdout_encodes_with_the_streams_error_handler(
         self, *, tmp_path, monkeypatch
@@ -1237,7 +1243,7 @@ class TestBodyCommand:
         written = io.BytesIO()
         stdout = io.TextIOWrapper(written, encoding="ascii", errors="backslashreplace")
         monkeypatch.setattr(sys, "stdout", stdout)
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "src" / "foo.py").write_text(
             'x = "é"\n', encoding="utf-8", newline=""
         )
@@ -1247,7 +1253,7 @@ class TestBodyCommand:
         assert written.getvalue() == b'x = "\\xe9"\n'
 
     def test_unsupported_name_path_exits_one(self, *, tmp_path, monkeypatch, capsys):
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "src" / "foo.py").write_text(
             "def fn(): pass\n", encoding="utf-8", newline=""
         )
@@ -1264,7 +1270,7 @@ class TestBodyCommand:
 
 class TestRefsCommand:
     def test_happy_path_dispatch(self, *, tmp_path, monkeypatch, capsys):
-        pkg = _init_pkg_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        pkg = _init_package_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (pkg / "a.py").write_text("def foo():\n    return 42\n", encoding="utf-8")
         (pkg / "b.py").write_text("from pkg.a import foo\nfoo()\n", encoding="utf-8")
 
@@ -1273,7 +1279,7 @@ class TestRefsCommand:
         assert "pkg/b.py:2:1" in out
 
     def test_class_method_form(self, *, tmp_path, monkeypatch, capsys):
-        pkg = _init_pkg_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        pkg = _init_package_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (pkg / "a.py").write_text(
             textwrap.dedent("""\
                 class Dog:
@@ -1294,7 +1300,7 @@ class TestRefsCommand:
         assert lines == ["pkg/a.py:2:9", "pkg/b.py:3:3", "pkg/b.py:4:3"]
 
     def test_symbol_not_found_exits_one(self, *, tmp_path, monkeypatch, capsys):
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "m.py").write_text("def other(): pass\n", encoding="utf-8")
 
         assert _refs(monkeypatch=monkeypatch, name_path="missing", in_path="m.py") == 1
@@ -1303,7 +1309,7 @@ class TestRefsCommand:
         assert "m.py" in err
 
     def test_file_not_found_exits_one(self, *, tmp_path, monkeypatch, capsys):
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
 
         assert (
             _refs(monkeypatch=monkeypatch, name_path="fn", in_path="nonexistent.py")
@@ -1312,14 +1318,14 @@ class TestRefsCommand:
         assert "nonexistent.py" in capsys.readouterr().err
 
     def test_syntax_error_exits_one(self, *, tmp_path, monkeypatch, capsys):
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "m.py").write_text("def broken(:\n", encoding="utf-8")
 
         assert _refs(monkeypatch=monkeypatch, name_path="broken", in_path="m.py") == 1
         assert "m.py" in capsys.readouterr().err
 
     def test_undecodable_file_exits_one(self, *, tmp_path, monkeypatch, capsys):
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "m.py").write_bytes(b"\xff\xfe not utf-8")
 
         assert _refs(monkeypatch=monkeypatch, name_path="fn", in_path="m.py") == 1
@@ -1328,7 +1334,7 @@ class TestRefsCommand:
         assert "m.py" in err
 
     def test_unknown_encoding_exits_one(self, *, tmp_path, monkeypatch, capsys):
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "m.py").write_bytes(
             b"# -*- coding: fake-encoding -*-\ndef fn(): pass\n"
         )
@@ -1339,7 +1345,7 @@ class TestRefsCommand:
         assert "m.py" in err
 
     def test_in_path_resolves_relative_to_cwd(self, *, tmp_path, monkeypatch, capsys):
-        pkg = _init_pkg_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        pkg = _init_package_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (pkg / "a.py").write_text("def foo():\n    pass\n", encoding="utf-8")
         (pkg / "b.py").write_text("from pkg.a import foo\nfoo()\n", encoding="utf-8")
         subdir = tmp_path / "subdir"
@@ -1356,7 +1362,7 @@ class TestRefsCommand:
         assert captured.err == ""
 
     def test_unsupported_name_path_exits_one(self, *, tmp_path, monkeypatch, capsys):
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "m.py").write_text("def fn(): pass\n", encoding="utf-8")
 
         assert _refs(monkeypatch=monkeypatch, name_path="A/B/C", in_path="m.py") == 1
@@ -1368,7 +1374,7 @@ class TestRefsCommand:
     def test_unused_symbol_prints_only_its_definition(
         self, *, tmp_path, monkeypatch, capsys
     ):
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "m.py").write_text("def uncalled():\n    pass\n", encoding="utf-8")
 
         assert _refs(monkeypatch=monkeypatch, name_path="uncalled", in_path="m.py") == 0
@@ -1377,7 +1383,7 @@ class TestRefsCommand:
         assert err == ""
 
     def test_multiple_references_prints_sorted(self, *, tmp_path, monkeypatch, capsys):
-        pkg = _init_pkg_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        pkg = _init_package_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (pkg / "a.py").write_text("def foo():\n    return 42\n", encoding="utf-8")
         (pkg / "b.py").write_text(
             "from pkg.a import foo\nresult = foo()\nother = foo()\n", encoding="utf-8"
@@ -1393,17 +1399,17 @@ class TestRefsCommand:
         ]
 
     def test_passes_the_project_directory_to_ty(self, *, tmp_path, monkeypatch):
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "src" / "m.py").write_text("def foo(): pass\n", encoding="utf-8")
         monkeypatch.chdir(tmp_path / "src")
 
         with mock.patch.object(cli, "find_refs", return_value=[]) as find_refs:
             assert _refs(monkeypatch=monkeypatch, name_path="foo", in_path="m.py") == 0
 
-        assert find_refs.call_args.kwargs["project_root"] == tmp_path.resolve()
+        assert find_refs.call_args.kwargs["project_directory"] == tmp_path.resolve()
 
     def test_missing_uvx_exits_one(self, *, tmp_path, monkeypatch, capsys):
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "m.py").write_text("def foo(): pass\n", encoding="utf-8")
 
         with mock.patch("uncoded.refs.subprocess.Popen", side_effect=FileNotFoundError):
@@ -1418,7 +1424,7 @@ class TestRefsCommand:
     def test_ty_failure_is_not_blamed_on_the_file(
         self, *, tmp_path, monkeypatch, capsys, stand_in_for_ty
     ):
-        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "m.py").write_text("def foo(): pass\n", encoding="utf-8")
         # A write to the input of a ty that has stopped reading fails with an
         # OSError, the kind of error that a file which cannot be read raises.
@@ -1442,8 +1448,8 @@ class TestRefsCommand:
         )
 
 
-def _init_doc_repo(*, tmp_path, monkeypatch, doc_roots=("docs",)):
-    """Set up a minimal doc-only repo: pyproject.toml + doc dir + chdir."""
+def _init_doc_project(*, tmp_path, monkeypatch, doc_roots=("docs",)):
+    """Set up a minimal doc-only project: pyproject.toml + doc dir + chdir."""
     roots_list = ", ".join(f'"{r}"' for r in doc_roots)
     (tmp_path / "pyproject.toml").write_text(
         textwrap.dedent(
@@ -1465,19 +1471,19 @@ def _init_doc_repo(*, tmp_path, monkeypatch, doc_roots=("docs",)):
 
 
 class TestSyncDocRoots:
-    def test_syncs_doc_navigation_artefacts(self, *, tmp_path, monkeypatch):
-        _init_doc_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+    def test_syncs_documentation_index_and_skill(self, *, tmp_path, monkeypatch):
+        _init_doc_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 0
         assert (tmp_path / ".uncoded" / ".gitignore").exists()
         assert (tmp_path / ".uncoded" / "docs.yaml").exists()
 
     def test_doc_only_does_not_write_namespace_yaml(self, *, tmp_path, monkeypatch):
-        _init_doc_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        _init_doc_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 0
         assert not (tmp_path / ".uncoded" / "namespace.yaml").exists()
 
     def test_doc_only_does_not_write_stubs(self, *, tmp_path, monkeypatch):
-        _init_doc_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        _init_doc_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 0
         assert not (tmp_path / ".uncoded" / "stubs").exists()
 
@@ -1493,7 +1499,7 @@ class TestSyncDocRoots:
         docs_yaml = (tmp_path / ".uncoded" / "docs.yaml").read_text(encoding="utf-8")
         assert "README.md" in docs_yaml
 
-    def test_both_roots_writes_both_artefacts(self, *, tmp_path, monkeypatch):
+    def test_both_kinds_of_root_write_both_indexes(self, *, tmp_path, monkeypatch):
         (tmp_path / "pyproject.toml").write_text(
             textwrap.dedent(
                 """\
@@ -1520,7 +1526,7 @@ class TestSyncDocRoots:
         assert (tmp_path / ".uncoded" / "namespace.yaml").exists()
         assert (tmp_path / ".uncoded" / "docs.yaml").exists()
 
-    def test_source_root_removal_cleans_code_artefacts(self, *, tmp_path, monkeypatch):
+    def test_source_root_removal_removes_code_index(self, *, tmp_path, monkeypatch):
         # First sync with source-roots; then reconfigure to doc-only.
         # namespace.yaml and stubs must be removed.
         (tmp_path / "pyproject.toml").write_text(
@@ -1570,7 +1576,9 @@ class TestSyncDocRoots:
         for path in _SOURCE_SKILL_PATHS:
             assert not (tmp_path / path).exists()
 
-    def test_doc_root_removal_cleans_doc_artefacts(self, *, tmp_path, monkeypatch):
+    def test_doc_root_removal_removes_documentation_index(
+        self, *, tmp_path, monkeypatch
+    ):
         # First sync with doc-roots; then drop them.
         (tmp_path / "pyproject.toml").write_text(
             textwrap.dedent(
@@ -1615,7 +1623,7 @@ class TestSyncDocRoots:
             assert not (tmp_path / path).exists()
 
     def test_check_returns_one_when_docs_yaml_stale(self, *, tmp_path, monkeypatch):
-        _init_doc_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        _init_doc_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         _run(monkeypatch=monkeypatch, arguments=["sync"])
         # Modify the doc source.
         (tmp_path / "docs" / "guide.md").write_text(
@@ -1627,7 +1635,7 @@ class TestSyncDocRoots:
         self, *, tmp_path, monkeypatch
     ):
         # Stubs exist from a prior sync; source-roots dropped → check returns 1.
-        _init_doc_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        _init_doc_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "src").mkdir()
         (tmp_path / "src" / "foo.py").write_text(
             "def hello(): pass\n", encoding="utf-8"
@@ -1667,7 +1675,7 @@ class TestSyncDocRoots:
         self, *, tmp_path, monkeypatch
     ):
         # docs.yaml exists but doc_roots is now absent — check must report.
-        _init_doc_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        _init_doc_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         _run(monkeypatch=monkeypatch, arguments=["sync"])
         assert (tmp_path / ".uncoded" / "docs.yaml").exists()
 
@@ -1687,13 +1695,13 @@ class TestSyncDocRoots:
         assert _run(monkeypatch=monkeypatch, arguments=["check"]) == 1
 
     def test_doc_only_does_not_write_skill(self, *, tmp_path, monkeypatch):
-        _init_doc_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        _init_doc_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 0
         for path in _SOURCE_SKILL_PATHS:
             assert not (tmp_path / path).exists()
 
     def test_doc_only_removes_preexisting_skill(self, *, tmp_path, monkeypatch):
-        _init_doc_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        _init_doc_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         for path in _SOURCE_SKILL_PATHS:
             skill_path = tmp_path / path
             skill_path.parent.mkdir(parents=True, exist_ok=True)
@@ -1705,7 +1713,7 @@ class TestSyncDocRoots:
     def test_check_returns_one_when_skill_should_be_removed(
         self, *, tmp_path, monkeypatch
     ):
-        _init_doc_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        _init_doc_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         for path in _SKILL_PATHS:
             skill_path = tmp_path / path
             skill_path.parent.mkdir(parents=True, exist_ok=True)
@@ -1715,7 +1723,7 @@ class TestSyncDocRoots:
             assert (tmp_path / path).exists()
 
     def test_idempotent_doc_only(self, *, tmp_path, monkeypatch):
-        _init_doc_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        _init_doc_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         _run(monkeypatch=monkeypatch, arguments=["sync"])
         docs_mtime = (tmp_path / ".uncoded" / "docs.yaml").stat().st_mtime_ns
         assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 0

@@ -57,13 +57,23 @@ includes it. Each entry links the pull request that made the change.
   of uncoded gave them: `coherence-review`, `uncoded-coherence-review` and
   `uncoded-review`. It removed them on every run, so it deleted a skill of the
   user's own with one of those names. It removes only the skills that the
-  current version generates, when the roots they belong with are gone. A project
+  running version generates, when the roots they belong with are gone. A project
   that still has a skill under an old name removes it as
   [Upgrading](upgrading.md) says.
   ([#337](https://github.com/alimanfoo/uncoded/pull/337))
 
 ### Fixed
 
+- The uncoded skills use the words that [the concepts page](concepts.md) gives
+  each concept, such as "code index", "definition" and "project". They also stop
+  listing directories and files among the symbols in the namespace map.
+  ([#344](https://github.com/alimanfoo/uncoded/pull/344))
+- The documentation navigation skill and the docs map's header say which heading
+  a " (N)" suffix in the docs map marks: the Nth heading with the same text and
+  level under one parent. The skill said that every heading in the docs map is
+  literal text, and the header said to take the Nth match of the heading's text,
+  which finds the wrong heading when the same text comes earlier elsewhere in
+  the file. ([#344](https://github.com/alimanfoo/uncoded/pull/344))
 - `uncoded body` prints a definition with the line endings that it has in the
   file. It printed every line ending as LF, and on Windows as CRLF, so an edit
   tool given the printed text could fail to find it in the file.
@@ -93,7 +103,7 @@ includes it. Each entry links the pull request that made the change.
 - When a source root is removed from the configuration while another source root
   stays, `uncoded sync` removes the removed root's stubs, and `uncoded check`
   counts them as files that would change. Both left the stubs alone, so
-  `uncoded check` said that the index was up to date while an agent could still
+  `uncoded check` said that the index was current while an agent could still
   read the stub of a file that was no longer indexed.
   ([#339](https://github.com/alimanfoo/uncoded/pull/339))
 - `uncoded sync` and `uncoded check` end their warnings about the files they
@@ -135,7 +145,7 @@ includes it. Each entry links the pull request that made the change.
   namespace map or the docs map, and whenever it notices that something else has
   changed files, such as a pull or a checkout. They told it to run
   `uncoded sync` only when a map was missing, so an agent could read a map that
-  was out of date. ([#333](https://github.com/alimanfoo/uncoded/pull/333))
+  was stale. ([#333](https://github.com/alimanfoo/uncoded/pull/333))
 
 ## [3.0.1](https://github.com/alimanfoo/uncoded/releases/tag/v3.0.1) — 2026-10-09
 

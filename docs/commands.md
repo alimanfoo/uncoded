@@ -1,16 +1,16 @@
 # Commands
 
-Run uncoded with `uvx uncoded`. Contributors use `uv run uncoded` to run the
-code in their checkout.
+Run uncoded with `uvx uncoded`. In a checkout of uncoded itself,
+`uv run uncoded` runs the code in the checkout.
 
-| To…                                   | Use                                     |
-| ------------------------------------- | --------------------------------------- |
-| Set uncoded up in a project           | `uvx uncoded init`                      |
-| Build or refresh the index and skills | `uvx uncoded sync`                      |
-| Check generated files without writing | `uvx uncoded check`                     |
-| Read a Python symbol's source         | `uvx uncoded body <symbol> --in <file>` |
-| Find references to a Python symbol    | `uvx uncoded refs <symbol> --in <file>` |
-| Print the installed version           | `uvx uncoded --version`                 |
+| To…                                   | Use                                        |
+| ------------------------------------- | ------------------------------------------ |
+| Set uncoded up in a project           | `uvx uncoded init`                         |
+| Build or refresh the index and skills | `uvx uncoded sync`                         |
+| Check generated files without writing | `uvx uncoded check`                        |
+| Read a Python symbol's definition     | `uvx uncoded body <name_path> --in <file>` |
+| Find references to a Python symbol    | `uvx uncoded refs <name_path> --in <file>` |
+| Print the installed version           | `uvx uncoded --version`                    |
 
 Every command but `init` and `--version` runs inside a project. It finds the
 configuration file in the current directory or the nearest directory above it.
@@ -44,9 +44,9 @@ those files or `pyproject.toml`. Running it again does no harm.
 uvx uncoded sync
 ```
 
-Builds or refreshes every configured index and navigation skill. Output lists
-files created, updated, or removed. Running it from a subdirectory produces
-output at the same project root.
+Builds or refreshes the index and the skills. Output lists files created,
+updated, or removed. Running it from a subdirectory writes the same files, in
+the project directory.
 
 Files that cannot be parsed or decoded are skipped with a warning, and the
 output ends with a line that says how many files were skipped. A skipped file
@@ -63,7 +63,7 @@ Runs the same pipeline as `sync` without changing files.
 
 | Status | Meaning                                                                                                         |
 | ------ | --------------------------------------------------------------------------------------------------------------- |
-| `0`    | All generated files match a fresh build.                                                                        |
+| `0`    | All generated files are current.                                                                                |
 | `1`    | A file would be created, updated, or removed, the configuration is invalid, or a generated file cannot be read. |
 
 The index is never committed, so in a fresh checkout `check` always reports it
@@ -82,13 +82,13 @@ file. These examples assume a `greet` function or a `Greeter.greet` method in
 `src/greetings.py`.
 
 Use one name for a top-level function, class, module assignment, or Python 3.12
-`type` alias. Use `Class/member` for a method or class attribute. Deeper paths
-and empty segments are unsupported.
+`type` alias. Use `Class/member` for a method, property or assignment in a class
+body. Deeper paths and empty segments are unsupported.
 
-The `--in` path is relative to your current directory, not the configuration
+The `--in` path is relative to the current directory, not the configuration
 file. It must be inside the project directory, once symbolic links are resolved.
-Run `body` from the project directory, so that you can pass the namespace map's
-paths to `--in` unchanged.
+Run `body` from the project directory, so that the namespace map's paths can be
+passed to `--in` unchanged.
 
 ## `refs`
 

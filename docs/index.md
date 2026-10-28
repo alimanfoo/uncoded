@@ -5,10 +5,10 @@ hide:
 
 <div class="home-intro" markdown="1">
 
-# Give your agent a map of your codebase
+# Give an agent a map of its codebase
 
-uncoded indexes Python code and Markdown docs. It gives your coding agent
-progressively deeper views of Python code:
+uncoded indexes Python code and Markdown docs. It gives the agent progressively
+deeper views of Python code:
 
 1. A map shows the code symbols
 2. Stubs add parameters and types
@@ -23,14 +23,14 @@ The agent can stop as soon as one view gives it enough information.
 
 ## What the agent sees
 
-For a repository containing this function, uncoded generates a map with its name
+For a project containing this function, uncoded generates a map with its name
 and location.
 
 <div class="home-example" markdown="1">
 
 <div markdown="1">
 
-### Your source
+### The source
 
 ```python title="src/greetings.py"
 def greet(name: str) -> str:
@@ -62,8 +62,8 @@ def greet(name: str) -> str:
     ...
 ```
 
-When the agent needs the exact source, it retrieves that body without reading
-the rest of the source file:
+When the agent needs the exact source, it retrieves that definition without
+reading the rest of the source file:
 
 ```sh
 uvx uncoded body greet --in src/greetings.py
@@ -75,5 +75,5 @@ at the stub.
 Before a rename, `uncoded refs` finds the references to check and update.
 Markdown docs get a separate map of files and headings.
 
-The index stays local. The generated navigation skills are committed with your
-project so agents know how to use it.
+The index stays local. The installed skill files are committed with the project
+so agents know how to use it.
