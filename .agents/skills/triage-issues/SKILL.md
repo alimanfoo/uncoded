@@ -41,8 +41,10 @@ much information at once. Keep explanations short and concrete, and develop them
 through the conversation.
 
 Treat it as a conversation. Open each issue with only what the issue is, as you
-understand it after investigating, in a few sentences. Then give two options,
-each in a line or two, and recommend one. Take one decision per turn: when an
+understand it after investigating, in a few sentences. Then give the two
+strongest options, each in a line or two, and recommend one. The second option
+is the best real alternative, not a default such as doing nothing, unless doing
+nothing is that alternative. Take one decision per turn: when an
 issue raises several points, take them one at a time, each in the same shape.
 Don't end every turn with a question; I will follow up.
 
