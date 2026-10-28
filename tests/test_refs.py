@@ -145,19 +145,25 @@ class TestFindRefs:
         assert refs[-1] == Reference(path=pkg / "b.py", line=2, col=1)
 
     def test_path_with_spaces_is_not_percent_encoded(self, *, tmp_path):
-        root = tmp_path / "my project"
-        root.mkdir()
-        (root / "pyproject.toml").write_text(
+        project_directory = tmp_path / "my project"
+        project_directory.mkdir()
+        (project_directory / "pyproject.toml").write_text(
             '[project]\nname = "t"\n', encoding="utf-8"
         )
-        (root / "a.py").write_text("def foo():\n    pass\n", encoding="utf-8")
-        (root / "b.py").write_text("from a import foo\nfoo()\n", encoding="utf-8")
-
-        refs = find_refs(
-            name_path=NamePath("foo"), in_path=root / "a.py", project_directory=root
+        (project_directory / "a.py").write_text(
+            "def foo():\n    pass\n", encoding="utf-8"
+        )
+        (project_directory / "b.py").write_text(
+            "from a import foo\nfoo()\n", encoding="utf-8"
         )
 
-        assert refs[0].path == root / "a.py"
+        refs = find_refs(
+            name_path=NamePath("foo"),
+            in_path=project_directory / "a.py",
+            project_directory=project_directory,
+        )
+
+        assert refs[0].path == project_directory / "a.py"
         assert all("%20" not in str(r.path) for r in refs)
 
 

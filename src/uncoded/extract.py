@@ -54,7 +54,8 @@ def _extract_class_members(*, node: ast.ClassDef) -> ClassInfo:
 def extract_module(*, source: str, rel_path: str) -> ModuleInfo:
     """Parse Python source and extract classes, functions, and assignments.
 
-    A name defined more than once keeps only its later definition.
+    A name defined more than once in the module body keeps only its later
+    definition.
     """
     tree = ast.parse(source)
 

@@ -5,7 +5,13 @@ import pytest
 
 import uncoded.skill as skill_module
 from uncoded.markers import GENERATED_MARKER
-from uncoded.skill import SKILL_ROOTS, SKILLS, Skill, agent_instructions, sync_skills
+from uncoded.skill import (
+    SKILL_DIRECTORIES,
+    SKILLS,
+    Skill,
+    agent_instructions,
+    sync_skills,
+)
 
 _REVIEW_SKILL = SKILLS[0]
 _REVIEW_SKILL_FILE = Path(_REVIEW_SKILL.name) / "SKILL.md"
@@ -26,22 +32,22 @@ class TestSyncSkills:
         assert [
             Path(".claude/skills"),
             Path(".agents/skills"),
-        ] == SKILL_ROOTS
+        ] == SKILL_DIRECTORIES
 
     def test_writes_skill_files(self, *, tmp_path):
         sync_skills(source=True, doc=False, project_directory=tmp_path, check=False)
-        for root in SKILL_ROOTS:
-            assert (tmp_path / root / _REVIEW_SKILL_FILE).exists()
+        for skill_directory in SKILL_DIRECTORIES:
+            assert (tmp_path / skill_directory / _REVIEW_SKILL_FILE).exists()
 
     def test_creates_parent_directories(self, *, tmp_path):
         sync_skills(source=True, doc=False, project_directory=tmp_path, check=False)
-        for root in SKILL_ROOTS:
-            assert (tmp_path / root / _REVIEW_SKILL_FILE.parent).is_dir()
+        for skill_directory in SKILL_DIRECTORIES:
+            assert (tmp_path / skill_directory / _REVIEW_SKILL_FILE.parent).is_dir()
 
     def test_content_has_frontmatter_and_body(self, *, tmp_path):
         sync_skills(source=True, doc=False, project_directory=tmp_path, check=False)
         skill = _REVIEW_SKILL
-        content = (tmp_path / SKILL_ROOTS[0] / skill.name / "SKILL.md").read_text(
+        content = (tmp_path / SKILL_DIRECTORIES[0] / skill.name / "SKILL.md").read_text(
             encoding="utf-8"
         )
         assert content.startswith(f"---\nname: {skill.name}\n")
@@ -71,7 +77,7 @@ class TestSyncSkills:
     def test_content_has_provenance_marker(self, *, tmp_path):
         sync_skills(source=True, doc=False, project_directory=tmp_path, check=False)
         skill = _REVIEW_SKILL
-        content = (tmp_path / SKILL_ROOTS[0] / skill.name / "SKILL.md").read_text(
+        content = (tmp_path / SKILL_DIRECTORIES[0] / skill.name / "SKILL.md").read_text(
             encoding="utf-8"
         )
         # Marker is present in the rendered file.
@@ -96,19 +102,19 @@ class TestSyncSkills:
     def test_idempotent(self, *, tmp_path):
         sync_skills(source=True, doc=False, project_directory=tmp_path, check=False)
         mtimes = [
-            (tmp_path / root / _REVIEW_SKILL_FILE).stat().st_mtime_ns
-            for root in SKILL_ROOTS
+            (tmp_path / skill_directory / _REVIEW_SKILL_FILE).stat().st_mtime_ns
+            for skill_directory in SKILL_DIRECTORIES
         ]
         sync_skills(source=True, doc=False, project_directory=tmp_path, check=False)
         assert [
-            (tmp_path / root / _REVIEW_SKILL_FILE).stat().st_mtime_ns
-            for root in SKILL_ROOTS
+            (tmp_path / skill_directory / _REVIEW_SKILL_FILE).stat().st_mtime_ns
+            for skill_directory in SKILL_DIRECTORIES
         ] == mtimes
 
     def test_check_mode_does_not_write(self, *, tmp_path):
         sync_skills(source=True, doc=False, project_directory=tmp_path, check=True)
-        for root in SKILL_ROOTS:
-            assert not (tmp_path / root / _REVIEW_SKILL_FILE).exists()
+        for skill_directory in SKILL_DIRECTORIES:
+            assert not (tmp_path / skill_directory / _REVIEW_SKILL_FILE).exists()
 
     def test_check_mode_reports_change_when_missing(self, *, tmp_path):
         assert (
@@ -128,7 +134,8 @@ class TestSyncSkills:
         # coherence-review was the skill's name before uncoded 2.0. A skill of
         # that name now belongs to the user, whichever roots the project has.
         own_paths = [
-            tmp_path / root / "coherence-review" / "SKILL.md" for root in SKILL_ROOTS
+            tmp_path / skill_directory / "coherence-review" / "SKILL.md"
+            for skill_directory in SKILL_DIRECTORIES
         ]
         for path in own_paths:
             path.parent.mkdir(parents=True)
@@ -147,8 +154,8 @@ class TestSyncSkills:
             )
             > 0
         )
-        for root in SKILL_ROOTS:
-            assert not (tmp_path / root / _REVIEW_SKILL_FILE).exists()
+        for skill_directory in SKILL_DIRECTORIES:
+            assert not (tmp_path / skill_directory / _REVIEW_SKILL_FILE).exists()
 
     def test_source_false_returns_zero_when_already_absent(self, *, tmp_path):
         assert (
@@ -164,26 +171,26 @@ class TestSyncSkills:
             sync_skills(source=False, doc=False, project_directory=tmp_path, check=True)
             > 0
         )
-        for root in SKILL_ROOTS:
-            assert (tmp_path / root / _REVIEW_SKILL_FILE).exists()
+        for skill_directory in SKILL_DIRECTORIES:
+            assert (tmp_path / skill_directory / _REVIEW_SKILL_FILE).exists()
 
     def test_gate_unmet_removal_prunes_empty_directory(self, *, tmp_path):
         # After gate-not-met removal, the skill directory itself must be gone.
         sync_skills(source=True, doc=False, project_directory=tmp_path, check=False)
         sync_skills(source=False, doc=False, project_directory=tmp_path, check=False)
-        for root in SKILL_ROOTS:
-            assert not (tmp_path / root / _REVIEW_SKILL_FILE.parent).exists()
+        for skill_directory in SKILL_DIRECTORIES:
+            assert not (tmp_path / skill_directory / _REVIEW_SKILL_FILE.parent).exists()
 
     def test_pruning_skipped_when_directory_has_other_files(self, *, tmp_path):
         # If extra files remain after SKILL.md removal, leave the directory.
         sync_skills(source=True, doc=False, project_directory=tmp_path, check=False)
-        for root in SKILL_ROOTS:
-            extra = tmp_path / root / _REVIEW_SKILL_FILE.parent / "extra.md"
+        for skill_directory in SKILL_DIRECTORIES:
+            extra = tmp_path / skill_directory / _REVIEW_SKILL_FILE.parent / "extra.md"
             extra.write_text("extra\n", encoding="utf-8")
         sync_skills(source=False, doc=False, project_directory=tmp_path, check=False)
-        for root in SKILL_ROOTS:
-            assert (tmp_path / root / _REVIEW_SKILL_FILE.parent).is_dir()
-            assert not (tmp_path / root / _REVIEW_SKILL_FILE).exists()
+        for skill_directory in SKILL_DIRECTORIES:
+            assert (tmp_path / skill_directory / _REVIEW_SKILL_FILE.parent).is_dir()
+            assert not (tmp_path / skill_directory / _REVIEW_SKILL_FILE).exists()
 
     def test_doc_gate_builds_when_doc_true(self, *, tmp_path, monkeypatch):
         doc_skill = Skill(
@@ -194,8 +201,8 @@ class TestSyncSkills:
         )
         monkeypatch.setattr(skill_module, "SKILLS", [doc_skill])
         sync_skills(source=False, doc=True, project_directory=tmp_path, check=False)
-        for root in SKILL_ROOTS:
-            assert (tmp_path / root / "test-docs" / "SKILL.md").exists()
+        for skill_directory in SKILL_DIRECTORIES:
+            assert (tmp_path / skill_directory / "test-docs" / "SKILL.md").exists()
 
     def test_doc_gate_skips_when_doc_false(self, *, tmp_path, monkeypatch):
         doc_skill = Skill(
@@ -206,37 +213,41 @@ class TestSyncSkills:
         )
         monkeypatch.setattr(skill_module, "SKILLS", [doc_skill])
         sync_skills(source=True, doc=False, project_directory=tmp_path, check=False)
-        for root in SKILL_ROOTS:
-            assert not (tmp_path / root / "test-docs" / "SKILL.md").exists()
+        for skill_directory in SKILL_DIRECTORIES:
+            assert not (tmp_path / skill_directory / "test-docs" / "SKILL.md").exists()
 
     def test_code_navigation_written_when_source_set(self, *, tmp_path):
         sync_skills(source=True, doc=False, project_directory=tmp_path, check=False)
-        for root in SKILL_ROOTS:
-            assert (tmp_path / root / "uncoded-code-navigation" / "SKILL.md").exists()
+        for skill_directory in SKILL_DIRECTORIES:
+            assert (
+                tmp_path / skill_directory / "uncoded-code-navigation" / "SKILL.md"
+            ).exists()
 
     def test_code_navigation_not_written_when_source_absent(self, *, tmp_path):
         sync_skills(source=False, doc=False, project_directory=tmp_path, check=False)
-        for root in SKILL_ROOTS:
+        for skill_directory in SKILL_DIRECTORIES:
             assert not (
-                tmp_path / root / "uncoded-code-navigation" / "SKILL.md"
+                tmp_path / skill_directory / "uncoded-code-navigation" / "SKILL.md"
             ).exists()
 
     def test_doc_navigation_written_when_doc_roots_set(self, *, tmp_path):
         sync_skills(source=False, doc=True, project_directory=tmp_path, check=False)
-        for root in SKILL_ROOTS:
-            assert (tmp_path / root / "uncoded-doc-navigation" / "SKILL.md").exists()
+        for skill_directory in SKILL_DIRECTORIES:
+            assert (
+                tmp_path / skill_directory / "uncoded-doc-navigation" / "SKILL.md"
+            ).exists()
 
     def test_doc_navigation_not_written_without_doc_roots(self, *, tmp_path):
         sync_skills(source=True, doc=False, project_directory=tmp_path, check=False)
-        for root in SKILL_ROOTS:
+        for skill_directory in SKILL_DIRECTORIES:
             assert not (
-                tmp_path / root / "uncoded-doc-navigation" / "SKILL.md"
+                tmp_path / skill_directory / "uncoded-doc-navigation" / "SKILL.md"
             ).exists()
 
     def test_doc_navigation_content_includes_orient_step(self, *, tmp_path):
         sync_skills(source=False, doc=True, project_directory=tmp_path, check=False)
         content = (
-            tmp_path / SKILL_ROOTS[0] / "uncoded-doc-navigation" / "SKILL.md"
+            tmp_path / SKILL_DIRECTORIES[0] / "uncoded-doc-navigation" / "SKILL.md"
         ).read_text(encoding="utf-8")
         assert ".uncoded/docs.yaml" in content
         # Orient step must tell the agent to read the map before anything else.
@@ -254,9 +265,9 @@ class TestSyncSkillsProjectDirectoryAnchor:
 
         sync_skills(source=True, doc=False, project_directory=tmp_path, check=False)
 
-        for root in SKILL_ROOTS:
-            assert (tmp_path / root / _REVIEW_SKILL_FILE).exists()
-            assert not (sub / root / _REVIEW_SKILL_FILE).exists()
+        for skill_directory in SKILL_DIRECTORIES:
+            assert (tmp_path / skill_directory / _REVIEW_SKILL_FILE).exists()
+            assert not (sub / skill_directory / _REVIEW_SKILL_FILE).exists()
 
     def test_project_directory_anchors_removal_independent_of_cwd(
         self, *, tmp_path, monkeypatch
@@ -268,8 +279,8 @@ class TestSyncSkillsProjectDirectoryAnchor:
 
         sync_skills(source=False, doc=False, project_directory=tmp_path, check=False)
 
-        for root in SKILL_ROOTS:
-            assert not (tmp_path / root / _REVIEW_SKILL_FILE).exists()
+        for skill_directory in SKILL_DIRECTORIES:
+            assert not (tmp_path / skill_directory / _REVIEW_SKILL_FILE).exists()
 
 
 class TestAgentInstructions:

@@ -25,7 +25,7 @@ from uncoded.namespace_map import build_map, render_map
 from uncoded.read_helpers import SkippedFile
 from uncoded.refs import TyError, find_refs
 from uncoded.resolver import NamePath, SymbolNotFoundError, UnsupportedNamePathError
-from uncoded.skill import SKILL_ROOTS, agent_instructions, sync_skills
+from uncoded.skill import SKILL_DIRECTORIES, agent_instructions, sync_skills
 from uncoded.stubs import sync_stubs
 from uncoded.sync import FileSyncError, remove_file, sync_file
 
@@ -221,7 +221,7 @@ def _init(*, config: Config | None) -> int:
 
     _sync(config=config)
 
-    skill_dirs = " and ".join(root.as_posix() for root in SKILL_ROOTS)
+    skill_dirs = " and ".join(directory.as_posix() for directory in SKILL_DIRECTORIES)
     instructions = agent_instructions(
         source=bool(config.source_roots), doc=bool(config.doc_roots)
     )
@@ -375,7 +375,7 @@ def main() -> int:
     """
     parser = argparse.ArgumentParser(
         prog="uncoded",
-        description="Build a navigation index for AI coding agents.",
+        description="Build an index of a codebase for AI coding agents.",
     )
     parser.add_argument(
         "--version", action="version", version=f"%(prog)s {__version__}"

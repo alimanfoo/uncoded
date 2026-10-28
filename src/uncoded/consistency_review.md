@@ -1,8 +1,8 @@
 # Semantic Consistency Review
 
-Review a Python codebase for concrete disagreements in its vocabulary and symbol
-contracts. A finding must identify two claims about the same concept that ought
-to agree, but do not.
+Review a Python codebase for concrete disagreements in its vocabulary and in the
+claims about its symbols. A finding must identify two claims about the same
+concept that ought to agree, but do not.
 
 ## Guardrails
 
@@ -34,14 +34,14 @@ from signatures, docstrings, or bodies. Look for:
 
 - **Competing terms:** different names for substantively the same concept.
 - **Conflicting use:** the same term used incompatibly within a shared context.
-- **Stale qualifiers:** names such as `legacy`, `v2`, or `final` whose
+- **Outdated qualifiers:** names such as `legacy`, `v2`, or `final` whose
   distinction conflicts with another symbol or a symbol's docstring.
 
 Similar spelling, low vocabulary overlap, or the presence of a qualifier is not
 evidence on its own. A finding needs two concrete claims that establish the
 shared concept and the disagreement.
 
-## Symbol-contract sweep
+## Symbol-claim sweep
 
 Compare a symbol's name, signature, docstring, and, when needed, behaviour.
 Findings may cover:
@@ -90,7 +90,7 @@ Use this structure:
 **Why these should agree:** <Evidence that both claims describe the same
 concept.>
 
-### Symbol-contract findings
+### Symbol-claim findings
 
 #### 1. <Summary>
 
@@ -120,7 +120,7 @@ another.
 **Why these should agree:** Both signatures accept a customer ID and return a
 customer through sibling adapters.
 
-### Symbol-contract finding
+### Symbol-claim finding
 
 #### 1. Predicate name promises a boolean but returns a value
 
@@ -135,4 +135,4 @@ customer through sibling adapters.
 **How they differ:** The name promises a predicate, while the return type holds
 a cached value or absence.
 
-**Why these should agree:** Both claims describe the contract of `is_cached`.
+**Why these should agree:** Both claims describe what `is_cached` returns.

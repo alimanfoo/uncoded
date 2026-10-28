@@ -56,14 +56,14 @@ def sync_file(
     """
     target = project_directory / path
     with _naming_failure(action="read", path=path):
-        current = target.read_text(encoding="utf-8") if target.exists() else None
-    if current == content:
+        existing = target.read_text(encoding="utf-8") if target.exists() else None
+    if existing == content:
         return False
     if not check:
         with _naming_failure(action="write", path=path):
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text(content, encoding="utf-8")
-    if current is None:
+    if existing is None:
         print(f"{'Would write' if check else 'Wrote'} {path.as_posix()}")
         return True
     print(f"{'Would update' if check else 'Updated'} {path.as_posix()}")

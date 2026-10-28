@@ -46,8 +46,8 @@ below it.
    another.
 
 An import-linter contract in `pyproject.toml` lists the modules in each layer
-and checks the imports. A new module fails the check until the contract places
-it in a layer.
+and checks the imports. A new module fails the check until the import-linter
+contract places it in a layer.
 
 ## Path boundary
 

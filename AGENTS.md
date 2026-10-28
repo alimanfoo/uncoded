@@ -32,7 +32,7 @@ The index files, generated from the roots:
    under the doc roots. Each file nests its `#`-prefixed headings as keys.
    Agents load this to orient to the documentation, then navigate to a heading
    with `Read` or `grep`. uncoded generates it only when `doc-roots` is set.
-   Outline only. No `uncoded body`, `uncoded refs`, or stubs for Markdown.
+   Headings only. No `uncoded body`, `uncoded refs`, or stubs for Markdown.
 
 Alongside the index, uncoded ships `uncoded body` to read a symbol's definition
 and `uncoded refs` to find all references.

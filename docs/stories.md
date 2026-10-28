@@ -178,7 +178,7 @@ commits the configuration file and the installed skill files together. Before
 upgrading to a new major version, they read `docs/upgrading.md`, which says what
 else to change. That includes deleting any installed skill files that an earlier
 version wrote under names the new version no longer uses, since `uncoded sync`
-removes only the skills the current version generates.
+removes only the skills the running version generates.
 
 A project set up before uncoded had a required version has no `required-version`
 setting, and runs at whatever version is cached. Its developer adds the setting
@@ -325,8 +325,9 @@ concept that ought to agree but do not, such as two names for one thing, or a
 docstring that contradicts its function's signature. It reports only the
 disagreements it can support, quoting both claims.
 
-The value to the developer is that inconsistencies in the code's names and
-contracts are found by a systematic review of the whole code, not by chance.
+The value to the developer is that inconsistencies in the code's names and in
+the claims about its symbols are found by a systematic review of the whole code,
+not by chance.
 
 ## User errors
 

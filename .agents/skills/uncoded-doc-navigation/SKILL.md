@@ -18,14 +18,14 @@ user and before any other tool call:
 Read .uncoded/docs.yaml
 ```
 
-`.uncoded/docs.yaml` is an orientation outline: it lists every Markdown file and
-its heading hierarchy. Read it once, in full, at session start.
+`.uncoded/docs.yaml` is the docs map: it lists every Markdown file and its
+heading hierarchy, for orientation. Read it once, in full, at session start.
 
-**Step 2: Navigate.** Headings in the map are literal text. Use `Read` or `grep`
-to navigate to a specific section identified in the map. A repeated heading
-under one parent ends with a " (N)" suffix, which is not in the file. To
-navigate to it, find its parent's heading, then take the Nth match of the
-heading text after it.
+**Step 2: Navigate.** Headings in the map are literal text, apart from the "
+(N)" suffix that ends a repeated heading under one parent, which is not in the
+file. Use `Read` or `grep` to navigate to a specific section identified in the
+map. To navigate to a heading with the suffix, find its parent's heading, then
+take the Nth match of the heading text after it.
 
 **Step 3: Refresh.** After every modification to indexed Markdown, run the
 project's configured `uncoded sync` command before the next

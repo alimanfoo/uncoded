@@ -42,8 +42,9 @@ keeps.
 - **Trio.** Seven concepts that compose, a design document that states ranked
   principles and says what the project will not do, and naming rules written
   beside the ambiguity each prevents. It sets the bar for elegance, for
-  vocabulary and for the enduring documents. Its design document has also gone
-  stale in places, which is why each measurement reads ours against the code.
+  vocabulary and for the enduring documents. Its design document has also fallen
+  behind the code in places, which is why each measurement reads ours against
+  the code.
 - **attrs and structlog.** A page that says why, a changelog with a written rule
   for what earns an entry, and a compatibility statement a reader can find. They
   set the bar for release practice.
@@ -175,7 +176,7 @@ The enduring documents are true.
   this standard that the code contradicts.
 - Bar: zero. A pull request that moves the code past one of them corrects it in
   the same change and says so.
-- Check: review, plus the import contract under
+- Check: review, plus the import-linter contract under
   [Machine-checked rules](#machine-checked-rules) for the layers that the
   architecture states.
 
@@ -254,9 +255,9 @@ The suite is fast and speaks the user's language.
   named for a behaviour a user could recognise, not for a function it calls.
 - Check: pytest reports the time, and review reads the names.
 
-#### Current tracker
+#### Accurate tracker
 
-The tracker is current.
+The tracker is accurate.
 
 - Measure: open issues that name a concept by a word the concepts page replaces,
   that ask for work already done, or that ask for what a story rules out.

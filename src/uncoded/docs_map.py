@@ -143,13 +143,13 @@ def build_docs_map(*, files: Iterable[tuple[str, Path]]) -> dict:
 
     for text, rel_path in files:
         parts = rel_path.parts
-        current = root
+        node = root
 
         for dir_part in parts[:-1]:
             dir_key = dir_part + "/"
-            if dir_key not in current:
-                current[dir_key] = {}
-            current = current[dir_key]
+            if dir_key not in node:
+                node[dir_key] = {}
+            node = node[dir_key]
 
         file_dict: dict = {}
         # Stack of (level, children_dict) — the active path from file root.
@@ -164,7 +164,7 @@ def build_docs_map(*, files: Iterable[tuple[str, Path]]) -> dict:
             parent_dict[key] = heading_dict
             stack.append((level, heading_dict))
 
-        current[parts[-1]] = _collapse_empty(mapping=file_dict)
+        node[parts[-1]] = _collapse_empty(mapping=file_dict)
 
     return root
 

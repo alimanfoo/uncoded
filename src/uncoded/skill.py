@@ -10,7 +10,7 @@ import yaml
 from uncoded.markers import GENERATED_MARKER
 from uncoded.sync import remove_file, sync_file
 
-SKILL_ROOTS = [
+SKILL_DIRECTORIES = [
     Path(".claude/skills"),  # Claude Code
     Path(".agents/skills"),  # Codex
 ]
@@ -66,9 +66,9 @@ SKILLS: list[Skill] = [
 ]
 
 
-def _skill_path(*, root: Path, name: str) -> Path:
-    """Return the SKILL.md path for a skill name under a given root."""
-    return root / name / "SKILL.md"
+def _skill_path(*, skill_directory: Path, name: str) -> Path:
+    """Return the SKILL.md path for a skill name in a given skill directory."""
+    return skill_directory / name / "SKILL.md"
 
 
 def _is_built(*, skill: Skill, source: bool, doc: bool) -> bool:
@@ -105,17 +105,17 @@ def _sync_one_skill(
     changes = 0
     if _is_built(skill=skill, source=source, doc=doc):
         content = _render_content(skill=skill)
-        for root in SKILL_ROOTS:
+        for skill_directory in SKILL_DIRECTORIES:
             changes += sync_file(
-                path=_skill_path(root=root, name=skill.name),
+                path=_skill_path(skill_directory=skill_directory, name=skill.name),
                 content=content,
                 project_directory=project_directory,
                 check=check,
             )
     else:
-        for root in SKILL_ROOTS:
+        for skill_directory in SKILL_DIRECTORIES:
             changes += remove_file(
-                path=_skill_path(root=root, name=skill.name),
+                path=_skill_path(skill_directory=skill_directory, name=skill.name),
                 project_directory=project_directory,
                 check=check,
             )

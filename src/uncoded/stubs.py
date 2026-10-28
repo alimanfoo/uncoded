@@ -59,7 +59,7 @@ class StubClass:
 
 @dataclass
 class StubModule:
-    """What a stub holds for one Python file: its imports and definitions."""
+    """What a stub holds for one Python file: its imports and its symbols."""
 
     rel_path: str
     imports: list[str] = field(default_factory=list)
@@ -261,7 +261,7 @@ def _render_function(*, func: StubFunction, indent: str = "") -> list[str]:
     return lines
 
 
-def _format_assignment_body(*, assignment: StubAssignment) -> str:
+def _format_assignment(*, assignment: StubAssignment) -> str:
     """Render the 'name [: type] [= value]' portion of an assignment."""
     if assignment.is_pep695_alias:
         return f"type {assignment.name} = {assignment.value_source}"
@@ -277,8 +277,8 @@ def _format_assignment_body(*, assignment: StubAssignment) -> str:
 
 def _render_assignment(*, assignment: StubAssignment, indent: str = "") -> str:
     """Render an assignment, at module level or in a class body, as a stub line."""
-    body = _format_assignment_body(assignment=assignment)
-    return f"{indent}{body}"
+    line = _format_assignment(assignment=assignment)
+    return f"{indent}{line}"
 
 
 def _render_class(*, cls: StubClass) -> list[str]:

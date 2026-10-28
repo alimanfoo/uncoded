@@ -29,14 +29,14 @@ def build_map(*, modules: list[ModuleInfo]) -> dict:
 
     for module in modules:
         parts = Path(module.rel_path).parts
-        current = root
+        node = root
 
         # Create intermediate directory entries
         for dir_part in parts[:-1]:
             key = dir_part + "/"
-            if key not in current:
-                current[key] = {}
-            current = current[key]
+            if key not in node:
+                node[key] = {}
+            node = node[key]
 
         # Build the file entry — symbols directly under the file key.
         # Each class maps to its members, or to None when it has none.
@@ -53,7 +53,7 @@ def build_map(*, modules: list[ModuleInfo]) -> dict:
         for func in module.functions:
             file_entry[func] = None
 
-        current[parts[-1]] = file_entry
+        node[parts[-1]] = file_entry
 
     return root
 
