@@ -5,7 +5,7 @@ hide:
 
 <div class="home-intro" markdown="1">
 
-# Give the agent a map of the codebase
+# Give an agent a map of its codebase
 
 uncoded indexes Python code and Markdown docs. It gives the agent progressively
 deeper views of Python code:

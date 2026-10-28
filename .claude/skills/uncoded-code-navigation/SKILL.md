@@ -14,8 +14,8 @@ for reading a symbol's definition and `uncoded refs` for finding references.
 ## The dispatch rule
 
 **If your search term is the name of a Python symbol, use the code index. Python
-symbols are classes, functions, methods, attributes, and module-level
-assignments. If it's a pattern, regex, or free-text phrase, use grep.**
+symbols are classes, functions, methods, properties, and assignments in a module
+or class body. If it's a pattern, regex, or free-text phrase, use grep.**
 
 This dispatch rule applies to every tool call where you find code, not just the
 first in the session. The pretrained reflex for "find X" is grep, and that
@@ -56,8 +56,8 @@ src/foo/bar.py      →  .uncoded/stubs/src/foo/bar.pyi
 tests/test_foo.py   →  .uncoded/stubs/tests/test_foo.pyi
 ```
 
-The stub contains imports, parameter names and annotations, return types,
-module-level assignments, and class attributes. It omits parameter defaults,
+The stub contains imports, parameter names and annotations, return types, and
+the assignments in module and class bodies. It omits parameter defaults,
 decorators, docstrings, and function bodies. Read source when the task depends
 on an omitted detail or needs exact code. If no stub exists at the expected
 path, the file has no symbols indexed. In that narrow case, read source

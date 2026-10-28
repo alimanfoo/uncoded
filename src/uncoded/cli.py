@@ -134,7 +134,8 @@ def _sync(*, config: Config, check: bool = False) -> int:
 
     The source roots drive the code index (namespace.yaml, stubs), and the doc
     roots drive the documentation index (docs.yaml). Each part is independent:
-    with no roots of its kind, its files are removed. Every root is checked
+    with no source roots, the code index's files are removed, and with no doc
+    roots, the documentation index's file is removed. Every root is checked
     before anything is written. Before writing any file of the index, sync writes
     .uncoded/.gitignore so the index stays local by default. Raises ConfigError
     when the configuration names no roots or a root cannot be used, and

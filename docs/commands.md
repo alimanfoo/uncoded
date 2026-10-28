@@ -8,8 +8,8 @@ Run uncoded with `uvx uncoded`. In a checkout of uncoded itself,
 | Set uncoded up in a project           | `uvx uncoded init`                         |
 | Build or refresh the index and skills | `uvx uncoded sync`                         |
 | Check generated files without writing | `uvx uncoded check`                        |
-| Read a Python symbol's source         | `uvx uncoded body <name path> --in <file>` |
-| Find references to a Python symbol    | `uvx uncoded refs <name path> --in <file>` |
+| Read a Python symbol's definition     | `uvx uncoded body <name_path> --in <file>` |
+| Find references to a Python symbol    | `uvx uncoded refs <name_path> --in <file>` |
 | Print the installed version           | `uvx uncoded --version`                    |
 
 Every command but `init` and `--version` runs inside a project. It finds the

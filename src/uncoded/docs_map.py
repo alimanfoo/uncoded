@@ -15,8 +15,8 @@ DOCS_HEADER = f"""\
 # Directory keys end with "/". Leaf headings map to null.
 #
 # A " (N)" suffix marks the Nth heading with the same text under one parent.
-# To navigate to it, grep the heading text and take the Nth match under that
-# parent. The suffix is not in the file.
+# The suffix is not in the file. To navigate to it, find its parent's heading,
+# then take the Nth match of the heading text after it.
 """
 
 

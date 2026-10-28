@@ -32,14 +32,14 @@ required-version = "3.1.0"
 required version does.
 
 `uncoded init` then builds the index and the skills, and prints the files it
-writes. With both kinds of root, they are:
+writes. With both kinds of root, the output is:
 
-| Output                                  | Purpose                                                   |
-| --------------------------------------- | --------------------------------------------------------- |
-| `.uncoded/namespace.yaml`               | Lists Python symbols and their locations.                 |
-| `.uncoded/stubs/`                       | Records imports, signatures, assignments, and attributes. |
-| `.uncoded/docs.yaml`                    | Lists Markdown files and headings.                        |
-| `.agents/skills/` and `.claude/skills/` | Hold the uncoded skills.                                  |
+| Output                                  | Purpose                                       |
+| --------------------------------------- | --------------------------------------------- |
+| `.uncoded/namespace.yaml`               | Lists Python symbols and their locations.     |
+| `.uncoded/stubs/`                       | Records imports, signatures, and assignments. |
+| `.uncoded/docs.yaml`                    | Lists Markdown files and headings.            |
+| `.agents/skills/` and `.claude/skills/` | Hold the uncoded skills.                      |
 
 Check the roots in `.uncoded.toml`. If the code or docs live elsewhere, edit the
 roots and run `uvx uncoded init` again. It leaves the configuration file as it

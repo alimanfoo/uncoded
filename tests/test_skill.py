@@ -185,26 +185,26 @@ class TestSyncSkills:
             assert (tmp_path / root / _REVIEW_SKILL_FILE.parent).is_dir()
             assert not (tmp_path / root / _REVIEW_SKILL_FILE).exists()
 
-    def test_docs_gate_builds_when_docs_true(self, *, tmp_path, monkeypatch):
-        docs_skill = Skill(
+    def test_doc_gate_builds_when_doc_true(self, *, tmp_path, monkeypatch):
+        doc_skill = Skill(
             name="test-docs",
             description="Test docs skill.",
             skill_source=_REVIEW_SKILL.skill_source,
             gate="doc",
         )
-        monkeypatch.setattr(skill_module, "SKILLS", [docs_skill])
+        monkeypatch.setattr(skill_module, "SKILLS", [doc_skill])
         sync_skills(source=False, doc=True, project_directory=tmp_path, check=False)
         for root in SKILL_ROOTS:
             assert (tmp_path / root / "test-docs" / "SKILL.md").exists()
 
-    def test_docs_gate_skips_when_docs_false(self, *, tmp_path, monkeypatch):
-        docs_skill = Skill(
+    def test_doc_gate_skips_when_doc_false(self, *, tmp_path, monkeypatch):
+        doc_skill = Skill(
             name="test-docs",
             description="Test docs skill.",
             skill_source=_REVIEW_SKILL.skill_source,
             gate="doc",
         )
-        monkeypatch.setattr(skill_module, "SKILLS", [docs_skill])
+        monkeypatch.setattr(skill_module, "SKILLS", [doc_skill])
         sync_skills(source=True, doc=False, project_directory=tmp_path, check=False)
         for root in SKILL_ROOTS:
             assert not (tmp_path / root / "test-docs" / "SKILL.md").exists()
@@ -221,12 +221,12 @@ class TestSyncSkills:
                 tmp_path / root / "uncoded-code-navigation" / "SKILL.md"
             ).exists()
 
-    def test_doc_navigation_written_when_docs_set(self, *, tmp_path):
+    def test_doc_navigation_written_when_doc_roots_set(self, *, tmp_path):
         sync_skills(source=False, doc=True, project_directory=tmp_path, check=False)
         for root in SKILL_ROOTS:
             assert (tmp_path / root / "uncoded-doc-navigation" / "SKILL.md").exists()
 
-    def test_doc_navigation_not_written_when_docs_absent(self, *, tmp_path):
+    def test_doc_navigation_not_written_without_doc_roots(self, *, tmp_path):
         sync_skills(source=True, doc=False, project_directory=tmp_path, check=False)
         for root in SKILL_ROOTS:
             assert not (

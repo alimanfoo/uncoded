@@ -24,7 +24,8 @@ its heading hierarchy. Read it once, in full, at session start.
 **Step 2: Navigate.** Headings in the map are literal text. Use `Read` or `grep`
 to navigate to a specific section identified in the map. A repeated heading
 under one parent ends with a " (N)" suffix, which is not in the file. To
-navigate to it, grep the heading text and take the Nth match under that parent.
+navigate to it, find its parent's heading, then take the Nth match of the
+heading text after it.
 
 **Step 3: Refresh.** After every modification to indexed Markdown, run the
 project's configured `uncoded sync` command before the next
