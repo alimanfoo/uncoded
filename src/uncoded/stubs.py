@@ -395,8 +395,8 @@ def build_stubs(
     :func:`read_source_files`, read once so that callers that also need the
     files for the namespace map do not walk the source twice. Every ``.pyi``
     file under ``output_dir`` that ``files`` does not generate is removed, so
-    a root that is no longer configured loses its stubs, and no files remove
-    every stub.
+    a root that is no longer configured loses its stubs, and an empty
+    ``files`` removes every stub.
 
     ``project_root`` is the anchor for both ends of the pipeline:
     source paths in ``files`` are already relative to it (so each
