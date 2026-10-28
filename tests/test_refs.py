@@ -237,7 +237,7 @@ class TestQueryReferences:
             ),
             pytest.raises(
                 TyError,
-                match=r"^ty failed: uvx could not start: .*Permission denied$",
+                match=r"^uvx could not start: .*Permission denied$",
             ),
         ):
             _query_references(in_path=in_path, position=(0, 4), project_root=tmp_path)
@@ -306,9 +306,7 @@ class TestRunExchange:
             _shutdown_response(),
         )
 
-        with pytest.raises(
-            TyError, match=r"^ty failed: it answered with an error: not open$"
-        ):
+        with pytest.raises(TyError, match=r"^it answered with an error: not open$"):
             _run_exchange(
                 stdin=io.BytesIO(),
                 stdout=stdout,
@@ -371,9 +369,7 @@ class TestTyFailures:
     def test_ty_that_exits_at_once(self, *, tmp_path, stand_in_for_ty):
         stand_in_for_ty(script="sys.exit(1)")
 
-        with pytest.raises(
-            TyError, match=r"^ty failed: it stopped before it answered\.$"
-        ):
+        with pytest.raises(TyError, match=r"^it stopped before it answered\.$"):
             self._query(tmp_path=tmp_path)
 
     def test_passes_on_what_uvx_and_ty_wrote(self, *, tmp_path, stand_in_for_ty):
@@ -389,7 +385,7 @@ class TestTyFailures:
             self._query(tmp_path=tmp_path)
 
         assert str(exc_info.value) == (
-            "ty failed: it stopped before it answered.\n"
+            "it stopped before it answered.\n"
             "Output from uvx and ty:\n"
             "  Resolved 1 package\n"
             "  error: Failed to fetch: https://pypi.org/simple/ty/"
@@ -407,9 +403,7 @@ class TestTyFailures:
             """
         )
 
-        with pytest.raises(
-            TyError, match=r"^ty failed: it stopped before it answered\.$"
-        ):
+        with pytest.raises(TyError, match=r"^it stopped before it answered\.$"):
             self._query(tmp_path=tmp_path)
 
     def test_ty_that_sends_invalid_message(self, *, tmp_path, stand_in_for_ty):
@@ -421,7 +415,7 @@ class TestTyFailures:
         )
 
         with pytest.raises(
-            TyError, match=r"^ty failed: it sent a message that is not valid LSP\.$"
+            TyError, match=r"^it sent a message that is not valid LSP\.$"
         ):
             self._query(tmp_path=tmp_path)
 
@@ -481,7 +475,5 @@ class TestReadResponse:
             {"jsonrpc": "2.0", "id": 1, "error": {"code": -32603, "message": "boom"}}
         )
 
-        with pytest.raises(
-            TyError, match=r"^ty failed: it answered with an error: boom$"
-        ):
+        with pytest.raises(TyError, match=r"^it answered with an error: boom$"):
             _read_response(stream=stream, request_id=1)

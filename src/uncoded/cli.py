@@ -316,7 +316,7 @@ def _refs(*, config: Config, name_path: str, in_path: str) -> int:
             project_root=config.project_root,
         )
     except TyError as e:
-        print(f"Error: {e}", file=sys.stderr)
+        print(f"Error: ty failed: {e}", file=sys.stderr)
         return 1
     except _LOOKUP_ERRORS as e:
         return _report_lookup_error(exc=e, name_path=name_path, in_path=in_path)
