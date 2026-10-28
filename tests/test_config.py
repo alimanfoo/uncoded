@@ -2,6 +2,7 @@ from pathlib import Path
 
 import pytest
 
+from uncoded import __version__
 from uncoded.config import (
     Config,
     ConfigError,
@@ -263,7 +264,7 @@ class TestConfigFileThatCannotBeUsed:
             ),
             (
                 "[tool.uncoded]\nrequired-version = 3.1\n",
-                "required-version is not a string.",
+                'required-version is not one exact version, such as "3.1.0".',
             ),
         ],
     )
@@ -285,3 +286,42 @@ class TestConfigFileThatCannotBeUsed:
             f"{(tmp_path / '.uncoded.toml').resolve().as_posix()}: "
             "source-roots is not a list of strings."
         )
+
+    @pytest.mark.parametrize(
+        "version", ["3.1", "3", "~=3.1.0", "==3.1.0", "3.1.0, <4", "v3.1.0", ""]
+    )
+    def test_required_version_that_is_not_one_exact_version(self, *, tmp_path, version):
+        (tmp_path / ".uncoded.toml").write_text(
+            f'required-version = "{version}"\n', encoding="utf-8"
+        )
+        with pytest.raises(ConfigError) as exc_info:
+            read_config(start=tmp_path)
+        assert str(exc_info.value) == (
+            f"{(tmp_path / '.uncoded.toml').resolve().as_posix()}: "
+            'required-version is not one exact version, such as "3.1.0".'
+        )
+
+    def test_required_version_that_is_a_list(self, *, tmp_path):
+        (tmp_path / ".uncoded.toml").write_text(
+            'required-version = ["3.1.0"]\n', encoding="utf-8"
+        )
+        with pytest.raises(ConfigError, match="required-version is not one exact"):
+            read_config(start=tmp_path)
+
+    @pytest.mark.parametrize(
+        "version",
+        [
+            "3.1.0",
+            "10.20.30",
+            "3.1.0rc1",
+            "3.1.0.post1",
+            "3.1.0.dev5+g1a2b3c4",
+            "3.1.0.dev5+g1a2b3c4.d20261028",
+            __version__,
+        ],
+    )
+    def test_required_version_that_is_one_exact_version(self, *, tmp_path, version):
+        (tmp_path / ".uncoded.toml").write_text(
+            f'required-version = "{version}"\n', encoding="utf-8"
+        )
+        assert read_config(start=tmp_path).required_version == version

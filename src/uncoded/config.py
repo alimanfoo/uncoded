@@ -1,6 +1,7 @@
 """Read uncoded configuration from pyproject.toml or .uncoded.toml."""
 
 import json
+import re
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
@@ -9,6 +10,15 @@ from typing import Literal
 from uncoded.read_helpers import failure_reason
 
 UNCODED_TOML = ".uncoded.toml"
+
+# One exact version, written as uncoded writes its own, since the required
+# version is compared with uncoded's own as a string: three release numbers and
+# any pre-release, post-release, development or local part, as in "3.1.0",
+# "3.1.0rc1" or "3.1.0.dev2+g1a2b3c4".
+_EXACT_VERSION = re.compile(
+    r"\d+\.\d+\.\d+(?:(?:a|b|rc)\d+)?(?:\.post\d+)?(?:\.dev\d+)?"
+    r"(?:\+[a-z0-9]+(?:\.[a-z0-9]+)*)?"
+)
 
 # The roots that uncoded init names, by kind, in the order it names them.
 _CONVENTIONAL_ROOTS: dict[Literal["source", "doc"], tuple[str, ...]] = {
@@ -159,14 +169,17 @@ def _required_version(*, settings: dict, config_file: Path) -> str | None:
     """Return the ``required-version`` setting, or None when it is unset.
 
     Raises :exc:`ConfigError`, naming ``config_file``, when the setting is not
-    a string.
+    one exact version.
     """
     version = settings.get("required-version")
-    if version is not None and not isinstance(version, str):
-        raise _config_file_error(
-            path=config_file, problem="required-version is not a string."
-        )
-    return version
+    if version is None or (
+        isinstance(version, str) and _EXACT_VERSION.fullmatch(version)
+    ):
+        return version
+    raise _config_file_error(
+        path=config_file,
+        problem='required-version is not one exact version, such as "3.1.0".',
+    )
 
 
 def read_config(*, start: Path) -> Config:
