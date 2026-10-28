@@ -20,7 +20,7 @@ class TestResolveBodyTopLevel:
                 return 42
         """)
         path = tmp_path / "m.py"
-        path.write_text(source, encoding="utf-8")
+        path.write_text(source, encoding="utf-8", newline="")
 
         result = resolve_body(name_path=NamePath("foo"), in_path=path)
 
@@ -35,7 +35,7 @@ class TestResolveBodyTopLevel:
                 return 1
         """)
         path = tmp_path / "m.py"
-        path.write_text(source, encoding="utf-8")
+        path.write_text(source, encoding="utf-8", newline="")
 
         result = resolve_body(name_path=NamePath("compute"), in_path=path)
 
@@ -47,7 +47,7 @@ class TestResolveBodyTopLevel:
                 return 0
         """)
         path = tmp_path / "m.py"
-        path.write_text(source, encoding="utf-8")
+        path.write_text(source, encoding="utf-8", newline="")
 
         result = resolve_body(name_path=NamePath("fetch"), in_path=path)
 
@@ -62,7 +62,7 @@ class TestResolveBodyTopLevel:
                     pass
         """)
         path = tmp_path / "m.py"
-        path.write_text(source, encoding="utf-8")
+        path.write_text(source, encoding="utf-8", newline="")
 
         result = resolve_body(name_path=NamePath("Engine"), in_path=path)
 
@@ -73,7 +73,7 @@ class TestResolveBodyTopLevel:
             MAX: int = 100
         """)
         path = tmp_path / "m.py"
-        path.write_text(source, encoding="utf-8")
+        path.write_text(source, encoding="utf-8", newline="")
 
         result = resolve_body(name_path=NamePath("MAX"), in_path=path)
 
@@ -84,7 +84,7 @@ class TestResolveBodyTopLevel:
             TIMEOUT = 30
         """)
         path = tmp_path / "m.py"
-        path.write_text(source, encoding="utf-8")
+        path.write_text(source, encoding="utf-8", newline="")
 
         result = resolve_body(name_path=NamePath("TIMEOUT"), in_path=path)
 
@@ -95,7 +95,7 @@ class TestResolveBodyTopLevel:
             type UserId = int
         """)
         path = tmp_path / "m.py"
-        path.write_text(source, encoding="utf-8")
+        path.write_text(source, encoding="utf-8", newline="")
 
         result = resolve_body(name_path=NamePath("UserId"), in_path=path)
 
@@ -115,7 +115,7 @@ class TestResolveBodyTopLevel:
                 return x
         """)
         path = tmp_path / "m.py"
-        path.write_text(source, encoding="utf-8")
+        path.write_text(source, encoding="utf-8", newline="")
 
         result = resolve_body(name_path=NamePath("process"), in_path=path)
 
@@ -129,7 +129,7 @@ class TestResolveBodyTopLevel:
                 return 42
         """)
         path = tmp_path / "m.py"
-        path.write_text(source, encoding="utf-8")
+        path.write_text(source, encoding="utf-8", newline="")
 
         result = resolve_body(name_path=NamePath("foo"), in_path=path)
 
@@ -137,7 +137,7 @@ class TestResolveBodyTopLevel:
 
     def test_not_found_raises_symbol_not_found(self, *, tmp_path):
         path = tmp_path / "m.py"
-        path.write_text("def other(): pass\n", encoding="utf-8")
+        path.write_text("def other(): pass\n", encoding="utf-8", newline="")
 
         with pytest.raises(SymbolNotFoundError, match="missing"):
             resolve_body(name_path=NamePath("missing"), in_path=path)
@@ -150,7 +150,7 @@ class TestResolveBodyTopLevel:
 
     def test_syntax_error_propagates(self, *, tmp_path):
         path = tmp_path / "m.py"
-        path.write_text("def broken(:\n", encoding="utf-8")
+        path.write_text("def broken(:\n", encoding="utf-8", newline="")
 
         with pytest.raises(SyntaxError):
             resolve_body(name_path=NamePath("broken"), in_path=path)
@@ -167,7 +167,7 @@ class TestResolveBodyTopLevel:
 
     def test_prints_whole_lines(self, *, tmp_path):
         path = tmp_path / "m.py"
-        path.write_text("x = 1; y = 2\n", encoding="utf-8")
+        path.write_text("x = 1; y = 2\n", encoding="utf-8", newline="")
 
         result = resolve_body(name_path=NamePath("x"), in_path=path)
 
@@ -182,7 +182,7 @@ class TestResolveBodyClassMember:
                     print("woof")
         """)
         path = tmp_path / "m.py"
-        path.write_text(source, encoding="utf-8")
+        path.write_text(source, encoding="utf-8", newline="")
 
         result = resolve_body(name_path=NamePath("Dog", "bark"), in_path=path)
 
@@ -200,7 +200,7 @@ class TestResolveBodyClassMember:
                     self._path = value
         """)
         path = tmp_path / "m.py"
-        path.write_text(source, encoding="utf-8")
+        path.write_text(source, encoding="utf-8", newline="")
 
         result = resolve_body(name_path=NamePath("Config", "path"), in_path=path)
 
@@ -213,7 +213,7 @@ class TestResolveBodyClassMember:
                 count: int = 0
         """)
         path = tmp_path / "m.py"
-        path.write_text(source, encoding="utf-8")
+        path.write_text(source, encoding="utf-8", newline="")
 
         result = resolve_body(name_path=NamePath("Counter", "count"), in_path=path)
 
@@ -225,7 +225,7 @@ class TestResolveBodyClassMember:
                 debug = False
         """)
         path = tmp_path / "m.py"
-        path.write_text(source, encoding="utf-8")
+        path.write_text(source, encoding="utf-8", newline="")
 
         result = resolve_body(name_path=NamePath("Config", "debug"), in_path=path)
 
@@ -238,7 +238,7 @@ class TestResolveBodyClassMember:
                 timeout = 30
         """)
         path = tmp_path / "m.py"
-        path.write_text(source, encoding="utf-8")
+        path.write_text(source, encoding="utf-8", newline="")
 
         result = resolve_body(name_path=NamePath("Config", "timeout"), in_path=path)
 
@@ -253,7 +253,7 @@ class TestResolveBodyClassMember:
                     pass
         """)
         path = tmp_path / "m.py"
-        path.write_text(source, encoding="utf-8")
+        path.write_text(source, encoding="utf-8", newline="")
 
         result = resolve_body(name_path=NamePath("Documented", "method"), in_path=path)
 
@@ -270,7 +270,7 @@ class TestResolveBodyClassMember:
                     pass
         """)
         path = tmp_path / "m.py"
-        path.write_text(source, encoding="utf-8")
+        path.write_text(source, encoding="utf-8", newline="")
 
         result = resolve_body(name_path=NamePath("Foo", "second_only"), in_path=path)
 
@@ -287,7 +287,7 @@ class TestResolveBodyClassMember:
                     pass
         """)
         path = tmp_path / "m.py"
-        path.write_text(source, encoding="utf-8")
+        path.write_text(source, encoding="utf-8", newline="")
 
         with pytest.raises(SymbolNotFoundError, match="first_only"):
             resolve_body(name_path=NamePath("Foo", "first_only"), in_path=path)
@@ -299,7 +299,7 @@ class TestResolveBodyClassMember:
                     pass
         """)
         path = tmp_path / "m.py"
-        path.write_text(source, encoding="utf-8")
+        path.write_text(source, encoding="utf-8", newline="")
 
         with pytest.raises(SymbolNotFoundError, match="missing"):
             resolve_body(name_path=NamePath("Foo", "missing"), in_path=path)
@@ -313,7 +313,7 @@ class TestResolveBodyClassMember:
     ):
         source = "class Foo:\n    member = 1\n\n" + redefinition
         path = tmp_path / "m.py"
-        path.write_text(source, encoding="utf-8")
+        path.write_text(source, encoding="utf-8", newline="")
 
         with pytest.raises(SymbolNotFoundError, match="Foo/member"):
             resolve_body(name_path=NamePath("Foo", "member"), in_path=path)
@@ -327,7 +327,7 @@ class TestResolveBodyClassMember:
                     pass
         """)
         path = tmp_path / "m.py"
-        path.write_text(source, encoding="utf-8")
+        path.write_text(source, encoding="utf-8", newline="")
 
         result = resolve_body(name_path=NamePath("Foo", "member"), in_path=path)
 
@@ -367,7 +367,7 @@ class TestResolveAstNode:
                 return x * 2
         """)
         path = tmp_path / "m.py"
-        path.write_text(source, encoding="utf-8")
+        path.write_text(source, encoding="utf-8", newline="")
 
         node = resolve_ast_node(name_path=NamePath("compute"), in_path=path)
 
@@ -381,7 +381,7 @@ class TestResolveAstNode:
                     pass
         """)
         path = tmp_path / "m.py"
-        path.write_text(source, encoding="utf-8")
+        path.write_text(source, encoding="utf-8", newline="")
 
         node = resolve_ast_node(name_path=NamePath("Engine", "start"), in_path=path)
 
@@ -390,7 +390,7 @@ class TestResolveAstNode:
 
     def test_raises_symbol_not_found(self, *, tmp_path):
         path = tmp_path / "m.py"
-        path.write_text("def other(): pass\n", encoding="utf-8")
+        path.write_text("def other(): pass\n", encoding="utf-8", newline="")
 
         with pytest.raises(SymbolNotFoundError, match="missing"):
             resolve_ast_node(name_path=NamePath("missing"), in_path=path)
@@ -407,7 +407,7 @@ class TestResolveAstNode:
 
     def test_syntax_error_propagates(self, *, tmp_path):
         path = tmp_path / "m.py"
-        path.write_text("def broken(:\n", encoding="utf-8")
+        path.write_text("def broken(:\n", encoding="utf-8", newline="")
 
         with pytest.raises(SyntaxError):
             resolve_ast_node(name_path=NamePath("broken"), in_path=path)
@@ -420,7 +420,7 @@ class TestResolveNamePosition:
                 return x * 2
         """)
         path = tmp_path / "m.py"
-        path.write_text(source, encoding="utf-8")
+        path.write_text(source, encoding="utf-8", newline="")
 
         assert resolve_name_position(name_path=NamePath("compute"), in_path=path) == (
             0,
@@ -436,7 +436,7 @@ class TestResolveNamePosition:
                 return 1
         """)
         path = tmp_path / "m.py"
-        path.write_text(source, encoding="utf-8")
+        path.write_text(source, encoding="utf-8", newline="")
 
         assert resolve_name_position(name_path=NamePath("compute"), in_path=path) == (
             3,
@@ -449,7 +449,7 @@ class TestResolveNamePosition:
                 return 0
         """)
         path = tmp_path / "m.py"
-        path.write_text(source, encoding="utf-8")
+        path.write_text(source, encoding="utf-8", newline="")
 
         assert resolve_name_position(name_path=NamePath("fetch"), in_path=path) == (
             0,
@@ -462,7 +462,7 @@ class TestResolveNamePosition:
                 pass
         """)
         path = tmp_path / "m.py"
-        path.write_text(source, encoding="utf-8")
+        path.write_text(source, encoding="utf-8", newline="")
 
         assert resolve_name_position(name_path=NamePath("Engine"), in_path=path) == (
             0,
@@ -474,7 +474,7 @@ class TestResolveNamePosition:
             MAX: int = 100
         """)
         path = tmp_path / "m.py"
-        path.write_text(source, encoding="utf-8")
+        path.write_text(source, encoding="utf-8", newline="")
 
         assert resolve_name_position(name_path=NamePath("MAX"), in_path=path) == (0, 0)
 
@@ -483,7 +483,7 @@ class TestResolveNamePosition:
             TIMEOUT = 30
         """)
         path = tmp_path / "m.py"
-        path.write_text(source, encoding="utf-8")
+        path.write_text(source, encoding="utf-8", newline="")
 
         assert resolve_name_position(name_path=NamePath("TIMEOUT"), in_path=path) == (
             0,
@@ -495,7 +495,7 @@ class TestResolveNamePosition:
             type UserId = int
         """)
         path = tmp_path / "m.py"
-        path.write_text(source, encoding="utf-8")
+        path.write_text(source, encoding="utf-8", newline="")
 
         assert resolve_name_position(name_path=NamePath("UserId"), in_path=path) == (
             0,
@@ -509,19 +509,50 @@ class TestResolveNamePosition:
                     pass
         """)
         path = tmp_path / "m.py"
-        path.write_text(source, encoding="utf-8")
+        path.write_text(source, encoding="utf-8", newline="")
 
         assert resolve_name_position(
             name_path=NamePath("Dog", "bark"), in_path=path
         ) == (1, 8)
 
 
-class TestResolveBodyByteIdentical:
+class TestResolveBodyExactlyAsInTheFile:
     def test_exact_source_returned(self, *, tmp_path):
         body = "def compute(x: int) -> int:\n    result = x * 2\n    return result\n"
         source = f"# header\n\n{body}\n# footer\n"
         path = tmp_path / "m.py"
-        path.write_text(source, encoding="utf-8")
+        path.write_text(source, encoding="utf-8", newline="")
+
+        result = resolve_body(name_path=NamePath("compute"), in_path=path)
+
+        assert result == body
+
+    @pytest.mark.parametrize("line_ending", ["\r\n", "\r"])
+    def test_keeps_line_endings(self, *, tmp_path, line_ending):
+        body = f"def compute():{line_ending}    return 1{line_ending}"
+        source = f"# header{line_ending}{body}# footer{line_ending}"
+        path = tmp_path / "m.py"
+        path.write_text(source, encoding="utf-8", newline="")
+
+        result = resolve_body(name_path=NamePath("compute"), in_path=path)
+
+        assert result == body
+
+    def test_leaves_out_byte_order_mark(self, *, tmp_path):
+        body = "def compute():\n    return 1\n"
+        path = tmp_path / "m.py"
+        path.write_bytes(b"\xef\xbb\xbf" + body.encode("utf-8"))
+
+        result = resolve_body(name_path=NamePath("compute"), in_path=path)
+
+        assert result == body
+
+    def test_lines_are_counted_as_python_counts_them(self, *, tmp_path):
+        # A form feed and a line separator do not end a line in Python.
+        body = "def compute():\x0c\n    return 1\n"
+        source = f'x = "a\u2028b"\n{body}'
+        path = tmp_path / "m.py"
+        path.write_text(source, encoding="utf-8", newline="")
 
         result = resolve_body(name_path=NamePath("compute"), in_path=path)
 

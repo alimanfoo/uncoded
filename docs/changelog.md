@@ -64,6 +64,14 @@ includes it. Each entry links the pull request that made the change.
 
 ### Fixed
 
+- `uncoded body` prints a definition with the line endings that it has in the
+  file. It printed every line ending as LF, and on Windows as CRLF, so an edit
+  tool given the printed text could fail to find it in the file.
+  ([#342](https://github.com/alimanfoo/uncoded/pull/342))
+- `uncoded body` prints the definition when a form feed or a Unicode line
+  separator, such as `\u2028` in a string, comes before the definition's end. It
+  counted those characters as line breaks, which Python does not, so it printed
+  the wrong lines. ([#342](https://github.com/alimanfoo/uncoded/pull/342))
 - When a name is defined twice in one module body, the namespace map shows the
   later symbol, and `uncoded body` and `uncoded refs` find no member of a class
   that a later function, assignment or type alias redefines. The map showed a
