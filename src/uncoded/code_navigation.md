@@ -82,7 +82,7 @@ method and `function_name` for a top-level function. Per task:
   the exact `old_string`; then `Edit` to apply the change.
 
 - **Rename.** `uvx uncoded refs <name_path> --in <relative_path>` enumerates
-  every site, the definition and each import included; then `Edit` at each.
+  every site; then `Edit` at each.
 
 - **Safely delete.** `uvx uncoded refs <name_path> --in <relative_path>` lists
   every reference. Read the source at each reference's line to see which

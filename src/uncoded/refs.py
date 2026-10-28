@@ -35,9 +35,6 @@ def find_refs(
 ) -> list[Reference]:
     """Return every reference to the symbol named by name_path in in_path.
 
-    The references are the symbol's definition, each import of it and each use
-    of it.
-
     Resolves the symbol's name-token position, queries ty's LSP server for
     references, with project_root as its workspace, and returns results with
     1-indexed line/col sorted by (path, line, col). path is relative to the
@@ -197,16 +194,13 @@ def _run_exchange(
         error = response["error"]
         raise RuntimeError(f"ty LSP error: {error.get('message', error)}")
 
-    result = response["result"]
-    if result is None:
-        return []
     return [
         _LSPLocation(
             path=_uri_to_path(uri=loc["uri"]),
             line=loc["range"]["start"]["line"],
             character=loc["range"]["start"]["character"],
         )
-        for loc in result
+        for loc in response["result"] or []
     ]
 
 
