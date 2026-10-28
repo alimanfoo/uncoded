@@ -408,20 +408,24 @@ def main() -> int:
         action=lambda *, config: _sync(config=config, check=True),
     )
 
-    body_parser = subparsers.add_parser(
-        "body",
-        help="Print the definition of a named symbol to stdout.",
-    )
-    body_parser.add_argument(
+    # The arguments of a lookup, which `uncoded body` and `uncoded refs` share.
+    lookup_parser = argparse.ArgumentParser(add_help=False)
+    lookup_parser.add_argument(
         "name_path",
         help="Name path: one segment for top-level, two for Class/member.",
     )
-    body_parser.add_argument(
+    lookup_parser.add_argument(
         "--in",
         dest="in_path",
         required=True,
         metavar="PATH",
         help="Source file path (relative to current directory).",
+    )
+
+    body_parser = subparsers.add_parser(
+        "body",
+        parents=[lookup_parser],
+        help="Print the definition of a named symbol to stdout.",
     )
     body_parser.set_defaults(
         find_project=read_config,
@@ -432,18 +436,8 @@ def main() -> int:
 
     refs_parser = subparsers.add_parser(
         "refs",
+        parents=[lookup_parser],
         help="Find all references to a named symbol and print them to stdout.",
-    )
-    refs_parser.add_argument(
-        "name_path",
-        help="Name path: one segment for top-level, two for Class/member.",
-    )
-    refs_parser.add_argument(
-        "--in",
-        dest="in_path",
-        required=True,
-        metavar="PATH",
-        help="Source file path (relative to current directory).",
     )
     refs_parser.set_defaults(
         find_project=read_config,
