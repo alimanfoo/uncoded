@@ -61,8 +61,9 @@ includes it. Each entry links the pull request that made the change.
   ([#334](https://github.com/alimanfoo/uncoded/pull/334))
 - When ty fails, `uncoded refs` says that ty failed and passes on what ty and
   `uvx` wrote about why, such as that ty could not be fetched. It discarded that
-  output, and a ty that stopped early could be reported as a fault in the `--in`
-  file. ([#335](https://github.com/alimanfoo/uncoded/pull/335))
+  output, and a ty that stopped early, or a `uvx` that could not start, could be
+  reported as a fault in the `--in` file.
+  ([#335](https://github.com/alimanfoo/uncoded/pull/335))
 - `uncoded sync` and `uncoded check` end their warnings about the files they
   skipped with a line that says how many files they skipped. A skip was easy to
   miss among the other lines, such as in the output of a pre-commit hook. The
