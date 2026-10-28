@@ -131,3 +131,14 @@ convention = "pep257"
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["D", "ANN", "S101"]
+# refs.py is the one module that spawns a subprocess, to run the ty language
+# server. Its command is a fixed list, and it finds uvx on PATH by design.
+"src/uncoded/refs.py" = [
+    "S404", # suspicious-subprocess-import
+    "S603", # subprocess-without-shell-equals-true
+    "S607", # start-process-with-partial-path
+]
+# The tests of refs.py build mocks of the subprocess that it spawns.
+"tests/test_refs.py" = [
+    "S404", # suspicious-subprocess-import
+]

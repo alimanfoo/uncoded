@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import os
-import subprocess  # noqa: S404 -- subprocess used to spawn the ty LSP server
+import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 from typing import IO, cast
@@ -67,8 +67,8 @@ def _query_references(
     """
     root = _find_root(in_path)
     try:
-        proc = subprocess.Popen(  # noqa: S603 -- fixed command vector; uvx resolved from PATH by design
-            ["uvx", "--from", f"ty=={TY_VERSION}", "ty", "server"],  # noqa: S607 -- uvx resolved from PATH by design
+        proc = subprocess.Popen(
+            ["uvx", "--from", f"ty=={TY_VERSION}", "ty", "server"],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,
