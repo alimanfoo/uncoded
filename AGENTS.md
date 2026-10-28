@@ -204,8 +204,7 @@ it.
 checks them.
 
 **Keyword parameters.** Every parameter is keyword-only, in `src` and `tests`.
-Ruff's PLR0917, with `max-positional-args = 0` in `pyproject.toml`, checks it. A
-method marked `@override` keeps the signature of the method it overrides.
+Ruff's PLR0917, with `max-positional-args = 0` in `pyproject.toml`, checks it.
 
 **Complexity ceiling.** The enabled complexity checks and their thresholds are
 in `pyproject.toml`. See [Linting and formatting](#linting-and-formatting) for

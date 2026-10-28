@@ -103,10 +103,10 @@ def _top_level_symbol(
     match only when tail is None.
     """
     if isinstance(node, ast.ClassDef):
-        return node if node.name == head else None
-    if tail is not None:
+        name = node.name
+    elif tail is not None:
         return None
-    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+    elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
         name = node.name
     elif isinstance(node, (ast.Assign, ast.AnnAssign)):
         name = assign_target_name(node=node)
