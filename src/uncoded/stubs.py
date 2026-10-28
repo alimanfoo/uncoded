@@ -242,18 +242,18 @@ def extract_stub(*, source: str, rel_path: str) -> StubModule:
     )
 
 
-def _render_param(*, p: StubParam) -> str:
+def _render_param(*, param: StubParam) -> str:
     """Render a single parameter as a string for a function signature."""
-    if p.name in ("/", "*"):
-        return p.name
-    if p.annotation:
-        return f"{p.name}: {p.annotation}"
-    return p.name
+    if param.name in ("/", "*"):
+        return param.name
+    if param.annotation:
+        return f"{param.name}: {param.annotation}"
+    return param.name
 
 
 def _render_function(*, func: StubFunction, indent: str = "") -> list[str]:
     """Render a function or method as stub lines, indented for methods."""
-    params_str = ", ".join(_render_param(p=p) for p in func.params)
+    params_str = ", ".join(_render_param(param=param) for param in func.params)
     ret = f" -> {func.return_annotation}" if func.return_annotation else ""
     prefix = "async def" if func.is_async else "def"
     lines = [f"{indent}{prefix} {func.name}({params_str}){ret}:"]
@@ -261,19 +261,23 @@ def _render_function(*, func: StubFunction, indent: str = "") -> list[str]:
     return lines
 
 
-def _format_assignment_body(*, a: StubAssignment) -> str:
+def _format_assignment_body(*, assignment: StubAssignment) -> str:
     """Render the 'name [: type] [= value]' portion of an assignment."""
-    if a.is_pep695_alias:
-        return f"type {a.name} = {a.value_source}"
-    head = f"{a.name}: {a.annotation}" if a.annotation else a.name
-    if a.value_source is None:
+    if assignment.is_pep695_alias:
+        return f"type {assignment.name} = {assignment.value_source}"
+    head = (
+        f"{assignment.name}: {assignment.annotation}"
+        if assignment.annotation
+        else assignment.name
+    )
+    if assignment.value_source is None:
         return head
-    return f"{head} = {a.value_source}"
+    return f"{head} = {assignment.value_source}"
 
 
-def _render_assignment(*, a: StubAssignment, indent: str = "") -> str:
+def _render_assignment(*, assignment: StubAssignment, indent: str = "") -> str:
     """Render a module-level assignment as a stub line."""
-    body = _format_assignment_body(a=a)
+    body = _format_assignment_body(assignment=assignment)
     return f"{indent}{body}"
 
 
@@ -284,7 +288,9 @@ def _render_class(*, cls: StubClass) -> list[str]:
         lines.append("    ...")
         lines.append("")
         return lines
-    lines.extend(_render_assignment(a=attr, indent="    ") for attr in cls.attributes)
+    lines.extend(
+        _render_assignment(assignment=attr, indent="    ") for attr in cls.attributes
+    )
     if cls.attributes:
         lines.append("")
     for method in cls.methods:
@@ -301,7 +307,7 @@ def render_stub(*, module: StubModule) -> str:
         lines.extend(module.imports)
         lines.append("")
 
-    lines.extend(_render_assignment(a=const) for const in module.constants)
+    lines.extend(_render_assignment(assignment=const) for const in module.constants)
     if module.constants:
         lines.append("")
 

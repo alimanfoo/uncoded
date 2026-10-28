@@ -239,7 +239,8 @@ A structural rule that review keeps missing is checked by a machine.
   - Every text read and write names its encoding. Ruff's PLW1514 and the runtime
     gate in the tests check it.
   - Every parameter is keyword-only. Ruff's `too-many-positional-arguments`
-    (PLR0917), with `max-positional-args = 0`, checks it in `src` and `tests`.
+    (PLR0917), with `max-positional-args = 0`, checks it in `src` and `tests`. A
+    method marked `@override` keeps the signature of the method it overrides.
 
   Review checks every other structural rule until it fails more than once.
 
