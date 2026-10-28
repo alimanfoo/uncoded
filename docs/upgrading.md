@@ -28,8 +28,7 @@ review, and makes navigation skills load once per session.
    index must also be refreshed when a commit only deletes files.
 
 3. Change every skill pointer from `uncoded-coherence-review` to
-   `uncoded-consistency-review`. Delete the old generated skill, since
-   `uncoded sync` removes only the skills that the current version generates:
+   `uncoded-consistency-review`. Delete the old generated skill:
 
    ```sh
    rm -rf .agents/skills/uncoded-coherence-review .claude/skills/uncoded-coherence-review
