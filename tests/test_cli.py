@@ -1173,9 +1173,7 @@ class TestBodyCommand:
         [
             pytest.param("m.py", "def fn():\n    pass\n", id="outside the roots"),
             pytest.param(
-                ".uncoded/stubs/src/foo.pyi",
-                "def fn(x: int) -> int:\n    ...\n",
-                id="stub",
+                ".uncoded/stubs/src/foo.pyi", "def fn(x: int) -> int: ...\n", id="stub"
             ),
         ],
     )

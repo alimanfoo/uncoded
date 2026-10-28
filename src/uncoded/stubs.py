@@ -33,14 +33,12 @@ def _render_param(*, param: Parameter) -> str:
     return param.name
 
 
-def _render_function(*, func: FunctionSymbol, indent: str = "") -> list[str]:
-    """Render a function or method as stub lines, indented for methods."""
+def _render_function(*, func: FunctionSymbol, indent: str = "") -> str:
+    """Render a function or method as a stub line, indented for methods."""
     params_str = ", ".join(_render_param(param=param) for param in func.params)
     ret = f" -> {func.return_annotation}" if func.return_annotation else ""
     prefix = "async def" if func.is_async else "def"
-    lines = [f"{indent}{prefix} {func.name}({params_str}){ret}:"]
-    lines.append(f"{indent}    ...")
-    return lines
+    return f"{indent}{prefix} {func.name}({params_str}){ret}: ..."
 
 
 def _render_assignment(
@@ -74,16 +72,37 @@ def _render_class(*, cls: ClassSymbol) -> list[str]:
     bases_str = f"({', '.join(cls.bases)})" if cls.bases else ""
     header = f"class {cls.name}{bases_str}:"
     if not cls.attributes and not cls.methods:
-        return [header, "    ..."]
-    attributes = [
-        _render_assignment(assignment=attr, indent="    ") for attr in cls.attributes
+        return [f"{header} ..."]
+    return [
+        header,
+        *(
+            _render_assignment(assignment=attr, indent="    ")
+            for attr in cls.attributes
+        ),
+        *(_render_function(func=method, indent="    ") for method in cls.methods),
     ]
-    methods = [_render_function(func=method, indent="    ") for method in cls.methods]
-    return [header, *_join_blocks(blocks=[attributes, *methods])]
+
+
+def _class_blocks(*, classes: list[ClassSymbol]) -> list[list[str]]:
+    """Render classes as blocks, one block for each run of one-line classes."""
+    blocks: list[list[str]] = [[]]
+    for cls in classes:
+        lines = _render_class(cls=cls)
+        if len(lines) == 1:
+            blocks[-1].extend(lines)
+        else:
+            blocks.extend([lines, []])
+    return blocks
 
 
 def _render_stub(*, python_file: PythonFile) -> str:
-    """Render a PythonFile as a .pyi file string."""
+    """Render a PythonFile as a .pyi file string, in the standard stub style.
+
+    The standard stub style is the one that ruff and Black write for .pyi files.
+    Each definition is one line, except a class with members. A blank line
+    separates each two blocks: the header, the imports, each run of one-line
+    definitions of one kind, and each class with members.
+    """
     blocks = [
         [f"# {GENERATED_MARKER}", f"# {python_file.rel_path}"],
         python_file.imports,
@@ -91,8 +110,8 @@ def _render_stub(*, python_file: PythonFile) -> str:
             _render_assignment(assignment=assignment)
             for assignment in python_file.assignments
         ],
-        *(_render_function(func=func) for func in python_file.functions),
-        *(_render_class(cls=cls) for cls in python_file.classes),
+        [_render_function(func=func) for func in python_file.functions],
+        *_class_blocks(classes=python_file.classes),
     ]
     return "\n".join(_join_blocks(blocks=blocks)) + "\n"
 

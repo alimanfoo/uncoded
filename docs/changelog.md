@@ -33,6 +33,11 @@ includes it. Each entry links the pull request that made the change.
   falls back to the nearest `pyproject.toml`. The code navigation skill tells
   the agent to run them from the project directory.
   ([#325](https://github.com/alimanfoo/uncoded/pull/325))
+- Stubs are laid out in the standard stub style that ruff and Black write for
+  `.pyi` files. A function, a method, or a class with no members is one line
+  that ends with `...`. No blank line separates consecutive functions, the
+  members of a class, or consecutive classes with no members.
+  ([#366](https://github.com/alimanfoo/uncoded/pull/366))
 
 ### Added
 
