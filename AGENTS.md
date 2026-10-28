@@ -166,7 +166,7 @@ carries no coverage pragmas.
 
 ## Enduring documents
 
-These documents hold uncoded to account. Read them before you work.
+These documents hold uncoded to account.
 
 - [docs/concepts.md](docs/concepts.md) says what the words mean. Use its words
   and no others.
