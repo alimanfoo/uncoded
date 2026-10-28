@@ -62,9 +62,8 @@ that fails one needs a strong reason.
 ## Commands
 
 This project uses [uv](https://docs.astral.sh/uv/). Run the commands below via
-`uv run`. `uv run uncoded` runs the code in the checkout. The pre-commit hook
-runs the release that its `entry` names, and writes back any installed skill
-file that a run of the checkout changed.
+`uv run`. `uv run uncoded` runs the code in the checkout, and the pre-commit
+hook runs the release that its `entry` names.
 
 ```sh
 # Run tests. PYTHONWARNDEFAULTENCODING=1 arms the EncodingWarning gate.
