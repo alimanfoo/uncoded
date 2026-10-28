@@ -32,7 +32,11 @@ jobs:
         with:
           python-version: "3.12"
       - run: uv sync --locked
+      # The Windows runner's console encodes output as cp1252, which cannot
+      # hold the emoji that complexipy prints.
       - run: uv run pre-commit run --all-files
+        env:
+          PYTHONIOENCODING: utf-8
       - run: uv run uncoded check
 
   # The test job runs on every supported operating system, and on every
