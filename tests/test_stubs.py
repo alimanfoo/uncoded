@@ -10,12 +10,12 @@ from uncoded.extract import (
     Parameter,
     PythonFile,
     TypeAliasSymbol,
-    extract_python_file,
+    _extract_python_file,
     extract_python_files,
     read_source_files,
 )
 from uncoded.markers import GENERATED_MARKER
-from uncoded.stubs import render_stub, sync_stubs
+from uncoded.stubs import _render_stub, sync_stubs
 
 
 def _setup(*, tmp_path):
@@ -40,7 +40,7 @@ def _sync_root(*, source_root, out, tmp_path, check=False):
 class TestRenderStub:
     def test_header_contains_path(self):
         module = PythonFile(rel_path="src/pkg/mod.py")
-        lines = render_stub(python_file=module).splitlines()
+        lines = _render_stub(python_file=module).splitlines()
         assert lines[0] == f"# {GENERATED_MARKER}"
         assert lines[1] == "# src/pkg/mod.py"
 
@@ -49,7 +49,7 @@ class TestRenderStub:
             rel_path="pkg/mod.py",
             imports=["import os", "from pathlib import Path"],
         )
-        output = render_stub(python_file=module)
+        output = _render_stub(python_file=module)
         assert "import os\nfrom pathlib import Path\n" in output
 
     def test_rendered_stub_has_no_line_range_comments(self):
@@ -69,7 +69,7 @@ class TestRenderStub:
                 ),
             ],
         )
-        output = render_stub(python_file=module)
+        output = _render_stub(python_file=module)
         assert "VALUE = 1\n" in output
         assert "def run():\n    ...\n" in output
         assert "class Worker:\n    def work(self):\n        ...\n" in output
@@ -80,7 +80,7 @@ class TestRenderStub:
             rel_path="pkg/mod.py",
             symbols=[FunctionSymbol(name="fetch", is_async=True)],
         )
-        assert "async def fetch():\n    ...\n" in render_stub(python_file=module)
+        assert "async def fetch():\n    ...\n" in _render_stub(python_file=module)
 
     @pytest.mark.parametrize(
         ("params", "expected"),
@@ -132,21 +132,21 @@ class TestRenderStub:
             rel_path="pkg/mod.py",
             symbols=[FunctionSymbol(name="f", params=params)],
         )
-        assert expected in render_stub(python_file=module)
+        assert expected in _render_stub(python_file=module)
 
     def test_return_annotation_rendered(self):
         module = PythonFile(
             rel_path="pkg/mod.py",
             symbols=[FunctionSymbol(name="f", return_annotation="str")],
         )
-        assert "def f() -> str:" in render_stub(python_file=module)
+        assert "def f() -> str:" in _render_stub(python_file=module)
 
     def test_class_with_bases(self):
         module = PythonFile(
             rel_path="pkg/mod.py",
             symbols=[ClassSymbol(name="Dog", bases=["Animal"])],
         )
-        assert "class Dog(Animal):\n    ...\n" in render_stub(python_file=module)
+        assert "class Dog(Animal):\n    ...\n" in _render_stub(python_file=module)
 
     def test_class_with_no_members_renders_body(self):
         # A class with no attributes and no methods needs an explicit
@@ -155,7 +155,7 @@ class TestRenderStub:
             rel_path="pkg/mod.py",
             symbols=[ClassSymbol(name="Sentinel")],
         )
-        output = render_stub(python_file=module)
+        output = _render_stub(python_file=module)
         assert "class Sentinel:\n    ...\n" in output
         compile(output, "pkg/mod.pyi", "exec")
 
@@ -169,7 +169,7 @@ class TestRenderStub:
                 )
             ],
         )
-        assert "class Record:\n    name: str\n" in render_stub(python_file=module)
+        assert "class Record:\n    name: str\n" in _render_stub(python_file=module)
 
     def test_method_indented(self):
         module = PythonFile(
@@ -186,12 +186,12 @@ class TestRenderStub:
                 )
             ],
         )
-        output = render_stub(python_file=module)
+        output = _render_stub(python_file=module)
         assert "class Foo:\n    def bar(self):\n        ...\n" in output
 
     def test_ends_with_newline(self):
         module = PythonFile(rel_path="pkg/mod.py")
-        assert render_stub(python_file=module).endswith("\n")
+        assert _render_stub(python_file=module).endswith("\n")
 
     def test_property_rendered_as_class_attribute(self):
         source = textwrap.dedent("""\
@@ -204,8 +204,8 @@ class TestRenderStub:
                 def path(self, value: Path) -> None:
                     self._path = value
         """)
-        module = extract_python_file(source=source, rel_path="pkg/cfg.py")
-        output = render_stub(python_file=module)
+        module = _extract_python_file(source=source, rel_path="pkg/cfg.py")
+        output = _render_stub(python_file=module)
         assert "class Config:\n    path: Path\n" in output
         assert "def path" not in output
 
@@ -214,7 +214,7 @@ class TestRenderStub:
             rel_path="pkg/mod.py",
             symbols=[AssignmentSymbol(name="TIMEOUT", value="30")],
         )
-        assert "TIMEOUT = 30\n" in render_stub(python_file=module)
+        assert "TIMEOUT = 30\n" in _render_stub(python_file=module)
 
     def test_assignment_annotated_with_value_rendered(self):
         module = PythonFile(
@@ -227,7 +227,7 @@ class TestRenderStub:
                 )
             ],
         )
-        assert "MAX: int = 3\n" in render_stub(python_file=module)
+        assert "MAX: int = 3\n" in _render_stub(python_file=module)
 
     def test_assignment_value_too_long_elided(self):
         long_list = "[" + ", ".join(f'"item{i}"' for i in range(50)) + "]"
@@ -235,14 +235,14 @@ class TestRenderStub:
             rel_path="pkg/mod.py",
             symbols=[AssignmentSymbol(name="BIG", value=long_list)],
         )
-        assert "BIG = ...\n" in render_stub(python_file=module)
+        assert "BIG = ...\n" in _render_stub(python_file=module)
 
     def test_assignment_bare_annotation_rendered(self):
         module = PythonFile(
             rel_path="pkg/mod.py",
             symbols=[AssignmentSymbol(name="FOO", annotation="int")],
         )
-        output = render_stub(python_file=module)
+        output = _render_stub(python_file=module)
         assert "FOO: int\n" in output
         assert "FOO: int = " not in output
 
@@ -251,7 +251,7 @@ class TestRenderStub:
             rel_path="pkg/mod.py",
             symbols=[TypeAliasSymbol(name="UserId", value="int")],
         )
-        assert "type UserId = int\n" in render_stub(python_file=module)
+        assert "type UserId = int\n" in _render_stub(python_file=module)
 
     def test_unannotated_class_attribute_rendered(self):
         module = PythonFile(
@@ -263,7 +263,7 @@ class TestRenderStub:
                 )
             ],
         )
-        output = render_stub(python_file=module)
+        output = _render_stub(python_file=module)
         assert "class Registry:\n    items = []\n" in output
         assert "# L" not in output
 
@@ -311,8 +311,8 @@ class TestRenderStub:
             class Dog(Animal):
                 pass
         """)
-        module = extract_python_file(source=source, rel_path="pkg/representative.py")
-        output = render_stub(python_file=module)
+        module = _extract_python_file(source=source, rel_path="pkg/representative.py")
+        output = _render_stub(python_file=module)
         compile(output, "pkg/representative.pyi", "exec")
 
     def test_leaves_out_decorators_docstrings_and_bodies(self):
@@ -333,8 +333,8 @@ class TestRenderStub:
                     return Shape()
         """)
 
-        output = render_stub(
-            python_file=extract_python_file(source=source, rel_path="pkg/m.py")
+        output = _render_stub(
+            python_file=_extract_python_file(source=source, rel_path="pkg/m.py")
         )
 
         assert output == (
@@ -357,8 +357,8 @@ class TestRenderStub:
             def area(width, height): ...
         """)
 
-        output = render_stub(
-            python_file=extract_python_file(source=source, rel_path="m.py")
+        output = _render_stub(
+            python_file=_extract_python_file(source=source, rel_path="m.py")
         )
 
         assert output.endswith(
@@ -520,7 +520,9 @@ class TestSyncStubsProjectDirectoryAnchor:
 
         changes = sync_stubs(
             python_files=[
-                extract_python_file(source="def hello(): pass\n", rel_path="src/foo.py")
+                _extract_python_file(
+                    source="def hello(): pass\n", rel_path="src/foo.py"
+                )
             ],
             output_dir=out,
             project_directory=tmp_path,

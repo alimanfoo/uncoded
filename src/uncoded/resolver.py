@@ -46,7 +46,7 @@ class UnsupportedNamePathError(Exception):
     """
 
 
-def resolve_ast_node(*, name_path: NamePath, in_path: Path) -> SymbolNode:
+def _resolve_ast_node(*, name_path: NamePath, in_path: Path) -> SymbolNode:
     """Return the AST node for the symbol named by name_path in in_path.
 
     Raises SymbolNotFoundError if the symbol is not present. Lets OSError,
@@ -65,9 +65,9 @@ def resolve_name_position(*, name_path: NamePath, in_path: Path) -> tuple[int, i
     For def/async def/class, character points past the keyword to the identifier.
     For assignments and type aliases, character points at the start of the target name.
     Raises SymbolNotFoundError, OSError, UnicodeDecodeError, and SyntaxError under
-    the same conditions as resolve_ast_node.
+    the same conditions as _resolve_ast_node.
     """
-    node = resolve_ast_node(name_path=name_path, in_path=in_path)
+    node = _resolve_ast_node(name_path=name_path, in_path=in_path)
     if isinstance(node, ast.FunctionDef):
         return (node.lineno - 1, node.col_offset + len("def "))
     if isinstance(node, ast.AsyncFunctionDef):
@@ -89,7 +89,7 @@ def resolve_ast_node_from_source(
 ) -> SymbolNode:
     """Return the AST node for name_path given an already-read source string.
 
-    The primitive that lets resolve_ast_node and resolve_definition share a single
+    The primitive that lets _resolve_ast_node and resolve_definition share a single
     file read. Callers that already have the source string call this directly
     to avoid reading in_path again. in_path is used only for ast.parse's
     filename argument and for error messages.

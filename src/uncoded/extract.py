@@ -216,7 +216,7 @@ def _extract_symbol(*, name: str, node: SymbolNode) -> Symbol:
     return _extract_assignment(name=name, node=node)
 
 
-def extract_python_file(*, source: str, rel_path: str) -> PythonFile:
+def _extract_python_file(*, source: str, rel_path: str) -> PythonFile:
     """Parse Python source and extract its imports and its symbols."""
     tree = ast.parse(source)
     return PythonFile(
@@ -280,7 +280,7 @@ def extract_python_files(*, files: Iterable[tuple[str, str]]) -> list[PythonFile
     parsing decisions.
     """
     python_files = [
-        extract_python_file(source=source, rel_path=rel_path)
+        _extract_python_file(source=source, rel_path=rel_path)
         for source, rel_path in files
     ]
     return [python_file for python_file in python_files if python_file.symbols]

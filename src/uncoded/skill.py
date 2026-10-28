@@ -17,7 +17,7 @@ SKILL_DIRECTORIES = [
 
 
 @dataclass(frozen=True)
-class Skill:
+class _Skill:
     """Frozen record of one skill: name, skill source, and gate."""
 
     name: str
@@ -27,8 +27,8 @@ class Skill:
     is_navigation: bool = False
 
 
-SKILLS: list[Skill] = [
-    Skill(
+_SKILLS: list[_Skill] = [
+    _Skill(
         name="uncoded-consistency-review",
         description=(
             "Review a Python codebase for semantic and naming consistency. It"
@@ -40,7 +40,7 @@ SKILLS: list[Skill] = [
         skill_source="consistency_review.md",
         gate="source",
     ),
-    Skill(
+    _Skill(
         name="uncoded-code-navigation",
         description=(
             "Load once per session, before the first search, read, or edit of Python"
@@ -52,7 +52,7 @@ SKILLS: list[Skill] = [
         gate="source",
         is_navigation=True,
     ),
-    Skill(
+    _Skill(
         name="uncoded-doc-navigation",
         description=(
             "Load once per session, before the first search or read of a codebase's"
@@ -71,12 +71,12 @@ def _skill_path(*, skill_directory: Path, name: str) -> Path:
     return skill_directory / name / "SKILL.md"
 
 
-def _is_built(*, skill: Skill, source: bool, doc: bool) -> bool:
+def _is_built(*, skill: _Skill, source: bool, doc: bool) -> bool:
     """Return whether the project's roots meet ``skill``'s gate."""
     return source if skill.gate == "source" else doc
 
 
-def _render_content(*, skill: Skill) -> str:
+def _render_content(*, skill: _Skill) -> str:
     """Render the full SKILL.md content."""
     front = yaml.dump(
         {"name": skill.name, "description": skill.description},
@@ -92,7 +92,7 @@ def _render_content(*, skill: Skill) -> str:
 
 def _sync_one_skill(
     *,
-    skill: Skill,
+    skill: _Skill,
     source: bool,
     doc: bool,
     project_directory: Path,
@@ -138,7 +138,7 @@ def sync_skills(
     Returns the total number of file changes (writes and removals).
     """
     changes = 0
-    for skill in SKILLS:
+    for skill in _SKILLS:
         changes += _sync_one_skill(
             skill=skill,
             source=source,
@@ -157,7 +157,7 @@ def agent_instructions(*, source: bool, doc: bool) -> str:
     lines = [
         f"- Load the `{skill.name}` skill once per session, before searching,"
         f" reading or editing any {'code' if skill.gate == 'source' else 'docs'}."
-        for skill in SKILLS
+        for skill in _SKILLS
         if skill.is_navigation and _is_built(skill=skill, source=source, doc=doc)
     ]
     return "\n".join(["## Before you start", "", *lines]) + "\n"

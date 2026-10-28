@@ -2,15 +2,15 @@ import textwrap
 
 import yaml
 
-from uncoded.extract import extract_python_file
-from uncoded.namespace_map import HEADER, build_map, render_map
+from uncoded.extract import _extract_python_file
+from uncoded.namespace_map import _HEADER, build_map, render_map
 
 
 def _map(*, sources):
     """Build the namespace map of the Python files that map rel_path to source."""
     return build_map(
         python_files=[
-            extract_python_file(source=textwrap.dedent(source), rel_path=rel_path)
+            _extract_python_file(source=textwrap.dedent(source), rel_path=rel_path)
             for rel_path, source in sources.items()
         ]
     )
@@ -164,9 +164,9 @@ class TestRenderMap:
         output = render_map(
             namespace=_map(sources={"src/pkg/utils.py": "def compute(): ...\n"})
         )
-        assert output.startswith(HEADER)
+        assert output.startswith(_HEADER)
         # Header must precede any non-comment YAML content.
-        assert output.index(HEADER) < output.index("src/")
+        assert output.index(_HEADER) < output.index("src/")
 
     def test_header_mentions_stub_pointer(self):
         # The header's job is partly to tell a cold-start agent where to find

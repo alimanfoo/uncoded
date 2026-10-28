@@ -41,7 +41,7 @@ type SymbolNode = (
     | ast.TypeAlias
 )
 
-type MemberNode = ast.FunctionDef | ast.AsyncFunctionDef | ast.AnnAssign | ast.Assign
+type _MemberNode = ast.FunctionDef | ast.AsyncFunctionDef | ast.AnnAssign | ast.Assign
 
 
 def module_symbols(*, tree: ast.Module) -> Iterator[tuple[str, SymbolNode]]:
@@ -60,7 +60,7 @@ def module_symbols(*, tree: ast.Module) -> Iterator[tuple[str, SymbolNode]]:
                 yield name, node
 
 
-def class_symbols(*, node: ast.ClassDef) -> Iterator[tuple[str, MemberNode]]:
+def class_symbols(*, node: ast.ClassDef) -> Iterator[tuple[str, _MemberNode]]:
     """Yield the name and definition of each symbol in the class body, in order.
 
     A property's setter and deleter are not symbols. A name defined more than

@@ -3,9 +3,9 @@ from pathlib import Path
 import yaml
 
 from uncoded.docs_map import (
-    DOCS_HEADER,
+    _DOCS_HEADER,
+    _extract_headings,
     build_docs_map,
-    extract_headings,
     read_doc_files,
     render_docs_map,
 )
@@ -13,11 +13,11 @@ from uncoded.docs_map import (
 
 class TestExtractHeadings:
     def test_empty_text(self):
-        assert extract_headings(text="") == []
+        assert _extract_headings(text="") == []
 
     def test_h1_through_h6(self):
         text = "# One\n## Two\n### Three\n#### Four\n##### Five\n###### Six\n"
-        assert extract_headings(text=text) == [
+        assert _extract_headings(text=text) == [
             (1, "One"),
             (2, "Two"),
             (3, "Three"),
@@ -27,80 +27,80 @@ class TestExtractHeadings:
         ]
 
     def test_trailing_hashes_stripped(self):
-        assert extract_headings(text="### Setup ###\n") == [(3, "Setup")]
+        assert _extract_headings(text="### Setup ###\n") == [(3, "Setup")]
 
     def test_trailing_hashes_with_surrounding_spaces_stripped(self):
-        assert extract_headings(text="## Title ## \n") == [(2, "Title")]
+        assert _extract_headings(text="## Title ## \n") == [(2, "Title")]
 
     def test_trailing_hashes_multiple_stripped(self):
-        assert extract_headings(text="## Done ###\n") == [(2, "Done")]
+        assert _extract_headings(text="## Done ###\n") == [(2, "Done")]
 
     def test_hash_attached_to_word_preserved(self):
         # C# — the # is not preceded by whitespace, so it is not a closing
         # sequence and must be kept in the title.
-        assert extract_headings(text="## Using C#\n") == [(2, "Using C#")]
+        assert _extract_headings(text="## Using C#\n") == [(2, "Using C#")]
 
     def test_multiple_hashes_attached_to_words_preserved(self):
-        assert extract_headings(text="## C# vs F#\n") == [(2, "C# vs F#")]
+        assert _extract_headings(text="## C# vs F#\n") == [(2, "C# vs F#")]
 
     def test_hash_attached_to_word_with_closing_sequence(self):
         # Closing sequence (space + ##) is stripped; C# in the middle is kept.
-        assert extract_headings(text="## C# intro ##\n") == [(2, "C# intro")]
+        assert _extract_headings(text="## C# intro ##\n") == [(2, "C# intro")]
 
     def test_seven_hashes_not_a_heading(self):
-        assert extract_headings(text="####### Too many\n") == []
+        assert _extract_headings(text="####### Too many\n") == []
 
     def test_no_space_after_hash_not_a_heading(self):
-        assert extract_headings(text="##NoSpace\n") == []
+        assert _extract_headings(text="##NoSpace\n") == []
 
     def test_hash_only_not_a_heading(self):
         # A lone # with no space and no title.
-        assert extract_headings(text="#\n") == []
+        assert _extract_headings(text="#\n") == []
 
     def test_empty_title_not_a_heading(self):
         # Trailing-# strip leaves an empty title.
-        assert extract_headings(text="# #\n") == []
+        assert _extract_headings(text="# #\n") == []
 
     def test_setext_underline_equals_not_a_heading(self):
-        assert extract_headings(text="Title\n=====\n") == []
+        assert _extract_headings(text="Title\n=====\n") == []
 
     def test_setext_underline_dashes_not_a_heading(self):
-        assert extract_headings(text="Other\n-----\n") == []
+        assert _extract_headings(text="Other\n-----\n") == []
 
     def test_backtick_fence_suppresses_headings(self):
         text = "# Before\n```\n# Inside\n```\n# After\n"
-        assert extract_headings(text=text) == [(1, "Before"), (1, "After")]
+        assert _extract_headings(text=text) == [(1, "Before"), (1, "After")]
 
     def test_tilde_fence_suppresses_headings(self):
         text = "# Before\n~~~\n# Inside\n~~~\n# After\n"
-        assert extract_headings(text=text) == [(1, "Before"), (1, "After")]
+        assert _extract_headings(text=text) == [(1, "Before"), (1, "After")]
 
     def test_fence_with_info_string(self):
         text = "# Before\n```python\n# Inside\n```\n# After\n"
-        assert extract_headings(text=text) == [(1, "Before"), (1, "After")]
+        assert _extract_headings(text=text) == [(1, "Before"), (1, "After")]
 
     def test_unclosed_fence_suppresses_rest_of_file(self):
         text = "# Before\n```\n# Never seen\n"
-        assert extract_headings(text=text) == [(1, "Before")]
+        assert _extract_headings(text=text) == [(1, "Before")]
 
     def test_tilde_does_not_close_backtick_fence(self):
         text = "# Before\n```\n# Inside\n~~~\n# Still inside\n```\n# After\n"
-        assert extract_headings(text=text) == [(1, "Before"), (1, "After")]
+        assert _extract_headings(text=text) == [(1, "Before"), (1, "After")]
 
     def test_backtick_does_not_close_tilde_fence(self):
         text = "# Before\n~~~\n# Inside\n```\n# Still inside\n~~~\n# After\n"
-        assert extract_headings(text=text) == [(1, "Before"), (1, "After")]
+        assert _extract_headings(text=text) == [(1, "Before"), (1, "After")]
 
     def test_preserves_order(self):
         text = "# A\n## B\n# C\n"
-        assert extract_headings(text=text) == [(1, "A"), (2, "B"), (1, "C")]
+        assert _extract_headings(text=text) == [(1, "A"), (2, "B"), (1, "C")]
 
     def test_title_with_special_chars(self):
-        assert extract_headings(text="## Hello, World!\n") == [(2, "Hello, World!")]
+        assert _extract_headings(text="## Hello, World!\n") == [(2, "Hello, World!")]
 
     def test_leading_spaces_not_a_heading(self):
         # The # must be at column 0; leading spaces are not stripped.
-        assert extract_headings(text="  # Indented\n") == []
+        assert _extract_headings(text="  # Indented\n") == []
 
 
 class TestReadDocFiles:
@@ -208,7 +208,7 @@ class TestReadDocFiles:
         )
         assert len(results) == 1
         text, _rel = results[0]
-        assert extract_headings(text=text) == [(1, "Guide")]
+        assert _extract_headings(text=text) == [(1, "Guide")]
 
 
 class TestBuildDocsMap:
@@ -281,7 +281,7 @@ class TestBuildDocsMap:
 class TestRenderDocsMap:
     def test_header_present(self):
         output = render_docs_map(mapping={})
-        assert output.startswith(DOCS_HEADER)
+        assert output.startswith(_DOCS_HEADER)
 
     def test_roundtrips_through_yaml(self):
         files = [("# Setup\n## Config\n", "guide.md")]

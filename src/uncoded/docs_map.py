@@ -7,7 +7,7 @@ from uncoded.markers import GENERATED_MARKER
 from uncoded.read_helpers import SkippedFile, failure_reason
 from uncoded.yaml_tree import nest_by_path, render_yaml_tree
 
-DOCS_HEADER = f"""\
+_DOCS_HEADER = f"""\
 # Documentation index of this codebase, for agent orientation.
 # {GENERATED_MARKER}
 #
@@ -39,7 +39,7 @@ def _parse_atx_heading(*, line: str) -> tuple[int, str] | None:
     return (level, title) if title else None
 
 
-def extract_headings(*, text: str) -> list[tuple[int, str]]:
+def _extract_headings(*, text: str) -> list[tuple[int, str]]:
     """Return the ATX headings in ``text`` as ordered (level, title) pairs.
 
     Recognises ATX headings only: 1-6 ``#`` followed by a space and a
@@ -141,7 +141,7 @@ def _file_headings(*, text: str) -> dict | None:
     # Stack of (level, children_dict) — the active path from file root.
     stack: list[tuple[int, dict]] = [(0, file_dict)]
 
-    for level, title in extract_headings(text=text):
+    for level, title in _extract_headings(text=text):
         while stack[-1][0] >= level:
             stack.pop()
         parent_dict = stack[-1][1]
@@ -166,4 +166,4 @@ def build_docs_map(*, files: Iterable[tuple[str, str]]) -> dict:
 
 def render_docs_map(*, mapping: dict) -> str:
     """Render a docs map dict as a YAML string with an explanatory header."""
-    return render_yaml_tree(header=DOCS_HEADER, mapping=mapping)
+    return render_yaml_tree(header=_DOCS_HEADER, mapping=mapping)

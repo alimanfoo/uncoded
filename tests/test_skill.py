@@ -6,28 +6,28 @@ import pytest
 import uncoded.skill as skill_module
 from uncoded.markers import GENERATED_MARKER
 from uncoded.skill import (
+    _SKILLS,
     SKILL_DIRECTORIES,
-    SKILLS,
-    Skill,
+    _Skill,
     agent_instructions,
     sync_skills,
 )
 
-_REVIEW_SKILL = SKILLS[0]
+_REVIEW_SKILL = _SKILLS[0]
 _REVIEW_SKILL_FILE = Path(_REVIEW_SKILL.name) / "SKILL.md"
 
 
 class TestSyncSkills:
     def test_lists_the_uncoded_skills_and_where_they_are_installed(self):
-        names = [s.name for s in SKILLS]
+        names = [s.name for s in _SKILLS]
         assert "uncoded-consistency-review" in names
         assert "uncoded-code-navigation" in names
         assert "uncoded-doc-navigation" in names
         assert _REVIEW_SKILL.name == "uncoded-consistency-review"
         assert _REVIEW_SKILL.gate == "source"
-        code_nav = next(s for s in SKILLS if s.name == "uncoded-code-navigation")
+        code_nav = next(s for s in _SKILLS if s.name == "uncoded-code-navigation")
         assert code_nav.gate == "source"
-        doc_nav = next(s for s in SKILLS if s.name == "uncoded-doc-navigation")
+        doc_nav = next(s for s in _SKILLS if s.name == "uncoded-doc-navigation")
         assert doc_nav.gate == "doc"
         assert [
             Path(".claude/skills"),
@@ -65,7 +65,7 @@ class TestSyncSkills:
     ):
         (tmp_path / "test.md").write_text("# Body\n", encoding="utf-8")
         monkeypatch.setattr(skill_module, "files", lambda pkg: tmp_path)
-        test_skill = Skill(
+        test_skill = _Skill(
             name="test", description="A test.", skill_source="test.md", gate="source"
         )
         content = skill_module._render_content(skill=test_skill)

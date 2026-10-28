@@ -16,12 +16,12 @@ from uncoded.sync import remove_file, sync_file
 # Width cap for inlining the right-hand side of an assignment. If the source of
 # the right-hand side exceeds this, it is elided to "..." so stubs stay compact
 # and stable.
-VALUE_WIDTH_CAP = 80
+_VALUE_WIDTH_CAP = 80
 
 
 def _render_value(*, value: str) -> str:
     """Return the source of a value, elided to '...' if too long or multi-line."""
-    if len(value) > VALUE_WIDTH_CAP or "\n" in value:
+    if len(value) > _VALUE_WIDTH_CAP or "\n" in value:
         return "..."
     return value
 
@@ -83,7 +83,7 @@ def _render_class(*, cls: ClassSymbol) -> list[str]:
     return lines
 
 
-def render_stub(*, python_file: PythonFile) -> str:
+def _render_stub(*, python_file: PythonFile) -> str:
     """Render a PythonFile as a .pyi file string."""
     lines: list[str] = [f"# {GENERATED_MARKER}", f"# {python_file.rel_path}", ""]
 
@@ -155,7 +155,7 @@ def sync_stubs(
         stub_path = output_dir / Path(python_file.rel_path).with_suffix(".pyi")
         changes += sync_file(
             path=stub_path,
-            content=render_stub(python_file=python_file),
+            content=_render_stub(python_file=python_file),
             project_directory=project_directory,
             check=check,
         )

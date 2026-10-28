@@ -11,7 +11,7 @@ from uncoded.extract import (
 from uncoded.markers import GENERATED_MARKER
 from uncoded.yaml_tree import nest_by_path, render_yaml_tree
 
-HEADER = f"""\
+_HEADER = f"""\
 # Namespace map of this codebase, for agent navigation.
 # {GENERATED_MARKER}
 #
@@ -71,4 +71,4 @@ def build_map(*, python_files: list[PythonFile]) -> dict:
 
 def render_map(*, namespace: dict) -> str:
     """Render a namespace map dict as a YAML string with an explanatory header."""
-    return render_yaml_tree(header=HEADER, mapping=namespace)
+    return render_yaml_tree(header=_HEADER, mapping=namespace)
