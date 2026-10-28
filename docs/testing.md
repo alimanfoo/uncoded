@@ -59,9 +59,9 @@ process and are slower than the rest.
 ## Hung tests
 
 Every test has a time limit to finish, counting its fixture setup and teardown.
-`timeout` in `pyproject.toml` sets the limit, and CI raises it on macOS and
-Windows, which run slower. The limit is there to end a run that has hung, not to
-measure speed.
+`timeout` in `pyproject.toml` sets the limit, and CI raises it on the systems
+that run slower. The limit is there to end a run that has hung, not to measure
+speed.
 
 When the limit passes, `pytest-timeout` writes the stack of every thread to the
 terminal. On Linux and macOS it then fails the test, and the run carries on. On
@@ -72,13 +72,13 @@ Windows it ends the whole run.
 For every push and pull request to `main`, the
 [CI workflow](https://github.com/alimanfoo/uncoded/blob/main/.github/workflows/ci.yml)
 runs the whole suite, the integration tests included, with the encoding gate on
-Linux, macOS and Windows, and on every Python version from 3.12 up. It then
-combines the coverage of those jobs and checks it against 100%. It runs every
-pre-commit hook on Linux and Windows, and then `uncoded check`. The hooks
-include a strict build of the documentation site and the regeneration of the
-`--help` blocks in [the commands reference](commands.md). On all three operating
-systems, it builds the sdist, builds the wheel from the sdist, and runs
-`uncoded --version` from the wheel.
+every supported operating system and Python version. It then combines the
+coverage of those jobs and checks it against 100%. It runs every pre-commit
+hook, and then `uncoded check`. The hooks include a strict build of the
+documentation site and the regeneration of the `--help` blocks in
+[the commands reference](commands.md). On every supported operating system, it
+builds the sdist, builds the wheel from the sdist, and runs `uncoded --version`
+from the wheel.
 
 For every pull request, the
 [dependency review workflow](https://github.com/alimanfoo/uncoded/blob/main/.github/workflows/dependency-review.yml)

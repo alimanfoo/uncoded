@@ -120,7 +120,7 @@ repos:
         name: generate command help
         entry: uv run --isolated --python 3.13 cog -r -U docs/commands.md
         language: system
-        always_run: true
+        files: ^(src/uncoded/cli\.py|docs/commands\.md)$
         pass_filenames: false
       - id: mkdocs
         name: build documentation
