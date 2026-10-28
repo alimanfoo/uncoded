@@ -526,3 +526,14 @@ class TestResolveBodyByteIdentical:
         result = resolve_body(name_path=NamePath("compute"), in_path=path)
 
         assert result == body
+
+    def test_lines_are_counted_as_python_counts_them(self, *, tmp_path):
+        # A form feed and a line separator do not end a line in Python.
+        body = "def compute():\x0c\n    return 1\n"
+        source = f'x = "a\u2028b"\n{body}'
+        path = tmp_path / "m.py"
+        path.write_text(source, encoding="utf-8")
+
+        result = resolve_body(name_path=NamePath("compute"), in_path=path)
+
+        assert result == body

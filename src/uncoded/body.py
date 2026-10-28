@@ -1,6 +1,7 @@
 """Retrieve the source body of a named symbol in a Python file."""
 
 import ast
+import io
 from pathlib import Path
 
 from uncoded.read_helpers import read_source_text
@@ -17,7 +18,11 @@ def resolve_body(*, name_path: NamePath, in_path: Path) -> str:
     node = resolve_ast_node_from_source(
         name_path=name_path, source=source, in_path=in_path
     )
-    return _extract_body(node=node, lines=source.splitlines(keepends=True))
+    # Python ends a line only at "\n", "\r\n" or "\r", while str.splitlines
+    # also breaks at characters such as a form feed, which would shift every
+    # line after it away from the node's line numbers.
+    lines = io.StringIO(source, newline="").readlines()
+    return _extract_body(node=node, lines=lines)
 
 
 def _extract_body(*, node: ast.stmt, lines: list[str]) -> str:
