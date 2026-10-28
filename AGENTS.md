@@ -62,7 +62,9 @@ that fails one needs a strong reason.
 ## Commands
 
 This project uses [uv](https://docs.astral.sh/uv/). Run all commands via
-`uv run`.
+`uv run`. The required version in `.uncoded.toml` refuses `uv run uncoded` in
+this repository. To try a change to uncoded by hand, run it in another project,
+as `uv run --project <path to this checkout> uncoded <command>`.
 
 ```sh
 # Run tests. PYTHONWARNDEFAULTENCODING=1 arms the EncodingWarning gate.
@@ -172,7 +174,9 @@ in `src/uncoded/markers.py`. The tests verify that every output kind carries it.
 
 **Stub style.** Every stub is laid out in the standard stub style that ruff
 writes for `.pyi` files. The `stub-style` hook in `.pre-commit-config.yaml`
-checks the stubs of uncoded's own source.
+checks the stubs that the required version writes for uncoded's own source. It
+checks a change to the layout once this repository upgrades to the release that
+carries it.
 
 **Explicit encoding.** Every text read/write in the repository must pass
 `encoding=`. Configuration lives in `pyproject.toml` and
