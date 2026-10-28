@@ -19,6 +19,7 @@ of CommonMark headings and code fences in `docs_map.py`, the parameter syntax in
 | `resolver.resolve_name_position`                       | The name of a `def`, `async def` or `class` statement is found after its keyword. | Python's `ast` records the position of the statement, and not of its name.                                                                         |
 | `body._definition_text`                                | A decorated function or class starts at its first decorator.                      | Python's `ast` gives a decorated definition the line of its `def` or `class`, not of its first decorator.                                          |
 | `stubs._render_class`                                  | A class with no members is rendered with `...` as its body.                       | Python's grammar needs at least one statement in a class body.                                                                                     |
+| `stubs._symbol_blocks`                                 | A `type` statement shares a block with assignments.                               | ruff, whose layout the standard stub style is, writes no blank line between consecutive simple statements, and both are simple statements.         |
 
 ## Processes and files
 
