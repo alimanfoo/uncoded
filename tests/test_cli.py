@@ -1224,6 +1224,19 @@ class TestBodyCommand:
 
         assert written.getvalue() == body.encode("utf-8")
 
+    def test_stdout_encodes_with_the_streams_error_handler(
+        self, *, tmp_path, monkeypatch
+    ):
+        written = io.BytesIO()
+        stdout = io.TextIOWrapper(written, encoding="ascii", errors="backslashreplace")
+        monkeypatch.setattr(sys, "stdout", stdout)
+        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        (tmp_path / "src" / "foo.py").write_bytes('x = "é"\n'.encode())
+
+        assert _body(monkeypatch=monkeypatch, name_path="x", in_path="src/foo.py") == 0
+
+        assert written.getvalue() == b'x = "\\xe9"\n'
+
     def test_unsupported_name_path_exits_one(self, *, tmp_path, monkeypatch, capsys):
         _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "src" / "foo.py").write_text("def fn(): pass\n", encoding="utf-8")

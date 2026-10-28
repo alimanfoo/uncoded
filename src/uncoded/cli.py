@@ -1,6 +1,7 @@
 """CLI entry point for uncoded."""
 
 import argparse
+import io
 import shlex
 import sys
 from pathlib import Path
@@ -287,9 +288,16 @@ def _body(*, config: Config, name_path: str, in_path: str) -> int:
     except _LOOKUP_ERRORS as e:
         return _report_lookup_error(exc=e, name_path=name_path, in_path=in_path)
 
-    # Write bytes, so that the stream cannot turn each "\n" into "\r\n", as
-    # it does on Windows.
-    sys.stdout.buffer.write(body.encode(sys.stdout.encoding))
+    # Write through a wrapper that encodes as standard output does, but does
+    # not turn each "\n" into "\r\n", as standard output does on Windows.
+    stdout = io.TextIOWrapper(
+        sys.stdout.buffer,
+        encoding=sys.stdout.encoding,
+        errors=sys.stdout.errors,
+        newline="",
+    )
+    stdout.write(body)
+    stdout.detach()
     return 0
 
 
