@@ -12,6 +12,7 @@ from pathlib import Path
 from unittest import mock
 
 import pytest
+import yaml
 
 from uncoded import __version__, cli
 from uncoded.skill import SKILL_ROOTS, SKILLS, _skill_path
@@ -210,6 +211,40 @@ class TestSyncApplyMode:
         assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 0
 
         assert capsys.readouterr().err == ""
+
+    def test_indexes_a_linked_file_and_does_not_follow_a_linked_directory(
+        self, *, tmp_path, monkeypatch
+    ):
+        outside = tmp_path / "outside"
+        (outside / "pkg").mkdir(parents=True)
+        (outside / "guide").mkdir()
+        (outside / "linked.py").write_text("def linked(): pass\n", encoding="utf-8")
+        (outside / "pkg" / "deep.py").write_text("def deep(): pass\n", encoding="utf-8")
+        (outside / "linked.md").write_text("# Linked\n", encoding="utf-8")
+        (outside / "guide" / "deep.md").write_text("# Deep\n", encoding="utf-8")
+        project = tmp_path / "project"
+        (project / "src").mkdir(parents=True)
+        (project / "docs").mkdir()
+        (project / ".uncoded.toml").write_text(
+            'source-roots = ["src"]\ndoc-roots = ["docs"]\n', encoding="utf-8"
+        )
+        (project / "src" / "linked.py").symlink_to(outside / "linked.py")
+        (project / "src" / "pkg").symlink_to(outside / "pkg", target_is_directory=True)
+        (project / "docs" / "linked.md").symlink_to(outside / "linked.md")
+        (project / "docs" / "guide").symlink_to(
+            outside / "guide", target_is_directory=True
+        )
+        monkeypatch.chdir(project)
+
+        assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 0
+
+        index = project / ".uncoded"
+        assert yaml.safe_load(
+            (index / "namespace.yaml").read_text(encoding="utf-8")
+        ) == {"src/": {"linked.py": {"linked": None}}}
+        assert yaml.safe_load((index / "docs.yaml").read_text(encoding="utf-8")) == {
+            "docs/": {"linked.md": {"Linked": None}}
+        }
 
     def test_anchors_reads_and_writes_at_project_root_when_cwd_is_subdir(
         self, *, tmp_path, monkeypatch

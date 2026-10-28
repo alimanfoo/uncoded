@@ -702,6 +702,18 @@ class TestRenderStub:
             "        ...\n"
         )
 
+    def test_shows_each_definition_of_a_name_defined_twice(self):
+        source = textwrap.dedent("""\
+            def area(width): ...
+            def area(width, height): ...
+        """)
+
+        output = render_stub(module=extract_stub(source=source, rel_path="m.py"))
+
+        assert output.endswith(
+            "def area(width):\n    ...\n\ndef area(width, height):\n    ...\n"
+        )
+
 
 class TestBuildStubs:
     """build_stubs writes expected stubs and removes orphans for its source root."""
