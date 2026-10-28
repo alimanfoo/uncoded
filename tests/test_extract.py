@@ -317,6 +317,15 @@ class TestIterAndExtract:
         assert "warning: skipping src/mypackage/bad.py" in err
         assert "SyntaxError" in err
 
+    def test_skips_unreadable_file_with_reason(self, tmp_path, capsys):
+        # A directory whose name ends in .py cannot be read as a file. The
+        # warning gives the reason without the error's own copy of the path.
+        (tmp_path / "src" / "pkg" / "notes.py").mkdir(parents=True)
+        assert list(iter_source_files(tmp_path / "src", project_root=tmp_path)) == []
+        err = capsys.readouterr().err
+        assert err.startswith("warning: skipping src/pkg/notes.py: ")
+        assert str(tmp_path) not in err
+
     def test_skips_undecodable_file_with_warning(self, tmp_path, capsys):
         # A file that cannot be decoded under its declared encoding (UTF-8
         # default) must be skipped with a warning; other files must still yield.
