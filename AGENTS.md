@@ -211,6 +211,11 @@ Ruff's PLR0917, with `max-positional-args = 0` in `pyproject.toml`, checks it.
 in `pyproject.toml`. See [Linting and formatting](#linting-and-formatting) for
 the response to a violation.
 
+**Special cases.** A conditional that names a particular situation, rather than
+applies a general rule, has an entry in
+[docs/special-cases.md](docs/special-cases.md), with its cause. Review checks
+it.
+
 **Index local.** `uncoded sync` writes `.uncoded/.gitignore`, which keeps the
 whole index out of Git. Run `uv run uncoded sync` after every indexed source or
 documentation change and before using the index again. The pre-commit hook is a

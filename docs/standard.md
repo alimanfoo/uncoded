@@ -297,8 +297,9 @@ name the question that fails and show the evidence. Elegance is not a word for
 Rules, not cases.
 
 - Measure: conditionals whose condition names a particular situation rather than
-  applies a general rule, and the ledger in `docs/special-cases.md` that lists
-  each one with its cause.
+  applies a general rule, and the ledger in
+  [`docs/special-cases.md`](special-cases.md) that lists each one with its
+  cause.
 - Bar: every such conditional is on the ledger, and every entry has an external
   cause, such as a rule of Python's grammar or a Windows behaviour. Nothing on
   the ledger exists because of a choice this project made.
