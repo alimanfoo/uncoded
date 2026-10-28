@@ -58,8 +58,7 @@ When the agent needs the function's parameters and return type, it reads the
 generated stub:
 
 ```python title=".uncoded/stubs/src/greetings.pyi (excerpt)"
-def greet(name: str) -> str:
-    ...
+def greet(name: str) -> str: ...
 ```
 
 When the agent needs the exact source, it retrieves that definition without
