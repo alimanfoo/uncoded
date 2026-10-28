@@ -1363,6 +1363,19 @@ class TestRefsCommand:
 
         assert find_refs.call_args.kwargs["project_root"] == tmp_path.resolve()
 
+    def test_missing_uvx_exits_one(self, *, tmp_path, monkeypatch, capsys):
+        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        (tmp_path / "m.py").write_text("def foo(): pass\n", encoding="utf-8")
+
+        with mock.patch("uncoded.refs.subprocess.Popen", side_effect=FileNotFoundError):
+            assert _refs(monkeypatch=monkeypatch, name_path="foo", in_path="m.py") == 1
+
+        captured = capsys.readouterr()
+        assert captured.out == ""
+        assert captured.err == (
+            "Error: uvx not found on PATH — install uv (https://docs.astral.sh/uv/)\n"
+        )
+
     def test_ty_failure_is_not_blamed_on_the_file(
         self, *, tmp_path, monkeypatch, capsys, stand_in_for_ty
     ):
