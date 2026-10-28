@@ -196,8 +196,8 @@ in `tests/test_encoding_gate.py` fails loudly if either the env var is unset or
 the filterwarnings escalation is removed.
 
 **Writes in `sync.py`.** Only `src/uncoded/sync.py` writes or removes files or
-directories, so that `uncoded check` changes nothing. The `writes-only-in-sync`
-hook in `.pre-commit-config.yaml` checks it.
+directories. The `writes-only-in-sync` hook in `.pre-commit-config.yaml` checks
+it.
 
 **Import layers.** Imports point down the three layers that
 `docs/architecture.md` describes. The import-linter contract in `pyproject.toml`

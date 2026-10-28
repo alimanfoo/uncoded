@@ -40,14 +40,14 @@ below it.
 
 1. `cli.py` is the top layer. It reads the configuration and calls the layer
    below for each command.
-2. The middle layer holds one module for each generated file or tool:
-   `namespace_map.py`, `stubs.py`, `docs_map.py`, `skill.py`, `body.py` and
-   `refs.py`. None of them imports another.
-3. The foundation holds every other module, such as `config.py`, `extract.py`,
-   `resolver.py` and `sync.py`. These modules can import one another.
+2. The middle layer holds one module for each generated file or tool. None of
+   them imports another.
+3. The foundation holds every other module. These modules can import one
+   another.
 
-An import-linter contract in `pyproject.toml` checks the layers. A new module
-fails the check until the contract places it in a layer.
+An import-linter contract in `pyproject.toml` lists the modules in each layer
+and checks the imports. A new module fails the check until the contract places
+it in a layer.
 
 ## Path boundary
 

@@ -327,18 +327,6 @@ def _generate_stubs(files: Iterable[tuple[str, str]]) -> dict[Path, str]:
     return result
 
 
-def _resolve_stubs_root(
-    *, source_root: Path, output_dir: Path, project_root: Path
-) -> Path | None:
-    # source_root must be under project_root; otherwise there is no safe subtree.
-    try:
-        source_rel = source_root.resolve().relative_to(project_root)
-    except ValueError:
-        return None
-    abs_stubs_root = project_root / output_dir / source_rel
-    return abs_stubs_root if abs_stubs_root.exists() else None
-
-
 def _remove_orphan_stubs(
     *,
     expected: set[Path],
@@ -373,16 +361,13 @@ def _write_stubs(
         if sync_file(stub_path, content, project_root=project_root, check=check):
             changes += 1
         expected.add((project_root / stub_path).resolve())
-    abs_stubs_root = _resolve_stubs_root(
-        source_root=source_root, output_dir=output_dir, project_root=project_root
+    source_rel = source_root.resolve().relative_to(project_root)
+    changes += _remove_orphan_stubs(
+        expected=expected,
+        abs_stubs_root=project_root / output_dir / source_rel,
+        project_root=project_root,
+        check=check,
     )
-    if abs_stubs_root is not None:
-        changes += _remove_orphan_stubs(
-            expected=expected,
-            abs_stubs_root=abs_stubs_root,
-            project_root=project_root,
-            check=check,
-        )
     return changes
 
 
