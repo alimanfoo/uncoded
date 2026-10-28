@@ -10,7 +10,9 @@ time, after the fixes that the checklist calls quick. The first measurement, the
 baseline, was taken on 2026-10-27 at `0071673`, before the roadmap for the
 engineering standard (#257) closed any gap.
 
-An open issue owns each shortfall below.
+An open issue owns each shortfall below, apart from reviewed changes. That
+shortfall counts pull requests already merged, and #355 settles it for the pull
+requests to come, by asking each one to answer the definition of done.
 
 ## Results
 
