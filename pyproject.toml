@@ -145,7 +145,6 @@ ignore = [
 [tool.ruff.lint.mccabe]
 max-complexity = 8
 
-# Every parameter is keyword-only.
 [tool.ruff.lint.pylint]
 max-positional-args = 0
 
