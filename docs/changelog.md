@@ -36,7 +36,9 @@ includes it. Each entry links the pull request that made the change.
 - Stubs are laid out in the standard stub style that ruff and Black write for
   `.pyi` files. A function, a method, or a class with no members is one line
   that ends with `...`. No blank line separates consecutive functions, the
-  members of a class, or consecutive classes with no members.
+  members of a class, or consecutive classes with no members. A blank line still
+  separates the imports, the assignments, the functions, each run of classes
+  with no members, and each class with members.
   ([#366](https://github.com/alimanfoo/uncoded/pull/366))
 
 ### Added

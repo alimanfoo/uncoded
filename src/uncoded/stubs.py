@@ -59,7 +59,7 @@ def _render_assignment(
 
 
 def _join_blocks(*, blocks: list[list[str]]) -> list[str]:
-    """Join blocks of stub lines, with a blank line between each two of them."""
+    """Join the blocks of stub lines that are not empty, with a blank line between."""
     lines: list[str] = []
     for block in filter(None, blocks):
         if lines:
