@@ -165,7 +165,7 @@ convention = "pep257"
     "start-process-with-partial-path",
 ]
 # The tests of refs.py build mocks of, and stand-ins for, the subprocess that it
-# spawns.
-"tests/{conftest,test_refs}.py" = [
+# spawns. The tests of the command line run it in a process of its own.
+"tests/{conftest,test_cli,test_refs}.py" = [
     "suspicious-subprocess-import",
 ]

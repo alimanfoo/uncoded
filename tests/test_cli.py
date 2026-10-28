@@ -8,6 +8,7 @@ have their own unit tests; this suite covers the orchestration and the
 import io
 import os
 import shlex
+import subprocess
 import sys
 import textwrap
 from pathlib import Path
@@ -1229,20 +1230,36 @@ class TestBodyCommand:
 
         assert written.getvalue() == definition.encode("utf-8")
 
-    def test_stdout_encodes_with_the_streams_error_handler(
+    def test_prints_utf8_when_the_system_encoding_is_ascii(
         self, *, tmp_path, monkeypatch
     ):
-        written = io.BytesIO()
-        stdout = io.TextIOWrapper(written, encoding="ascii", errors="backslashreplace")
-        monkeypatch.setattr(sys, "stdout", stdout)
+        # A real process, since the standard streams take their encoding from
+        # the environment when the process starts.
         _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        definition = 'x = "é"\n'
         (tmp_path / "src" / "foo.py").write_text(
-            'x = "é"\n', encoding="utf-8", newline=""
+            definition, encoding="utf-8", newline=""
+        )
+        monkeypatch.setenv("PYTHONIOENCODING", "ascii")
+
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-c",
+                "import sys; from uncoded.cli import main; sys.exit(main())",
+                "body",
+                "x",
+                "--in",
+                "src/foo.py",
+            ],
+            cwd=tmp_path,
+            capture_output=True,
+            check=False,
         )
 
-        assert _body(monkeypatch=monkeypatch, name_path="x", in_path="src/foo.py") == 0
-
-        assert written.getvalue() == b'x = "\\xe9"\n'
+        assert result.returncode == 0
+        assert result.stdout == definition.encode("utf-8")
+        assert result.stderr == b""
 
     def test_unsupported_name_path_exits_one(self, *, tmp_path, monkeypatch, capsys):
         _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)

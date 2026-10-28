@@ -78,6 +78,11 @@ includes it. Each entry links the pull request that made the change.
 
 ### Fixed
 
+- What uncoded prints is UTF-8 on every system. `uncoded body` could not print a
+  definition that holds a character the system's output encoding lacks, such as
+  `é` where that encoding is ASCII. It stopped with an error, or printed an
+  escape in place of the character.
+  ([#368](https://github.com/alimanfoo/uncoded/pull/368))
 - The uncoded skills use one word for each concept, such as "code index",
   "definition" and "project". They also stop listing directories and files among
   the symbols in the namespace map.
