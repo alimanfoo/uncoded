@@ -11,7 +11,6 @@ from uncoded.stubs import (
     StubFunction,
     StubModule,
     StubParam,
-    _write_stubs,
     build_stubs,
     extract_stub,
     render_stub,
@@ -852,51 +851,7 @@ class TestBuildStubsCheckMode:
         assert (out / "src" / "bar.pyi").exists()
 
 
-class TestWriteStubs:
-    def test_writes_stubs(self, *, tmp_path):
-        out = tmp_path / "stubs"
-        stubs = {Path("src/foo.pyi"): "# stub\n"}
-
-        changes = _write_stubs(
-            stubs=stubs,
-            output_dir=out,
-            project_root=tmp_path,
-            check=False,
-        )
-
-        assert changes == 1
-        assert (out / "src" / "foo.pyi").read_text(encoding="utf-8") == "# stub\n"
-
-    def test_check_mode_does_not_write(self, *, tmp_path):
-        out = tmp_path / "stubs"
-        stubs = {Path("src/foo.pyi"): "# stub\n"}
-
-        changes = _write_stubs(
-            stubs=stubs,
-            output_dir=out,
-            project_root=tmp_path,
-            check=True,
-        )
-
-        assert changes == 1
-        assert not (out / "src" / "foo.pyi").exists()
-
-    def test_prunes_orphan_stubs(self, *, tmp_path):
-        out = tmp_path / "stubs"
-        (out / "src" / "pkg").mkdir(parents=True)
-        (out / "src" / "pkg" / "orphan.pyi").write_text("# stale\n", encoding="utf-8")
-
-        changes = _write_stubs(
-            stubs={},
-            output_dir=out,
-            project_root=tmp_path,
-            check=False,
-        )
-
-        assert changes == 1
-        assert not (out / "src" / "pkg" / "orphan.pyi").exists()
-        assert not (out / "src").exists()
-
+class TestBuildStubsProjectRootAnchor:
     def test_project_root_anchors_writes_independent_of_cwd(
         self, *, tmp_path, monkeypatch
     ):
@@ -906,19 +861,16 @@ class TestWriteStubs:
         sub.mkdir()
         monkeypatch.chdir(sub)
         out = Path("stubs")
-        stubs = {Path("src/foo.pyi"): "# stub\n"}
 
-        changes = _write_stubs(
-            stubs=stubs,
+        changes = build_stubs(
+            files=[("def hello(): pass\n", "src/foo.py")],
             output_dir=out,
             project_root=tmp_path,
             check=False,
         )
 
         assert changes == 1
-        assert (tmp_path / out / "src" / "foo.pyi").read_text(
-            encoding="utf-8"
-        ) == "# stub\n"
+        assert (tmp_path / out / "src" / "foo.pyi").exists()
         assert not (sub / out / "src" / "foo.pyi").exists()
 
     def test_project_root_anchors_orphan_pruning_independent_of_cwd(
@@ -933,11 +885,8 @@ class TestWriteStubs:
             "# stale\n", encoding="utf-8"
         )
 
-        changes = _write_stubs(
-            stubs={},
-            output_dir=out,
-            project_root=tmp_path,
-            check=False,
+        changes = build_stubs(
+            files=[], output_dir=out, project_root=tmp_path, check=False
         )
 
         assert changes == 1

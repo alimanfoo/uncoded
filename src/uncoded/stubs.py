@@ -356,32 +356,6 @@ def _remove_orphan_stubs(
     return changes
 
 
-def _write_stubs(
-    *,
-    stubs: dict[Path, str],
-    output_dir: Path,
-    project_root: Path,
-    check: bool,
-) -> int:
-    """Write each expected stub and remove every other stub under output_dir."""
-    changes = 0
-    expected: set[Path] = set()
-    for rel_stub_path, content in stubs.items():
-        stub_path = output_dir / rel_stub_path
-        if sync_file(
-            path=stub_path, content=content, project_root=project_root, check=check
-        ):
-            changes += 1
-        expected.add((project_root / stub_path).resolve())
-    changes += _remove_orphan_stubs(
-        expected=expected,
-        stubs_dir=project_root / output_dir,
-        project_root=project_root,
-        check=check,
-    )
-    return changes
-
-
 def build_stubs(
     *,
     files: Iterable[tuple[str, str]],
@@ -412,10 +386,19 @@ def build_stubs(
     the number of changes (or prospective changes).
     """
     project_root = project_root.resolve()
-    stubs = _generate_stubs(files=files)
-    return _write_stubs(
-        stubs=stubs,
-        output_dir=output_dir,
+    changes = 0
+    expected: set[Path] = set()
+    for rel_stub_path, content in _generate_stubs(files=files).items():
+        stub_path = output_dir / rel_stub_path
+        if sync_file(
+            path=stub_path, content=content, project_root=project_root, check=check
+        ):
+            changes += 1
+        expected.add((project_root / stub_path).resolve())
+    changes += _remove_orphan_stubs(
+        expected=expected,
+        stubs_dir=project_root / output_dir,
         project_root=project_root,
         check=check,
     )
+    return changes
