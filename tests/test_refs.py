@@ -168,9 +168,7 @@ class TestFindRefs:
 
 
 class TestPathForDisplay:
-    def test_displays_path_relative_to_current_directory(
-        self, *, tmp_path, monkeypatch
-    ):
+    def test_returns_relative_path_when_under_cwd(self, *, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         path = tmp_path / "pkg" / "m.py"
 
@@ -466,7 +464,7 @@ class TestReadMessage:
             pytest.param(b"Content-Length: 1\r\n\r\n{", id="body-not-json"),
         ],
     )
-    def test_raises_when_ty_sends_an_invalid_message(self, *, data):
+    def test_raises_on_invalid_message(self, *, data):
         with pytest.raises(TyError, match="not valid LSP"):
             _read_message(stream=io.BytesIO(data))
 
@@ -490,7 +488,7 @@ class TestReadResponse:
 
         assert _read_response(stream=stream, request_id=7) == response
 
-    def test_raises_when_ty_answers_with_an_error(self):
+    def test_raises_on_error_reply(self):
         stream = _lsp_stream(
             {"jsonrpc": "2.0", "id": 1, "error": {"code": -32603, "message": "boom"}}
         )
