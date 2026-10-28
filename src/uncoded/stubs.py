@@ -96,26 +96,20 @@ def _render_symbol(*, symbol: Symbol) -> list[str]:
     return [_render_line(symbol=symbol)]
 
 
-def _block_kind(*, symbol: Symbol) -> str:
-    """Return the kind of a symbol, for consecutive one-line definitions to share."""
-    if isinstance(symbol, ClassSymbol):
-        return "class"
-    if isinstance(symbol, FunctionSymbol):
-        return "function"
-    return "assignment"
-
-
 def _symbol_blocks(*, symbols: list[Symbol]) -> list[list[str]]:
     """Render symbols in order as blocks of stub lines.
 
-    Consecutive one-line definitions of one kind share a block. Each class with
-    members is a block of its own.
+    Consecutive one-line definitions of one kind share a block, and a ``type``
+    statement is of the kind of an assignment. Each class with members is a
+    block of its own.
     """
     blocks: list[list[str]] = []
     previous_kind = None
     for symbol in symbols:
         lines = _render_symbol(symbol=symbol)
-        kind = _block_kind(symbol=symbol) if len(lines) == 1 else None
+        kind = AssignmentSymbol if isinstance(symbol, TypeAliasSymbol) else type(symbol)
+        if len(lines) > 1:
+            kind = None
         if kind is not None and kind == previous_kind:
             blocks[-1].extend(lines)
         else:
