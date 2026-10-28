@@ -47,6 +47,12 @@ Changelog = "https://alimanfoo.github.io/uncoded/changelog/"
 [tool.hatch.version]
 source = "vcs"
 
+# The sdist carries the package alone, beside the files that hatchling reads
+# itself, such as README.md and LICENSE. The tests, documentation, specs and
+# agent skills stay in the repository, as no downstream packager is supported.
+[tool.hatch.build.targets.sdist]
+only-include = ["src"]
+
 [tool.uncoded]
 source-roots = ["src", "tests"]
 doc-roots = ["README.md", "AGENTS.md", "docs", "src/uncoded"]
