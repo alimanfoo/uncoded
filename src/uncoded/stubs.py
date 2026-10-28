@@ -356,21 +356,18 @@ def _remove_orphan_stubs(
     return changes
 
 
-def build_stubs(
+def sync_stubs(
     *,
     files: Iterable[tuple[str, str]],
     output_dir: Path,
     project_root: Path,
     check: bool,
 ) -> int:
-    """Sync the stub files of every source root, removing every other stub.
+    """Write the stub of each file in ``files``, and remove every other stub.
 
-    ``files`` holds the readable files of every source root, from
-    :func:`read_source_files`, read once so that callers that also need the
-    files for the namespace map do not walk the source twice. Every ``.pyi``
-    file under ``output_dir`` that ``files`` does not generate is removed, so
-    a root that is no longer configured loses its stubs, and an empty
-    ``files`` removes every stub.
+    ``files`` holds ``(source, rel_path)`` pairs from :func:`read_source_files`.
+    Every ``.pyi`` file under ``output_dir`` that ``files`` does not generate is
+    removed, so ``files`` holds every file that keeps a stub.
 
     ``project_root`` is the anchor for both ends of the pipeline:
     source paths in ``files`` are already relative to it (so each
@@ -378,7 +375,7 @@ def build_stubs(
     and the namespace map), and each stub is written to
     ``project_root / output_dir / <rel>``. The same ``project_root``
     must therefore be passed to :func:`read_source_files` (for
-    relativising) and to ``build_stubs`` (for writing); mismatched
+    relativising) and to ``sync_stubs`` (for writing); mismatched
     anchors silently produce wrong-looking stub paths.
 
     When ``check=True``, the on-disk tree is not mutated; instead,
@@ -390,10 +387,9 @@ def build_stubs(
     expected: set[Path] = set()
     for rel_stub_path, content in _generate_stubs(files=files).items():
         stub_path = output_dir / rel_stub_path
-        if sync_file(
+        changes += sync_file(
             path=stub_path, content=content, project_root=project_root, check=check
-        ):
-            changes += 1
+        )
         expected.add((project_root / stub_path).resolve())
     changes += _remove_orphan_stubs(
         expected=expected,

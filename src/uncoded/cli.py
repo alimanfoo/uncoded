@@ -25,7 +25,7 @@ from uncoded.read_helpers import SkippedFile
 from uncoded.refs import TyError, find_refs
 from uncoded.resolver import NamePath, SymbolNotFoundError, UnsupportedNamePathError
 from uncoded.skill import SKILL_ROOTS, agent_instructions, sync_skills
-from uncoded.stubs import build_stubs
+from uncoded.stubs import sync_stubs
 from uncoded.sync import FileSyncError, remove_file, sync_file
 
 
@@ -79,7 +79,7 @@ def _sync_code_artefacts(
         )
     else:
         n = remove_file(path=namespace_path, project_root=project_root, check=check)
-    n += build_stubs(
+    n += sync_stubs(
         files=files,
         output_dir=Path(".uncoded/stubs"),
         project_root=project_root,
