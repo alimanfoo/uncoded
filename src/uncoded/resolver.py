@@ -90,23 +90,9 @@ def resolve_name_position(*, name_path: NamePath, in_path: Path) -> tuple[int, i
     return (node.name.lineno - 1, node.name.col_offset)
 
 
-def _top_level_symbol(
-    *,
-    node: ast.stmt,
-    head: str,
-    tail: str | None,
-) -> _SymbolNode | None:
-    """Return node if it matches head as a top-level symbol, else None.
-
-    ClassDef matches regardless of tail (it is the dispatch target for
-    class-member lookups). Function, assignment, and type-alias nodes
-    match only when tail is None.
-    """
-    if isinstance(node, ast.ClassDef):
-        name = node.name
-    elif tail is not None:
-        return None
-    elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+def _top_level_symbol(*, node: ast.stmt, head: str) -> _SymbolNode | None:
+    """Return node if it is a top-level symbol named head, else None."""
+    if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
         name = node.name
     elif isinstance(node, (ast.Assign, ast.AnnAssign)):
         name = assign_target_name(node=node)
@@ -139,12 +125,9 @@ def resolve_ast_node_from_source(
     top_match: _SymbolNode | None = None
 
     for node in tree.body:
-        symbol = _top_level_symbol(node=node, head=head, tail=tail)
+        symbol = _top_level_symbol(node=node, head=head)
         if symbol is not None:
             top_match = symbol
-
-    if top_match is None:
-        raise SymbolNotFoundError(f"{str(name_path)!r} not found in {in_path}")
 
     if tail is not None and isinstance(top_match, ast.ClassDef):
         return _resolve_class_member(
@@ -153,6 +136,9 @@ def resolve_ast_node_from_source(
             class_node=top_match,
             member_name=tail,
         )
+
+    if top_match is None or tail is not None:
+        raise SymbolNotFoundError(f"{str(name_path)!r} not found in {in_path}")
 
     return top_match
 

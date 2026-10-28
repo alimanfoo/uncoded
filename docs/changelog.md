@@ -64,6 +64,11 @@ includes it. Each entry links the pull request that made the change.
 
 ### Fixed
 
+- When a function, an assignment or a type alias redefines a class,
+  `uncoded body` and `uncoded refs` find no symbol for a name path to a member
+  of that class, and exit with status `1`. They used the class, although the
+  later definition replaces it, as [Concepts](concepts.md#redefinition) says.
+  ([#341](https://github.com/alimanfoo/uncoded/pull/341))
 - `uncoded refs` prints the symbol's definition and each import of it, as well
   as each use of it. It printed only the uses, so a symbol whose only reference
   was an import looked unused. The code navigation skill tells the agent to
