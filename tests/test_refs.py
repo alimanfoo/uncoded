@@ -304,7 +304,7 @@ class TestQueryReferences:
 
 
 class TestRunExchange:
-    def test_lsp_error_raises(self, *, tmp_path):
+    def test_raises_when_ty_answers_with_an_error(self, *, tmp_path):
         in_path = tmp_path / "m.py"
         in_path.write_text("def foo(): pass\n", encoding="utf-8")
 

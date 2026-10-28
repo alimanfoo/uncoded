@@ -918,7 +918,7 @@ class TestSyncStubsWithNoFiles:
             check=check,
         )
 
-    def test_noop_when_output_dir_absent(self, *, tmp_path):
+    def test_changes_nothing_when_stubs_directory_absent(self, *, tmp_path):
         assert self._sync(tmp_path=tmp_path) == 0
 
     def test_removes_every_stub_and_directory(self, *, tmp_path):

@@ -26,7 +26,7 @@ class TestSyncFile:
         assert changed is True
         assert path.read_text(encoding="utf-8") == "new"
 
-    def test_noop_when_current(self, *, tmp_path):
+    def test_changes_nothing_when_current(self, *, tmp_path):
         path = tmp_path / "out.txt"
         path.write_text("same", encoding="utf-8")
         mtime_before = path.stat().st_mtime_ns
@@ -52,7 +52,7 @@ class TestSyncFile:
         assert changed is True
         assert path.read_text(encoding="utf-8") == "old"
 
-    def test_check_mode_reports_noop_when_current(self, *, tmp_path):
+    def test_check_mode_reports_no_change_when_current(self, *, tmp_path):
         path = tmp_path / "out.txt"
         path.write_text("same", encoding="utf-8")
         changed = sync_file(
@@ -77,7 +77,7 @@ class TestRemoveFile:
         assert changed is True
         assert not path.exists()
 
-    def test_noop_when_absent(self, *, tmp_path):
+    def test_changes_nothing_when_absent(self, *, tmp_path):
         path = tmp_path / "missing.txt"
         changed = remove_file(path=path, project_directory=tmp_path)
         assert changed is False
@@ -89,7 +89,7 @@ class TestRemoveFile:
         assert changed is True
         assert path.exists()
 
-    def test_check_mode_reports_noop_when_absent(self, *, tmp_path):
+    def test_check_mode_reports_no_change_when_absent(self, *, tmp_path):
         path = tmp_path / "missing.txt"
         changed = remove_file(path=path, project_directory=tmp_path, check=True)
         assert changed is False
