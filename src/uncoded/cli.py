@@ -235,6 +235,17 @@ def _init() -> int:
     return 0
 
 
+# The failures of a lookup that `uncoded body` and `uncoded refs` report, each
+# with its message in _report_lookup_error. OSError covers FileNotFoundError.
+_LOOKUP_ERRORS = (
+    UnsupportedNamePathError,
+    SymbolNotFoundError,
+    OSError,
+    UnicodeDecodeError,
+    SyntaxError,
+)
+
+
 def _report_lookup_error(*, exc: Exception, name_path: str, in_path: str) -> int:
     """Print the CLI error message for a lookup failure and return 1.
 
@@ -264,14 +275,7 @@ def _body(*, name_path: str, in_path: str) -> int:
     target = Path(in_path)
     try:
         body = resolve_body(name_path=NamePath.parse(raw=name_path), in_path=target)
-    except (
-        UnsupportedNamePathError,
-        SymbolNotFoundError,
-        FileNotFoundError,
-        OSError,
-        UnicodeDecodeError,
-        SyntaxError,
-    ) as e:
+    except _LOOKUP_ERRORS as e:
         return _report_lookup_error(exc=e, name_path=name_path, in_path=in_path)
 
     sys.stdout.write(body)
@@ -292,14 +296,7 @@ def _refs(*, name_path: str, in_path: str) -> int:
     except RuntimeError as e:
         print(f"Error: {e}", file=sys.stderr)
         return 1
-    except (
-        UnsupportedNamePathError,
-        SymbolNotFoundError,
-        FileNotFoundError,
-        OSError,
-        UnicodeDecodeError,
-        SyntaxError,
-    ) as e:
+    except _LOOKUP_ERRORS as e:
         return _report_lookup_error(exc=e, name_path=name_path, in_path=in_path)
 
     for ref in refs:
