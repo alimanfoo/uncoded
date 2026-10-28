@@ -136,9 +136,9 @@ An open issue owns each shortfall below.
 - **Machine-checked rules.** Each rule that the standard lists has its check:
   ruff's subprocess rules with their per-file waivers, the `writes-only-in-sync`
   hook, the import-linter `layers` contract, `tests/test_markers.py`, the
-  `stub-style` hook that #366 added, PLW1514 with the runtime gate, and PLR0917
-  with `max-positional-args = 0`. One rule to watch: a test that spawns ty must
-  carry the `integration` marker, which review has missed once (#336).
+  stub-style step of the `lint` job in CI, PLW1514 with the runtime gate, and
+  PLR0917 with `max-positional-args = 0`. One rule to watch: a test that spawns
+  ty must carry the `integration` marker, which review has missed once (#336).
 - **Fast readable tests.** The time is the default run's, as pytest reports it.
   The 8 integration tests passed in 0.43 seconds. Review read the 361 distinct
   test function names against the bar that #310 settled, and 17 fall short: #359
