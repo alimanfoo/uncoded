@@ -83,6 +83,12 @@ PYTHONWARNDEFAULTENCODING=1 uv run pytest
 # Run a subset of tests without the coverage gate
 PYTHONWARNDEFAULTENCODING=1 uv run pytest tests/test_stubs.py --no-cov
 
+# Preview the documentation site at http://127.0.0.1:8000/
+uv run mkdocs serve
+
+# Build the documentation with the strict checks that mkdocs.yml sets
+uv run mkdocs build
+
 # Run the full pre-commit suite (the same checks CI runs)
 uv run pre-commit run --all-files
 ```
