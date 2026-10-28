@@ -58,9 +58,10 @@ process and are slower than the rest.
 
 ## Hung tests
 
-Every test has 30 seconds to finish, counting its fixture setup and teardown. CI
-raises the limit to 120 seconds on macOS and Windows, which run slower. The
-limit is there to end a run that has hung, not to measure speed.
+Every test has a time limit to finish, counting its fixture setup and teardown.
+`timeout` in `pyproject.toml` sets the limit, and CI raises it on macOS and
+Windows, which run slower. The limit is there to end a run that has hung, not to
+measure speed.
 
 When the limit passes, `pytest-timeout` writes the stack of every thread to the
 terminal. On Linux and macOS it then fails the test, and the run carries on. On
@@ -89,6 +90,5 @@ builds the documentation site and publishes it to GitHub Pages.
 ## Run the tests
 
 The
-[agent guide](https://github.com/alimanfoo/uncoded/blob/main/AGENTS.md#commands)
-gives the commands for the default suite, a subset of the tests, every test with
-the integration tests, and the pre-commit checks.
+[Commands section of the agent guide](https://github.com/alimanfoo/uncoded/blob/main/AGENTS.md#commands)
+gives the commands that run the tests.

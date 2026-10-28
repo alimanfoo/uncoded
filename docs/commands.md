@@ -27,7 +27,7 @@ def help_block(*command):
         stdout=subprocess.PIPE,
         check=True,
         encoding="utf-8",
-        env={**os.environ, "COLUMNS": "80", "PYTHONIOENCODING": "utf-8"},
+        env={**os.environ, "COLUMNS": "80"},
     )
     cog.outl()
     cog.outl("```text")
