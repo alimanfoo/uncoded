@@ -70,8 +70,8 @@ class TestRenderStub:
         )
         output = _render_stub(python_file=module)
         assert "VALUE = 1\n" in output
-        assert "def run():\n    ...\n" in output
-        assert "class Worker:\n    def work(self):\n        ...\n" in output
+        assert "def run(): ...\n" in output
+        assert "class Worker:\n    def work(self): ...\n" in output
         assert "# L" not in output
 
     def test_async_function_prefix(self):
@@ -79,7 +79,7 @@ class TestRenderStub:
             rel_path="pkg/mod.py",
             symbols=[FunctionSymbol(name="fetch", is_async=True)],
         )
-        assert "async def fetch():\n    ...\n" in _render_stub(python_file=module)
+        assert "async def fetch(): ...\n" in _render_stub(python_file=module)
 
     @pytest.mark.parametrize(
         ("params", "expected"),
@@ -145,7 +145,7 @@ class TestRenderStub:
             rel_path="pkg/mod.py",
             symbols=[ClassSymbol(name="Dog", bases=["Animal"])],
         )
-        assert "class Dog(Animal):\n    ...\n" in _render_stub(python_file=module)
+        assert "class Dog(Animal): ...\n" in _render_stub(python_file=module)
 
     def test_class_with_no_members_renders_body(self):
         # A class with no attributes and no methods needs an explicit
@@ -155,7 +155,7 @@ class TestRenderStub:
             symbols=[ClassSymbol(name="Sentinel")],
         )
         output = _render_stub(python_file=module)
-        assert "class Sentinel:\n    ...\n" in output
+        assert "class Sentinel: ...\n" in output
         compile(output, "pkg/mod.pyi", "exec")
 
     def test_attribute_with_annotation(self):
@@ -186,7 +186,7 @@ class TestRenderStub:
             ],
         )
         output = _render_stub(python_file=module)
-        assert "class Foo:\n    def bar(self):\n        ...\n" in output
+        assert "class Foo:\n    def bar(self): ...\n" in output
 
     def test_ends_with_newline(self):
         module = PythonFile(rel_path="pkg/mod.py")
@@ -342,12 +342,10 @@ class TestRenderStub:
             "\n"
             "import functools\n"
             "\n"
-            "def area(width: int, height: int) -> int:\n"
-            "    ...\n"
+            "def area(width: int, height: int) -> int: ...\n"
             "\n"
             "class Shape:\n"
-            "    def unit() -> 'Shape':\n"
-            "        ...\n"
+            "    def unit() -> 'Shape': ...\n"
         )
 
     def test_shows_each_definition_of_a_name_defined_twice(self):
@@ -360,8 +358,51 @@ class TestRenderStub:
             python_file=_extract_python_file(source=source, rel_path="m.py")
         )
 
-        assert output.endswith(
-            "def area(width):\n    ...\n\ndef area(width, height):\n    ...\n"
+        assert output.endswith("def area(width): ...\ndef area(width, height): ...\n")
+
+    def test_separates_blocks_by_blank_lines_as_ruff_does(self):
+        source = textwrap.dedent("""\
+            import os
+            X = 1
+            type T = int
+            def f(): pass
+            async def g(): pass
+            class A: pass
+            class B: pass
+            class C:
+                x: int
+                def m(self): pass
+                def n(self): pass
+            class D: pass
+            class E: pass
+        """)
+
+        output = _render_stub(
+            python_file=_extract_python_file(source=source, rel_path="m.py")
+        )
+
+        assert output == (
+            f"# {GENERATED_MARKER}\n"
+            "# m.py\n"
+            "\n"
+            "import os\n"
+            "\n"
+            "X = 1\n"
+            "type T = int\n"
+            "\n"
+            "def f(): ...\n"
+            "async def g(): ...\n"
+            "\n"
+            "class A: ...\n"
+            "class B: ...\n"
+            "\n"
+            "class C:\n"
+            "    x: int\n"
+            "    def m(self): ...\n"
+            "    def n(self): ...\n"
+            "\n"
+            "class D: ...\n"
+            "class E: ...\n"
         )
 
 

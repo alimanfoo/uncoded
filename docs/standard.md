@@ -237,6 +237,8 @@ A structural rule that review keeps missing is checked by a machine.
   - Imports point down three layers, which the architecture states. An
     import-linter `layers` contract in `pyproject.toml` checks it.
   - Every generated file carries the provenance marker. The tests check it.
+  - Every stub is laid out in the standard stub style. A hook runs
+    `ruff format --check` on the stubs of uncoded's own source.
   - Every text read and write names its encoding. Ruff's PLW1514 and the runtime
     gate in the tests check it.
   - Every parameter is keyword-only. Ruff's `too-many-positional-arguments`
