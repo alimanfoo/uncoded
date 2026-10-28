@@ -35,9 +35,9 @@ Paths that resolve outside that directory are rejected, including through
 symbolic links.
 
 uncoded searches upwards from the current directory and uses the nearest
-configuration. In one directory, `.uncoded.toml` takes precedence over a
-`pyproject.toml` without `[tool.uncoded]`. If both files configure uncoded, the
-command fails. Keep the settings in one file.
+configuration file. A `pyproject.toml` without `[tool.uncoded]` is not a
+configuration file, so the search passes over it. If both files in one directory
+configure uncoded, the command fails. Keep the settings in one file.
 
 ## Generated files
 
