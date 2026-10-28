@@ -110,7 +110,9 @@ def resolve_ast_node_from_source(
         )
 
     if top_match is None or tail is not None:
-        raise SymbolNotFoundError(f"{str(name_path)!r} not found in {in_path}")
+        raise SymbolNotFoundError(
+            f"{str(name_path)!r} not found in {in_path.as_posix()}"
+        )
 
     return top_match
 
@@ -124,5 +126,7 @@ def _resolve_class_member(
 ) -> SymbolNode:
     match = dict(class_symbols(node=class_node)).get(member_name)
     if match is None:
-        raise SymbolNotFoundError(f"{str(name_path)!r} not found in {in_path}")
+        raise SymbolNotFoundError(
+            f"{str(name_path)!r} not found in {in_path.as_posix()}"
+        )
     return match
