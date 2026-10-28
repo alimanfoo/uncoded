@@ -226,6 +226,22 @@ class TestQueryReferences:
         ):
             _query_references(in_path=in_path, position=(0, 4), project_root=tmp_path)
 
+    def test_uvx_that_cannot_start_raises_ty_error(self, *, tmp_path):
+        in_path = tmp_path / "m.py"
+        in_path.write_text("def foo(): pass\n", encoding="utf-8")
+
+        with (
+            mock.patch(
+                "uncoded.refs.subprocess.Popen",
+                side_effect=PermissionError(13, "Permission denied"),
+            ),
+            pytest.raises(
+                TyError,
+                match=r"^ty failed: uvx could not start: .*Permission denied$",
+            ),
+        ):
+            _query_references(in_path=in_path, position=(0, 4), project_root=tmp_path)
+
     @pytest.mark.integration
     def test_returns_empty_list_when_no_references(self, *, tmp_path):
         (tmp_path / "pyproject.toml").write_text(
@@ -459,3 +475,13 @@ class TestReadResponse:
         stream = _lsp_stream(notification, response)
 
         assert _read_response(stream=stream, request_id=7) == response
+
+    def test_raises_on_error_reply(self):
+        stream = _lsp_stream(
+            {"jsonrpc": "2.0", "id": 1, "error": {"code": -32603, "message": "boom"}}
+        )
+
+        with pytest.raises(
+            TyError, match=r"^ty failed: it answered with an error: boom$"
+        ):
+            _read_response(stream=stream, request_id=1)

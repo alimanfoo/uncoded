@@ -113,6 +113,8 @@ def _run_ty(
         raise TyError(
             "uvx not found on PATH — install uv (https://docs.astral.sh/uv/)"
         ) from exc
+    except OSError as exc:
+        raise TyError(f"ty failed: uvx could not start: {exc}") from exc
     try:
         return _run_exchange(
             stdin=cast("IO[bytes]", proc.stdin),
@@ -228,12 +230,6 @@ def _run_exchange(
     _read_response(stream=stdout, request_id=3)
     _write_message(stream=stdin, msg={"jsonrpc": "2.0", "method": "exit"})
 
-    if "error" in response:
-        error = response["error"]
-        raise TyError(
-            f"ty failed: it answered with an error: {error.get('message', error)}"
-        )
-
     return [
         _LSPLocation(
             path=_uri_to_path(uri=loc["uri"]),
@@ -270,8 +266,14 @@ def _read_message(*, stream: IO[bytes]) -> dict:
 def _read_response(*, stream: IO[bytes], request_id: int) -> dict:
     while True:
         msg = _read_message(stream=stream)
-        if msg.get("id") == request_id:
-            return msg
+        if msg.get("id") != request_id:
+            continue
+        if "error" in msg:
+            error = msg["error"]
+            raise TyError(
+                f"ty failed: it answered with an error: {error.get('message', error)}"
+            )
+        return msg
 
 
 def _uri_to_path(*, uri: str) -> Path:
