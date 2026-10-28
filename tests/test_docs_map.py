@@ -283,14 +283,14 @@ class TestRenderDocsMap:
         output = render_docs_map(mapping={})
         assert output.startswith(DOCS_HEADER)
 
-    def test_yaml_parseable(self):
+    def test_roundtrips_through_yaml(self):
         files = [("# Setup\n## Config\n", Path("guide.md"))]
         m = build_docs_map(files=files)
         output = render_docs_map(mapping=m)
         parsed = yaml.safe_load(output)
         assert parsed == m
 
-    def test_null_renders_clean(self):
+    def test_headingless_file_renders_without_null(self):
         # Null leaves must render as "key:" not "key: null".
         files = [("no headings", Path("notes.md"))]
         output = render_docs_map(mapping=build_docs_map(files=files))

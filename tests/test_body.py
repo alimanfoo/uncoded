@@ -142,13 +142,13 @@ class TestResolveDefinitionTopLevel:
         with pytest.raises(SymbolNotFoundError, match="missing"):
             resolve_definition(name_path=NamePath("missing"), in_path=path)
 
-    def test_file_not_found_propagates(self, *, tmp_path):
+    def test_raises_when_the_file_is_missing(self, *, tmp_path):
         path = tmp_path / "nonexistent.py"
 
         with pytest.raises(FileNotFoundError):
             resolve_definition(name_path=NamePath("foo"), in_path=path)
 
-    def test_syntax_error_propagates(self, *, tmp_path):
+    def test_raises_when_the_file_cannot_be_parsed(self, *, tmp_path):
         path = tmp_path / "m.py"
         path.write_text("def broken(:\n", encoding="utf-8", newline="")
 
@@ -407,13 +407,13 @@ class TestResolveAstNode:
         with pytest.raises(UnsupportedNamePathError):
             NamePath.parse(raw="A/B/C")
 
-    def test_file_not_found_propagates(self, *, tmp_path):
+    def test_raises_when_the_file_is_missing(self, *, tmp_path):
         with pytest.raises(FileNotFoundError):
             resolve_ast_node(
                 name_path=NamePath("foo"), in_path=tmp_path / "nonexistent.py"
             )
 
-    def test_syntax_error_propagates(self, *, tmp_path):
+    def test_raises_when_the_file_cannot_be_parsed(self, *, tmp_path):
         path = tmp_path / "m.py"
         path.write_text("def broken(:\n", encoding="utf-8", newline="")
 
@@ -510,7 +510,7 @@ class TestResolveNamePosition:
             5,
         )
 
-    def test_class_method(self, *, tmp_path):
+    def test_method(self, *, tmp_path):
         source = textwrap.dedent("""\
             class Dog:
                 def bark(self):

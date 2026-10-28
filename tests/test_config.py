@@ -4,7 +4,6 @@ import pytest
 
 from uncoded import __version__
 from uncoded.config import (
-    Config,
     ConfigError,
     find_config,
     read_config,
@@ -75,12 +74,6 @@ class TestReadConfig:
         subdir.mkdir()
         config = read_config(start=subdir)
         assert config.project_directory == tmp_path
-
-    def test_returns_frozen_dataclass(self, *, tmp_path):
-        toml = '[tool.uncoded]\nsource-roots = ["src"]\n'
-        (tmp_path / "pyproject.toml").write_text(toml, encoding="utf-8")
-        config = read_config(start=tmp_path)
-        assert isinstance(config, Config)
 
     def test_required_version_read_from_pyproject(self, *, tmp_path):
         (tmp_path / "pyproject.toml").write_text(

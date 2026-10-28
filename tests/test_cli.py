@@ -93,7 +93,7 @@ class TestSyncApplyMode:
         for skill_path in _SOURCE_SKILL_PATHS:
             assert (tmp_path / skill_path).exists()
 
-    def test_idempotent_second_run(self, *, tmp_path, monkeypatch):
+    def test_second_run_changes_nothing(self, *, tmp_path, monkeypatch):
         _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "src" / "foo.py").write_text(
             "def hello(): pass\n", encoding="utf-8"
@@ -754,7 +754,7 @@ class TestRootThatCannotBeUsed:
         )
 
 
-def _init_project(*, tmp_path, monkeypatch, roots):
+def _make_roots(*, tmp_path, monkeypatch, roots):
     """Create each of ``roots`` in ``tmp_path``, then chdir into it."""
     for root in roots:
         if root.endswith(".md"):
@@ -823,7 +823,7 @@ class TestInitCommand:
     def test_configures_every_conventional_root_and_syncs(
         self, *, tmp_path, monkeypatch, capsys
     ):
-        _init_project(
+        _make_roots(
             tmp_path=tmp_path,
             monkeypatch=monkeypatch,
             roots=["src", "tests", "README.md", "AGENTS.md", "docs"],
@@ -864,7 +864,7 @@ class TestInitCommand:
         )
 
     def test_names_only_the_roots_that_exist(self, *, tmp_path, monkeypatch, capsys):
-        _init_project(tmp_path=tmp_path, monkeypatch=monkeypatch, roots=["docs"])
+        _make_roots(tmp_path=tmp_path, monkeypatch=monkeypatch, roots=["docs"])
 
         assert _run(monkeypatch=monkeypatch, arguments=["init"]) == 0
 
@@ -881,7 +881,7 @@ class TestInitCommand:
         (tmp_path / "outside").mkdir()
         project = tmp_path / "project"
         project.mkdir()
-        _init_project(tmp_path=project, monkeypatch=monkeypatch, roots=[])
+        _make_roots(tmp_path=project, monkeypatch=monkeypatch, roots=[])
         (project / "README.md").write_text("# T\n", encoding="utf-8")
         (project / "src").write_text("", encoding="utf-8")
         (project / "tests").symlink_to(tmp_path / "outside", target_is_directory=True)
@@ -895,7 +895,7 @@ class TestInitCommand:
     def test_passes_over_pyproject_without_uncoded_table(
         self, *, tmp_path, monkeypatch
     ):
-        _init_project(tmp_path=tmp_path, monkeypatch=monkeypatch, roots=["src"])
+        _make_roots(tmp_path=tmp_path, monkeypatch=monkeypatch, roots=["src"])
         (tmp_path / "pyproject.toml").write_text(
             '[project]\nname = "demo"\n', encoding="utf-8"
         )
@@ -924,7 +924,7 @@ class TestInitCommand:
     def test_writes_nothing_when_no_conventional_root_exists(
         self, *, tmp_path, monkeypatch, capsys
     ):
-        _init_project(tmp_path=tmp_path, monkeypatch=monkeypatch, roots=["lib"])
+        _make_roots(tmp_path=tmp_path, monkeypatch=monkeypatch, roots=["lib"])
 
         assert _run(monkeypatch=monkeypatch, arguments=["init"]) == 1
 
@@ -958,7 +958,7 @@ class TestInitCommand:
         assert "uncoded-doc-navigation" not in out
 
     def test_second_run_changes_nothing(self, *, tmp_path, monkeypatch, capsys):
-        _init_project(
+        _make_roots(
             tmp_path=tmp_path, monkeypatch=monkeypatch, roots=["src", "README.md"]
         )
         assert _run(monkeypatch=monkeypatch, arguments=["init"]) == 0
@@ -978,7 +978,7 @@ class TestInitCommand:
     def test_stops_with_one_line_when_the_configuration_file_cannot_be_written(
         self, *, tmp_path, monkeypatch, capsys
     ):
-        _init_project(tmp_path=tmp_path, monkeypatch=monkeypatch, roots=["src"])
+        _make_roots(tmp_path=tmp_path, monkeypatch=monkeypatch, roots=["src"])
         failure = PermissionError(13, "Permission denied")
 
         with mock.patch.object(Path, "write_text", side_effect=failure):
@@ -1067,16 +1067,7 @@ def _init_package_project(*, tmp_path, monkeypatch):
 
 
 class TestBodyCommand:
-    def test_happy_path_dispatch(self, *, tmp_path, monkeypatch, capsys):
-        _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
-        (tmp_path / "src" / "foo.py").write_text(
-            "def fn():\n    pass\n", encoding="utf-8", newline=""
-        )
-
-        assert _body(monkeypatch=monkeypatch, name_path="fn", in_path="src/foo.py") == 0
-        assert capsys.readouterr().out == "def fn():\n    pass\n"
-
-    def test_class_method_form(self, *, tmp_path, monkeypatch, capsys):
+    def test_prints_a_methods_definition(self, *, tmp_path, monkeypatch, capsys):
         _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "src" / "foo.py").write_text(
             "class Dog:\n    def bark(self):\n        pass\n",
@@ -1269,16 +1260,7 @@ class TestBodyCommand:
 
 
 class TestRefsCommand:
-    def test_happy_path_dispatch(self, *, tmp_path, monkeypatch, capsys):
-        pkg = _init_package_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
-        (pkg / "a.py").write_text("def foo():\n    return 42\n", encoding="utf-8")
-        (pkg / "b.py").write_text("from pkg.a import foo\nfoo()\n", encoding="utf-8")
-
-        assert _refs(monkeypatch=monkeypatch, name_path="foo", in_path="pkg/a.py") == 0
-        out = capsys.readouterr().out
-        assert "pkg/b.py:2:1" in out
-
-    def test_class_method_form(self, *, tmp_path, monkeypatch, capsys):
+    def test_prints_each_reference_to_a_method(self, *, tmp_path, monkeypatch, capsys):
         pkg = _init_package_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (pkg / "a.py").write_text(
             textwrap.dedent("""\
@@ -1477,7 +1459,7 @@ class TestSyncDocRoots:
         assert (tmp_path / ".uncoded" / ".gitignore").exists()
         assert (tmp_path / ".uncoded" / "docs.yaml").exists()
 
-    def test_doc_only_does_not_write_namespace_yaml(self, *, tmp_path, monkeypatch):
+    def test_doc_only_does_not_write_namespace_map(self, *, tmp_path, monkeypatch):
         _init_doc_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 0
         assert not (tmp_path / ".uncoded" / "namespace.yaml").exists()
@@ -1487,7 +1469,7 @@ class TestSyncDocRoots:
         assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 0
         assert not (tmp_path / ".uncoded" / "stubs").exists()
 
-    def test_doc_root_single_md_file(self, *, tmp_path, monkeypatch):
+    def test_doc_root_that_is_a_markdown_file(self, *, tmp_path, monkeypatch):
         readme = tmp_path / "README.md"
         readme.write_text("# Overview\n## Usage\n", encoding="utf-8")
         (tmp_path / "pyproject.toml").write_text(
@@ -1622,7 +1604,7 @@ class TestSyncDocRoots:
         for path in _DOC_SKILL_PATHS:
             assert not (tmp_path / path).exists()
 
-    def test_check_returns_one_when_docs_yaml_stale(self, *, tmp_path, monkeypatch):
+    def test_check_returns_one_when_docs_map_stale(self, *, tmp_path, monkeypatch):
         _init_doc_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         _run(monkeypatch=monkeypatch, arguments=["sync"])
         # Modify the doc source.
@@ -1671,7 +1653,7 @@ class TestSyncDocRoots:
         )
         assert _run(monkeypatch=monkeypatch, arguments=["check"]) == 1
 
-    def test_check_returns_one_when_docs_yaml_should_be_removed(
+    def test_check_returns_one_when_docs_map_should_be_removed(
         self, *, tmp_path, monkeypatch
     ):
         # docs.yaml exists but doc_roots is now absent — check must report.
@@ -1722,7 +1704,7 @@ class TestSyncDocRoots:
         for path in _SKILL_PATHS:
             assert (tmp_path / path).exists()
 
-    def test_idempotent_doc_only(self, *, tmp_path, monkeypatch):
+    def test_doc_only_second_run_changes_nothing(self, *, tmp_path, monkeypatch):
         _init_doc_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
         _run(monkeypatch=monkeypatch, arguments=["sync"])
         docs_mtime = (tmp_path / ".uncoded" / "docs.yaml").stat().st_mtime_ns

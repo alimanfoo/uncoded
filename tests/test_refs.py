@@ -82,7 +82,7 @@ class TestFindRefs:
             Reference(path=pkg / "c.py", line=1, col=19),
         ]
 
-    def test_class_method_shape(self, *, tmp_path):
+    def test_finds_each_reference_to_a_method(self, *, tmp_path):
         pkg = tmp_path / "pkg"
         pkg.mkdir()
         (tmp_path / "pyproject.toml").write_text(
@@ -266,7 +266,7 @@ class TestQueryReferences:
 
         assert refs == []
 
-    def test_returns_lsp_locations_when_popen_succeeds(self, *, tmp_path):
+    def test_starts_the_pinned_ty_and_returns_its_locations(self, *, tmp_path):
         in_path = tmp_path / "m.py"
         in_path.write_text("def foo(): pass\n", encoding="utf-8")
         ref_path = tmp_path / "other.py"
@@ -304,7 +304,7 @@ class TestQueryReferences:
 
 
 class TestRunExchange:
-    def test_lsp_error_raises(self, *, tmp_path):
+    def test_raises_when_ty_answers_with_an_error(self, *, tmp_path):
         in_path = tmp_path / "m.py"
         in_path.write_text("def foo(): pass\n", encoding="utf-8")
 
@@ -439,7 +439,7 @@ class TestTyFailures:
 
 
 class TestTerminate:
-    def test_kills_on_timeout(self):
+    def test_terminates_ty_that_does_not_stop_in_time(self):
         proc = mock.Mock(spec=subprocess.Popen)
         proc.stdin = io.BytesIO()
         proc.wait.side_effect = [subprocess.TimeoutExpired("cmd", 5), None]

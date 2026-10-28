@@ -155,7 +155,7 @@ class TestRenderMap:
 
         assert output.index("zebra.py") < output.index("alpha.py")
 
-    def test_null_renders_clean(self):
+    def test_function_renders_without_null(self):
         modules = [
             ModuleInfo(rel_path="src/pkg/utils.py", classes=[], functions=["compute"]),
         ]
