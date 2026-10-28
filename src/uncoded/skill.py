@@ -18,13 +18,12 @@ SKILL_ROOTS = [
 
 @dataclass(frozen=True)
 class Skill:
-    """Frozen record of one skill: name, content file, gate, and any legacy names."""
+    """Frozen record of one skill: name, content file, and gate."""
 
     name: str
     description: str
     body_file: str
     gate: Literal["source", "docs"]
-    legacy_names: tuple[str, ...] = ()
     is_navigation: bool = False
 
 
@@ -40,11 +39,6 @@ SKILLS: list[Skill] = [
         ),
         body_file="consistency_review.md",
         gate="source",
-        legacy_names=(
-            "uncoded-coherence-review",
-            "coherence-review",
-            "uncoded-review",
-        ),
     ),
     Skill(
         name="uncoded-code-navigation",
@@ -103,7 +97,7 @@ def _sync_one_skill(
     project_root: Path,
     check: bool,
 ) -> int:
-    """Build or remove one skill's files, then remove any legacy names.
+    """Build one skill's files when its gate is met, or remove them otherwise.
 
     Returns the number of file changes (writes and removals).
     """
@@ -124,13 +118,6 @@ def _sync_one_skill(
                 project_root=project_root,
                 check=check,
             )
-    for legacy_name in skill.legacy_names:
-        for root in SKILL_ROOTS:
-            changes += remove_file(
-                path=_skill_path(root=root, name=legacy_name),
-                project_root=project_root,
-                check=check,
-            )
     return changes
 
 
@@ -145,7 +132,7 @@ def sync_skills(
 
     For each skill, builds the skill files when its gate condition is met
     (gate "source" requires source=True; gate "docs" requires docs=True) and
-    removes them otherwise. Always removes any legacy skill paths.
+    removes them otherwise.
 
     Returns the total number of file changes (writes and removals).
     """

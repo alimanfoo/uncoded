@@ -28,8 +28,11 @@ review, and makes navigation skills load once per session.
    index must also be refreshed when a commit only deletes files.
 
 3. Change every skill pointer from `uncoded-coherence-review` to
-   `uncoded-consistency-review`. Running `uncoded sync` removes the old
-   generated skill.
+   `uncoded-consistency-review`. Delete the old generated skill:
+
+   ```sh
+   rm -rf .agents/skills/uncoded-coherence-review .claude/skills/uncoded-coherence-review
+   ```
 
 4. Replace any always-on navigation instructions in `AGENTS.md` or `CLAUDE.md`
    with the skill-loading instructions from
@@ -44,6 +47,9 @@ Version 2 replaces instruction injection with generated skills.
    ```sh
    uvx uncoded@2.1.1 sync
    ```
+
+   It also removes the version 1 skills, `coherence-review` and
+   `uncoded-review`. Later releases leave them in place.
 
 2. Remove the old marker blocks from `AGENTS.md` or `CLAUDE.md`:
 
