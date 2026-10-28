@@ -27,9 +27,10 @@ includes it. Each entry links the pull request that made the change.
   already do. So does every path in a message or a warning.
   ([#312](https://github.com/alimanfoo/uncoded/pull/312))
 - `uncoded body` and `uncoded refs` find the project directory from the current
-  directory, as the other commands do, and stop outside a project.
-  `uncoded refs` no longer looks for a project from the `--in` file's directory,
-  and no longer falls back to the nearest `pyproject.toml`.
+  directory, as the other commands do, and stop outside a project. They also
+  stop when the `--in` file is outside the project directory. `uncoded refs` no
+  longer looks for a project from the `--in` file's directory, and no longer
+  falls back to the nearest `pyproject.toml`.
   ([#325](https://github.com/alimanfoo/uncoded/pull/325))
 
 ### Added

@@ -12,6 +12,7 @@ from uncoded.config import (
     Config,
     ConfigError,
     find_config,
+    is_inside_project,
     read_config,
     render_conventional_config,
     validate_root,
@@ -220,9 +221,24 @@ def _init(*, config: Config | None) -> int:
     return 0
 
 
+class _OutsideProjectError(Exception):
+    """Raised when an ``--in`` file is outside the project directory."""
+
+
+def _project_file(*, in_path: str, project_root: Path) -> Path:
+    """Return the ``--in`` file, or raise _OutsideProjectError when it is outside."""
+    target = Path(in_path)
+    if not is_inside_project(path=target, project_root=project_root):
+        raise _OutsideProjectError(
+            f"outside the project directory {project_root.as_posix()}."
+        )
+    return target
+
+
 # The failures of a lookup that `uncoded body` and `uncoded refs` report, each
 # with its message in _report_lookup_error. OSError covers FileNotFoundError.
 _LOOKUP_ERRORS = (
+    _OutsideProjectError,
     UnsupportedNamePathError,
     SymbolNotFoundError,
     OSError,
@@ -234,8 +250,9 @@ _LOOKUP_ERRORS = (
 def _report_lookup_error(*, exc: Exception, name_path: str, in_path: str) -> int:
     """Print the CLI error message for a lookup failure and return 1.
 
-    Covers the four shared error arms for _body and _refs: unsupported name
-    path, symbol not found, file not found, and read/parse error.
+    Covers the shared error arms for _body and _refs: unsupported name path,
+    symbol not found, file not found, and any other fault in the file, such as
+    a file outside the project directory or a read or parse error.
     FileNotFoundError is checked before OSError because it subclasses it.
     """
     shown_path = Path(in_path).as_posix()
@@ -250,15 +267,16 @@ def _report_lookup_error(*, exc: Exception, name_path: str, in_path: str) -> int
     return 1
 
 
-def _body(*, name_path: str, in_path: str) -> int:
+def _body(*, config: Config, name_path: str, in_path: str) -> int:
     """Print the source body of name_path in in_path to stdout.
 
-    Returns 0 on success. Returns 1 if name_path is unsupported, if
-    name_path is not present in the file, if the file cannot be read
-    (missing, unreadable, or undecodable), or if the source has a syntax error.
+    Returns 0 on success. Returns 1 if in_path is outside the project
+    directory of ``config``, if name_path is unsupported, if name_path is not
+    present in the file, if the file cannot be read (missing, unreadable, or
+    undecodable), or if the source has a syntax error.
     """
-    target = Path(in_path)
     try:
+        target = _project_file(in_path=in_path, project_root=config.project_root)
         body = resolve_body(name_path=NamePath.parse(raw=name_path), in_path=target)
     except _LOOKUP_ERRORS as e:
         return _report_lookup_error(exc=e, name_path=name_path, in_path=in_path)
@@ -273,15 +291,15 @@ def _refs(*, config: Config, name_path: str, in_path: str) -> int:
     ty reads the project directory of ``config`` as its workspace.
 
     Returns 0 on success. Each reference is printed as path:line:col.
-    Returns 1 if name_path is unsupported, if name_path is not present in
-    the file, if the file cannot be read (missing, unreadable, or
-    undecodable), if the source has a syntax error, or if the reference
-    lookup fails.
+    Returns 1 if in_path is outside the project directory, if name_path is
+    unsupported, if name_path is not present in the file, if the file cannot
+    be read (missing, unreadable, or undecodable), if the source has a syntax
+    error, or if the reference lookup fails.
     """
     try:
         refs = find_refs(
             name_path=NamePath.parse(raw=name_path),
-            in_path=Path(in_path),
+            in_path=_project_file(in_path=in_path, project_root=config.project_root),
             project_root=config.project_root,
         )
     except RuntimeError as e:
@@ -386,7 +404,9 @@ def main() -> int:
     )
     body_parser.set_defaults(
         find_project=read_config,
-        action=lambda *, config: _body(name_path=args.name_path, in_path=args.in_path),
+        action=lambda *, config: _body(
+            config=config, name_path=args.name_path, in_path=args.in_path
+        ),
     )
 
     refs_parser = subparsers.add_parser(

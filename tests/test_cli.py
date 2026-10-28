@@ -730,6 +730,35 @@ class TestOutsideAProject:
         )
 
 
+class TestInFileOutsideTheProject:
+    @pytest.mark.parametrize("command", ["body", "refs"])
+    @pytest.mark.parametrize("is_link", [False, True])
+    def test_refuses_the_file(self, *, tmp_path, monkeypatch, capsys, command, is_link):
+        project = tmp_path / "project"
+        project.mkdir()
+        _init_repo(tmp_path=project, monkeypatch=monkeypatch)
+        (tmp_path / "m.py").write_text("def fn():\n    pass\n", encoding="utf-8")
+        in_path = "../m.py"
+        if is_link:
+            # A link inside the project that leads out of it is outside.
+            (project / "m.py").symlink_to(tmp_path / "m.py")
+            in_path = "m.py"
+
+        with mock.patch.object(cli, "find_refs") as find_refs:
+            status = _run(
+                monkeypatch=monkeypatch, arguments=[command, "fn", "--in", in_path]
+            )
+
+        assert status == 1
+        find_refs.assert_not_called()
+        captured = capsys.readouterr()
+        assert captured.out == ""
+        assert captured.err == (
+            f"Error: {in_path}: outside the project directory "
+            f"{project.resolve().as_posix()}.\n"
+        )
+
+
 def _body(*, monkeypatch, name_path, in_path):
     return _run(monkeypatch=monkeypatch, arguments=["body", name_path, "--in", in_path])
 

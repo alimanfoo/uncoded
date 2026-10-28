@@ -83,7 +83,7 @@ Use one name for a top-level function, class, module assignment, or Python 3.12
 and empty segments are unsupported.
 
 The `--in` path is relative to your current directory, not the configuration
-file.
+file. It must be inside the project directory, once symbolic links are resolved.
 
 ## `refs`
 
@@ -117,7 +117,7 @@ Prints `uncoded` and the installed version, such as `uncoded 3.0.1`.
 
 ## Lookup errors
 
-`body` and `refs` exit with status `1` if the source cannot be read or parsed,
-the symbol is missing, or its name path is unsupported. A reference lookup also
-fails if the language server fails. Missing required arguments exit with status
-`2`.
+`body` and `refs` exit with status `1` if the `--in` file is outside the project
+directory, the source cannot be read or parsed, the symbol is missing, or its
+name path is unsupported. A reference lookup also fails if the language server
+fails. Missing required arguments exit with status `2`.
