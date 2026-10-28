@@ -235,14 +235,15 @@ def _report_lookup_error(exc: Exception, *, name_path: str, in_path: str) -> int
     path, symbol not found, file not found, and read/parse error.
     FileNotFoundError is checked before OSError because it subclasses it.
     """
+    shown_path = Path(in_path).as_posix()
     if isinstance(exc, UnsupportedNamePathError):
         print(f"Error: {exc}", file=sys.stderr)
     elif isinstance(exc, SymbolNotFoundError):
-        print(f"Error: {name_path!r} not found in {in_path}", file=sys.stderr)
+        print(f"Error: {name_path!r} not found in {shown_path}", file=sys.stderr)
     elif isinstance(exc, FileNotFoundError):
-        print(f"Error: {in_path}: file not found.", file=sys.stderr)
+        print(f"Error: {shown_path}: file not found.", file=sys.stderr)
     else:
-        print(f"Error: {in_path}: {exc}", file=sys.stderr)
+        print(f"Error: {shown_path}: {exc}", file=sys.stderr)
     return 1
 
 

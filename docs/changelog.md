@@ -24,8 +24,8 @@ includes it. Each entry links the pull request that made the change.
 
 - On Windows, the paths that `uncoded refs` prints and the path comment in each
   stub use `/` to separate directories, as the namespace map and the docs map
-  already do. So do the paths in the messages and warnings of `uncoded sync` and
-  `uncoded check`. ([#312](https://github.com/alimanfoo/uncoded/pull/312))
+  already do. So does every path in a message or a warning.
+  ([#312](https://github.com/alimanfoo/uncoded/pull/312))
 
 ### Added
 

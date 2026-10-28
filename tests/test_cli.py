@@ -476,8 +476,11 @@ class TestBodyCommand:
     def test_file_not_found_exits_one(self, tmp_path, monkeypatch, capsys):
         _init_repo(tmp_path, monkeypatch)
 
-        assert cli._body(name_path="fn", in_path="src/nonexistent.py") == 1
-        assert "nonexistent.py" in capsys.readouterr().err
+        # The --in path is given with the system's separator, and the message
+        # shows it with /, on Windows too.
+        in_path = str(Path("src") / "nonexistent.py")
+        assert cli._body(name_path="fn", in_path=in_path) == 1
+        assert capsys.readouterr().err == "Error: src/nonexistent.py: file not found.\n"
 
     def test_syntax_error_exits_one(self, tmp_path, monkeypatch, capsys):
         _init_repo(tmp_path, monkeypatch)
