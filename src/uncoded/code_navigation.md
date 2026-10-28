@@ -7,7 +7,7 @@ for reading a symbol's definition and `uncoded refs` for finding references.
 ## The dispatch rule
 
 **If your search term is the name of a Python symbol, use the code index. Python
-symbols are classes, functions, methods, properties, `type` aliases, and
+symbols are classes, functions, methods, properties, `type` statements, and
 assignments in a module or class body. If it's a pattern, regex, or free-text
 phrase, use grep.**
 

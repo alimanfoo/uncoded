@@ -354,7 +354,7 @@ def main() -> int:
 
     Five subcommands:
 
-    - ``init`` — sets uncoded up in a project, then syncs its index.
+    - ``init`` — sets uncoded up in a project, then syncs its index and skills.
     - ``sync`` — builds or refreshes the index and the skills.
     - ``check`` — verifies that the generated files are current; exits
       non-zero when they are stale.
@@ -366,7 +366,7 @@ def main() -> int:
     """
     parser = argparse.ArgumentParser(
         prog="uncoded",
-        description="Build an index of a codebase for AI coding agents.",
+        description="Build an index of a codebase for agents.",
     )
     parser.add_argument(
         "--version", action="version", version=f"%(prog)s {__version__}"
@@ -377,14 +377,14 @@ def main() -> int:
         "init",
         help="Set uncoded up in a project, then build its index and skills.",
     )
-    init_parser.set_defaults(find_project=find_config, action=_init)
+    init_parser.set_defaults(find_configuration=find_config, action=_init)
 
     sync_parser = subparsers.add_parser(
         "sync",
         help="Build or refresh the index and the skills.",
     )
     sync_parser.set_defaults(
-        find_project=read_config,
+        find_configuration=read_config,
         action=lambda *, config: _sync(config=config, check=False),
     )
 
@@ -396,7 +396,7 @@ def main() -> int:
         ),
     )
     check_parser.set_defaults(
-        find_project=read_config,
+        find_configuration=read_config,
         action=lambda *, config: _sync(config=config, check=True),
     )
 
@@ -420,7 +420,7 @@ def main() -> int:
         help="Print the definition of a named symbol to stdout.",
     )
     body_parser.set_defaults(
-        find_project=read_config,
+        find_configuration=read_config,
         action=lambda *, config: _body(
             config=config, name_path=args.name_path, in_path=args.in_path
         ),
@@ -432,7 +432,7 @@ def main() -> int:
         help="Find all references to a named symbol and print them to stdout.",
     )
     refs_parser.set_defaults(
-        find_project=read_config,
+        find_configuration=read_config,
         action=lambda *, config: _refs(
             config=config, name_path=args.name_path, in_path=args.in_path
         ),
@@ -441,7 +441,7 @@ def main() -> int:
     arguments = sys.argv[1:]
     args = parser.parse_args(arguments)
     try:
-        config = args.find_project(start=Path.cwd())
+        config = args.find_configuration(start=Path.cwd())
         _check_required_version(config=config, arguments=arguments)
         return args.action(config=config)
     except (ConfigError, FileSyncError) as e:

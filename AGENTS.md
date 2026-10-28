@@ -25,7 +25,7 @@ The index files, generated from the roots:
    before any task begins. The map gives the agent a world view.
 
 2. **Stub files** (`.uncoded/stubs/`). One `.pyi` for each Python file that has
-   symbols. It includes imports, full signatures (parameter names, types, return
+   symbols. It includes imports, signatures (parameter names, types, return
    types), and the assignments in module and class bodies.
 
 3. **Docs map** (`.uncoded/docs.yaml`). The headings of every Markdown file

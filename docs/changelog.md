@@ -69,6 +69,9 @@ includes it. Each entry links the pull request that made the change.
 
 ### Fixed
 
+- The code navigation skill calls a `type` statement by that name, which the
+  rest of the documentation uses. It called it a `type` alias.
+  ([#355](https://github.com/alimanfoo/uncoded/pull/355))
 - The uncoded skills use one word for each concept, such as "code index",
   "definition" and "project". They also stop listing directories and files among
   the symbols in the namespace map.
@@ -89,9 +92,9 @@ includes it. Each entry links the pull request that made the change.
   the wrong lines. ([#342](https://github.com/alimanfoo/uncoded/pull/342))
 - When a name is defined twice in one module body, the namespace map shows the
   later symbol, and `uncoded body` and `uncoded refs` find no member of a class
-  that a later function, assignment or type alias redefines. The map showed a
-  function over a class, and a class over an assignment, whatever the order.
-  `uncoded body` and `uncoded refs` used the class.
+  that a later function, assignment or `type` statement redefines. The map
+  showed a function over a class, and a class over an assignment, whatever the
+  order. `uncoded body` and `uncoded refs` used the class.
   ([#341](https://github.com/alimanfoo/uncoded/pull/341))
 - `uncoded refs` prints the symbol's definition and each import of it, as well
   as each use of it. It printed only the uses, so a symbol whose only reference

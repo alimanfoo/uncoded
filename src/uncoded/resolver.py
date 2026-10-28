@@ -63,7 +63,8 @@ def resolve_name_position(*, name_path: NamePath, in_path: Path) -> tuple[int, i
 
     Follows LSP convention: both line and character are 0-indexed.
     For def/async def/class, character points past the keyword to the identifier.
-    For assignments and type aliases, character points at the start of the target name.
+    For assignments and type statements, character points at the start of the
+    target name.
     Raises SymbolNotFoundError, OSError, UnicodeDecodeError, and SyntaxError under
     the same conditions as _resolve_ast_node.
     """
