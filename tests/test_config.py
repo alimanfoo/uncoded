@@ -118,9 +118,9 @@ class TestReadConfig:
         assert "pyproject.toml" in str(exc_info.value)
         assert ".uncoded.toml" in str(exc_info.value)
 
-    def test_uncoded_toml_wins_over_bare_pyproject(self, *, tmp_path):
-        # Bare pyproject (no [tool.uncoded]) + sibling .uncoded.toml →
-        # the .uncoded.toml is used, not the bare pyproject.
+    def test_finds_uncoded_toml_beside_pyproject_without_uncoded_table(
+        self, *, tmp_path
+    ):
         (tmp_path / "pyproject.toml").write_text("[tool.ruff]\n", encoding="utf-8")
         (tmp_path / ".uncoded.toml").write_text(
             'doc-roots = ["docs"]\n', encoding="utf-8"

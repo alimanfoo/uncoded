@@ -36,13 +36,14 @@ def _pyproject_settings(*, pyproject_path: Path) -> dict | None:
 
     Returns None when the file or the table is absent.
     """
-    if not pyproject_path.exists():
+    data = _load_toml(path=pyproject_path)
+    return None if data is None else data.get("tool", {}).get("uncoded")
+
+
+def _load_toml(*, path: Path) -> dict | None:
+    """Parse the TOML file at ``path``, or return None when it is absent."""
+    if not path.exists():
         return None
-    return _load_toml(path=pyproject_path).get("tool", {}).get("uncoded")
-
-
-def _load_toml(*, path: Path) -> dict:
-    """Parse the TOML file at ``path``."""
     with path.open("rb") as f:
         return tomllib.load(f)
 
@@ -60,14 +61,15 @@ def _config_file_at(*, directory: Path) -> tuple[Path, dict] | None:
     pyproject = directory / "pyproject.toml"
     uncoded_toml = directory / ".uncoded.toml"
     pyproject_settings = _pyproject_settings(pyproject_path=pyproject)
-    if uncoded_toml.exists():
+    uncoded_toml_settings = _load_toml(path=uncoded_toml)
+    if uncoded_toml_settings is not None:
         if pyproject_settings is not None:
             raise ConfigError(
                 "Ambiguous config: both pyproject.toml and .uncoded.toml "
                 "configure uncoded in the same directory. "
                 "Configure uncoded in one file only."
             )
-        return uncoded_toml, _load_toml(path=uncoded_toml)
+        return uncoded_toml, uncoded_toml_settings
     if pyproject_settings is not None:
         return pyproject, pyproject_settings
     return None
