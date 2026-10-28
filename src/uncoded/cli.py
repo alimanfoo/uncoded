@@ -25,7 +25,7 @@ from uncoded.read_helpers import SkippedFile
 from uncoded.refs import TyError, find_refs
 from uncoded.resolver import NamePath, SymbolNotFoundError, UnsupportedNamePathError
 from uncoded.skill import SKILL_ROOTS, agent_instructions, sync_skills
-from uncoded.stubs import build_stubs, remove_all_stubs
+from uncoded.stubs import build_stubs
 from uncoded.sync import FileSyncError, remove_file, sync_file
 
 
@@ -52,46 +52,39 @@ def _sync_code_artefacts(
 ) -> tuple[int, list[SkippedFile]]:
     """Build or remove the code artefacts (namespace map and stubs).
 
-    With no source roots, removes namespace.yaml and all stubs. Otherwise
-    collects the source files beneath the resolved ``source_roots`` and writes
-    the namespace map and stub files. Returns the change count and the files
-    that could not be read or parsed.
+    Collects the source files beneath the resolved ``source_roots`` and writes
+    the namespace map and the stub files, removing every stub that those files
+    do not generate. With no source roots, removes namespace.yaml and every
+    stub. Returns the change count and the files that could not be read or
+    parsed.
     """
-    if not source_roots:
-        n = remove_file(
-            path=Path(".uncoded/namespace.yaml"), project_root=project_root, check=check
-        )
-        n += remove_all_stubs(
-            output_dir=Path(".uncoded/stubs"), project_root=project_root, check=check
-        )
-        return n, []
-
-    roots_with_files = []
+    files: list[tuple[str, str]] = []
     all_skipped: list[SkippedFile] = []
     for src_root in source_roots:
-        files, skipped = read_source_files(
+        root_files, skipped = read_source_files(
             source_root=src_root, project_root=project_root
         )
-        roots_with_files.append((src_root, files))
+        files.extend(root_files)
         all_skipped.extend(skipped)
-    modules = [
-        m for _root, files in roots_with_files for m in extract_modules(files=files)
-    ]
-    map_content = render_map(namespace=build_map(modules=modules))
-    n = sync_file(
-        path=Path(".uncoded/namespace.yaml"),
-        content=map_content,
-        project_root=project_root,
-        check=check,
-    )
-    for src_root, files in roots_with_files:
-        n += build_stubs(
-            files=files,
-            source_root=src_root,
-            output_dir=Path(".uncoded/stubs"),
+    namespace_path = Path(".uncoded/namespace.yaml")
+    if source_roots:
+        map_content = render_map(
+            namespace=build_map(modules=extract_modules(files=files))
+        )
+        n = sync_file(
+            path=namespace_path,
+            content=map_content,
             project_root=project_root,
             check=check,
         )
+    else:
+        n = remove_file(path=namespace_path, project_root=project_root, check=check)
+    n += build_stubs(
+        files=files,
+        output_dir=Path(".uncoded/stubs"),
+        project_root=project_root,
+        check=check,
+    )
     return n, all_skipped
 
 

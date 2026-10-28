@@ -14,7 +14,6 @@ from uncoded.stubs import (
     _write_stubs,
     build_stubs,
     extract_stub,
-    remove_all_stubs,
     render_stub,
 )
 
@@ -30,7 +29,6 @@ def _build(*, source_root, out, tmp_path, check=False):
     files, _skipped = read_source_files(source_root=source_root, project_root=tmp_path)
     return build_stubs(
         files=files,
-        source_root=source_root,
         output_dir=out,
         project_root=tmp_path,
         check=check,
@@ -716,7 +714,7 @@ class TestRenderStub:
 
 
 class TestBuildStubs:
-    """build_stubs writes expected stubs and removes orphans for its source root."""
+    """build_stubs writes expected stubs and removes every other stub."""
 
     def test_writes_expected_stubs(self, *, tmp_path):
         src, out = _setup(tmp_path=tmp_path)
@@ -761,21 +759,29 @@ class TestBuildStubs:
         _build(source_root=src, out=out, tmp_path=tmp_path)
         assert not (out / "src" / "pkg").exists()
 
-    def test_does_not_touch_other_source_root(self, *, tmp_path):
+    def test_removes_stubs_of_a_source_root_left_out(self, *, tmp_path):
         src, out = _setup(tmp_path=tmp_path)
         tests = tmp_path / "tests"
         tests.mkdir()
         (src / "foo.py").write_text("def hello(): pass\n", encoding="utf-8")
         (tests / "test_foo.py").write_text("def test_hello(): pass\n", encoding="utf-8")
+        src_files, _skipped = read_source_files(source_root=src, project_root=tmp_path)
+        test_files, _skipped = read_source_files(
+            source_root=tests, project_root=tmp_path
+        )
 
-        _build(source_root=src, out=out, tmp_path=tmp_path)
-        _build(source_root=tests, out=out, tmp_path=tmp_path)
+        build_stubs(
+            files=src_files + test_files,
+            output_dir=out,
+            project_root=tmp_path,
+            check=False,
+        )
         assert (out / "src" / "foo.pyi").exists()
         assert (out / "tests" / "test_foo.pyi").exists()
 
-        # Rebuilding only `src` must leave the `tests` stub alone.
         _build(source_root=src, out=out, tmp_path=tmp_path)
-        assert (out / "tests" / "test_foo.pyi").exists()
+        assert (out / "src" / "foo.pyi").exists()
+        assert not (out / "tests").exists()
 
     def test_no_op_when_clean(self, *, tmp_path):
         src, out = _setup(tmp_path=tmp_path)
@@ -848,14 +854,11 @@ class TestBuildStubsCheckMode:
 
 class TestWriteStubs:
     def test_writes_stubs(self, *, tmp_path):
-        src = tmp_path / "src"
-        src.mkdir()
         out = tmp_path / "stubs"
         stubs = {Path("src/foo.pyi"): "# stub\n"}
 
         changes = _write_stubs(
             stubs=stubs,
-            source_root=src,
             output_dir=out,
             project_root=tmp_path,
             check=False,
@@ -865,14 +868,11 @@ class TestWriteStubs:
         assert (out / "src" / "foo.pyi").read_text(encoding="utf-8") == "# stub\n"
 
     def test_check_mode_does_not_write(self, *, tmp_path):
-        src = tmp_path / "src"
-        src.mkdir()
         out = tmp_path / "stubs"
         stubs = {Path("src/foo.pyi"): "# stub\n"}
 
         changes = _write_stubs(
             stubs=stubs,
-            source_root=src,
             output_dir=out,
             project_root=tmp_path,
             check=True,
@@ -882,15 +882,12 @@ class TestWriteStubs:
         assert not (out / "src" / "foo.pyi").exists()
 
     def test_prunes_orphan_stubs(self, *, tmp_path):
-        src = tmp_path / "src"
-        src.mkdir()
         out = tmp_path / "stubs"
         (out / "src" / "pkg").mkdir(parents=True)
         (out / "src" / "pkg" / "orphan.pyi").write_text("# stale\n", encoding="utf-8")
 
         changes = _write_stubs(
             stubs={},
-            source_root=src,
             output_dir=out,
             project_root=tmp_path,
             check=False,
@@ -908,14 +905,11 @@ class TestWriteStubs:
         sub = tmp_path / "subdir"
         sub.mkdir()
         monkeypatch.chdir(sub)
-        src = tmp_path / "src"
-        src.mkdir()
         out = Path("stubs")
         stubs = {Path("src/foo.pyi"): "# stub\n"}
 
         changes = _write_stubs(
             stubs=stubs,
-            source_root=src,
             output_dir=out,
             project_root=tmp_path,
             check=False,
@@ -933,8 +927,6 @@ class TestWriteStubs:
         sub = tmp_path / "subdir"
         sub.mkdir()
         monkeypatch.chdir(sub)
-        src = tmp_path / "src"
-        src.mkdir()
         out = Path("stubs")
         (tmp_path / out / "src" / "pkg").mkdir(parents=True)
         (tmp_path / out / "src" / "pkg" / "orphan.pyi").write_text(
@@ -943,7 +935,6 @@ class TestWriteStubs:
 
         changes = _write_stubs(
             stubs={},
-            source_root=src,
             output_dir=out,
             project_root=tmp_path,
             check=False,
@@ -954,7 +945,9 @@ class TestWriteStubs:
         assert not (tmp_path / out / "src" / "pkg").exists()
 
 
-class TestRemoveAllStubs:
+class TestBuildStubsWithNoFiles:
+    """build_stubs with no files removes every stub, as when no root is left."""
+
     def _make_stubs(self, *, tmp_path, rel_pyi="src/foo.pyi"):
         """Create a stubs directory with one .pyi file; return (stubs_dir, pyi)."""
         stubs_dir = tmp_path / ".uncoded" / "stubs"
@@ -964,15 +957,21 @@ class TestRemoveAllStubs:
         return stubs_dir, pyi
 
     def test_noop_when_output_dir_absent(self, *, tmp_path):
-        changes = remove_all_stubs(
-            output_dir=Path(".uncoded/stubs"), project_root=tmp_path, check=False
+        changes = build_stubs(
+            files=[],
+            output_dir=Path(".uncoded/stubs"),
+            project_root=tmp_path,
+            check=False,
         )
         assert changes == 0
 
     def test_removes_pyi_file_and_directory(self, *, tmp_path):
         stubs_dir, pyi = self._make_stubs(tmp_path=tmp_path)
-        changes = remove_all_stubs(
-            output_dir=Path(".uncoded/stubs"), project_root=tmp_path, check=False
+        changes = build_stubs(
+            files=[],
+            output_dir=Path(".uncoded/stubs"),
+            project_root=tmp_path,
+            check=False,
         )
         assert changes == 1
         assert not pyi.exists()
@@ -980,24 +979,33 @@ class TestRemoveAllStubs:
 
     def test_removes_nested_structure(self, *, tmp_path):
         stubs_dir, _pyi = self._make_stubs(tmp_path=tmp_path, rel_pyi="src/pkg/bar.pyi")
-        changes = remove_all_stubs(
-            output_dir=Path(".uncoded/stubs"), project_root=tmp_path, check=False
+        changes = build_stubs(
+            files=[],
+            output_dir=Path(".uncoded/stubs"),
+            project_root=tmp_path,
+            check=False,
         )
         assert changes == 1
         assert not stubs_dir.exists()
 
     def test_check_mode_reports_without_removing(self, *, tmp_path):
         stubs_dir, pyi = self._make_stubs(tmp_path=tmp_path)
-        changes = remove_all_stubs(
-            output_dir=Path(".uncoded/stubs"), project_root=tmp_path, check=True
+        changes = build_stubs(
+            files=[],
+            output_dir=Path(".uncoded/stubs"),
+            project_root=tmp_path,
+            check=True,
         )
         assert changes == 1
         assert pyi.exists()
         assert stubs_dir.exists()
 
     def test_check_mode_noop_when_absent(self, *, tmp_path):
-        changes = remove_all_stubs(
-            output_dir=Path(".uncoded/stubs"), project_root=tmp_path, check=True
+        changes = build_stubs(
+            files=[],
+            output_dir=Path(".uncoded/stubs"),
+            project_root=tmp_path,
+            check=True,
         )
         assert changes == 0
 
@@ -1006,8 +1014,11 @@ class TestRemoveAllStubs:
         (stubs_dir / "src").mkdir(parents=True)
         (stubs_dir / "src" / "a.pyi").write_text("# a\n", encoding="utf-8")
         (stubs_dir / "src" / "b.pyi").write_text("# b\n", encoding="utf-8")
-        changes = remove_all_stubs(
-            output_dir=Path(".uncoded/stubs"), project_root=tmp_path, check=False
+        changes = build_stubs(
+            files=[],
+            output_dir=Path(".uncoded/stubs"),
+            project_root=tmp_path,
+            check=False,
         )
         assert changes == 2
         assert not stubs_dir.exists()
@@ -1016,8 +1027,11 @@ class TestRemoveAllStubs:
         stubs_dir, pyi = self._make_stubs(tmp_path=tmp_path)
         stray = pyi.parent / "stray.txt"
         stray.write_text("keep me\n", encoding="utf-8")
-        changes = remove_all_stubs(
-            output_dir=Path(".uncoded/stubs"), project_root=tmp_path, check=False
+        changes = build_stubs(
+            files=[],
+            output_dir=Path(".uncoded/stubs"),
+            project_root=tmp_path,
+            check=False,
         )
         assert changes == 1
         assert not pyi.exists()

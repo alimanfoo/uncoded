@@ -131,6 +131,26 @@ class TestSyncApplyMode:
         )
         assert not (tmp_path / ".uncoded" / "stubs" / "src" / "bar.pyi").exists()
 
+    def test_removes_the_stubs_of_a_source_root_left_out(
+        self, *, tmp_path, monkeypatch, capsys
+    ):
+        _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch, source_roots=("a", "b"))
+        (tmp_path / "a" / "m.py").write_text("def f(): pass\n", encoding="utf-8")
+        (tmp_path / "b" / "n.py").write_text("def g(): pass\n", encoding="utf-8")
+        _run(monkeypatch=monkeypatch, arguments=["sync"])
+        (tmp_path / "pyproject.toml").write_text(
+            '[tool.uncoded]\nsource-roots = ["a"]\n', encoding="utf-8"
+        )
+        capsys.readouterr()
+
+        assert _run(monkeypatch=monkeypatch, arguments=["check"]) == 1
+        assert "Would remove .uncoded/stubs/b/n.pyi\n" in capsys.readouterr().out
+        assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 0
+
+        assert "Removed .uncoded/stubs/b/n.pyi\n" in capsys.readouterr().out
+        assert not (tmp_path / ".uncoded" / "stubs" / "b").exists()
+        assert (tmp_path / ".uncoded" / "stubs" / "a" / "m.pyi").exists()
+
     def test_error_when_no_config_file_points_to_init(
         self, *, tmp_path, monkeypatch, capsys
     ):
