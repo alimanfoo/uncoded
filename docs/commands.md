@@ -84,8 +84,8 @@ and empty segments are unsupported.
 
 The `--in` path is relative to your current directory, not the configuration
 file. It must be inside the project directory, once symbolic links are resolved.
-Run `body` from the project directory, where the namespace map's paths work as
-`--in` paths as given.
+Run `body` from the project directory, so that you can pass the namespace map's
+paths to `--in` unchanged.
 
 ## `refs`
 

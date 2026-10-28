@@ -59,8 +59,8 @@ directly.
 to find every reference to a symbol. Use `Edit` (with `uncoded body`'s output as
 `old_string`) to change a symbol. Run both from the project directory, the
 directory that holds the uncoded configuration file. The map's paths are
-relative to it, so there they work as `--in` paths as given. Use the exact
-`relative_path` and `name_path` from the map. Use `ClassName/method` for a
+relative to that directory, so you can pass them to `--in` unchanged. Use the
+exact `relative_path` and `name_path` from the map. Use `ClassName/method` for a
 method and `function_name` for a top-level function. Per task:
 
 - **Read a symbol's body.** `uvx uncoded body <name_path> --in <relative_path>`

@@ -138,7 +138,7 @@ class TestSyncApplyMode:
         assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 1
         err = capsys.readouterr().err
         assert "Error: source root ../outside" in err
-        assert "outside the project root" in err
+        assert "outside the project directory" in err
 
     def test_error_when_source_root_missing(self, *, tmp_path, monkeypatch, capsys):
         # The message must (a) report the source-root path as the user
@@ -1190,7 +1190,7 @@ class TestSyncDocRoots:
         assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 1
         err = capsys.readouterr().err
         assert "Error: doc root ../shared-docs" in err
-        assert "outside the project root" in err
+        assert "outside the project directory" in err
 
     def test_both_roots_writes_both_artefacts(self, *, tmp_path, monkeypatch):
         (tmp_path / "pyproject.toml").write_text(

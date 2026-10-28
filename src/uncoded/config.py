@@ -149,7 +149,7 @@ def validate_root(
     resolved = (project_root / configured).resolve()
     if not is_inside_project(path=resolved, project_root=project_root):
         raise ConfigError(
-            f"{root_label} is outside the project root. "
+            f"{root_label} is outside the project directory. "
             f"Check {kind}-roots in your uncoded config file."
         )
     accepts_md_file = kind == "doc"

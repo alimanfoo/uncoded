@@ -124,7 +124,8 @@ def _sync(*, config: Config, check: bool = False) -> int:
 
     Every writer anchors the project-relative paths that it reads or writes at
     ``config.project_root``, so running from a subdirectory of the project
-    produces artefacts in the same locations as running from the project root.
+    produces artefacts in the same locations as running from the project
+    directory.
 
     source-roots drive code artefacts (namespace.yaml, stubs); doc-roots
     drive doc artefacts (docs.yaml). Each root type is independent: when
@@ -236,7 +237,7 @@ def _project_file(*, in_path: str, project_root: Path) -> Path:
 
 
 # The failures of a lookup that `uncoded body` and `uncoded refs` report, each
-# with its message in _report_lookup_error. OSError covers FileNotFoundError.
+# with its message in _report_lookup_error.
 _LOOKUP_ERRORS = (
     _OutsideProjectError,
     UnsupportedNamePathError,
@@ -250,9 +251,7 @@ _LOOKUP_ERRORS = (
 def _report_lookup_error(*, exc: Exception, name_path: str, in_path: str) -> int:
     """Print the CLI error message for a lookup failure and return 1.
 
-    Covers the shared error arms for _body and _refs: unsupported name path,
-    symbol not found, file not found, and any other fault in the file, such as
-    a file outside the project directory or a read or parse error.
+    Covers the error arms that _body and _refs share.
     FileNotFoundError is checked before OSError because it subclasses it.
     """
     shown_path = Path(in_path).as_posix()
@@ -342,14 +341,8 @@ def main() -> int:
     - ``body`` — prints the source body of a named symbol to stdout.
     - ``refs`` — finds all references to a named symbol and prints them.
 
-    Each subparser binds two callables via ``set_defaults``.
-    ``find_project`` finds the configuration from the current directory: only
-    ``init`` runs without one. ``action`` runs the command on that
-    configuration. ``main`` finds the configuration once, checks the required
-    version, and then dispatches via ``args.action(config=...)``. Adding a new
-    subcommand is a local change at the registration site — no central
-    dispatch ladder to update. A ConfigError from any step stops the command
-    with status 1.
+    Each subparser binds how it finds the configuration and the action it
+    runs on it.
     """
     parser = argparse.ArgumentParser(
         prog="uncoded",
