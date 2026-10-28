@@ -25,10 +25,11 @@ must be non-empty. You can configure either type on its own.
 
 ## Settings
 
-| Setting        | Accepted paths                        | Indexed content                |
-| -------------- | ------------------------------------- | ------------------------------ |
-| `source-roots` | Directories                           | Python symbols and signatures. |
-| `doc-roots`    | Directories or individual `.md` files | Markdown headings.             |
+| Setting            | Accepts                               | Effect                                          |
+| ------------------ | ------------------------------------- | ----------------------------------------------- |
+| `source-roots`     | Directories                           | Indexes Python symbols and signatures.          |
+| `doc-roots`        | Directories or individual `.md` files | Indexes Markdown headings.                      |
+| `required-version` | One exact version, such as `"3.1.0"`  | Refuses to run at any other version of uncoded. |
 
 Every path is relative to the configuration file's directory and must exist.
 Paths that resolve outside that directory are rejected, including through
@@ -52,8 +53,8 @@ At any other version, every command stops before it changes anything. It says
 which version the project requires, and gives the command that runs it, such as
 `uvx uncoded@3.1.0 sync`. Without `required-version`, every version runs.
 
-If a pre-commit hook runs uncoded, name the same version in its command, such as
-`uvx uncoded@3.1.0 sync`. To upgrade, raise the version in both places.
+If a pre-commit hook runs uncoded, name the same version in the hook's `entry`,
+such as `uvx uncoded@3.1.0 sync`. To upgrade, raise the version in both places.
 
 ## Generated files
 
