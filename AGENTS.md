@@ -61,7 +61,7 @@ that fails one needs a strong reason.
 
 ## Commands
 
-This project uses [uv](https://docs.astral.sh/uv/). Run all commands via
+This project uses [uv](https://docs.astral.sh/uv/). Run the commands below via
 `uv run`. The required version in `.uncoded.toml` refuses `uv run uncoded` in
 this repository. To try a change to uncoded by hand, run it in another project,
 as `uv run --project <path to this checkout> uncoded <command>`.

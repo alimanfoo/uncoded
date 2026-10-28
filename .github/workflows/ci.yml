@@ -10,7 +10,6 @@ permissions:
   contents: read
 
 jobs:
-  # Runs every hook on Linux and on Windows.
   lint:
     runs-on: ${{ matrix.os }}
     strategy:
