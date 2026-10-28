@@ -66,6 +66,7 @@ markers = ["integration: spawns real ty subprocess (requires uvx)"]
 [tool.coverage.run]
 source = ["src"]
 branch = true
+relative_files = true
 
 [tool.coverage.report]
 show_missing = true
