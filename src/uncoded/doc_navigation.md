@@ -15,7 +15,9 @@ Read .uncoded/docs.yaml
 its heading hierarchy. Read it once, in full, at session start.
 
 **Step 2: Navigate.** Headings in the map are literal text. Use `Read` or `grep`
-to navigate to a specific section identified in the map.
+to navigate to a specific section identified in the map. A repeated heading
+under one parent ends with a " (N)" suffix, which is not in the file. To
+navigate to it, grep the heading text and take the Nth match under that parent.
 
 **Step 3: Refresh.** After every modification to indexed Markdown, run the
 project's configured `uncoded sync` command before the next

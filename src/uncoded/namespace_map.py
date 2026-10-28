@@ -21,7 +21,8 @@ HEADER = f"""\
 def build_map(*, modules: list[ModuleInfo]) -> dict:
     """Build a nested dict representing the namespace.
 
-    Keys are repo-relative paths. Directory keys have a trailing slash.
+    Keys are paths relative to the project directory. Directory keys have a
+    trailing slash.
     Symbols sit directly under their file key.
     """
     root: dict = {}
@@ -38,8 +39,8 @@ def build_map(*, modules: list[ModuleInfo]) -> dict:
             current = current[key]
 
         # Build the file entry — symbols directly under the file key.
-        # Classes with methods map to their method list.
-        # Classes without methods, bare functions and assignments map to None.
+        # Each class maps to its members, or to None when it has none.
+        # Functions and assignments map to None.
         file_entry: dict = {}
 
         for assignment in module.assignments:

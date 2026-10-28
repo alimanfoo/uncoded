@@ -276,7 +276,7 @@ def _format_assignment_body(*, assignment: StubAssignment) -> str:
 
 
 def _render_assignment(*, assignment: StubAssignment, indent: str = "") -> str:
-    """Render a module-level assignment as a stub line."""
+    """Render an assignment, at module level or in a class body, as a stub line."""
     body = _format_assignment_body(assignment=assignment)
     return f"{indent}{body}"
 
