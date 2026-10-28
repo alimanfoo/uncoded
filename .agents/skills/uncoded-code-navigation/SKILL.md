@@ -71,10 +71,10 @@ exact `relative_path` and `name_path` from the map. Use `ClassName/method` for a
 method and `function_name` for a top-level function. Per task:
 
 - **Read a symbol's body.** `uvx uncoded body <name_path> --in <relative_path>`
-  prints the symbol's source text to stdout, byte-identical to disk. Returns
-  exactly the symbol. No offset arithmetic, no risk of reading too much. Its
-  output has every byte `Edit` needs as `old_string`. You need no extra `Read`
-  for partial edits. Stay on stubs for a wider sweep.
+  prints the symbol's source text to stdout, exactly as it is in the file.
+  Returns exactly the symbol. No offset arithmetic, no risk of reading too much.
+  Its output is the exact text `Edit` needs as `old_string`. You need no extra
+  `Read` for partial edits. Stay on stubs for a wider sweep.
 
 - **Find every reference to a symbol.**
   `uvx uncoded refs <name_path> --in <relative_path>`. Prints the symbol's
