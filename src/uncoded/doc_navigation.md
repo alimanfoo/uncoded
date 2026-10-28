@@ -4,9 +4,8 @@ This codebase uses [uncoded](https://github.com/alimanfoo/uncoded) to maintain a
 documentation index.
 
 **Step 1: Orient. Sync, then read the docs map.** Run the repository's
-configured `uncoded sync` command, so that the map is current. Files may have
-changed since the map was last written. Then, before answering the user and
-before any other tool call:
+configured `uncoded sync` command, so that the map is current. Then, before
+answering the user and before any other tool call:
 
 ```text
 Read .uncoded/docs.yaml

@@ -49,8 +49,7 @@ uvx uncoded refs greet --in src/greetings.py
 ```
 
 The results identify the sites to inspect and update. After changing indexed
-Python or Markdown files, or noticing that something else has changed files, the
-agent runs `uncoded sync` before navigating again.
+Python or Markdown files, the agent runs `uncoded sync` before navigating again.
 
 ## Review consistency
 
