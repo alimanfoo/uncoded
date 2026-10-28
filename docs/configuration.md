@@ -64,13 +64,13 @@ such as `uvx uncoded@3.1.0 sync`. To upgrade, raise the version in both places.
 
 ## Generated files
 
-| Output                                        | When generated         | Commit it? |
-| --------------------------------------------- | ---------------------- | ---------- |
-| `.uncoded/namespace.yaml`                     | `source-roots` is set. | No.        |
-| `.uncoded/stubs/`                             | `source-roots` is set. | No.        |
-| `.uncoded/docs.yaml`                          | `doc-roots` is set.    | No.        |
-| Code navigation and consistency review skills | `source-roots` is set. | Yes.       |
-| Documentation navigation skill                | `doc-roots` is set.    | Yes.       |
+| Output                                        | When generated               | Commit it? |
+| --------------------------------------------- | ---------------------------- | ---------- |
+| `.uncoded/namespace.yaml`                     | `source-roots` names a root. | No.        |
+| `.uncoded/stubs/`                             | `source-roots` names a root. | No.        |
+| `.uncoded/docs.yaml`                          | `doc-roots` names a root.    | No.        |
+| Code navigation and consistency review skills | `source-roots` names a root. | Yes.       |
+| Documentation navigation skill                | `doc-roots` names a root.    | Yes.       |
 
 The generated `.uncoded/.gitignore` keeps `.uncoded/` out of Git. Skills are
 written to both `.agents/skills/` and `.claude/skills/`.

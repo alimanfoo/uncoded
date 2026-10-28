@@ -229,8 +229,9 @@ A structural rule that review keeps missing is checked by a machine.
 - Measure: structural rules that have failed review more than once, that a small
   and exact check could enforce, and that no machine checks.
 - Bar: zero. These rules are checked:
-  - Only `refs.py` imports `subprocess`. Ruff's subprocess rules check it, with
-    a per-file waiver for `refs.py`.
+  - Only `refs.py`, `tests/conftest.py` and `tests/test_refs.py` import
+    `subprocess`. Ruff's subprocess rules check it, with a per-file waiver for
+    each.
   - Only `sync.py` writes or removes files or directories. A `pygrep` hook over
     `src`, excluding `sync.py`, checks it.
   - Imports point down three layers, which the architecture states. An
@@ -262,7 +263,8 @@ The tracker is accurate.
 - Measure: open issues that name a concept by a word the concepts page replaces,
   that ask for work already done, or that ask for what a story rules out.
 - Bar: zero.
-- Check: triage before each major or minor release.
+- Check: the triage that [the release checklist](releasing.md) runs before each
+  major or minor release.
 
 #### Reviewed changes
 
@@ -376,9 +378,9 @@ is a violation.
 
 ## Measurement
 
-Every criterion is measured again before each major or minor release, and the
-enduring documents are read against the code. [The measurement](measurement.md)
-holds the latest results and says how each was taken, so the next measurement
-can repeat it. Each shortfall is owned by an issue, and none holds a release
-back. Where a check that this page names is not yet in place, the measurement
-says so and names the issue that adds it.
+Every criterion is measured again before each major or minor release, as
+[the release checklist](releasing.md) says, and the enduring documents are read
+against the code. [The measurement](measurement.md) holds the latest results and
+says how each was taken, so the next measurement can repeat it. Each shortfall
+is owned by an issue. Where a check that this page names is not yet in place,
+the measurement says so and names the issue that adds it.

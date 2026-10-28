@@ -25,14 +25,15 @@ The index files, generated from the roots:
    before any task begins. The map gives the agent a world view.
 
 2. **Stub files** (`.uncoded/stubs/`). One `.pyi` for each Python file that has
-   symbols. It includes imports, full signatures (parameter names, types, return
+   symbols. It includes imports, signatures (parameter names, types, return
    types), and the assignments in module and class bodies.
 
 3. **Docs map** (`.uncoded/docs.yaml`). The headings of every Markdown file
    under the doc roots. Each file nests its `#`-prefixed headings as keys.
    Agents load this to orient to the documentation, then navigate to a heading
-   with `Read` or `grep`. uncoded generates it only when `doc-roots` is set.
-   Headings only. No `uncoded body`, `uncoded refs`, or stubs for Markdown.
+   with `Read` or `grep`. uncoded generates it only when `doc-roots` names a
+   root. Headings only. No `uncoded body`, `uncoded refs`, or stubs for
+   Markdown.
 
 Alongside the index, uncoded ships `uncoded body` to read a symbol's definition
 and `uncoded refs` to find all references.
@@ -163,14 +164,22 @@ Cover both arms of every branch. If an arm looks unreachable, the branch is dead
 code. Remove or restructure it rather than reach for a coverage pragma. The repo
 carries no coverage pragmas.
 
-## Concepts and stories
+## Enduring documents
 
-[docs/concepts.md](docs/concepts.md) says what the words mean. Use its words and
-no others.
+These documents hold uncoded to account.
 
-[docs/stories.md](docs/stories.md) says what users do with uncoded and what they
-see, including what happens when things go wrong. Behaviour that contradicts a
-story is a bug.
+- [docs/concepts.md](docs/concepts.md) says what the words mean. Use its words
+  and no others.
+- [docs/stories.md](docs/stories.md) says what users do with uncoded and what
+  they see, including what happens when things go wrong. Behaviour that
+  contradicts a story is a bug.
+- [docs/architecture.md](docs/architecture.md) says where each thing lives in
+  the code.
+- [docs/standard.md](docs/standard.md) says how good the work has to be and how
+  we tell.
+
+Answer [the definition of done](docs/standard.md#definition-of-done) in every
+pull request description, in the form that the standard gives.
 
 ## Conventions
 
@@ -230,22 +239,8 @@ final refresh. See [Commands](#commands) and [Dev setup](#dev-setup).
 
 ## Releasing
 
-GitHub releases publish to PyPI through `.github/workflows/publish.yml`. The
-workflow uses PyPI Trusted Publishing. It does not need a `PYPI_TOKEN` or any
-other long-lived publishing secret.
-
-The PyPI trusted publisher is configured for:
-
-- PyPI project: `uncoded`
-- Owner: `alimanfoo`
-- Repository: `uncoded`
-- Workflow: `publish.yml`
-- Environment: `pypi`
-
-Create and publish a GitHub release from the release tag. Name the tag `v`
-followed by the version, such as `v3.0.1`. The `published` release event builds
-the source distribution and wheel, then uploads them to PyPI. The build fails
-before the upload if the tag did not build that version.
+[docs/releasing.md](docs/releasing.md) is the checklist for a release, from
+checking the standard to publishing to PyPI.
 
 ## Before you start
 

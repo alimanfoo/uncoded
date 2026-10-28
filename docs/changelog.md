@@ -69,16 +69,16 @@ includes it. Each entry links the pull request that made the change.
 
 ### Fixed
 
-- The uncoded skills use the words that [the concepts page](concepts.md) gives
-  each concept, such as "code index", "definition" and "project". They also stop
-  listing directories and files among the symbols in the namespace map.
+- The uncoded skills use one word for each concept, such as "code index",
+  "definition" and "project". They also stop listing directories and files among
+  the symbols in the namespace map.
   ([#344](https://github.com/alimanfoo/uncoded/pull/344))
 - The documentation navigation skill and the docs map's header say which heading
-  a " (N)" suffix in the docs map marks: the Nth heading with the same text and
-  level under one parent. The skill said that every heading in the docs map is
-  literal text, and the header said to take the Nth match of the heading's text,
-  which finds the wrong heading when the same text comes earlier elsewhere in
-  the file. ([#344](https://github.com/alimanfoo/uncoded/pull/344))
+  a " (N)" suffix in the docs map marks: the Nth heading with the same text
+  under one parent. The skill said that every heading in the docs map is literal
+  text, and the header said to take the Nth match of the heading's text, which
+  finds the wrong heading when the same text comes earlier elsewhere in the
+  file. ([#344](https://github.com/alimanfoo/uncoded/pull/344))
 - `uncoded body` prints a definition with the line endings that it has in the
   file. It printed every line ending as LF, and on Windows as CRLF, so an edit
   tool given the printed text could fail to find it in the file.
@@ -89,16 +89,14 @@ includes it. Each entry links the pull request that made the change.
   the wrong lines. ([#342](https://github.com/alimanfoo/uncoded/pull/342))
 - When a name is defined twice in one module body, the namespace map shows the
   later symbol, and `uncoded body` and `uncoded refs` find no member of a class
-  that a later function, assignment or type alias redefines. The map showed a
-  function over a class, and a class over an assignment, whatever the order.
-  `uncoded body` and `uncoded refs` used the class.
-  [Concepts](concepts.md#redefinition) says that the later symbol replaces the
-  earlier one. ([#341](https://github.com/alimanfoo/uncoded/pull/341))
+  that a later function, assignment or `type` statement redefines. The map
+  showed a function over a class, and a class over an assignment, whatever the
+  order. `uncoded body` and `uncoded refs` used the class.
+  ([#341](https://github.com/alimanfoo/uncoded/pull/341))
 - `uncoded refs` prints the symbol's definition and each import of it, as well
   as each use of it. It printed only the uses, so a symbol whose only reference
   was an import looked unused. The code navigation skill tells the agent to
-  delete a symbol only when it is unused, as
-  [Concepts](concepts.md#symbols-and-references) defines it.
+  delete a symbol only when it is unused.
   ([#334](https://github.com/alimanfoo/uncoded/pull/334))
 - When ty fails, `uncoded refs` says that ty failed and passes on what ty and
   `uvx` wrote about why, such as that ty could not be fetched. It discarded that

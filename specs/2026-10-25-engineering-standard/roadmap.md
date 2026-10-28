@@ -454,17 +454,18 @@ Needs stage 7, because `docs/testing.md` describes its CI and `--help` includes
 
 ## Stage 17: Keep it there
 
-Delivers the definition of done in `AGENTS.md`, with its titled questions,
-asking every pull request to answer each under a "Definition of done" heading,
-title first and with its evidence. Delivers `docs/releasing.md`, a checklist run
-before each major or minor release: the consistency review; the triage of open
-issues, including the words the concepts page replaces; measuring every
-criterion; adding new Python releases to the matrix; reading the repository
-settings back through `gh api`, including the `pypi` environment's tag rule, and
-the collaborators-only limit by eye; and moving the "Unreleased" entries under
-the new version. The Releasing section of `AGENTS.md` moves there. Then it runs
-the checklist once, triaging #162, #226, #229 and #278, and records the second
-measurement on `docs/measurement.md`.
+Delivers the definition of done in `AGENTS.md`, as a pointer to the titled
+questions that `docs/standard.md` holds, asking every pull request to answer
+each under a "Definition of done" heading, title first and with its evidence.
+Delivers `docs/releasing.md`, a checklist run before each major or minor
+release: the consistency review; the triage of open issues, including the words
+the concepts page replaces; measuring every criterion; adding new Python
+releases to the matrix; reading the repository settings back through `gh api`,
+including the `pypi` environment's tag rule, and the collaborators-only limit by
+eye; and moving the "Unreleased" entries under the new version. The Releasing
+section of `AGENTS.md` moves there. Then it runs the checklist once, triaging
+issues #162, #226, #229 and #278, and records the second measurement on
+`docs/measurement.md`.
 
 Proof: its own pull request answers the definition of done, the second
 measurement is recorded, and every shortfall is closed or is an issue.

@@ -4,179 +4,170 @@ This page holds the latest measurement of uncoded against
 [the standard](standard.md). Each measurement replaces the one before it, and
 earlier measurements are in Git history.
 
-This is the first measurement, the baseline. It was taken on 2026-10-27 at
-`0071673`, the commit on `main` after the stories were added in #290 and before
-any gap was closed.
+This is the second measurement. It was taken on 2026-10-28 at `1c0b9ba`, on the
+branch of #355, which ran [the release checklist](releasing.md) for the first
+time, after the fixes that the checklist calls quick. The first measurement, the
+baseline, was taken on 2026-10-27 at `0071673`, before the roadmap for the
+engineering standard (#257) closed any gap.
 
-A stage of the
-[roadmap](https://github.com/alimanfoo/uncoded/blob/main/specs/2026-10-25-engineering-standard/roadmap.md)
-for the engineering standard (#257) owns most shortfalls below, and the product
-owner, who decides what the project takes on, owns the rest: #310 and three open
-bugs.
+An open issue owns each shortfall below.
 
 ## Results
 
-| Criterion                  | Measured                                                                                                                         | Status  | Owner                                |
-| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------- | ------------------------------------ |
-| Cohesive modules           | 0 modules without one nameable responsibility; the largest are `stubs.py` (471 lines) and `cli.py` (377)                         | met     |                                      |
-| Focused functions          | 0 functions without one nameable job; the longest is `refs._run_exchange` (88 lines)                                             | met     |                                      |
-| No unused exports          | 20 public names that no other module imports, besides `main`                                                                     | not met | #273                                 |
-| One way                    | 2 facts derived more than once: the project directory, 3 ways, and which statements are symbols, 3 ways                          | not met | #273, #296                           |
-| No suppressions            | 4 `noqa`, 0 `type: ignore`, 0 `pragma: no cover`; no hook against `noqa` or `type: ignore`                                       | not met | #269, #267                           |
-| One vocabulary             | 25 disagreements, besides 6 that are behaviour changes not yet built; 337 uses of a replaced word, 217 of them `project_root`    | not met | #272                                 |
-| True documents             | 14 behaviour changes the stories settle are not yet built; 3 open bugs contradict a story                                        | not met | #265, #293 to #304; #280, #281, #292 |
-| Docs by purpose            | Tutorial, how-to pages, references and development pages are kept apart; no user page links to a development page                | met     |                                      |
-| Versioned contract         | No compatibility statement and no changelog; `docs/upgrading.md` covers the two major releases                                   | not met | #264                                 |
-| Accurate references        | No generated `--help` blocks; 2 behaviours that a reference or skill describes differently from the code                         | not met | #274; #292                           |
-| Machine-checked rules      | 3 of the 6 rules checked; removals outside `sync.py` at 4 places; 286 functions with positional parameters                       | not met | #269, #270                           |
-| Fast readable tests        | 368 tests in 2.07 seconds at 100% branch coverage; 18 of 326 distinct test names name a mechanism, not a behaviour               | not met | product owner, #310                  |
-| Accurate tracker           | 7 of 46 open issues fall short: 4 use a replaced word, and 4 ask for work done or ruled out                                      | not met | #272, #275                           |
-| Reviewed changes           | 11 pull requests merged since v3.0.0, 10 linking an issue or spec, 0 answering the definition of done; 4 commits outside one     | not met | #275                                 |
-| Loud failures              | No `strict = true`, `pytest>=8.0`, no test timeout                                                                               | not met | #269                                 |
-| Rules not cases            | No ledger; 4 conditionals name a situation, each with a cause inside uncoded                                                     | not met | #273, #293, #296, #304               |
-| Invariants by construction | 0 branches that defend against a state the types could rule out                                                                  | met     |                                      |
-| Few concepts               | 35 terms on the concepts page, settled with the product owner in #279 and #290; no other change has added one                    | met     |                                      |
-| Symmetry                   | 4 asymmetries between `uncoded body` and `uncoded refs`, and between the code and documentation index paths; skills are parallel | not met | #273, #296                           |
+| Criterion                  | Measured                                                                                                          | Status  | Owner                              |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------- | ------- | ---------------------------------- |
+| Cohesive modules           | 0 modules without one nameable responsibility; the largest are `cli.py` (452 lines) and `config.py` (292)         | met     |                                    |
+| Focused functions          | 0 functions without one nameable job; the longest is `cli.main` (101 lines)                                       | met     |                                    |
+| No unused exports          | 0 public names that no other module imports, besides `main`                                                       | met     |                                    |
+| One way                    | 1 fact derived twice: why a Python file cannot be parsed                                                          | not met | #357                               |
+| No suppressions            | 0 `noqa`, 0 `type: ignore`, 0 `pragma: no cover`; ruff's `PGH` checks on                                          | met     |                                    |
+| One vocabulary             | 2 disagreements, both in how `extract.py` models the symbols of a class body and a module body; 0 replaced words  | not met | #347                               |
+| True documents             | 5 open bugs contradict a story or the concepts page; 1 message does not say what its story says                   | not met | #317, #332, #343, #351, #356; #330 |
+| Docs by purpose            | Tutorial, how-to pages, references and development pages are kept apart; no user page links to a development page | met     |                                    |
+| Versioned contract         | A compatibility page and a changelog; each **Breaking** entry says what changes for the user                      | met     |                                    |
+| Accurate references        | `--help` blocks generated by cog; 0 behaviours that a reference or skill describes differently from the code      | met     |                                    |
+| Machine-checked rules      | 6 of the 6 rules checked; no rule found that review missed more than once                                         | met     |                                    |
+| Fast readable tests        | 491 tests, the default 483 in 1.71 seconds at 100% branch coverage; 17 test names fall short of the bar           | not met | #359, #340                         |
+| Accurate tracker           | 0 of 26 open issues use a replaced word or ask for work done or ruled out                                         | met     |                                    |
+| Reviewed changes           | 41 pull requests merged since v3.0.0, 40 linking an issue or spec, 8 answering the definition of done             | not met | #360                               |
+| Loud failures              | `strict = true`, `pytest>=9.0`, a 30-second test timeout, raised to 120 seconds on macOS and Windows in CI        | met     |                                    |
+| Rules not cases            | 11 entries on the ledger, each with an external cause; 0 conditionals that name a situation off the ledger        | met     |                                    |
+| Invariants by construction | 0 branches that defend against a state the types could rule out                                                   | met     |                                    |
+| Few concepts               | 36 terms on the concepts page; the one added since the baseline, "contract", came with the compatibility page     | met     |                                    |
+| Symmetry                   | 4 asymmetries: 3 between the code and documentation index paths, 1 between `uncoded body` and `uncoded refs`      | not met | #358                               |
 
 ## Notes
 
 - **Cohesive modules, focused functions.** Review read every module under `src`,
-  largest first, and named one responsibility for each: `stubs.py` builds the
-  stubs, `cli.py` defines and runs the commands, `refs.py` finds references
-  through ty, `resolver.py` finds a symbol by its name path, `skill.py` writes
-  the skills, `docs_map.py` builds the docs map, `config.py` finds and reads the
-  configuration file, and `extract.py` lists the symbols of Python files. The
-  longest functions each do one job:
+  largest first, and named one responsibility for each: `cli.py` defines and
+  runs the commands, `config.py` finds, reads and checks the configuration file,
+  `refs.py` finds references through ty, `extract.py` lists the symbols of
+  Python files, `docs_map.py` builds the docs map, `stubs.py` renders and syncs
+  the stubs, `skill.py` writes the skills, `resolver.py` finds a symbol by its
+  name path, `sync.py` writes and removes generated files, `ast_helpers.py`
+  decides which statements are symbols, `namespace_map.py` builds the namespace
+  map, `read_helpers.py` reads source and says why a file could not be used,
+  `yaml_tree.py` nests paths and renders the maps, `body.py` slices out a
+  definition, and `markers.py` holds the provenance marker. The longest
+  functions each do one job:
 
-  | Function                                | Lines | Its job                                      |
-  | --------------------------------------- | ----: | -------------------------------------------- |
-  | `refs._run_exchange`                    |    88 | Run one exchange with ty's language server.  |
-  | `cli.main`                              |    78 | Define the command-line grammar.             |
-  | `cli._sync`                             |    74 | Run `uncoded sync` or `uncoded check`.       |
-  | `cli._sync_code_artefacts`              |    56 | Write or remove the code index.              |
-  | `docs_map.extract_headings`             |    40 | List a Markdown file's headings.             |
-  | `stubs.build_stubs`                     |    39 | Write the stubs for one source root.         |
-  | `skill._sync_one_skill`                 |    38 | Write or remove one skill's installed files. |
-  | `resolver.resolve_ast_node_from_source` |    37 | Find the definition that a name path names.  |
-  | `namespace_map.build_map`               |    37 | Build the namespace map's tree.              |
-  | `docs_map.build_docs_map`               |    37 | Build the docs map's tree.                   |
+  | Function                     | Lines | Its job                                             |
+  | ---------------------------- | ----: | --------------------------------------------------- |
+  | `cli.main`                   |   101 | Parse the command line and run the chosen command.  |
+  | `refs._run_exchange`         |    81 | Run one exchange with ty's language server.         |
+  | `cli._sync`                  |    68 | Run `uncoded sync` or `uncoded check`.              |
+  | `docs_map._extract_headings` |    40 | List a Markdown file's headings.                    |
+  | `stubs.sync_stubs`           |    39 | Write the stubs for one source root.                |
+  | `cli._init`                  |    39 | Set uncoded up in a project, then sync.             |
+  | `cli._sync_code_index`       |    37 | Write or remove the code index.                     |
+  | `extract.read_python_files`  |    36 | Read and list the symbols of one root's files.      |
+  | `sync.sync_file`             |    33 | Write a generated file when its content differs.    |
+  | `sync.remove_file`           |    33 | Remove a generated file and the parents left empty. |
 
-- **No unused exports.** No other module under `src` imports these public names:
-  `config.Config`, `docs_map.DOCS_HEADER`, `docs_map.extract_headings`,
-  `extract.ClassInfo`, `extract.extract_module`, `namespace_map.HEADER`,
-  `refs.Reference`, `refs.TY_VERSION`, `resolver.resolve_ast_node`,
-  `skill.SKILLS`, `skill.SKILL_ROOTS`, `skill.Skill`, `stubs.StubAssignment`,
-  `stubs.StubClass`, `stubs.StubFunction`, `stubs.StubModule`,
-  `stubs.StubParam`, `stubs.VALUE_WIDTH_CAP`, `stubs.extract_stub` and
-  `stubs.render_stub`. Some are used in their own module or reached through a
-  return value, and the tests import others. Stage 15 (#273) makes each one
-  private or gives it an importer.
-- **One way.** The project directory is found three ways. `config.py` walks up
-  the tree once in `find_pyproject_toml` and again in `_find_config_file`
-  (#234), and `refs._find_root` falls back to the nearest `pyproject.toml`, or
-  the `--in` file's directory, when there is no configuration file. Which
-  statements in a module body or class body are symbols is decided three times,
-  in `extract.py`, `stubs.py` and `resolver.py`, and `extract.ModuleInfo` and
-  `stubs.StubModule` are two models of a Python file's symbols. Stage 15 (#273)
-  owns these, and stage 13.4 (#296) removes the fallback in `refs.py`.
-- **No suppressions.** The `noqa` comments are the subprocess waivers in
-  `refs.py` (S404, S603, S607) and `tests/test_refs.py` (S404). Stage 11 (#269)
-  moves them to per-file ignores, and stage 9 (#267) adds the hooks against
-  blanket `noqa` and `type: ignore`.
-- **One vocabulary.** The consistency review reported 31 disagreements, one for
-  each pair of conflicting claims, however many places repeat a claim. Six of
-  them are behaviour changes that the stories settle and the code does not yet
-  do, such as `uncoded init` and `uncoded refs` listing a symbol's definition,
-  and are counted under true documents. Of the other 25, 20 are about words: 13
-  use a word the concepts page replaces, such as "config file", "artefact" and
-  "root type", and 7 use a concept's word for something else, such as "symbol"
-  for a directory or "index" for every generated file. The other 5 are claims
-  about a symbol that its code contradicts, such as the `sync.py` docstring
-  naming an `uncoded --check` flag that does not exist, and `AGENTS.md`
-  promising a stub for every Python file. Words that the concepts page replaces
-  occur 337 times: 95 in prose and 242 in identifiers, of which 217 are
-  `project_root` and its variants. Stage 14 (#272) settles all of these.
-- **True documents.** The design's
+  `cli.main` grew from 78 lines, because each command now binds how it finds the
+  configuration and the action it runs. It still reads as one sequence: build
+  the grammar, parse, run the command, report errors.
+
+- **One way.** Both facts that the baseline found derived more than once are now
+  derived once. `Config.project_directory` is the one project directory, and
+  `ast_helpers.module_symbols` and `class_symbols` decide which statements are
+  symbols for `extract.py` and `resolver.py`, with `extract.PythonFile` the one
+  model of a Python file's symbols. One new case: `uncoded sync` says
+  `SyntaxError at line 1: invalid syntax` for a file that `uncoded body` reports
+  as `invalid syntax (b.py, line 1)`, because `extract.read_python_files` builds
+  its own message instead of using `read_helpers.failure_reason` (#357). The
+  references that `refs.py` reads from ty and the ones it prints are two types,
+  but one is ty's format and the other uncoded's, converted at the edge, so they
+  are not counted.
+- **No suppressions.** The subprocess waivers are per-file ignores in
+  `pyproject.toml`, each with its reason, and ruff's `PGH` checks reject a
+  blanket `noqa` or `type: ignore`.
+- **One vocabulary.** The consistency review reported 6 disagreements. #355
+  fixed 4: `AGENTS.md` promised "full signatures" in a stub, the docstring of
+  `cli.main` said `uncoded init` syncs only the index, `cli.main` bound the
+  function that finds the configuration as `find_project`, and the code
+  navigation skill, `docs/commands.md` and a docstring in `resolver.py` said
+  "`type` alias" for a `type` statement. The other 2 are in
+  `src/uncoded/extract.py`, and #347 owns both: a property is modelled as an
+  `AssignmentSymbol` in a class's `attributes`, a word the concepts page does
+  not use, and `PythonFile.assignments` also holds the `type` statements. No
+  word that the concepts page replaces is in use outside this page, which quotes
+  the baseline's words. The `--help` text and the package's description say "AI
+  coding agents", which the concepts page allows, since each introduces the
+  term.
+- **True documents.** Every behaviour change that the design's
   [Stories](https://github.com/alimanfoo/uncoded/blob/main/specs/2026-10-25-engineering-standard/design.md#behaviour-changes)
-  section lists 14 behaviour changes that the stories settle and the code does
-  not yet do. Stage 7 (#265) builds paths that use `/` on every system, and
-  stages 13.1 to 13.12 (#293 to #304) build the rest. Three open bugs contradict
-  a story, and no stage owns them: #280, where `uncoded check` reports the index
-  as current after a source root is removed; #281, where a name path with a
-  slash reaches a class that a later definition redefines; and #292, where
-  `uncoded body` changes CRLF line endings and drops a byte-order mark. The
-  architecture contradicts nothing, but it does not yet state the three layers,
-  which stage 11 (#269) adds.
+  section lists is built. Five open bugs contradict a story or the concepts
+  page: #351, where `uncoded refs` finds nothing for a `def` with two spaces
+  before its name; #332, where a file under two overlapping source roots is
+  warned about and counted twice; #343, where a stub does not show which of two
+  definitions of a name comes later; #317, where `uncoded refs` drops the host
+  of a UNC path on Windows; and #356, where the docs map lists a heading inside
+  a code block that a shorter fence seems to close. The message for a
+  configuration file that names no roots does not name the file, as its story
+  says (#330). #345, a traceback when standard output cannot encode a
+  definition, contradicts no story, since no story covers that fault. #355
+  corrected the standard, which said that only `refs.py` imports `subprocess`,
+  when `tests/conftest.py` and `tests/test_refs.py` do too. The architecture
+  contradicts nothing.
 - **Docs by purpose.** "Get started" is the tutorial, "Use uncoded" holds the
-  how-to pages, and "Reference" holds the configuration, command and upgrading
-  references. The README sends the reader to the site. `docs/contributing.md`
-  sits under "Development", and stage 10 (#268) removes it.
-- **Versioned contract.** Stage 6 (#264) writes the compatibility statement and
-  the changelog. Until then, the rules for what counts as a breaking, minor or
-  patch change are in the design's
-  [Breaking changes](https://github.com/alimanfoo/uncoded/blob/main/specs/2026-10-25-engineering-standard/design.md#breaking-changes)
-  section. The stories also record two **Breaking** changes to come, which stage
-  13.4 (#296) and stage 7 (#265) build.
-- **Accurate references.** `docs/commands.md` has no block generated from
-  `--help`, and stage 16 (#274) adds them with cog. Review read
-  `docs/commands.md`, `docs/configuration.md` and the three skill sources
-  against the code and the `--help` output. One behaviour is described
-  differently: `docs/commands.md` says `uncoded body` prints the source "exactly
-  as written in the file", and the code navigation skill says its output is
-  "byte-identical to disk", but #292 shows it is not for a file with CRLF line
-  endings or a byte-order mark. No stage owns #292. And the documentation
-  navigation skill says the headings in the docs map are literal text, but the
-  docs map adds a suffix such as " (2)" to a repeated heading. Stage 16 (#274)
-  reviews the skills against the code.
-- **Machine-checked rules.** These rules are checked today: only `refs.py`
-  imports `subprocess` (ruff's S404, with the waivers above), every generated
-  file carries the provenance marker (`tests/test_markers.py`), and every text
-  read and write names its encoding (PLW1514 and the runtime gate). Three are
-  not. Files and directories are removed outside `sync.py` at four places: three
-  `rmdir` calls in `stubs.py` and one in `skill.py`. Imports already point down
-  the three layers, with no middle-layer module importing another, but nothing
-  checks it. Stage 11 (#269) checks both. Ruff's PLR0917, with
-  `max-positional-args = 0`, finds 48 functions with positional parameters in
-  `src` and 238 in `tests`, and stage 12 (#270) makes them keyword-only.
+  how-to pages, "Reference" holds the configuration, command, compatibility,
+  upgrading and changelog pages, and "Development" holds the rest. The changelog
+  linked the concepts page three times, and #355 removed those links.
+- **Versioned contract.** `docs/compatibility.md` gives the rules, and
+  `docs/changelog.md` uses the headings Breaking, Added, Changed and Fixed. The
+  two **Breaking** entries under "Unreleased" each say what now happens, and the
+  release that takes them will add an upgrading section, as the release
+  checklist says.
+- **Accurate references.** `cog --check` passes on `docs/commands.md`, and every
+  exit status it gives matched the commands' behaviour. #355 fixed two
+  descriptions that differed from the code: the documentation navigation skill
+  and the docs map's header said that a " (N)" suffix marks a heading with the
+  same text and level, when the level does not count, and
+  `docs/configuration.md` said that a file is generated when a setting is set,
+  when the setting must name a root. The code navigation skill gives
+  `uvx uncoded body` and `uvx uncoded refs` as the commands. In a project with a
+  required version, uncoded refuses them at any other version and gives the
+  command to use, as the stories say, so they are not counted.
+- **Machine-checked rules.** Each rule that the standard lists has its check:
+  ruff's subprocess rules with their per-file waivers, the `writes-only-in-sync`
+  hook, the import-linter `layers` contract, `tests/test_markers.py`, PLW1514
+  with the runtime gate, and PLR0917 with `max-positional-args = 0`. One rule to
+  watch: a test that spawns ty must carry the `integration` marker, which review
+  has missed once (#336).
 - **Fast readable tests.** The time is the default run's, as pytest reports it.
-  The 8 integration tests, which spawn ty, passed in 0.77 seconds. Review read
-  every distinct test name, and #310 lists the ones that name a function, a type
-  or a step of a protocol that a user never sees. No stage of the roadmap
-  renames tests for the behaviour they test.
-- **Accurate tracker.** Four open issues use a word the concepts page replaces:
-  #162 ("artefact"), #231 and #235 ("contributor"), and #280 ("up to date").
-  Four ask for work that is done or that a story rules out: #162, since
-  `.uncoded/.gitignore` now ignores everything under `.uncoded/`; #226, which
-  rests on `tools/check_encoding.py`, now gone; #229, whose docstring was
-  corrected; and #278, which asks for names defined inside an `if` that the
-  stories say are not symbols. Stage 14 (#272) corrects the words, and stage 17
-  (#275) triages the rest.
-- **Reviewed changes.** v3.0.0 is the previous major or minor release. Of the 11
-  pull requests merged since, #252 links no issue or spec, and none answers the
-  definition of done, which stage 17 (#275) starts asking for. Four commits
-  reached `main` outside a pull request, the last on 2026-10-24. Branch
-  protection now requires a pull request, enforced for admins.
-- **Rules not cases.** These conditionals name a situation, and the cause of
-  each is a choice uncoded made: `config._config_file_at` passes over a
-  directory named `.uncoded`, and stops the search at a `pyproject.toml` without
-  `[tool.uncoded]`, which stage 13.1 (#293) changes; `skill.py` removes the
-  skill names of earlier versions, which stage 13.12 (#304) stops; and
-  `refs._find_root` falls back when there is no configuration file, which stage
-  13.4 (#296) removes. Stage 15 (#273) starts the ledger and settles any that
-  remain. The other conditionals apply rules from outside uncoded, such as
-  CommonMark's headings and Python's parameter syntax, or rules the concepts
-  page states, such as a property's setter and deleter not being symbols.
-- **Invariants by construction.** `stubs.StubAssignment` carries an
-  `is_pep695_alias` flag, and its fields allow an alias with an annotation,
-  which no source produces, but no branch defends against it.
-- **Symmetry.** `uncoded body` and `uncoded refs` each list the exceptions they
-  report, and the lists can drift (#205). `uncoded refs` finds a project
-  directory and `uncoded body` does not, which stage 13.4 (#296) settles. In
-  `cli.py` the code index is built root by root and the documentation index from
-  all roots at once, and the project directory is passed to
-  `extract.iter_source_files` by name but to `docs_map.iter_doc_files` by
-  position. Stage 15 (#273) owns the rest. The two navigation skills have the
-  same steps in the same order.
+  The 8 integration tests passed in 0.43 seconds. Review read the 361 distinct
+  test function names against the bar that #310 settled, and 17 fall short: #359
+  lists 16, and #340 removes the other. #346 kept three names of steps of ty's
+  protocol, which are not counted.
+- **Accurate tracker.** The triage corrected the words that #348 listed in #340,
+  #332, #330, #278, #257, #235 and #162, along with code names that have changed
+  since, and brought #347 up to date with the code. It closed #162, #226, #229,
+  #278 and #348, each with its reason. A search of every open issue's title and
+  body finds no word that the concepts page replaces.
+- **Reviewed changes.** v3.0.0 is the previous major or minor release. Of the 41
+  pull requests merged since, #252 links no issue or spec, and 8 answer the
+  definition of done. Four commits reached `main` outside a pull request, the
+  last on 2026-10-24, before branch protection required one. `AGENTS.md` asks
+  every pull request to answer the definition of done from #355 on, and #360
+  owns the shortfall until a measurement counts only those pull requests.
+- **Rules not cases.** Every entry on [the ledger](special-cases.md) is where it
+  says, with a cause outside uncoded, and review found no other conditional that
+  names a situation. #355 removed an override in `yaml_tree.py` that indented
+  lists, since neither map holds a list.
+- **Invariants by construction.** No branch, raise or assert defends against a
+  state the types could rule out. `sync.remove_file` takes a path relative to
+  the project directory as a `Path`, and a path outside it raises the
+  `ValueError` of `Path.relative_to`, which a test pins, but no branch of
+  uncoded's own defends against it.
+- **Symmetry.** `uncoded body` and `uncoded refs` share one list of the errors
+  they report, which settled #205. Four asymmetries remain, which #358 lists:
+  `extract.read_python_files` and `docs_map.read_doc_files` walk a root the same
+  way without sharing code, `cli._sync_code_index` and
+  `_sync_documentation_index` repeat one sequence, the names of the two maps'
+  functions are not parallel, and `uncoded body` and `uncoded refs` check their
+  input in a different order. The two navigation skills have the same steps in
+  the same order.
 
 ## Method
 
@@ -237,7 +228,7 @@ with the development dependencies installed.
   `PYTHONWARNDEFAULTENCODING=1 uv run pytest -q`, and the integration tests'
   from `PYTHONWARNDEFAULTENCODING=1 uv run pytest -q -m integration --no-cov`.
   The distinct test names come from `uv run pytest --collect-only -q -m ""`,
-  with parameters stripped.
+  with the test class and parameters stripped.
 - **Vocabulary** comes from the consistency review, run by an agent following
   the `uncoded-consistency-review` skill over `src`, `tests`, `README.md`,
   `AGENTS.md`, `docs` and the skill sources, with the concepts page as the
@@ -255,11 +246,13 @@ with the development dependencies installed.
   and the stories.
 - **Reviewed changes** come from `git log --first-parent v3.0.0..origin/main`
   and from the bodies of the pull requests merged since v3.0.0, read through
-  `gh pr list --state merged`. A commit outside a pull request is one that
+  `gh pr list --state merged`. A pull request answers the definition of done
+  when its body has a "Definition of done" heading and every question's title in
+  bold. A commit outside a pull request is one that
   `git log --first-parent --no-merges v3.0.0..origin/main` lists.
 - **Terms on the concepts page** are its `###` headings under "Terms".
 - **Docs by purpose** comes from the `nav` in `mkdocs.yml`, and from
-  `grep -nE "\]\((concepts|stories|architecture|contributing|standard|measurement)\.md" README.md docs/*.md`,
+  `grep -nE "\]\((concepts|stories|architecture|standard|measurement|testing|special-cases|releasing)\.md" README.md docs/*.md`,
   which must find nothing in the pages outside "Development".
 - **Versioned contract** comes from looking for a compatibility statement and a
   changelog under `docs`.
