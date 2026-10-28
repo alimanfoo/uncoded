@@ -1,0 +1,95 @@
+# Releasing
+
+The maintainer decides when to release. This page lists what to do before and
+when publishing a release. The package takes its version from the Git tag, so
+creating the tag is the only version change.
+
+## Check the standard
+
+Do this before a major or minor release. A patch release skips it.
+
+1. Run the consistency review, the `uncoded-consistency-review` skill, over
+   `src`, `tests`, `README.md`, `AGENTS.md`, `docs` and the skill sources, with
+   [the concepts page](concepts.md) as the authority. Fix what is quick to fix,
+   and file an issue for each other finding.
+2. Triage the open issues. Rewrite each issue that uses a word the concepts page
+   replaces, which is any word after "Replaces:" on that page. Close each issue
+   whose work is done, or that asks for what [a story](stories.md) rules out,
+   and say why.
+3. Measure every criterion in [the standard](standard.md), by the method that
+   [the measurement](measurement.md) gives, reading the enduring documents
+   against the code. Replace the measurement with the results, and name an issue
+   for each shortfall, filing one where no open issue owns it.
+
+A shortfall does not hold the release back. A failing test or check does.
+
+## Check what nothing else checks
+
+Do this before a major or minor release too.
+
+1. Add each Python release that came out since the previous release to the
+   `python` list of the `test` job in `.github/workflows/ci.yml`. That list is
+   the one record of the Python versions that uncoded supports.
+2. Read the repository settings back, since they live outside the repository:
+
+   ```sh
+   R=repos/alimanfoo/uncoded
+   gh api $R --jq '{has_discussions, security_and_analysis}'
+   gh api $R/private-vulnerability-reporting
+   gh api $R/code-scanning/default-setup --jq '{state, languages}'
+   gh api $R/dependency-graph/sbom --jq '.sbom.name'
+   gh api $R/branches/main/protection
+   gh api $R/environments/pypi
+   gh api $R/environments/pypi/deployment-branch-policies
+   ```
+
+   Check that Discussions, private vulnerability reporting, secret scanning and
+   push protection are on, and that CodeQL default setup covers `actions` and
+   `python`. Check that `main` requires a pull request and the "Required checks
+   pass" and `dependency-review` checks, enforced for admins, with "require
+   branches to be up to date" and conversation resolution off. Check that the
+   `pypi` environment allows only tags that match `v*`, and has no required
+   reviewer. Then check by eye, in the repository's settings on GitHub, that
+   only collaborators can open issues and pull requests. Correct any setting
+   that differs.
+
+## Prepare the release
+
+1. Choose the version from the headings of the entries under **Unreleased** in
+   the changelog. Any entry under **Breaking** makes a major release, any entry
+   under **Added** or **Changed** a minor release, and entries under **Fixed**
+   alone a patch release. [Compatibility](compatibility.md#versions) says what
+   each kind of release can change.
+2. Move the entries under **Unreleased** into a section for the new version,
+   headed like the released sections below it. Keep each entry under its
+   heading, and leave out a heading with no entries.
+3. If the release is major, add a section to [Upgrading](upgrading.md) that
+   takes a project from the previous major version, and link it from the top of
+   the version's section in the changelog, as 3.0.0 does.
+4. Merge these changes, and the measurement, in one pull request. Then wait for
+   CI to pass on `main`.
+
+## Publish
+
+Create and publish a GitHub release from `main`. Name the tag `v` followed by
+the version, such as `v3.0.1`:
+
+```sh
+gh release create v3.0.1 --target main --generate-notes
+```
+
+Publishing the release starts `.github/workflows/publish.yml`. It builds the
+source distribution and wheel from the tag, then uploads them to
+[PyPI](https://pypi.org/p/uncoded). The build fails before the upload if the tag
+did not build that version. Check that the workflow succeeds and that PyPI lists
+the new version.
+
+The upload uses PyPI Trusted Publishing, so it needs no `PYPI_TOKEN` or any
+other long-lived publishing secret. The PyPI trusted publisher is configured
+for:
+
+- PyPI project: `uncoded`
+- Owner: `alimanfoo`
+- Repository: `uncoded`
+- Workflow: `publish.yml`
+- Environment: `pypi`

@@ -74,5 +74,6 @@ nav:
       - Architecture: architecture.md
       - Standard: standard.md
       - Measurement: measurement.md
+      - Releasing: releasing.md
       - Testing: testing.md
       - Special cases: special-cases.md

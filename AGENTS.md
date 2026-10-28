@@ -240,22 +240,8 @@ final refresh. See [Commands](#commands) and [Dev setup](#dev-setup).
 
 ## Releasing
 
-GitHub releases publish to PyPI through `.github/workflows/publish.yml`. The
-workflow uses PyPI Trusted Publishing. It does not need a `PYPI_TOKEN` or any
-other long-lived publishing secret.
-
-The PyPI trusted publisher is configured for:
-
-- PyPI project: `uncoded`
-- Owner: `alimanfoo`
-- Repository: `uncoded`
-- Workflow: `publish.yml`
-- Environment: `pypi`
-
-Create and publish a GitHub release from the release tag. Name the tag `v`
-followed by the version, such as `v3.0.1`. The `published` release event builds
-the source distribution and wheel, then uploads them to PyPI. The build fails
-before the upload if the tag did not build that version.
+[docs/releasing.md](docs/releasing.md) is the checklist for a release, from
+checking the standard to publishing to PyPI.
 
 ## Before you start
 
