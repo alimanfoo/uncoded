@@ -174,6 +174,9 @@ signature, and each assignment's annotation and, when short, its value. It sits
 at the Python file's path relative to the project directory, under
 `.uncoded/stubs/`.
 
+A stub is laid out in the **standard stub style**, the layout that ruff and
+Black write for `.pyi` files.
+
 A stub is not a type stub for type checkers. It leaves out parameter defaults
 and decorators, so a type checker would misread it.
 
