@@ -6,6 +6,7 @@ have their own unit tests; this suite covers the orchestration and the
 """
 
 import io
+import os
 import shlex
 import sys
 import textwrap
@@ -1065,7 +1066,7 @@ class TestBodyCommand:
     def test_happy_path_dispatch(self, *, tmp_path, monkeypatch, capsys):
         _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "src" / "foo.py").write_text(
-            "def fn():\n    pass\n", encoding="utf-8"
+            "def fn():\n    pass\n", encoding="utf-8", newline=""
         )
 
         assert _body(monkeypatch=monkeypatch, name_path="fn", in_path="src/foo.py") == 0
@@ -1074,7 +1075,9 @@ class TestBodyCommand:
     def test_class_method_form(self, *, tmp_path, monkeypatch, capsys):
         _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "src" / "foo.py").write_text(
-            "class Dog:\n    def bark(self):\n        pass\n", encoding="utf-8"
+            "class Dog:\n    def bark(self):\n        pass\n",
+            encoding="utf-8",
+            newline="",
         )
 
         assert (
@@ -1086,7 +1089,7 @@ class TestBodyCommand:
     def test_symbol_not_found_exits_one(self, *, tmp_path, monkeypatch, capsys):
         _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "src" / "foo.py").write_text(
-            "def other(): pass\n", encoding="utf-8"
+            "def other(): pass\n", encoding="utf-8", newline=""
         )
 
         assert (
@@ -1123,7 +1126,9 @@ class TestBodyCommand:
 
     def test_syntax_error_exits_one(self, *, tmp_path, monkeypatch, capsys):
         _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
-        (tmp_path / "src" / "foo.py").write_text("def broken(:\n", encoding="utf-8")
+        (tmp_path / "src" / "foo.py").write_text(
+            "def broken(:\n", encoding="utf-8", newline=""
+        )
 
         assert (
             _body(monkeypatch=monkeypatch, name_path="broken", in_path="src/foo.py")
@@ -1154,7 +1159,7 @@ class TestBodyCommand:
     def test_in_path_resolves_relative_to_cwd(self, *, tmp_path, monkeypatch, capsys):
         _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "src" / "foo.py").write_text(
-            "def fn():\n    pass\n", encoding="utf-8"
+            "def fn():\n    pass\n", encoding="utf-8", newline=""
         )
         subdir = tmp_path / "subdir"
         subdir.mkdir()
@@ -1179,6 +1184,8 @@ class TestBodyCommand:
     def test_reads_any_python_file_in_the_project(
         self, *, tmp_path, monkeypatch, capsys, in_path, body
     ):
+        # Both files hold the platform's line endings, as the stub that sync
+        # writes does.
         _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
         (tmp_path / "src" / "foo.py").write_text(
             "def fn(x: int) -> int:\n    return x\n", encoding="utf-8"
@@ -1188,13 +1195,13 @@ class TestBodyCommand:
         capsys.readouterr()
 
         assert _body(monkeypatch=monkeypatch, name_path="fn", in_path=in_path) == 0
-        assert capsys.readouterr().out == body
+        assert capsys.readouterr().out == body.replace("\n", os.linesep)
 
     def test_stdout_is_exact_body(self, *, tmp_path, monkeypatch, capsys):
         _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
         body = "def compute(x: int) -> int:\n    return x * 2\n"
         source = f"# header\n\n{body}\n# footer\n"
-        (tmp_path / "src" / "foo.py").write_text(source, encoding="utf-8")
+        (tmp_path / "src" / "foo.py").write_text(source, encoding="utf-8", newline="")
 
         assert (
             _body(monkeypatch=monkeypatch, name_path="compute", in_path="src/foo.py")
@@ -1215,7 +1222,7 @@ class TestBodyCommand:
         monkeypatch.setattr(sys, "stdout", stdout)
         _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
         body = "def compute(x: int) -> int:\n    return x * 2\n"
-        (tmp_path / "src" / "foo.py").write_bytes(body.encode("utf-8"))
+        (tmp_path / "src" / "foo.py").write_text(body, encoding="utf-8", newline="")
 
         assert (
             _body(monkeypatch=monkeypatch, name_path="compute", in_path="src/foo.py")
@@ -1231,7 +1238,9 @@ class TestBodyCommand:
         stdout = io.TextIOWrapper(written, encoding="ascii", errors="backslashreplace")
         monkeypatch.setattr(sys, "stdout", stdout)
         _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
-        (tmp_path / "src" / "foo.py").write_bytes('x = "é"\n'.encode())
+        (tmp_path / "src" / "foo.py").write_text(
+            'x = "é"\n', encoding="utf-8", newline=""
+        )
 
         assert _body(monkeypatch=monkeypatch, name_path="x", in_path="src/foo.py") == 0
 
@@ -1239,7 +1248,9 @@ class TestBodyCommand:
 
     def test_unsupported_name_path_exits_one(self, *, tmp_path, monkeypatch, capsys):
         _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
-        (tmp_path / "src" / "foo.py").write_text("def fn(): pass\n", encoding="utf-8")
+        (tmp_path / "src" / "foo.py").write_text(
+            "def fn(): pass\n", encoding="utf-8", newline=""
+        )
 
         assert (
             _body(monkeypatch=monkeypatch, name_path="A/B/C", in_path="src/foo.py") == 1
