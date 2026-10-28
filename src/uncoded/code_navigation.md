@@ -16,11 +16,11 @@ reflex is wrong here. Reaching for `grep -rn 'def parse_config'` to read a
 function's body is a case for `uncoded body`. Reaching for
 `grep -rn 'validate_input'` to check callers before a refactor is a case for
 `uncoded refs`. Reaching for `grep` then `Edit` to delete dead code is a case
-for `uncoded refs` to confirm the code is dead, then `Edit`. The grep version of
-any of these is noisier and less reliable. Grep matches comments, strings, and
-unrelated attributes. Grep misses re-exports, so caller and delete checks come
-back incomplete. Grep forces offset arithmetic to slice a body. The indexed
-tools don't.
+for `uncoded refs` to confirm the symbol is unused, then `Edit`. The grep
+version of any of these is noisier and less reliable. Grep matches comments,
+strings, and unrelated attributes. Grep misses re-exports, so caller and delete
+checks come back incomplete. Grep forces offset arithmetic to slice a body. The
+indexed tools don't.
 
 ## How to execute the rule
 
@@ -70,7 +70,8 @@ method and `function_name` for a top-level function. Per task:
   for partial edits. Stay on stubs for a wider sweep.
 
 - **Find every reference to a symbol.**
-  `uvx uncoded refs <name_path> --in <relative_path>`. Prints one reference per
+  `uvx uncoded refs <name_path> --in <relative_path>`. Prints the symbol's
+  definition, each import of it, and each use of it. Prints one reference per
   line as `<path>:<line>:<col>`, sorted by path, then line, then column. Each
   path is relative to the current working directory when possible and otherwise
   absolute. Grep on the name misses re-exports and adds false positives from
@@ -81,10 +82,12 @@ method and `function_name` for a top-level function. Per task:
   the exact `old_string`; then `Edit` to apply the change.
 
 - **Rename.** `uvx uncoded refs <name_path> --in <relative_path>` enumerates
-  every site; then `Edit` at each.
+  every site, the definition and each import included; then `Edit` at each.
 
-- **Safely delete.** `uvx uncoded refs <name_path> --in <relative_path>` must
-  return empty; then `Edit` to remove.
+- **Safely delete.** `uvx uncoded refs <name_path> --in <relative_path>` lists
+  every reference. The symbol is unused when every reference lies within its own
+  definition, within an `@overload` definition that it redefines, or within its
+  property setter or deleter. If the symbol is unused, `Edit` to remove it.
 
 **Step 4: Refresh.** After every modification to indexed Python source, run the
 repository's configured `uncoded sync` command before the next code-navigation
