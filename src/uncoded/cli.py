@@ -26,7 +26,7 @@ from uncoded.refs import find_refs
 from uncoded.resolver import NamePath, SymbolNotFoundError, UnsupportedNamePathError
 from uncoded.skill import SKILL_ROOTS, agent_instructions, sync_skills
 from uncoded.stubs import build_stubs, remove_all_stubs
-from uncoded.sync import remove_file, sync_file
+from uncoded.sync import FileSyncError, remove_file, sync_file
 
 
 def _warn_skipped(*, skipped: list[SkippedFile]) -> None:
@@ -138,8 +138,10 @@ def _sync(*, config: Config, check: bool = False) -> int:
     a root type is absent its artefacts are removed. Every root is checked
     before anything is written. Before writing any index artefact, sync writes
     .uncoded/.gitignore so the index stays local by default. Raises ConfigError
-    when the configuration names no roots or a root cannot be used. A file
-    that cannot be read or parsed is left out of the index and reported.
+    when the configuration names no roots or a root cannot be used, and
+    FileSyncError when a generated file cannot be read, written or removed. A
+    file under a root that cannot be read or parsed is left out of the index
+    and reported.
 
     When ``check=True``, the on-disk tree is not mutated; the function
     reports each prospective write or removal, returns 1 if anything
@@ -200,7 +202,9 @@ def _init(*, config: Config | None) -> int:
     naming the conventional roots. Leaves the configuration file of ``config``
     as it is, and says where it is. After the sync, says what to commit and
     prints the lines that tell agents to load the navigation skills. Returns 0.
-    Raises ConfigError when there is no root to name or the sync fails.
+    Raises ConfigError when there is no root to name or the sync fails, and
+    FileSyncError when the configuration file cannot be written or a generated
+    file cannot be read, written or removed.
     """
     if config is None:
         start = Path.cwd()
@@ -440,6 +444,9 @@ def main() -> int:
         config = args.find_project(start=Path.cwd())
         _check_required_version(config=config, arguments=arguments)
         return args.action(config=config)
-    except ConfigError as e:
+    except (ConfigError, FileSyncError) as e:
+        # The error follows the lines that name the files already written,
+        # even when both streams go to one pipe.
+        sys.stdout.flush()
         print(f"Error: {e}", file=sys.stderr)
         return 1

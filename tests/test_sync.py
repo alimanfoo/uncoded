@@ -1,8 +1,9 @@
 from pathlib import Path
+from unittest import mock
 
 import pytest
 
-from uncoded.sync import remove_file, sync_file
+from uncoded.sync import FileSyncError, remove_file, sync_file
 
 
 class TestSyncFile:
@@ -130,6 +131,51 @@ class TestRemoveFile:
         path.write_text("data", encoding="utf-8")
         remove_file(path=path, project_root=tmp_path, check=True)
         assert path.exists()
+
+
+class TestFileThatCannotBeUsed:
+    def test_file_that_cannot_be_read_names_it(self, *, tmp_path):
+        (tmp_path / "out.txt").write_bytes(b"\xff")
+        with pytest.raises(FileSyncError) as exc_info:
+            sync_file(path=Path("out.txt"), content="new", project_root=tmp_path)
+        assert str(exc_info.value) == (
+            "cannot read out.txt: 'utf-8' codec can't decode byte 0xff in "
+            "position 0: invalid start byte"
+        )
+
+    def test_file_that_cannot_be_written_names_it(self, *, tmp_path):
+        # A file where a parent directory should be fails on every system,
+        # with a reason that differs between them.
+        (tmp_path / "nested").write_text("", encoding="utf-8")
+        path = Path("nested") / "out.txt"
+        with pytest.raises(FileSyncError) as exc_info:
+            sync_file(path=path, content="new", project_root=tmp_path)
+        message = str(exc_info.value)
+        assert message.startswith("cannot write nested/out.txt: ")
+        assert "Errno" not in message
+
+    def test_file_that_cannot_be_removed_names_it(self, *, tmp_path):
+        # Removing a directory as a file fails on every system, with a reason
+        # that differs between them.
+        (tmp_path / "out.txt").mkdir()
+        with pytest.raises(FileSyncError) as exc_info:
+            remove_file(path=Path("out.txt"), project_root=tmp_path)
+        message = str(exc_info.value)
+        assert message.startswith("cannot remove out.txt: ")
+        assert "Errno" not in message
+
+    def test_parent_that_cannot_be_removed_names_it(self, *, tmp_path, capsys):
+        path = Path("a") / "out.txt"
+        (tmp_path / "a").mkdir()
+        (tmp_path / path).write_text("data", encoding="utf-8")
+        failure = PermissionError(13, "Permission denied")
+        with (
+            mock.patch.object(Path, "rmdir", side_effect=failure),
+            pytest.raises(FileSyncError) as exc_info,
+        ):
+            remove_file(path=path, project_root=tmp_path)
+        assert str(exc_info.value) == "cannot remove a: Permission denied"
+        assert capsys.readouterr().out == "Removed a/out.txt\n"
 
 
 class TestSyncFileProjectRootAnchor:

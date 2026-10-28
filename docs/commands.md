@@ -29,8 +29,9 @@ If no configuration file is found in that directory or above it, `init` writes
 `.uncoded.toml` there. Its source roots are whichever of `src` and `tests`
 exist, its doc roots are whichever of `README.md`, `AGENTS.md` and `docs` exist,
 and its required version is the version of uncoded that is running. If none of
-them exist, `init` writes nothing and exits with status `1`. A configuration
-file that `init` finds is left as it is.
+them exist, `init` writes nothing and exits with status `1`. If `init` cannot
+write the configuration file, it says why and exits with status `1`. A
+configuration file that `init` finds is left as it is.
 
 If `sync` fails, `init` stops there with exit status `1`. After `sync`, `init`
 says which files to commit, and prints the lines to add to `AGENTS.md` or
@@ -49,8 +50,8 @@ output at the same project root.
 
 Files that cannot be parsed or decoded are skipped with a warning, and the
 output ends with a line that says how many files were skipped. A skipped file
-does not change the exit status. Invalid configuration or roots cause exit
-status `1`.
+does not change the exit status. Invalid configuration or roots, or a generated
+file that cannot be read, written or removed, cause exit status `1`.
 
 ## `check`
 
@@ -60,10 +61,10 @@ uvx uncoded check
 
 Runs the same pipeline as `sync` without changing files.
 
-| Status | Meaning                                                                        |
-| ------ | ------------------------------------------------------------------------------ |
-| `0`    | All generated files match a fresh build.                                       |
-| `1`    | A file would be created, updated, or removed, or the configuration is invalid. |
+| Status | Meaning                                                                                                         |
+| ------ | --------------------------------------------------------------------------------------------------------------- |
+| `0`    | All generated files match a fresh build.                                                                        |
+| `1`    | A file would be created, updated, or removed, the configuration is invalid, or a generated file cannot be read. |
 
 The index is never committed, so in a fresh checkout `check` always reports it
 as stale. It is not a check for CI. See
