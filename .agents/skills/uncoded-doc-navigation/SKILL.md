@@ -10,9 +10,9 @@ description: Load once per session, before the first search or read of a codebas
 This codebase uses [uncoded](https://github.com/alimanfoo/uncoded) to maintain a
 documentation index.
 
-**Step 1: Orient. Read the docs map first.** If the map is missing, run the
-repository's configured `uncoded sync` command. Then, before answering the user,
-before any other tool call:
+**Step 1: Orient. Sync, then read the docs map.** Run the repository's
+configured `uncoded sync` command, so that the map is current. Then, before
+answering the user and before any other tool call:
 
 ```text
 Read .uncoded/docs.yaml
@@ -27,3 +27,5 @@ to navigate to a specific section identified in the map.
 **Step 3: Refresh.** After every modification to indexed Markdown, run the
 repository's configured `uncoded sync` command before the next
 documentation-navigation operation. The modification can change the heading map.
+Run it too whenever you notice that something else has changed files, such as a
+pull, a checkout, or another agent working in the same project.

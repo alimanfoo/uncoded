@@ -6,9 +6,10 @@ agent follows this workflow during a coding task.
 
 ## Start a task
 
-The agent loads `.uncoded/namespace.yaml` in full to learn the Python symbols
-that exist. For a documentation task, it loads `.uncoded/docs.yaml` to find the
-relevant file and heading.
+The agent runs `uncoded sync`, so that the index is current. It then loads
+`.uncoded/namespace.yaml` in full to learn the Python symbols that exist. For a
+documentation task, it loads `.uncoded/docs.yaml` to find the relevant file and
+heading.
 
 Navigation skills load once per session. Their instructions apply throughout the
 session.

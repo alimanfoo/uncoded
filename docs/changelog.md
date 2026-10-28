@@ -88,6 +88,11 @@ includes it. Each entry links the pull request that made the change.
   `[tool.uncoded]` table, so a Python package's own `pyproject.toml` inside the
   project no longer hides the configuration file above it.
   ([#321](https://github.com/alimanfoo/uncoded/pull/321))
+- The navigation skills tell the agent to run `uncoded sync` before it reads the
+  namespace map or the docs map, and whenever it notices that something else has
+  changed files, such as a pull or a checkout. They told it to run
+  `uncoded sync` only when a map was missing, so an agent could read a map that
+  was out of date. ([#333](https://github.com/alimanfoo/uncoded/pull/333))
 
 ## [3.0.1](https://github.com/alimanfoo/uncoded/releases/tag/v3.0.1) — 2026-10-09
 

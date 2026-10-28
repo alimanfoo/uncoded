@@ -1,8 +1,9 @@
 # Keep the index current
 
 The index is local and is not in Git. Agents keep it current: the navigation
-skills tell an agent to run `uncoded sync` when the index is missing, such as in
-a fresh checkout, and after it changes indexed Python code or Markdown docs.
+skills tell an agent to run `uncoded sync` at the start of every session, after
+it changes indexed Python code or Markdown docs, and whenever it notices that
+something else has changed files, such as a pull or a checkout.
 
 ## Refresh on commit
 

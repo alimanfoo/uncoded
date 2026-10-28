@@ -34,9 +34,9 @@ tools don't.
 The index has two parts: a namespace map and per-file stubs. Start with the map
 and add detail only when the task needs it.
 
-**Step 1: Orient. Read the namespace map first.** If the map is missing, run the
-repository's configured `uncoded sync` command. Then, before answering the user,
-before any other tool call:
+**Step 1: Orient. Sync, then read the namespace map.** Run the repository's
+configured `uncoded sync` command, so that the map is current. Then, before
+answering the user and before any other tool call:
 
 ```text
 Read .uncoded/namespace.yaml
@@ -95,7 +95,9 @@ method and `function_name` for a top-level function. Per task:
 
 **Step 4: Refresh.** After every modification to indexed Python source, run the
 repository's configured `uncoded sync` command before the next code-navigation
-operation. The modification can change the namespace map and stubs.
+operation. The modification can change the namespace map and stubs. Run it too
+whenever you notice that something else has changed files, such as a pull, a
+checkout, or another agent working in the same project.
 
 ## Where Read, Edit, and grep are still the right tools
 
