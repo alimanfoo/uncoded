@@ -23,8 +23,10 @@ directory. For a project that has all the roots it looks for, the file is:
 ```toml title=".uncoded.toml"
 source-roots = ["src", "tests"]
 doc-roots = ["README.md", "AGENTS.md", "docs"]
-required-version = "3.1.0"
 ```
+
+`uncoded init` also sets `required-version` to its own version, so every machine
+runs the same uncoded.
 
 `source-roots` indexes Python files, and `doc-roots` indexes Markdown headings.
 [`init`](commands.md#init) says which roots `uncoded init` looks for, and

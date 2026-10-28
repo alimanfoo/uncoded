@@ -20,6 +20,11 @@ includes it. Each entry links the pull request that made the change.
 
 ## Unreleased
 
+## [4.0.0](https://github.com/alimanfoo/uncoded/releases/tag/v4.0.0) — 2026-10-28
+
+Before upgrading, follow
+[Upgrading from version 3 to version 4](upgrading.md#from-version-3-to-version-4).
+
 ### Breaking
 
 - On Windows, the paths that `uncoded refs` prints and the path comment in each
