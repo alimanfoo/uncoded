@@ -83,6 +83,30 @@ class TestRemoveFile:
         changed = remove_file(path, project_root=tmp_path, check=True)
         assert changed is False
 
+    def test_removes_each_parent_left_empty_up_to_project_root(self, tmp_path):
+        path = tmp_path / "a" / "b" / "out.txt"
+        path.parent.mkdir(parents=True)
+        path.write_text("data", encoding="utf-8")
+        remove_file(path, project_root=tmp_path)
+        assert not (tmp_path / "a").exists()
+        assert tmp_path.is_dir()
+
+    def test_keeps_parent_that_holds_other_files(self, tmp_path):
+        path = tmp_path / "a" / "b" / "out.txt"
+        path.parent.mkdir(parents=True)
+        path.write_text("data", encoding="utf-8")
+        (tmp_path / "a" / "keep.txt").write_text("keep", encoding="utf-8")
+        remove_file(path, project_root=tmp_path)
+        assert not (tmp_path / "a" / "b").exists()
+        assert (tmp_path / "a" / "keep.txt").exists()
+
+    def test_check_mode_keeps_parent_directories(self, tmp_path):
+        path = tmp_path / "a" / "out.txt"
+        path.parent.mkdir()
+        path.write_text("data", encoding="utf-8")
+        remove_file(path, project_root=tmp_path, check=True)
+        assert path.exists()
+
 
 class TestSyncFileProjectRootAnchor:
     def test_project_root_anchors_write_independent_of_cwd(self, tmp_path, monkeypatch):

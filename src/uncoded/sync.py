@@ -51,11 +51,15 @@ def remove_file(
     project_root: Path,
     check: bool = False,
 ) -> bool:
-    """Remove ``path`` if it exists.
+    """Remove ``path`` if it exists, and each parent directory left empty.
 
     Prints ``Removed`` in apply mode, ``Would remove`` in check mode.
     Returns ``True`` if a removal was (or would be) performed, ``False``
     if the file was already absent.
+
+    As :func:`sync_file` creates each missing parent directory, the
+    removal removes each parent directory that it leaves empty, up to
+    but not including ``project_root``.
 
     The file removed is ``project_root / path``. The log line still
     names ``path`` as given, so messages stay project-relative
@@ -66,5 +70,10 @@ def remove_file(
         return False
     if not check:
         target.unlink()
+        for parent in target.relative_to(project_root).parents[:-1]:
+            directory = project_root / parent
+            if any(directory.iterdir()):
+                break
+            directory.rmdir()
     print(f"{'Would remove' if check else 'Removed'} {path.as_posix()}")
     return True

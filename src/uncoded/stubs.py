@@ -347,21 +347,12 @@ def _remove_orphan_stubs(
     check: bool,
 ) -> int:
     changes = 0
-    for existing in abs_stubs_root.rglob("*.pyi"):
+    for existing in list(abs_stubs_root.rglob("*.pyi")):
         if existing.resolve() in expected:
             continue
         display = existing.relative_to(project_root)
         changes += remove_file(display, project_root=project_root, check=check)
     return changes
-
-
-def _prune_empty_stub_dirs(*, abs_stubs_root: Path) -> None:
-    # Prune now-empty directories, deepest-first, but keep abs_stubs_root itself.
-    for d in sorted(
-        abs_stubs_root.rglob("*"), key=lambda p: len(p.parts), reverse=True
-    ):
-        if d.is_dir() and not any(d.iterdir()):
-            d.rmdir()
 
 
 def _write_stubs(
@@ -372,7 +363,7 @@ def _write_stubs(
     project_root: Path,
     check: bool,
 ) -> int:
-    """Write each expected stub, remove orphans, and prune empty directories."""
+    """Write each expected stub and remove orphans."""
     changes = 0
     expected: set[Path] = set()
     for rel_stub_path, content in stubs.items():
@@ -390,42 +381,22 @@ def _write_stubs(
             project_root=project_root,
             check=check,
         )
-        if not check:
-            _prune_empty_stub_dirs(abs_stubs_root=abs_stubs_root)
     return changes
 
 
 def remove_all_stubs(output_dir: Path, *, project_root: Path, check: bool) -> int:
-    """Remove all .pyi stubs under output_dir and prune empty directories.
+    """Remove all .pyi stubs under output_dir.
 
     Removes every .pyi file under ``output_dir``, reporting each as
-    apply/check mode dictates, then (in apply mode) prunes now-empty
-    directories deepest-first, including the root when it becomes empty.
-    In check mode, reports prospective removals without touching disk.
-    Returns the number of files removed (or that would be).
+    apply/check mode dictates. In check mode, reports prospective
+    removals without touching disk. Returns the number of files removed
+    (or that would be).
     """
     project_root = project_root.resolve()
-    abs_output_dir = project_root / output_dir
-    if not abs_output_dir.exists():
-        return 0
-
     changes = 0
-    for pyi_file in sorted(abs_output_dir.rglob("*.pyi")):
+    for pyi_file in sorted((project_root / output_dir).rglob("*.pyi")):
         display = pyi_file.relative_to(project_root)
         changes += remove_file(display, project_root=project_root, check=check)
-
-    if check:
-        return changes
-
-    # Prune empty directories deepest-first. Skip any foreign file or non-empty
-    # directory the tree should not contain.
-    for d in sorted(
-        abs_output_dir.rglob("*"), key=lambda p: len(p.parts), reverse=True
-    ):
-        if d.is_dir() and not any(d.iterdir()):
-            d.rmdir()
-    if not any(abs_output_dir.iterdir()):
-        abs_output_dir.rmdir()
 
     return changes
 
