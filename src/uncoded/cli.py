@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 from uncoded import __version__
-from uncoded.body import resolve_body
+from uncoded.body import resolve_definition
 from uncoded.config import (
     UNCODED_TOML,
     Config,
@@ -280,7 +280,7 @@ def _report_lookup_error(*, exc: Exception, name_path: str, in_path: str) -> int
 
 
 def _body(*, config: Config, name_path: str, in_path: str) -> int:
-    """Print the source body of name_path in in_path to stdout.
+    """Print the definition of name_path in in_path to stdout.
 
     Returns 0 on success. Returns 1 if in_path is outside the project
     directory of ``config``, if name_path is unsupported, if name_path is not
@@ -291,7 +291,9 @@ def _body(*, config: Config, name_path: str, in_path: str) -> int:
         target = _project_file(
             in_path=in_path, project_directory=config.project_directory
         )
-        body = resolve_body(name_path=NamePath.parse(raw=name_path), in_path=target)
+        definition = resolve_definition(
+            name_path=NamePath.parse(raw=name_path), in_path=target
+        )
     except _LOOKUP_ERRORS as e:
         return _report_lookup_error(exc=e, name_path=name_path, in_path=in_path)
 
@@ -303,7 +305,7 @@ def _body(*, config: Config, name_path: str, in_path: str) -> int:
         errors=sys.stdout.errors,
         newline="",
     )
-    stdout.write(body)
+    stdout.write(definition)
     stdout.detach()
     return 0
 
@@ -364,7 +366,7 @@ def main() -> int:
     - ``sync`` — builds or refreshes the navigation index.
     - ``check`` — verifies the index matches what a rebuild would produce;
       exits non-zero on drift.
-    - ``body`` — prints the source body of a named symbol to stdout.
+    - ``body`` — prints the definition of a named symbol to stdout.
     - ``refs`` — finds all references to a named symbol and prints them.
 
     Each subparser binds how it finds the configuration and the action it
@@ -408,7 +410,7 @@ def main() -> int:
 
     body_parser = subparsers.add_parser(
         "body",
-        help="Print the source body of a named symbol to stdout.",
+        help="Print the definition of a named symbol to stdout.",
     )
     body_parser.add_argument(
         "name_path",

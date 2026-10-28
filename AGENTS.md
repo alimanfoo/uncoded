@@ -33,8 +33,8 @@ The index files, generated from the roots:
    with `Read` or `grep`. uncoded generates it only when `doc-roots` is set.
    Outline only. No `uncoded body`, `uncoded refs`, or stubs for Markdown.
 
-Alongside the index, uncoded ships `uncoded body` to read symbol bodies and
-`uncoded refs` to find all references.
+Alongside the index, uncoded ships `uncoded body` to read a symbol's definition
+and `uncoded refs` to find all references.
 
 ## How we decide
 
@@ -70,7 +70,7 @@ uv run uncoded sync
 # Verify the index without writing. It exits non-zero if any file would change
 uv run uncoded check
 
-# Print the source body of a named symbol to stdout
+# Print the definition of a named symbol to stdout
 uv run uncoded body <name_path> --in <relative_path>
 
 # Find references to a symbol

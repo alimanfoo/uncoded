@@ -62,8 +62,8 @@ def greet(name: str) -> str:
     ...
 ```
 
-When the agent needs the exact source, it retrieves that body without reading
-the rest of the source file:
+When the agent needs the exact source, it retrieves that definition without
+reading the rest of the source file:
 
 ```sh
 uvx uncoded body greet --in src/greetings.py

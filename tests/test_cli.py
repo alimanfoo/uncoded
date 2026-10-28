@@ -1171,7 +1171,7 @@ class TestBodyCommand:
         assert capsys.readouterr().out == "def fn():\n    pass\n"
 
     @pytest.mark.parametrize(
-        ("in_path", "body"),
+        ("in_path", "definition"),
         [
             pytest.param("m.py", "def fn():\n    pass\n", id="outside the roots"),
             pytest.param(
@@ -1182,7 +1182,7 @@ class TestBodyCommand:
         ],
     )
     def test_reads_any_python_file_in_the_project(
-        self, *, tmp_path, monkeypatch, capsys, in_path, body
+        self, *, tmp_path, monkeypatch, capsys, in_path, definition
     ):
         # Both files hold the platform's line endings, as the stub that sync
         # writes does.
@@ -1195,12 +1195,12 @@ class TestBodyCommand:
         capsys.readouterr()
 
         assert _body(monkeypatch=monkeypatch, name_path="fn", in_path=in_path) == 0
-        assert capsys.readouterr().out == body.replace("\n", os.linesep)
+        assert capsys.readouterr().out == definition.replace("\n", os.linesep)
 
     def test_stdout_is_exact_body(self, *, tmp_path, monkeypatch, capsys):
         _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
-        body = "def compute(x: int) -> int:\n    return x * 2\n"
-        source = f"# header\n\n{body}\n# footer\n"
+        definition = "def compute(x: int) -> int:\n    return x * 2\n"
+        source = f"# header\n\n{definition}\n# footer\n"
         (tmp_path / "src" / "foo.py").write_text(source, encoding="utf-8", newline="")
 
         assert (
@@ -1209,7 +1209,7 @@ class TestBodyCommand:
         )
 
         out, err = capsys.readouterr()
-        assert out == body
+        assert out == definition
         assert err == ""
 
     def test_stdout_keeps_line_endings_where_the_stream_translates_them(
@@ -1221,15 +1221,17 @@ class TestBodyCommand:
         stdout = io.TextIOWrapper(written, encoding="utf-8", newline="\r\n")
         monkeypatch.setattr(sys, "stdout", stdout)
         _init_repo(tmp_path=tmp_path, monkeypatch=monkeypatch)
-        body = "def compute(x: int) -> int:\n    return x * 2\n"
-        (tmp_path / "src" / "foo.py").write_text(body, encoding="utf-8", newline="")
+        definition = "def compute(x: int) -> int:\n    return x * 2\n"
+        (tmp_path / "src" / "foo.py").write_text(
+            definition, encoding="utf-8", newline=""
+        )
 
         assert (
             _body(monkeypatch=monkeypatch, name_path="compute", in_path="src/foo.py")
             == 0
         )
 
-        assert written.getvalue() == body.encode("utf-8")
+        assert written.getvalue() == definition.encode("utf-8")
 
     def test_stdout_encodes_with_the_streams_error_handler(
         self, *, tmp_path, monkeypatch
