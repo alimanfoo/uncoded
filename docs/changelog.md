@@ -61,6 +61,11 @@ includes it. Each entry links the pull request that made the change.
   that still has a skill under an old name removes it as
   [Upgrading](upgrading.md) says.
   ([#337](https://github.com/alimanfoo/uncoded/pull/337))
+- `uncoded body` and `uncoded refs` report an `--in` file that does not exist
+  with the reason that the system gives, as they do for every other file that
+  cannot be read: `Error: nope.py: No such file or directory`. They said
+  `Error: nope.py: file not found.`
+  ([#354](https://github.com/alimanfoo/uncoded/pull/354))
 
 ### Fixed
 

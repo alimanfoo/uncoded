@@ -1103,7 +1103,10 @@ class TestBodyCommand:
         # shows it with /, on Windows too.
         in_path = str(Path("src") / "nonexistent.py")
         assert _body(monkeypatch=monkeypatch, name_path="fn", in_path=in_path) == 1
-        assert capsys.readouterr().err == "Error: src/nonexistent.py: file not found.\n"
+        assert (
+            capsys.readouterr().err
+            == "Error: src/nonexistent.py: No such file or directory\n"
+        )
 
     def test_unreadable_file_names_it_with_slashes(
         self, *, tmp_path, monkeypatch, capsys
