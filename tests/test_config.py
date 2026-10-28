@@ -30,16 +30,6 @@ class TestFindConfig:
     def test_returns_none_when_no_config_file(self, *, tmp_path):
         assert find_config(start=tmp_path) is None
 
-    def test_raises_when_both_configure_uncoded_in_same_directory(self, *, tmp_path):
-        (tmp_path / "pyproject.toml").write_text(
-            '[tool.uncoded]\nsource-roots = ["src"]\n', encoding="utf-8"
-        )
-        (tmp_path / ".uncoded.toml").write_text(
-            'doc-roots = ["docs"]\n', encoding="utf-8"
-        )
-        with pytest.raises(ConfigError, match=r"Ambiguous config"):
-            find_config(start=tmp_path)
-
 
 class TestReadConfig:
     # --- pyproject.toml ---

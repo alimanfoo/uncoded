@@ -118,8 +118,7 @@ def find_config(*, start: Path) -> Config | None:
 def read_config(*, start: Path) -> Config:
     """Return the configuration that :func:`find_config` finds from ``start``.
 
-    Raises :exc:`ConfigError` when no configuration file is found, or when two
-    files in the same directory both configure uncoded.
+    Raises :exc:`ConfigError` when no configuration file is found.
     """
     config = find_config(start=start)
     if config is None:

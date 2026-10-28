@@ -346,9 +346,7 @@ def main() -> int:
 
     Each subparser binds its own ``action`` callable via
     ``set_defaults``; ``main`` then dispatches via ``args.action()``,
-    unless the project refuses every command: when it requires another
-    version of uncoded, or when two files in one directory both configure
-    uncoded.
+    unless ``_refusal`` gives a reason that no command may run.
     Adding a new subcommand is a local change at the registration site —
     no central dispatch ladder to update, and no silent fall-through if
     the binding is forgotten (``args.action`` will simply be missing).
