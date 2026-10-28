@@ -31,7 +31,9 @@ that matter.
 uvx uncoded body greet --in src/greetings.py
 ```
 
-This example assumes `greet` is defined in `src/greetings.py`. For a method, use
+This example assumes `greet` is defined in `src/greetings.py`. The agent runs
+`uncoded body` and `uncoded refs` from the project directory, where the
+namespace map's paths work as `--in` paths as given. For a method, use
 `ClassName/method_name`. See [the command reference](commands.md#body) for
 supported symbols and paths.
 

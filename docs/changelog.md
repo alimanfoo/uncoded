@@ -30,7 +30,8 @@ includes it. Each entry links the pull request that made the change.
   directory, as the other commands do, and stop outside a project. They also
   stop when the `--in` file is outside the project directory. `uncoded refs` no
   longer looks for a project from the `--in` file's directory, and no longer
-  falls back to the nearest `pyproject.toml`.
+  falls back to the nearest `pyproject.toml`. The code navigation skill tells
+  the agent to run them from the project directory.
   ([#325](https://github.com/alimanfoo/uncoded/pull/325))
 
 ### Added
