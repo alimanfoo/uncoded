@@ -27,6 +27,12 @@ includes it. Each entry links the pull request that made the change.
   in the `entry` of its pre-commit hook.
   ([#380](https://github.com/alimanfoo/uncoded/pull/380))
 
+### Fixed
+
+- `uncoded refs` retains the host from a file URI, so it reports the correct
+  path for a project on a Windows network share.
+  ([#398](https://github.com/alimanfoo/uncoded/pull/398))
+
 ## [4.0.0](https://github.com/alimanfoo/uncoded/releases/tag/v4.0.0) — 2026-10-28
 
 Before upgrading, follow

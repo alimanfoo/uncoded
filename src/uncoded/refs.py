@@ -285,4 +285,6 @@ def _read_response(*, stream: IO[bytes], request_id: int) -> dict:
 def _uri_to_path(*, uri: str) -> Path:
     # url2pathname decodes the percent escapes and, on Windows, turns a URI path
     # such as /C:/src/m.py into C:\src\m.py.
-    return Path(url2pathname(urlparse(uri).path))
+    parsed = urlparse(uri)
+    path = f"//{parsed.netloc}{parsed.path}" if parsed.netloc else parsed.path
+    return Path(url2pathname(path))
