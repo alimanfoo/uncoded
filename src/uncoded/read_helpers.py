@@ -18,18 +18,25 @@ class SkippedFile:
 
 
 def root_files(
-    *, root: Path, pattern: str, project_directory: Path
+    *, roots: list[Path], pattern: str, project_directory: Path
 ) -> list[tuple[Path, str]]:
-    """List a root's matching files with their project-relative paths.
+    """List each matching file under ``roots`` with its project-relative path.
 
     A file root lists itself. A directory root lists files that match the
-    pattern in path order. Each relative path uses forward slashes on every
-    platform.
+    pattern. Files under overlapping roots are listed once, in path order. Each
+    relative path uses forward slashes on every platform.
     """
-    root = root.resolve()
     project_directory = project_directory.resolve()
-    files = [root] if root.is_file() else sorted(root.rglob(pattern))
-    return [(path, path.relative_to(project_directory).as_posix()) for path in files]
+    paths: dict[str, Path] = {}
+    for root in roots:
+        resolved_root = root.resolve()
+        files = (
+            [resolved_root] if resolved_root.is_file() else resolved_root.rglob(pattern)
+        )
+        for path in files:
+            rel_path = path.relative_to(project_directory).as_posix()
+            paths[rel_path] = path
+    return [(path, rel_path) for rel_path, path in sorted(paths.items())]
 
 
 def read_source_text(*, path: Path) -> str:

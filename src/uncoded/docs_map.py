@@ -77,18 +77,15 @@ def read_doc_files(
     """
     files: list[DocFile] = []
     skipped: list[SkippedFile] = []
-    for doc_root in doc_roots:
-        for md_file, rel_path in root_files(
-            root=doc_root, pattern="*.md", project_directory=project_directory
-        ):
-            try:
-                text = md_file.read_text(encoding="utf-8-sig")
-            except (UnicodeDecodeError, OSError) as e:
-                skipped.append(
-                    SkippedFile(path=rel_path, reason=failure_reason(error=e))
-                )
-                continue
-            files.append(DocFile(rel_path=rel_path, text=text))
+    for md_file, rel_path in root_files(
+        roots=doc_roots, pattern="*.md", project_directory=project_directory
+    ):
+        try:
+            text = md_file.read_text(encoding="utf-8-sig")
+        except (UnicodeDecodeError, OSError) as e:
+            skipped.append(SkippedFile(path=rel_path, reason=failure_reason(error=e)))
+            continue
+        files.append(DocFile(rel_path=rel_path, text=text))
     return files, skipped
 
 
