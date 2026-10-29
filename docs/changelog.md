@@ -32,6 +32,9 @@ includes it. Each entry links the pull request that made the change.
 - `uncoded refs` now finds every reference when valid whitespace separates a
   `def`, `async def` or `class` keyword from its name.
   ([#401](https://github.com/alimanfoo/uncoded/pull/401))
+- `uncoded refs` retains the host from a file URI, so it reports the correct
+  path for a project on a Windows network share.
+  ([#398](https://github.com/alimanfoo/uncoded/pull/398))
 - `uncoded refs` ignores a request from ty while waiting for a response, even
   when its id equals its own request's. It could fail with a traceback.
   ([#395](https://github.com/alimanfoo/uncoded/pull/395))
