@@ -31,166 +31,6 @@ def _function(*, python_file, index=0):
     return symbol
 
 
-class TestWhichStatementsAreSymbols:
-    def test_classes_and_functions(self):
-        source = textwrap.dedent("""\
-            class MyClass:
-                def public_method(self):
-                    pass
-
-                def _private_method(self):
-                    pass
-
-            class _PrivateClass:
-                def method(self):
-                    pass
-
-            def public_function():
-                pass
-
-            def _private_function():
-                pass
-        """)
-
-        result = _extract_python_file(source=source, rel_path="module.py")
-
-        assert result.rel_path == "module.py"
-        my_class = _class(python_file=result, index=0)
-        private_class = _class(python_file=result, index=1)
-        assert my_class.name == "MyClass"
-        assert _names(symbols=my_class.members) == [
-            "public_method",
-            "_private_method",
-        ]
-        assert private_class.name == "_PrivateClass"
-        assert _names(symbols=private_class.members) == ["method"]
-        assert _names(symbols=result.symbols[2:]) == [
-            "public_function",
-            "_private_function",
-        ]
-
-    def test_async_functions_and_methods(self):
-        source = textwrap.dedent("""\
-            async def fetch_data():
-                pass
-
-            class Client:
-                async def connect(self):
-                    pass
-
-                def disconnect(self):
-                    pass
-        """)
-
-        result = _extract_python_file(source=source, rel_path="async_module.py")
-
-        cls = _class(python_file=result, index=1)
-        assert result.symbols[0].name == "fetch_data"
-        assert cls.name == "Client"
-        assert _names(symbols=cls.members) == ["connect", "disconnect"]
-
-    def test_empty_module(self):
-        result = _extract_python_file(source="", rel_path="empty.py")
-
-        assert result.symbols == []
-
-    def test_module_level_assignments(self):
-        source = textwrap.dedent("""\
-            TIMEOUT = 30
-            MAX_RETRIES: int = 3
-            __version__ = "1.0.0"
-        """)
-
-        result = _extract_python_file(source=source, rel_path="const.py")
-
-        assert _names(symbols=result.symbols) == [
-            "TIMEOUT",
-            "MAX_RETRIES",
-            "__version__",
-        ]
-
-    def test_chained_assignment_skipped(self):
-        source = "x = y = 1\n"
-
-        result = _extract_python_file(source=source, rel_path="chain.py")
-
-        assert result.symbols == []
-
-    def test_non_property_decorator_classified_as_method(self):
-        source = textwrap.dedent("""\
-            class Util:
-                @staticmethod
-                def helper():
-                    pass
-        """)
-
-        result = _extract_python_file(source=source, rel_path="util.py")
-
-        cls = _class(python_file=result)
-        assert [type(m) for m in cls.members] == [FunctionSymbol]
-        assert _names(symbols=cls.members) == ["helper"]
-
-    def test_preserves_source_order(self):
-        source = textwrap.dedent("""\
-            def zebra():
-                pass
-
-            class Alpha:
-                def omega(self):
-                    pass
-
-                beta = 1
-
-                def alpha(self):
-                    pass
-
-            ZETA = 1
-
-            def apple():
-                pass
-        """)
-
-        result = _extract_python_file(source=source, rel_path="ordering.py")
-
-        assert _names(symbols=result.symbols) == ["zebra", "Alpha", "ZETA", "apple"]
-        assert _names(symbols=_class(python_file=result, index=1).members) == [
-            "omega",
-            "beta",
-            "alpha",
-        ]
-
-    def test_leaves_out_names_that_are_not_symbols(self):
-        source = textwrap.dedent("""\
-            import os
-            from pathlib import Path
-
-            class Registry:
-                def __init__(self):
-                    self.items = []
-
-                class Entry:
-                    pass
-
-            def run():
-                local = 1
-
-            if os.name == "nt":
-                SEPARATOR = ";"
-
-            try:
-                import tomllib
-            except ImportError:
-                FALLBACK = True
-        """)
-
-        result = _extract_python_file(source=source, rel_path="names.py")
-
-        assert _names(symbols=result.symbols) == ["Registry", "run"]
-        assert _names(symbols=_class(python_file=result, index=0).members) == [
-            "__init__"
-        ]
-
-
 class TestReadAndExtract:
     def test_keeps_each_python_file_that_has_symbols(self, *, tmp_path):
         # Simulate project structure: src/mypackage/...
@@ -357,7 +197,7 @@ class TestReadPythonFilesKeepsFilesWithSymbols:
 
 
 class TestExtractPythonFile:
-    def test_simple_function(self):
+    def test_extracts_function_signature(self):
         source = textwrap.dedent("""\
             def greet(name: str) -> str:
                 '''Say hello.'''
@@ -369,7 +209,7 @@ class TestExtractPythonFile:
         assert f.params == [Parameter("name", "str")]
         assert f.return_annotation == "str"
 
-    def test_function_no_annotations(self):
+    def test_leaves_missing_function_annotations_empty(self):
         source = textwrap.dedent("""\
             def run(x, y):
                 pass
@@ -379,25 +219,77 @@ class TestExtractPythonFile:
         assert f.params == [Parameter("x"), Parameter("y")]
         assert f.return_annotation is None
 
-    def test_async_function(self):
+    def test_extracts_async_functions_and_methods(self):
         source = textwrap.dedent("""\
-            async def fetch(url: str) -> bytes:
+            async def fetch_data(url: str) -> bytes:
                 pass
+
+            class Client:
+                async def connect(self):
+                    pass
+
+                def disconnect(self):
+                    pass
         """)
         module = _extract_python_file(source=source, rel_path="pkg/net.py")
-        f = _function(python_file=module)
-        assert f.is_async is True
-        assert f.name == "fetch"
+        assert module.symbols == [
+            FunctionSymbol(
+                name="fetch_data",
+                params=[Parameter("url", "str")],
+                return_annotation="bytes",
+                is_async=True,
+            ),
+            ClassSymbol(
+                name="Client",
+                members=[
+                    FunctionSymbol(
+                        name="connect",
+                        params=[Parameter("self")],
+                        is_async=True,
+                    ),
+                    FunctionSymbol(name="disconnect", params=[Parameter("self")]),
+                ],
+            ),
+        ]
 
-    def test_private_function_included(self):
+    def test_extracts_top_level_and_class_symbols(self):
         source = textwrap.dedent("""\
-            def public(): pass
-            def _private(): pass
-        """)
-        module = _extract_python_file(source=source, rel_path="pkg/mod.py")
-        assert _names(symbols=module.symbols) == ["public", "_private"]
+            class MyClass:
+                def public_method(self):
+                    pass
 
-    def test_class_with_assignments_and_methods(self):
+                def _private_method(self):
+                    pass
+
+            class _PrivateClass:
+                def method(self):
+                    pass
+
+            def public_function():
+                pass
+
+            def _private_function():
+                pass
+        """)
+        module = _extract_python_file(source=source, rel_path="module.py")
+        assert module.rel_path == "module.py"
+        assert module.symbols == [
+            ClassSymbol(
+                name="MyClass",
+                members=[
+                    FunctionSymbol(name="public_method", params=[Parameter("self")]),
+                    FunctionSymbol(name="_private_method", params=[Parameter("self")]),
+                ],
+            ),
+            ClassSymbol(
+                name="_PrivateClass",
+                members=[FunctionSymbol(name="method", params=[Parameter("self")])],
+            ),
+            FunctionSymbol(name="public_function"),
+            FunctionSymbol(name="_private_function"),
+        ]
+
+    def test_extracts_class_assignments_and_methods(self):
         source = textwrap.dedent("""\
             class Record:
                 '''Stores a named value.'''
@@ -413,17 +305,28 @@ class TestExtractPythonFile:
                     pass
         """)
         module = _extract_python_file(source=source, rel_path="pkg/models.py")
-        cls = _class(python_file=module)
-        assert cls.name == "Record"
-        assignments = [m for m in cls.members if isinstance(m, AssignmentSymbol)]
-        assert [(a.name, a.annotation) for a in assignments] == [
-            ("name", "str"),
-            ("value", "int"),
-            ("_internal", "float"),
+        assert module.symbols == [
+            ClassSymbol(
+                name="Record",
+                members=[
+                    AssignmentSymbol(name="name", annotation="str"),
+                    AssignmentSymbol(name="value", annotation="int"),
+                    AssignmentSymbol(name="_internal", annotation="float"),
+                    FunctionSymbol(
+                        name="save",
+                        params=[Parameter("self")],
+                        return_annotation="None",
+                    ),
+                    FunctionSymbol(
+                        name="_validate",
+                        params=[Parameter("self")],
+                        return_annotation="bool",
+                    ),
+                ],
+            )
         ]
-        assert _names(symbols=cls.members[3:]) == ["save", "_validate"]
 
-    def test_class_with_bases(self):
+    def test_extracts_class_bases(self):
         source = textwrap.dedent("""\
             class Dog(Animal, Domestic):
                 pass
@@ -431,13 +334,120 @@ class TestExtractPythonFile:
         module = _extract_python_file(source=source, rel_path="pkg/animals.py")
         assert _class(python_file=module).bases == ["Animal", "Domestic"]
 
-    def test_class_no_bases(self):
+    def test_leaves_bases_empty_when_a_class_has_none(self):
         source = textwrap.dedent("""\
             class Plain:
                 pass
         """)
         module = _extract_python_file(source=source, rel_path="pkg/plain.py")
         assert _class(python_file=module).bases == []
+
+    def test_leaves_empty_module_without_symbols(self):
+        module = _extract_python_file(source="", rel_path="empty.py")
+
+        assert module.symbols == []
+
+    def test_extracts_module_assignments(self):
+        source = textwrap.dedent("""\
+            TIMEOUT = 30
+            MAX_RETRIES: int = 3
+            __version__ = "1.0.0"
+            _INTERNAL = 42
+        """)
+        module = _extract_python_file(source=source, rel_path="const.py")
+
+        assert module.symbols == [
+            AssignmentSymbol(name="TIMEOUT", value="30"),
+            AssignmentSymbol(name="MAX_RETRIES", annotation="int", value="3"),
+            AssignmentSymbol(name="__version__", value="'1.0.0'"),
+            AssignmentSymbol(name="_INTERNAL", value="42"),
+        ]
+
+    def test_skips_chained_assignment(self):
+        module = _extract_python_file(source="x = y = 1\n", rel_path="chain.py")
+
+        assert module.symbols == []
+
+    def test_extracts_non_property_decorated_method(self):
+        source = textwrap.dedent("""\
+            class Util:
+                @staticmethod
+                def helper():
+                    pass
+        """)
+        module = _extract_python_file(source=source, rel_path="util.py")
+
+        assert module.symbols == [
+            ClassSymbol(name="Util", members=[FunctionSymbol(name="helper")])
+        ]
+
+    def test_preserves_module_and_class_member_order(self):
+        source = textwrap.dedent("""\
+            def zebra():
+                pass
+
+            class Alpha:
+                def omega(self):
+                    pass
+
+                beta = 1
+
+                def alpha(self):
+                    pass
+
+            ZETA = 1
+
+            def apple():
+                pass
+        """)
+        module = _extract_python_file(source=source, rel_path="ordering.py")
+
+        assert module.symbols == [
+            FunctionSymbol(name="zebra"),
+            ClassSymbol(
+                name="Alpha",
+                members=[
+                    FunctionSymbol(name="omega", params=[Parameter("self")]),
+                    AssignmentSymbol(name="beta", value="1"),
+                    FunctionSymbol(name="alpha", params=[Parameter("self")]),
+                ],
+            ),
+            AssignmentSymbol(name="ZETA", value="1"),
+            FunctionSymbol(name="apple"),
+        ]
+
+    def test_skips_non_symbol_statements(self):
+        source = textwrap.dedent("""\
+            import os
+            from pathlib import Path
+
+            class Registry:
+                def __init__(self):
+                    self.items = []
+
+                class Entry:
+                    pass
+
+            def run():
+                local = 1
+
+            if os.name == "nt":
+                SEPARATOR = ";"
+
+            try:
+                import tomllib
+            except ImportError:
+                FALLBACK = True
+        """)
+        module = _extract_python_file(source=source, rel_path="names.py")
+
+        assert module.symbols == [
+            ClassSymbol(
+                name="Registry",
+                members=[FunctionSymbol(name="__init__", params=[Parameter("self")])],
+            ),
+            FunctionSymbol(name="run"),
+        ]
 
     @pytest.mark.parametrize(
         ("source", "expected"),
@@ -539,35 +549,12 @@ class TestExtractPythonFile:
         with pytest.raises(SyntaxError):
             _extract_python_file(source="def broken(:\n", rel_path="pkg/bad.py")
 
-    def test_assignment_annotated_with_value(self):
-        source = textwrap.dedent("""\
-            MAX_RETRIES: int = 3
-        """)
-        module = _extract_python_file(source=source, rel_path="pkg/mod.py")
-        assert module.symbols == [
-            AssignmentSymbol(name="MAX_RETRIES", annotation="int", value="3")
-        ]
-
-    def test_assignment_unannotated_with_value(self):
-        source = textwrap.dedent("""\
-            TIMEOUT = 30
-        """)
-        module = _extract_python_file(source=source, rel_path="pkg/mod.py")
-        assert module.symbols == [AssignmentSymbol(name="TIMEOUT", value="30")]
-
     def test_assignment_bare_annotation(self):
         source = textwrap.dedent("""\
             FOO: int
         """)
         module = _extract_python_file(source=source, rel_path="pkg/mod.py")
         assert module.symbols == [AssignmentSymbol(name="FOO", annotation="int")]
-
-    def test_assignment_private_included(self):
-        source = textwrap.dedent("""\
-            _INTERNAL = 42
-        """)
-        module = _extract_python_file(source=source, rel_path="pkg/mod.py")
-        assert module.symbols[0].name == "_INTERNAL"
 
     def test_type_alias_classic(self):
         source = textwrap.dedent("""\
