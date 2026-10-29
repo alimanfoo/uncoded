@@ -403,6 +403,12 @@ class TestResolveNamePosition:
                 id="line-continuation",
             ),
             pytest.param(
+                "def \\\r    continued():\r    pass\r",
+                "continued",
+                (1, 4),
+                id="bare-cr-line-continuation",
+            ),
+            pytest.param(
                 "import functools\n\n@functools.cache\ndef compute():\n    return 1\n",
                 "compute",
                 (3, 4),

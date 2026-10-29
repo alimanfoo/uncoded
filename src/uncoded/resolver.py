@@ -53,11 +53,12 @@ def _definition_name_position(
     node: ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef,
     source: str,
 ) -> tuple[int, int]:
-    lines = io.StringIO(source, newline="").readlines()
-    statement = "".join(lines[node.lineno - 1 :])
+    statement = io.StringIO(source, newline=None)
+    for _ in range(node.lineno - 1):
+        statement.readline()
     name_tokens = (
         token
-        for token in tokenize.generate_tokens(io.StringIO(statement).readline)
+        for token in tokenize.generate_tokens(statement.readline)
         if token.type == tokenize.NAME
     )
     keyword = "class" if isinstance(node, ast.ClassDef) else "def"
