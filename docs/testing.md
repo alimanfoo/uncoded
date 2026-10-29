@@ -72,12 +72,14 @@ Windows it ends the whole run.
 For every push and pull request to `main`, the
 [CI workflow](https://github.com/alimanfoo/uncoded/blob/main/.github/workflows/ci.yml)
 runs the whole suite, the integration tests included, with the encoding gate on
-every supported operating system and Python version. It then combines the
-coverage of those jobs and checks it against 100%. It runs every pre-commit
-hook. The hooks include a strict build of the documentation site and the
-regeneration of the `--help` blocks in [the commands reference](commands.md). On
-every supported operating system, it builds the sdist, builds the wheel from the
-sdist, and runs `uncoded --version` from the wheel.
+every supported Python version. Linux and Windows run every version on every
+event. Pushes to `main` also run every version on macOS, while pull requests run
+macOS on the oldest and newest versions only. It then combines the coverage of
+those jobs and checks it against 100%. It runs every pre-commit hook. The hooks
+include a strict build of the documentation site and the regeneration of the
+`--help` blocks in [the commands reference](commands.md). On every supported
+operating system, it builds the sdist, builds the wheel from the sdist, and runs
+`uncoded --version` from the wheel.
 
 For every pull request, the
 [dependency review workflow](https://github.com/alimanfoo/uncoded/blob/main/.github/workflows/dependency-review.yml)
