@@ -767,10 +767,10 @@ class TestInitCommand:
         assert {name: (tmp_path / name).read_bytes() for name in unedited} == unedited
         assert (tmp_path / "pyproject.toml").read_bytes() == (
             original_pyproject
-            + b"\n"
-            + b"[tool.uncoded]\n"
-            + b'source-roots = ["src", "tests"]\n'
-            + b'doc-roots = ["README.md", "AGENTS.md", "docs"]\n'
+            + b"\r\n"
+            + b"[tool.uncoded]\r\n"
+            + b'source-roots = ["src", "tests"]\r\n'
+            + b'doc-roots = ["README.md", "AGENTS.md", "docs"]\r\n'
         )
         assert (tmp_path / ".uncoded" / "namespace.yaml").exists()
         assert (tmp_path / ".uncoded" / "docs.yaml").exists()
@@ -838,14 +838,14 @@ class TestInitCommand:
             ),
             pytest.param(
                 b"[dependency-groups]\r\ndev = [\r\n]\r\n",
-                b"[dependency-groups]\r\ndev = [\r\n]\r\n\n"
-                b'[tool.uncoded]\nsource-roots = ["src"]\n',
+                b"[dependency-groups]\r\ndev = [\r\n]\r\n\r\n"
+                b'[tool.uncoded]\r\nsource-roots = ["src"]\r\n',
                 id="final-crlf-newline",
             ),
             pytest.param(
                 b"[dependency-groups]\r\ndev = [\r\n]\r\n\r\n",
                 b"[dependency-groups]\r\ndev = [\r\n]\r\n\r\n"
-                b'[tool.uncoded]\nsource-roots = ["src"]\n',
+                b'[tool.uncoded]\r\nsource-roots = ["src"]\r\n',
                 id="final-crlf-blank-line",
             ),
             pytest.param(

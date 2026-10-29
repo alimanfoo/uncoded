@@ -247,7 +247,9 @@ def render_conventional_config(*, directory: Path, pyproject: str) -> str:
         normalized_line_endings.rstrip("\n")
     )
     separator = "\n" * (2 - min(trailing_newlines, 2)) if pyproject else ""
-    content = pyproject + separator + "\n".join(lines) + "\n"
+    line_ending = "\r\n" if "\r\n" in pyproject else "\n"
+    appended = (separator + "\n".join(lines) + "\n").replace("\n", line_ending)
+    content = pyproject + appended
     try:
         tomllib.loads(content)
     except tomllib.TOMLDecodeError as e:

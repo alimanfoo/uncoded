@@ -76,7 +76,8 @@ they run `uv add --dev uncoded`, then `uv run uncoded init`.
 
 `uncoded init` looks for an existing configuration file in that directory and
 the directories above it. Finding none, it appends a `[tool.uncoded]` table
-after a blank line in the `pyproject.toml` in that directory. In it:
+after a blank line in the `pyproject.toml` in that directory, using the file's
+line endings. In it:
 
 - the source roots are whichever of `src` and `tests` exist in that directory;
 - the doc roots are whichever of `README.md`, `AGENTS.md` and `docs` exist in
