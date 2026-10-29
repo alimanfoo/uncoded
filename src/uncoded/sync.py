@@ -42,14 +42,16 @@ def sync_file(
     content: str,
     project_directory: Path,
     check: bool = False,
+    newline: str | None = None,
 ) -> bool:
     """Write ``content`` to ``path`` if it differs from what's on disk.
 
     Prints ``Wrote``/``Updated`` in apply mode, ``Would write``/``Would
     update`` in check mode. Returns ``True`` if a write was (or would be)
-    performed, ``False`` if the file was already current. Parent
-    directories are created as needed. Raises :class:`FileSyncError` when
-    the file cannot be read or written.
+    performed, ``False`` if the file was already current. ``newline`` controls
+    newline translation as it does for :meth:`Path.write_text`. Parent
+    directories are created as needed. Raises :class:`FileSyncError` when the
+    file cannot be read or written.
 
     The file is written to ``project_directory / path``. The log line still
     names ``path`` as given, so messages stay project-relative
@@ -65,7 +67,7 @@ def sync_file(
             target.parent.mkdir(parents=True, exist_ok=True)
             with TemporaryDirectory(dir=target.parent) as temporary_directory:
                 temporary = Path(temporary_directory) / target.name
-                temporary.write_text(content, encoding="utf-8", newline="")
+                temporary.write_text(content, encoding="utf-8", newline=newline)
                 temporary.replace(target)
     if existing is None:
         print(f"{'Would write' if check else 'Wrote'} {path.as_posix()}")

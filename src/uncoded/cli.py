@@ -200,7 +200,12 @@ def _init(*, config: Config | None) -> int:
         with pyproject_path.open(encoding="utf-8", newline="") as f:
             existing = f.read()
         content = render_conventional_config(directory=start, pyproject=existing)
-        sync_file(path=pyproject, content=content, project_directory=start)
+        sync_file(
+            path=pyproject,
+            content=content,
+            project_directory=start,
+            newline="",
+        )
         config = read_config(start=start)
     else:
         print(
