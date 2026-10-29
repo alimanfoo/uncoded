@@ -20,6 +20,11 @@ includes it. Each entry links the pull request that made the change.
 
 ## Unreleased
 
+## [6.0.0](https://github.com/alimanfoo/uncoded/releases/tag/v6.0.0) — 2026-10-29
+
+Before upgrading, follow
+[Upgrading from version 5 to version 6](upgrading.md#from-version-5-to-version-6).
+
 ### Breaking
 
 - The skills run uncoded from the project's uv environment, so a project must

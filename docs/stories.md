@@ -108,10 +108,10 @@ Variations:
   found none there. It exits with status `1`. The developer creates the file
   through uv, and runs `uncoded init` again.
 
-- **None of those directories and files exist.** `uncoded init` writes no
-  configuration file. It says which directories and files it looked for, and how
-  to write the configuration file by hand. It exits with status `1`. The
-  developer writes the file, and runs `uncoded init` again.
+- **None of those directories and files exist.** `uncoded init` changes no file.
+  It says which directories and files it looked for, and how to add the
+  `[tool.uncoded]` table to `pyproject.toml` by hand. It exits with status `1`.
+  The developer adds the table, and runs `uncoded init` again.
 - **The project already has a configuration file.** `uncoded init` leaves it as
   it is, says so, and carries on: it runs `uncoded sync`, says which files to
   commit, and prints the lines. Running `uncoded init` a second time therefore
