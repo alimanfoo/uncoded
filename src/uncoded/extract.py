@@ -11,7 +11,12 @@ from uncoded.ast_helpers import (
     module_symbols,
     property_kind,
 )
-from uncoded.read_helpers import SkippedFile, failure_reason, read_source_text
+from uncoded.read_helpers import (
+    SkippedFile,
+    failure_reason,
+    read_source_text,
+    root_files,
+)
 
 
 @dataclass
@@ -229,9 +234,9 @@ def _extract_python_file(*, source: str, rel_path: str) -> PythonFile:
 
 
 def read_python_files(
-    *, source_root: Path, project_directory: Path
+    *, source_roots: list[Path], project_directory: Path
 ) -> tuple[list[PythonFile], list[SkippedFile]]:
-    """Read and extract every Python file under ``source_root`` that has symbols.
+    """Read every Python file under ``source_roots`` that has symbols.
 
     Returns the :class:`PythonFile` of every readable, parseable file that has
     symbols, and a :class:`SkippedFile` for every file that cannot be read or
@@ -243,24 +248,25 @@ def read_python_files(
     UnicodeDecodeError, or a SyntaxError from a malformed encoding cookie) or
     fails to parse (SyntaxError).
     """
-    source_root = source_root.resolve()
-    project_directory = project_directory.resolve()
-
     python_files: list[PythonFile] = []
     skipped: list[SkippedFile] = []
-    for py_file in sorted(source_root.rglob("*.py")):
-        rel_path = py_file.relative_to(project_directory).as_posix()
-        try:
-            source = read_source_text(path=py_file)
-        except (OSError, UnicodeDecodeError, SyntaxError) as e:
-            skipped.append(SkippedFile(path=rel_path, reason=failure_reason(error=e)))
-            continue
-        try:
-            python_file = _extract_python_file(source=source, rel_path=rel_path)
-        except SyntaxError as e:
-            reason = f"SyntaxError at line {e.lineno}: {e.msg}"
-            skipped.append(SkippedFile(path=rel_path, reason=reason))
-            continue
-        if python_file.symbols:
-            python_files.append(python_file)
+    for source_root in source_roots:
+        for py_file, rel_path in root_files(
+            root=source_root, pattern="*.py", project_directory=project_directory
+        ):
+            try:
+                source = read_source_text(path=py_file)
+            except (OSError, UnicodeDecodeError, SyntaxError) as e:
+                skipped.append(
+                    SkippedFile(path=rel_path, reason=failure_reason(error=e))
+                )
+                continue
+            try:
+                python_file = _extract_python_file(source=source, rel_path=rel_path)
+            except SyntaxError as e:
+                reason = f"SyntaxError at line {e.lineno}: {e.msg}"
+                skipped.append(SkippedFile(path=rel_path, reason=reason))
+                continue
+            if python_file.symbols:
+                python_files.append(python_file)
     return python_files, skipped

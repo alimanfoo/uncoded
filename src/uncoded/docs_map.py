@@ -1,12 +1,13 @@
 """Build the docs map, in YAML, from Markdown files for agent orientation."""
 
 from collections.abc import Iterable
+from dataclasses import dataclass
 from pathlib import Path
 
 from markdown_it import MarkdownIt
 
 from uncoded.markers import GENERATED_MARKER
-from uncoded.read_helpers import SkippedFile, failure_reason
+from uncoded.read_helpers import SkippedFile, failure_reason, root_files
 from uncoded.yaml_tree import nest_by_path, render_yaml_tree
 
 _DOCS_HEADER = f"""\
@@ -19,6 +20,14 @@ _DOCS_HEADER = f"""\
 # A " (N)" suffix marks the Nth heading with the same text under one
 # parent. The suffix is not in the file: read the parent's section to find it.
 """
+
+
+@dataclass(frozen=True)
+class DocFile:
+    """A Markdown file's project-relative path and text."""
+
+    rel_path: str
+    text: str
 
 
 def _extract_headings(*, text: str) -> list[tuple[int, str]]:
@@ -53,33 +62,33 @@ def _collapse_empty(*, mapping: dict) -> dict | None:
 
 
 def read_doc_files(
-    *, doc_root: Path, project_directory: Path
-) -> tuple[list[tuple[str, str]], list[SkippedFile]]:
-    """Read the Markdown files of ``doc_root``, keeping those that read as UTF-8.
+    *, doc_roots: list[Path], project_directory: Path
+) -> tuple[list[DocFile], list[SkippedFile]]:
+    """Read the Markdown files of ``doc_roots``, keeping readable UTF-8 files.
 
-    If ``doc_root`` is a directory, reads every ``*.md`` file found by rglob,
-    in sorted order. If it is a single ``.md`` file, reads just that file.
+    If a root is a directory, reads every Markdown file found by rglob, in
+    sorted order. If it is a single Markdown file, reads just that file.
     Each file is read as UTF-8, and a leading UTF-8 BOM is stripped.
 
-    Returns the ``(text, rel_path)`` pair of every file that reads, and a
+    Returns a :class:`DocFile` for every file that reads, and a
     :class:`SkippedFile` for every file that is unreadable or not UTF-8.
     Each ``rel_path`` is the file's path relative to ``project_directory``, with
     ``/`` separators on every platform.
     """
-    doc_root = doc_root.resolve()
-    project_directory = project_directory.resolve()
-    md_files = [doc_root] if doc_root.is_file() else sorted(doc_root.rglob("*.md"))
-
-    files: list[tuple[str, str]] = []
+    files: list[DocFile] = []
     skipped: list[SkippedFile] = []
-    for md_file in md_files:
-        rel_path = md_file.relative_to(project_directory).as_posix()
-        try:
-            text = md_file.read_text(encoding="utf-8-sig")
-        except (UnicodeDecodeError, OSError) as e:
-            skipped.append(SkippedFile(path=rel_path, reason=failure_reason(error=e)))
-            continue
-        files.append((text, rel_path))
+    for doc_root in doc_roots:
+        for md_file, rel_path in root_files(
+            root=doc_root, pattern="*.md", project_directory=project_directory
+        ):
+            try:
+                text = md_file.read_text(encoding="utf-8-sig")
+            except (UnicodeDecodeError, OSError) as e:
+                skipped.append(
+                    SkippedFile(path=rel_path, reason=failure_reason(error=e))
+                )
+                continue
+            files.append(DocFile(rel_path=rel_path, text=text))
     return files, skipped
 
 
@@ -107,14 +116,17 @@ def _file_headings(*, text: str) -> dict | None:
     return _collapse_empty(mapping=file_dict)
 
 
-def build_docs_map(*, files: Iterable[tuple[str, str]]) -> dict:
-    """Build a nested dict from ``(text, rel_path)`` doc-file pairs.
+def build_docs_map(*, files: Iterable[DocFile]) -> dict:
+    """Build a nested dict from Markdown files.
 
     Top-level keys are directory names (trailing "/") and file names, and each
     file maps to its headings.
     """
     return nest_by_path(
-        entries=((rel_path, _file_headings(text=text)) for text, rel_path in files)
+        entries=(
+            (doc_file.rel_path, _file_headings(text=doc_file.text))
+            for doc_file in files
+        )
     )
 
 

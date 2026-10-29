@@ -20,7 +20,7 @@ from uncoded.config import (
     validate_root,
 )
 from uncoded.docs_map import build_docs_map, read_doc_files, render_docs_map
-from uncoded.extract import PythonFile, read_python_files
+from uncoded.extract import read_python_files
 from uncoded.markers import GENERATED_MARKER
 from uncoded.namespace_map import build_map, render_map
 from uncoded.read_helpers import SkippedFile, failure_reason
@@ -59,14 +59,9 @@ def _sync_code_index(
     their stubs, removing every other stub. Returns the change count and the
     files that could not be read or parsed.
     """
-    python_files: list[PythonFile] = []
-    skipped: list[SkippedFile] = []
-    for source_root in source_roots:
-        root_files, root_skipped = read_python_files(
-            source_root=source_root, project_directory=project_directory
-        )
-        python_files.extend(root_files)
-        skipped.extend(root_skipped)
+    python_files, skipped = read_python_files(
+        source_roots=source_roots, project_directory=project_directory
+    )
     namespace_path = Path(".uncoded/namespace.yaml")
     if source_roots:
         changes = sync_file(
@@ -97,14 +92,9 @@ def _sync_documentation_index(
     map, or removes it when there are no doc roots. Returns the change count
     and the files that could not be read.
     """
-    files: list[tuple[str, str]] = []
-    skipped: list[SkippedFile] = []
-    for doc_root in doc_roots:
-        root_files, root_skipped = read_doc_files(
-            doc_root=doc_root, project_directory=project_directory
-        )
-        files.extend(root_files)
-        skipped.extend(root_skipped)
+    files, skipped = read_doc_files(
+        doc_roots=doc_roots, project_directory=project_directory
+    )
     docs_path = Path(".uncoded/docs.yaml")
     if doc_roots:
         changes = sync_file(

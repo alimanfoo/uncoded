@@ -4,6 +4,7 @@ import yaml
 
 from uncoded.docs_map import (
     _DOCS_HEADER,
+    DocFile,
     _extract_headings,
     build_docs_map,
     read_doc_files,
@@ -119,17 +120,15 @@ class TestReadDocFiles:
     def test_single_file_root(self, *, tmp_path):
         md = tmp_path / "README.md"
         md.write_text("# Hello\n", encoding="utf-8")
-        results, _skipped = read_doc_files(doc_root=md, project_directory=tmp_path)
+        results, _skipped = read_doc_files(doc_roots=[md], project_directory=tmp_path)
         assert len(results) == 1
-        text, rel = results[0]
-        assert text == "# Hello\n"
-        assert rel == "README.md"
+        assert results[0] == DocFile(rel_path="README.md", text="# Hello\n")
 
     def test_directory_walk_reads_md_files(self, *, tmp_path):
         (tmp_path / "a.md").write_text("# A\n", encoding="utf-8")
         (tmp_path / "b.md").write_text("# B\n", encoding="utf-8")
         results, _skipped = read_doc_files(
-            doc_root=tmp_path, project_directory=tmp_path
+            doc_roots=[tmp_path], project_directory=tmp_path
         )
         assert len(results) == 2
 
@@ -137,33 +136,33 @@ class TestReadDocFiles:
         (tmp_path / "z.md").write_text("z", encoding="utf-8")
         (tmp_path / "a.md").write_text("a", encoding="utf-8")
         results, _skipped = read_doc_files(
-            doc_root=tmp_path, project_directory=tmp_path
+            doc_roots=[tmp_path], project_directory=tmp_path
         )
-        names = [Path(r[1]).name for r in results]
+        names = [Path(result.rel_path).name for result in results]
         assert names == ["a.md", "z.md"]
 
     def test_directory_excludes_non_md(self, *, tmp_path):
         (tmp_path / "guide.md").write_text("# Guide\n", encoding="utf-8")
         (tmp_path / "notes.txt").write_text("some text", encoding="utf-8")
         results, _skipped = read_doc_files(
-            doc_root=tmp_path, project_directory=tmp_path
+            doc_roots=[tmp_path], project_directory=tmp_path
         )
         assert len(results) == 1
-        assert results[0][1] == "guide.md"
+        assert results[0].rel_path == "guide.md"
 
     def test_directory_nested_subdir(self, *, tmp_path):
         sub = tmp_path / "docs"
         sub.mkdir()
         (sub / "guide.md").write_text("# Guide\n", encoding="utf-8")
         results, _skipped = read_doc_files(
-            doc_root=tmp_path, project_directory=tmp_path
+            doc_roots=[tmp_path], project_directory=tmp_path
         )
         assert len(results) == 1
-        assert results[0][1] == "docs/guide.md"
+        assert results[0].rel_path == "docs/guide.md"
 
     def test_empty_directory_reads_nothing(self, *, tmp_path):
         results, _skipped = read_doc_files(
-            doc_root=tmp_path, project_directory=tmp_path
+            doc_roots=[tmp_path], project_directory=tmp_path
         )
         assert results == []
 
@@ -171,8 +170,8 @@ class TestReadDocFiles:
         docs = tmp_path / "docs"
         docs.mkdir()
         (docs / "a.md").write_text("", encoding="utf-8")
-        results, _skipped = read_doc_files(doc_root=docs, project_directory=tmp_path)
-        assert results[0][1] == "docs/a.md"
+        results, _skipped = read_doc_files(doc_roots=[docs], project_directory=tmp_path)
+        assert results[0].rel_path == "docs/a.md"
 
     def test_skips_non_utf8_file(self, *, tmp_path):
         # A file with invalid UTF-8 bytes must be skipped; other files in the
@@ -182,10 +181,10 @@ class TestReadDocFiles:
         (guide / "good.md").write_text("# Good\n", encoding="utf-8")
         (guide / "bad.md").write_bytes(b"\xff\xfe not utf-8")
         results, skipped = read_doc_files(
-            doc_root=tmp_path / "docs", project_directory=tmp_path
+            doc_roots=[tmp_path / "docs"], project_directory=tmp_path
         )
         assert len(results) == 1
-        assert results[0][1] == "docs/guide/good.md"
+        assert results[0].rel_path == "docs/guide/good.md"
         assert [s.path for s in skipped] == ["docs/guide/bad.md"]
 
     def test_skips_unreadable_file_with_reason(self, *, tmp_path):
@@ -194,7 +193,7 @@ class TestReadDocFiles:
         # the system's separator.
         (tmp_path / "docs" / "notes.md").mkdir(parents=True)
         results, skipped = read_doc_files(
-            doc_root=tmp_path / "docs", project_directory=tmp_path
+            doc_roots=[tmp_path / "docs"], project_directory=tmp_path
         )
         assert results == []
         assert [s.path for s in skipped] == ["docs/notes.md"]
@@ -207,7 +206,7 @@ class TestReadDocFiles:
         (tmp_path / "docs").mkdir()
         bad = tmp_path / "docs" / "bad.md"
         bad.write_bytes(b"\xff\xfe not utf-8")
-        results, skipped = read_doc_files(doc_root=bad, project_directory=tmp_path)
+        results, skipped = read_doc_files(doc_roots=[bad], project_directory=tmp_path)
         assert results == []
         assert [s.path for s in skipped] == ["docs/bad.md"]
 
@@ -216,11 +215,10 @@ class TestReadDocFiles:
         bom = b"\xef\xbb\xbf"
         (tmp_path / "guide.md").write_bytes(bom + b"# Guide\n")
         results, _skipped = read_doc_files(
-            doc_root=tmp_path, project_directory=tmp_path
+            doc_roots=[tmp_path], project_directory=tmp_path
         )
         assert len(results) == 1
-        text, _rel = results[0]
-        assert _extract_headings(text=text) == [(1, "Guide")]
+        assert _extract_headings(text=results[0].text) == [(1, "Guide")]
 
 
 class TestBuildDocsMap:
@@ -228,63 +226,67 @@ class TestBuildDocsMap:
         assert build_docs_map(files=[]) == {}
 
     def test_headingless_file_maps_to_null(self, *, tmp_path):
-        result = build_docs_map(files=[("no headings here", "notes.md")])
+        result = build_docs_map(
+            files=[DocFile(rel_path="notes.md", text="no headings here")]
+        )
         assert result == {"notes.md": None}
 
     def test_single_heading(self):
-        result = build_docs_map(files=[("# Setup\n", "guide.md")])
+        result = build_docs_map(files=[DocFile(rel_path="guide.md", text="# Setup\n")])
         assert result == {"guide.md": {"Setup": None}}
 
     def test_nesting_parent_child(self):
         text = "# Install\n## Steps\n"
-        result = build_docs_map(files=[(text, "guide.md")])
+        result = build_docs_map(files=[DocFile(rel_path="guide.md", text=text)])
         assert result == {"guide.md": {"Install": {"Steps": None}}}
 
     def test_level_skip_attaches_to_nearest_shallower(self):
         # H2 → H4: H4 should nest under H2 (nearest shallower).
         text = "## Config\n#### Advanced\n"
-        result = build_docs_map(files=[(text, "ref.md")])
+        result = build_docs_map(files=[DocFile(rel_path="ref.md", text=text)])
         assert result == {"ref.md": {"Config": {"Advanced": None}}}
 
     def test_heading_returns_to_same_level(self):
         # H1 → H2 → H1: second H1 is a sibling of the first.
         text = "# A\n## Sub\n# B\n"
-        result = build_docs_map(files=[(text, "f.md")])
+        result = build_docs_map(files=[DocFile(rel_path="f.md", text=text)])
         assert result == {"f.md": {"A": {"Sub": None}, "B": None}}
 
     def test_heading_not_starting_at_h1(self):
         # File starts at H2 — lands at file root.
         text = "## Setup\n### Detail\n"
-        result = build_docs_map(files=[(text, "f.md")])
+        result = build_docs_map(files=[DocFile(rel_path="f.md", text=text)])
         assert result == {"f.md": {"Setup": {"Detail": None}}}
 
     def test_duplicate_sibling_disambiguation(self):
         text = "## Setup\n## Setup\n"
-        result = build_docs_map(files=[(text, "f.md")])
+        result = build_docs_map(files=[DocFile(rel_path="f.md", text=text)])
         assert result == {"f.md": {"Setup": None, "Setup (2)": None}}
 
     def test_duplicate_increments_past_existing_suffix(self):
         # Three duplicates: Setup, Setup (2), Setup (3).
         text = "## Setup\n## Setup\n## Setup\n"
-        result = build_docs_map(files=[(text, "f.md")])
+        result = build_docs_map(files=[DocFile(rel_path="f.md", text=text)])
         assert result == {"f.md": {"Setup": None, "Setup (2)": None, "Setup (3)": None}}
 
     def test_directory_structure_dir_key_has_trailing_slash(self):
-        result = build_docs_map(files=[("# Guide\n", "docs/guide.md")])
+        result = build_docs_map(
+            files=[DocFile(rel_path="docs/guide.md", text="# Guide\n")]
+        )
         assert result == {"docs/": {"guide.md": {"Guide": None}}}
 
     def test_two_files_in_same_directory(self):
         files = [
-            ("# A\n", "docs/a.md"),
-            ("# B\n", "docs/b.md"),
+            DocFile(rel_path="docs/a.md", text="# A\n"),
+            DocFile(rel_path="docs/b.md", text="# B\n"),
         ]
         result = build_docs_map(files=files)
         assert result == {"docs/": {"a.md": {"A": None}, "b.md": {"B": None}}}
 
     def test_multiple_files_flat(self):
         files = [
-            ("# Intro\n", "intro.md"),
-            ("# API\n", "api.md"),
+            DocFile(rel_path="intro.md", text="# Intro\n"),
+            DocFile(rel_path="api.md", text="# API\n"),
         ]
         result = build_docs_map(files=files)
         assert result == {"intro.md": {"Intro": None}, "api.md": {"API": None}}
@@ -296,7 +298,7 @@ class TestRenderDocsMap:
         assert output.startswith(_DOCS_HEADER)
 
     def test_roundtrips_through_yaml(self):
-        files = [("# Setup\n## Config\n", "guide.md")]
+        files = [DocFile(rel_path="guide.md", text="# Setup\n## Config\n")]
         m = build_docs_map(files=files)
         output = render_docs_map(mapping=m)
         parsed = yaml.safe_load(output)
@@ -304,7 +306,7 @@ class TestRenderDocsMap:
 
     def test_headingless_file_renders_without_null(self):
         # Null leaves must render as "key:" not "key: null".
-        files = [("no headings", "notes.md")]
+        files = [DocFile(rel_path="notes.md", text="no headings")]
         output = render_docs_map(mapping=build_docs_map(files=files))
         assert "notes.md: null" not in output
         assert "notes.md:" in output
