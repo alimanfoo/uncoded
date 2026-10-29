@@ -286,5 +286,5 @@ def _uri_to_path(*, uri: str) -> Path:
     # url2pathname decodes the percent escapes and, on Windows, turns a URI path
     # such as /C:/src/m.py into C:\src\m.py.
     parsed = urlparse(uri)
-    path = f"//{parsed.netloc}{parsed.path}" if parsed.netloc else parsed.path
-    return Path(url2pathname(path))
+    path = Path(url2pathname(parsed.path))
+    return Path(f"//{parsed.netloc}{path.as_posix()}") if parsed.netloc else path
