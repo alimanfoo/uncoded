@@ -274,6 +274,8 @@ def _read_response(*, stream: IO[bytes], request_id: int) -> dict:
         msg = _read_message(stream=stream)
         if msg.get("id") != request_id:
             continue
+        if "result" not in msg and "error" not in msg:
+            continue
         if "error" in msg:
             error = msg["error"]
             raise TyError(
@@ -285,4 +287,6 @@ def _read_response(*, stream: IO[bytes], request_id: int) -> dict:
 def _uri_to_path(*, uri: str) -> Path:
     # url2pathname decodes the percent escapes and, on Windows, turns a URI path
     # such as /C:/src/m.py into C:\src\m.py.
-    return Path(url2pathname(urlparse(uri).path))
+    parsed = urlparse(uri)
+    path = Path(url2pathname(parsed.path))
+    return Path(f"//{parsed.netloc}{path.as_posix()}") if parsed.netloc else path

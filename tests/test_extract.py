@@ -620,7 +620,7 @@ class TestExtractPythonFile:
             ("count", "int", "0"),
         ]
 
-    def test_property_extracted_as_property(self):
+    def test_property_is_indexed(self):
         source = textwrap.dedent("""\
             class Config:
                 @property

@@ -2,13 +2,15 @@
 
 To upgrade a project to a new release of uncoded:
 
-1. Read [the changelog](changelog.md) for every release after the one that the
-   project uses.
-2. If the new release is major, follow the section below for each major release
+1. Find the release that the project uses. If a pre-commit hook runs uncoded, it
+   is the version in its `entry`. Without a hook, it is the version that
+   `uvx uncoded --version` prints.
+2. Read [the changelog](changelog.md) for every release after that release.
+3. If the new release is major, follow the section below for each major release
    that the upgrade crosses, oldest first.
-3. If a pre-commit hook runs uncoded, raise the version in its `entry` to the
+4. If a pre-commit hook runs uncoded, raise the version in its `entry` to the
    new release.
-4. Run `uvx uncoded@<version> sync`, where `<version>` is the new release, and
+5. Run `uvx uncoded@<version> sync`, where `<version>` is the new release, and
    commit every file that the upgrade changes, including every installed skill
    file that the command writes, rewrites or removes.
 

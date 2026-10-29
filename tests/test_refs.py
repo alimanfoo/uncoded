@@ -1,5 +1,6 @@
 import io
 import json
+import os
 import subprocess
 import textwrap
 from pathlib import Path
@@ -18,6 +19,7 @@ from uncoded.refs import (
     _Reference,
     _run_exchange,
     _terminate,
+    _uri_to_path,
     find_refs,
 )
 from uncoded.resolver import NamePath
@@ -38,6 +40,28 @@ def _init_response() -> dict:
 
 def _shutdown_response() -> dict:
     return {"jsonrpc": "2.0", "id": 3, "result": None}
+
+
+class TestFindRefsWithoutTy:
+    def test_converts_and_sorts_locations(self, *, tmp_path):
+        in_path = tmp_path / "m.py"
+        in_path.write_text("def foo(): pass\n", encoding="utf-8")
+        locations = [
+            _LSPLocation(path=tmp_path / "b.py", line=4, character=8),
+            _LSPLocation(path=tmp_path / "a.py", line=1, character=4),
+        ]
+
+        with mock.patch("uncoded.refs._query_references", return_value=locations):
+            refs = find_refs(
+                name_path=NamePath("foo"),
+                in_path=in_path,
+                project_directory=tmp_path,
+            )
+
+        assert refs == [
+            _Reference(path=tmp_path / "a.py", line=2, col=5),
+            _Reference(path=tmp_path / "b.py", line=5, col=9),
+        ]
 
 
 @pytest.mark.integration
@@ -200,6 +224,26 @@ class TestPathForDisplay:
         assert result == other
 
 
+class TestUriToPath:
+    def test_keeps_host_in_network_path(self):
+        result = _uri_to_path(uri="file://server/share/pkg/m.py")
+
+        assert result.as_posix().lstrip("/") == "server/share/pkg/m.py"
+
+    @pytest.mark.skipif(
+        os.name != "nt", reason="UNC paths have their native form only on Windows."
+    )
+    def test_returns_unc_path_for_uri_with_host(self):
+        result = _uri_to_path(uri="file://server/share/pkg/m.py")
+
+        assert result == Path(r"\\server\share\pkg\m.py")
+
+    def test_uses_uri_path_without_host(self):
+        result = _uri_to_path(uri="file:///share/pkg/m.py")
+
+        assert result.as_posix() == "/share/pkg/m.py"
+
+
 class TestQueryReferences:
     @pytest.mark.integration
     def test_finds_definition_import_and_call_sites(self, *, tmp_path):
@@ -224,7 +268,7 @@ class TestQueryReferences:
             _LSPLocation(path=pkg / "b.py", line=2, character=8),
         ]
 
-    def test_uvx_not_found_raises_ty_error(self, *, tmp_path):
+    def test_reports_missing_uvx(self, *, tmp_path):
         in_path = tmp_path / "m.py"
         in_path.write_text("def foo(): pass\n", encoding="utf-8")
 
@@ -236,7 +280,7 @@ class TestQueryReferences:
                 in_path=in_path, position=(0, 4), project_directory=tmp_path
             )
 
-    def test_uvx_that_cannot_start_raises_ty_error(self, *, tmp_path):
+    def test_reports_uvx_start_failure(self, *, tmp_path):
         in_path = tmp_path / "m.py"
         in_path.write_text("def foo(): pass\n", encoding="utf-8")
 
@@ -329,7 +373,7 @@ class TestRunExchange:
                 project_directory=tmp_path,
             )
 
-    def test_empty_result_list_returns_empty(self, *, tmp_path):
+    def test_treats_an_empty_reference_list_as_no_references(self, *, tmp_path):
         in_path = tmp_path / "m.py"
         in_path.write_text("def foo(): pass\n", encoding="utf-8")
 
@@ -349,7 +393,7 @@ class TestRunExchange:
 
         assert refs == []
 
-    def test_null_result_returns_empty(self, *, tmp_path):
+    def test_treats_a_null_reference_list_as_no_references(self, *, tmp_path):
         in_path = tmp_path / "m.py"
         in_path.write_text("def foo(): pass\n", encoding="utf-8")
 
@@ -477,14 +521,20 @@ class TestReadMessage:
 
 
 class TestReadResponse:
-    def test_skips_notifications_until_matching_id(self):
+    def test_skips_non_responses_until_matching_id(self):
         notification = {
             "jsonrpc": "2.0",
             "method": "textDocument/publishDiagnostics",
             "params": {},
         }
+        request = {
+            "jsonrpc": "2.0",
+            "id": 7,
+            "method": "workspace/configuration",
+            "params": {},
+        }
         response = {"jsonrpc": "2.0", "id": 7, "result": []}
-        stream = _lsp_stream(notification, response)
+        stream = _lsp_stream(notification, request, response)
 
         assert _read_response(stream=stream, request_id=7) == response
 
