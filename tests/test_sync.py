@@ -3,7 +3,7 @@ from unittest import mock
 
 import pytest
 
-from uncoded.sync import FileSyncError, remove_file, sync_file, sync_generated_file
+from uncoded.sync import FileSyncError, remove_file, sync_file
 
 
 class TestSyncFile:
@@ -67,29 +67,6 @@ class TestSyncFile:
         )
         assert changed is True
         assert not path.parent.exists()
-
-
-class TestSyncGeneratedFile:
-    def test_writes_when_content_is_present(self, *, tmp_path):
-        path = tmp_path / "out.txt"
-
-        changed = sync_generated_file(
-            path=path, content="content", project_directory=tmp_path
-        )
-
-        assert changed is True
-        assert path.read_text(encoding="utf-8") == "content"
-
-    def test_removes_when_content_is_absent(self, *, tmp_path):
-        path = tmp_path / "out.txt"
-        path.write_text("content", encoding="utf-8")
-
-        changed = sync_generated_file(
-            path=path, content=None, project_directory=tmp_path
-        )
-
-        assert changed is True
-        assert not path.exists()
 
 
 class TestRemoveFile:

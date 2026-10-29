@@ -8,7 +8,7 @@ from typing import Literal
 import yaml
 
 from uncoded.markers import GENERATED_MARKER
-from uncoded.sync import remove_file, sync_file
+from uncoded.sync import sync_generated_file
 
 SKILL_DIRECTORIES = [
     Path(".claude/skills"),  # Claude Code
@@ -102,23 +102,19 @@ def _sync_one_skill(
 
     Returns the number of file changes (writes and removals).
     """
+    content = (
+        _render_content(skill=skill)
+        if _is_built(skill=skill, source=source, doc=doc)
+        else None
+    )
     changes = 0
-    if _is_built(skill=skill, source=source, doc=doc):
-        content = _render_content(skill=skill)
-        for skill_directory in SKILL_DIRECTORIES:
-            changes += sync_file(
-                path=_skill_path(skill_directory=skill_directory, name=skill.name),
-                content=content,
-                project_directory=project_directory,
-                check=check,
-            )
-    else:
-        for skill_directory in SKILL_DIRECTORIES:
-            changes += remove_file(
-                path=_skill_path(skill_directory=skill_directory, name=skill.name),
-                project_directory=project_directory,
-                check=check,
-            )
+    for skill_directory in SKILL_DIRECTORIES:
+        changes += sync_generated_file(
+            path=_skill_path(skill_directory=skill_directory, name=skill.name),
+            content=content,
+            project_directory=project_directory,
+            check=check,
+        )
     return changes
 
 
