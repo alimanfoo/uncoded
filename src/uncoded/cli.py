@@ -220,14 +220,16 @@ class _OutsideProjectError(Exception):
     """Raised when an ``--in`` file is outside the project directory."""
 
 
-def _project_file(*, in_path: str, project_directory: Path) -> Path:
-    """Return the ``--in`` file, or raise _OutsideProjectError when it is outside."""
+def _lookup_inputs(
+    *, name_path: str, in_path: str, project_directory: Path
+) -> tuple[NamePath, Path]:
+    """Parse a lookup's name path and project file, checking the file first."""
     target = Path(in_path)
     if not is_inside_project(path=target, project_directory=project_directory):
         raise _OutsideProjectError(
             f"outside the project directory {project_directory.as_posix()}."
         )
-    return target
+    return NamePath.parse(raw=name_path), target
 
 
 # The failures of a lookup that `uncoded body` and `uncoded refs` report, each
@@ -264,12 +266,12 @@ def _body(*, config: Config, name_path: str, in_path: str) -> int:
     undecodable), or if the source has a syntax error.
     """
     try:
-        target = _project_file(
-            in_path=in_path, project_directory=config.project_directory
+        parsed_name_path, target = _lookup_inputs(
+            name_path=name_path,
+            in_path=in_path,
+            project_directory=config.project_directory,
         )
-        definition = resolve_definition(
-            name_path=NamePath.parse(raw=name_path), in_path=target
-        )
+        definition = resolve_definition(name_path=parsed_name_path, in_path=target)
     except _LOOKUP_ERRORS as e:
         return _report_lookup_error(exc=e, in_path=in_path)
 
@@ -298,11 +300,14 @@ def _refs(*, config: Config, name_path: str, in_path: str) -> int:
     error, or if ty fails.
     """
     try:
+        parsed_name_path, target = _lookup_inputs(
+            name_path=name_path,
+            in_path=in_path,
+            project_directory=config.project_directory,
+        )
         refs = find_refs(
-            name_path=NamePath.parse(raw=name_path),
-            in_path=_project_file(
-                in_path=in_path, project_directory=config.project_directory
-            ),
+            name_path=parsed_name_path,
+            in_path=target,
             project_directory=config.project_directory,
         )
     except TyError as e:
