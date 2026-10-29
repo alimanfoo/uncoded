@@ -767,9 +767,10 @@ class TestInitCommand:
         assert {name: (tmp_path / name).read_bytes() for name in unedited} == unedited
         assert (tmp_path / "pyproject.toml").read_bytes() == (
             original_pyproject
-            + b"[tool.uncoded]\n"
-            + b'source-roots = ["src", "tests"]\n'
-            + b'doc-roots = ["README.md", "AGENTS.md", "docs"]\n'
+            + b"\r\n"
+            + b"[tool.uncoded]\r\n"
+            + b'source-roots = ["src", "tests"]\r\n'
+            + b'doc-roots = ["README.md", "AGENTS.md", "docs"]\r\n'
         )
         assert (tmp_path / ".uncoded" / "namespace.yaml").exists()
         assert (tmp_path / ".uncoded" / "docs.yaml").exists()
@@ -820,29 +821,55 @@ class TestInitCommand:
             '[tool.uncoded]\ndoc-roots = ["README.md"]\n'
         )
 
-    def test_appends_to_pyproject_without_uncoded_table(self, *, tmp_path, monkeypatch):
+    @pytest.mark.parametrize(
+        ("pyproject", "expected"),
+        [
+            pytest.param(
+                b"[dependency-groups]\ndev = [\n]\n",
+                b"[dependency-groups]\ndev = [\n]\n\n"
+                b'[tool.uncoded]\nsource-roots = ["src"]\n',
+                id="final-lf-newline",
+            ),
+            pytest.param(
+                b"[dependency-groups]\ndev = [\n]\n\n",
+                b"[dependency-groups]\ndev = [\n]\n\n"
+                b'[tool.uncoded]\nsource-roots = ["src"]\n',
+                id="final-lf-blank-line",
+            ),
+            pytest.param(
+                b"[dependency-groups]\r\ndev = [\r\n]\r\n",
+                b"[dependency-groups]\r\ndev = [\r\n]\r\n\r\n"
+                b'[tool.uncoded]\r\nsource-roots = ["src"]\r\n',
+                id="final-crlf-newline",
+            ),
+            pytest.param(
+                b"[dependency-groups]\r\ndev = [\r\n]\r\n\r\n",
+                b"[dependency-groups]\r\ndev = [\r\n]\r\n\r\n"
+                b'[tool.uncoded]\r\nsource-roots = ["src"]\r\n',
+                id="final-crlf-blank-line",
+            ),
+            pytest.param(
+                b"[dependency-groups]\ndev = [\n]",
+                b"[dependency-groups]\ndev = [\n]\n\n"
+                b'[tool.uncoded]\nsource-roots = ["src"]\n',
+                id="no-final-newline",
+            ),
+            pytest.param(
+                b"",
+                b'[tool.uncoded]\nsource-roots = ["src"]\n',
+                id="empty",
+            ),
+        ],
+    )
+    def test_separates_appended_table(
+        self, *, tmp_path, monkeypatch, pyproject, expected
+    ):
         _make_roots(tmp_path=tmp_path, monkeypatch=monkeypatch, roots=["src"])
-        (tmp_path / "pyproject.toml").write_text(
-            '[project]\nname = "demo"\n', encoding="utf-8"
-        )
+        (tmp_path / "pyproject.toml").write_bytes(pyproject)
 
         assert _run(monkeypatch=monkeypatch, arguments=["init"]) == 0
 
-        assert (tmp_path / "pyproject.toml").read_text(encoding="utf-8") == (
-            '[project]\nname = "demo"\n[tool.uncoded]\nsource-roots = ["src"]\n'
-        )
-
-    def test_adds_a_newline_before_the_table(self, *, tmp_path, monkeypatch):
-        _make_roots(tmp_path=tmp_path, monkeypatch=monkeypatch, roots=["src"])
-        (tmp_path / "pyproject.toml").write_text(
-            '[project]\nname = "demo"', encoding="utf-8"
-        )
-
-        assert _run(monkeypatch=monkeypatch, arguments=["init"]) == 0
-
-        assert (tmp_path / "pyproject.toml").read_text(encoding="utf-8") == (
-            '[project]\nname = "demo"\n[tool.uncoded]\nsource-roots = ["src"]\n'
-        )
+        assert (tmp_path / "pyproject.toml").read_bytes() == expected
 
     def test_leaves_an_inline_tool_table_valid(self, *, tmp_path, monkeypatch, capsys):
         _make_roots(tmp_path=tmp_path, monkeypatch=monkeypatch, roots=["src"])

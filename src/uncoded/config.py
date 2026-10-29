@@ -242,8 +242,14 @@ def render_conventional_config(*, directory: Path, pyproject: str) -> str:
     lines.extend(
         f"{kind}-roots = {json.dumps(found)}" for kind, found in roots.items() if found
     )
-    separator = "\n" if pyproject and not pyproject.endswith("\n") else ""
-    content = pyproject + separator + "\n".join(lines) + "\n"
+    normalized_line_endings = pyproject.replace("\r\n", "\n")
+    trailing_newlines = len(normalized_line_endings) - len(
+        normalized_line_endings.rstrip("\n")
+    )
+    separator = "\n" * (2 - min(trailing_newlines, 2)) if pyproject else ""
+    line_ending = "\r\n" if "\r\n" in pyproject else "\n"
+    appended = (separator + "\n".join(lines) + "\n").replace("\n", line_ending)
+    content = pyproject + appended
     try:
         tomllib.loads(content)
     except tomllib.TOMLDecodeError as e:
