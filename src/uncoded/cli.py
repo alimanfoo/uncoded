@@ -22,7 +22,7 @@ from uncoded.config import (
 from uncoded.docs_map import build_docs_map, read_doc_files, render_docs_map
 from uncoded.extract import read_python_files
 from uncoded.markers import GENERATED_MARKER
-from uncoded.namespace_map import build_map, render_map
+from uncoded.namespace_map import build_namespace_map, render_namespace_map
 from uncoded.read_helpers import SkippedFile, failure_reason
 from uncoded.refs import TyError, find_refs
 from uncoded.resolver import NamePath, SymbolNotFoundError, UnsupportedNamePathError
@@ -64,7 +64,7 @@ def _sync_code_index(
     )
     namespace_path = Path(".uncoded/namespace.yaml")
     namespace_content = (
-        render_map(namespace=build_map(python_files=python_files))
+        render_namespace_map(mapping=build_namespace_map(python_files=python_files))
         if source_roots
         else None
     )
