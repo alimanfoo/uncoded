@@ -75,8 +75,6 @@ def resolve_name_position(*, name_path: NamePath, in_path: Path) -> tuple[int, i
     does not record its position.
     For assignments and type statements, character points at the start of the
     target name.
-    Raises SymbolNotFoundError, OSError, UnicodeDecodeError, and SyntaxError under
-    the same conditions as resolve_ast_node_from_source.
     """
     source = read_source_text(path=in_path)
     node = resolve_ast_node_from_source(
@@ -99,10 +97,6 @@ def resolve_ast_node_from_source(
 ) -> SymbolNode:
     """Return the AST node for name_path given an already-read source string.
 
-    The primitive that lets _resolve_ast_node and resolve_definition share a single
-    file read. Callers that already have the source string call this directly
-    to avoid reading in_path again. in_path is used only for ast.parse's
-    filename argument and for error messages.
     Raises SymbolNotFoundError if the symbol is not present; propagates SyntaxError
     if source cannot be parsed.
     """
