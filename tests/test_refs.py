@@ -477,14 +477,20 @@ class TestReadMessage:
 
 
 class TestReadResponse:
-    def test_skips_notifications_until_matching_id(self):
+    def test_skips_non_responses_until_matching_id(self):
         notification = {
             "jsonrpc": "2.0",
             "method": "textDocument/publishDiagnostics",
             "params": {},
         }
+        request = {
+            "jsonrpc": "2.0",
+            "id": 7,
+            "method": "workspace/configuration",
+            "params": {},
+        }
         response = {"jsonrpc": "2.0", "id": 7, "result": []}
-        stream = _lsp_stream(notification, response)
+        stream = _lsp_stream(notification, request, response)
 
         assert _read_response(stream=stream, request_id=7) == response
 
