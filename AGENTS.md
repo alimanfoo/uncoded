@@ -20,9 +20,9 @@ The index files, generated from the roots:
 
 1. **Namespace map** (`.uncoded/namespace.yaml`). A hierarchical YAML file
    listing all symbols, beneath the directories and files that hold them:
-   classes (with their methods, properties and assignments), functions and
-   assignments. It covers both source and tests. The agent loads it into context
-   before any task begins. The map gives the agent a world view.
+   classes (with their methods, properties and assignments), functions, `type`
+   statements and assignments. It covers both source and tests. The agent loads
+   it into context before any task begins. The map gives the agent a world view.
 
 2. **Stub files** (`.uncoded/stubs/`). One `.pyi` for each Python file that has
    symbols. It includes imports, signatures (parameter names, types, return

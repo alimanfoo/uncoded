@@ -147,7 +147,8 @@ symbols of the Python files under the source roots as one tree: directories and
 files by their path relative to the project directory, each file's symbols
 beneath it, and each class's symbols beneath the class. It lists each file's and
 each class's symbols in the order that the Python file defines them, as a stub
-does. A file with no symbols is left out.
+does, and a name defined more than once where it is first defined. A file with
+no symbols is left out.
 
 ### Docs map
 

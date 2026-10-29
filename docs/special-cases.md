@@ -5,10 +5,10 @@ situation, rather than applies a general rule, with the cause of each. It is the
 ledger that [the standard](standard.md)'s "Rules not cases" criterion measures,
 and the standard sets the bar for each entry's cause.
 
-Conditionals that apply a general rule are not listed. Examples are the parsing
-of CommonMark headings and code fences in `docs_map.py`, the parameter syntax in
-`extract.py`, and the rules that the [concepts page](concepts.md) and the
-[stories](stories.md) state, such as a doc root that is a Markdown file.
+Conditionals that apply a general rule are not listed. Examples are the choice
+of ATX headings in `docs_map.py`, the parameter syntax in `extract.py`, and the
+rules that the [concepts page](concepts.md) and the [stories](stories.md) state,
+such as a doc root that is a Markdown file.
 
 ## Python files
 
