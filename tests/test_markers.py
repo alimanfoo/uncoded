@@ -3,14 +3,14 @@
 from uncoded.docs_map import render_docs_map
 from uncoded.extract import PythonFile
 from uncoded.markers import GENERATED_MARKER
-from uncoded.namespace_map import render_map
+from uncoded.namespace_map import render_namespace_map
 from uncoded.skill import _SKILLS, _render_content
 from uncoded.stubs import _render_stub
 
 
 class TestMarkerCompleteness:
     def test_namespace_map_carries_marker(self):
-        assert GENERATED_MARKER in render_map(namespace={})
+        assert GENERATED_MARKER in render_namespace_map(mapping={})
 
     def test_docs_map_carries_marker(self):
         assert GENERATED_MARKER in render_docs_map(mapping={})

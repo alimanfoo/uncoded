@@ -939,7 +939,33 @@ class TestInFileOutsideTheProject:
 
         with mock.patch.object(cli, "find_refs") as find_refs:
             status = _run(
-                monkeypatch=monkeypatch, arguments=[command, "fn", "--in", in_path]
+                monkeypatch=monkeypatch,
+                arguments=[command, "fn", "--in", in_path],
+            )
+
+        assert status == 1
+        find_refs.assert_not_called()
+        captured = capsys.readouterr()
+        assert captured.out == ""
+        assert captured.err == (
+            f"Error: {in_path}: outside the project directory "
+            f"{project.resolve().as_posix()}.\n"
+        )
+
+    @pytest.mark.parametrize("command", ["body", "refs"])
+    def test_checks_file_before_name_path(
+        self, *, tmp_path, monkeypatch, capsys, command
+    ):
+        project = tmp_path / "project"
+        project.mkdir()
+        _init_source_project(tmp_path=project, monkeypatch=monkeypatch)
+        (tmp_path / "m.py").write_text("def fn():\n    pass\n", encoding="utf-8")
+        in_path = "../m.py"
+
+        with mock.patch.object(cli, "find_refs") as find_refs:
+            status = _run(
+                monkeypatch=monkeypatch,
+                arguments=[command, "A/B/C", "--in", in_path],
             )
 
         assert status == 1

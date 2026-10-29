@@ -53,7 +53,7 @@ class TestReadAndExtract:
         (pkg / "empty.py").write_text("# nothing here\n", encoding="utf-8")
 
         modules, _skipped = read_python_files(
-            source_root=src, project_directory=tmp_path
+            source_roots=[src], project_directory=tmp_path
         )
 
         rel_paths = [m.rel_path for m in modules]
@@ -74,7 +74,7 @@ class TestReadAndExtract:
         )
 
         modules, _skipped = read_python_files(
-            source_root=src, project_directory=tmp_path
+            source_roots=[src], project_directory=tmp_path
         )
 
         rel_paths = [m.rel_path for m in modules]
@@ -88,7 +88,7 @@ class TestReadAndExtract:
         (pkg / "core.py").write_text("def run(): pass\n", encoding="utf-8")
 
         modules, _skipped = read_python_files(
-            source_root=src, project_directory=tmp_path
+            source_roots=[src], project_directory=tmp_path
         )
 
         rel_paths = [m.rel_path for m in modules]
@@ -103,7 +103,7 @@ class TestReadAndExtract:
         (pkg / "core.py").write_text("def run(): pass\n", encoding="utf-8")
 
         modules, _skipped = read_python_files(
-            source_root=src, project_directory=tmp_path
+            source_roots=[src], project_directory=tmp_path
         )
 
         rel_paths = [m.rel_path for m in modules]
@@ -118,7 +118,7 @@ class TestReadAndExtract:
         (pkg / "bad.py").write_text("def broken(:\n", encoding="utf-8")
 
         modules, skipped = read_python_files(
-            source_root=src, project_directory=tmp_path
+            source_roots=[src], project_directory=tmp_path
         )
 
         rel_paths = [m.rel_path for m in modules]
@@ -139,7 +139,7 @@ class TestReadAndExtract:
         bad_file.write_text("# coding: unknown\n", encoding="utf-8")
 
         files, skipped = read_python_files(
-            source_root=source_root, project_directory=tmp_path
+            source_roots=[source_root], project_directory=tmp_path
         )
 
         assert files == []
@@ -155,7 +155,7 @@ class TestReadAndExtract:
         # reason leaves out the error's own copy of the path.
         (tmp_path / "src" / "pkg" / "notes.py").mkdir(parents=True)
         files, skipped = read_python_files(
-            source_root=tmp_path / "src", project_directory=tmp_path
+            source_roots=[tmp_path / "src"], project_directory=tmp_path
         )
         assert files == []
         assert [s.path for s in skipped] == ["src/pkg/notes.py"]
@@ -170,7 +170,9 @@ class TestReadAndExtract:
         pkg.mkdir(parents=True)
         (pkg / "good.py").write_text("def works(): pass\n", encoding="utf-8")
         (pkg / "binary.py").write_bytes(b"\xff\xfe not utf-8")
-        files, skipped = read_python_files(source_root=src, project_directory=tmp_path)
+        files, skipped = read_python_files(
+            source_roots=[src], project_directory=tmp_path
+        )
         assert [f.rel_path for f in files] == ["src/mypkg/good.py"]
         assert [s.path for s in skipped] == ["src/mypkg/binary.py"]
 
@@ -183,7 +185,9 @@ class TestReadAndExtract:
         (pkg / "latin1.py").write_bytes(
             b"# -*- coding: latin-1 -*-\ndef caf\xe9(): pass\n"
         )
-        files, skipped = read_python_files(source_root=src, project_directory=tmp_path)
+        files, skipped = read_python_files(
+            source_roots=[src], project_directory=tmp_path
+        )
         assert [f.rel_path for f in files] == ["src/mypkg/latin1.py"]
         assert skipped == []
 
@@ -195,7 +199,7 @@ class TestReadPythonFilesKeepsFilesWithSymbols:
         (pkg / "__init__.py").write_text('__version__ = "1.0"\n', encoding="utf-8")
 
         modules, _skipped = read_python_files(
-            source_root=tmp_path / "src", project_directory=tmp_path
+            source_roots=[tmp_path / "src"], project_directory=tmp_path
         )
 
         assert [m.rel_path for m in modules] == ["src/mypackage/__init__.py"]
@@ -207,7 +211,7 @@ class TestReadPythonFilesKeepsFilesWithSymbols:
             (src / f"{name}.py").write_text(f"def {name}(): pass\n", encoding="utf-8")
 
         modules, _skipped = read_python_files(
-            source_root=src, project_directory=tmp_path
+            source_roots=[src], project_directory=tmp_path
         )
 
         assert [m.rel_path for m in modules] == ["src/a.py", "src/b.py", "src/c.py"]

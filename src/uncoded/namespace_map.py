@@ -4,7 +4,7 @@ from uncoded.extract import ClassSymbol, PythonFile, Symbol
 from uncoded.markers import GENERATED_MARKER
 from uncoded.yaml_tree import nest_by_path, render_yaml_tree
 
-_HEADER = f"""\
+_NAMESPACE_HEADER = f"""\
 # Namespace map of this codebase, for agent navigation.
 # {GENERATED_MARKER}
 #
@@ -36,7 +36,7 @@ def _file_entry(*, python_file: PythonFile) -> dict:
     return {s.name: _members(symbol=s) for s in python_file.symbols}
 
 
-def build_map(*, python_files: list[PythonFile]) -> dict:
+def build_namespace_map(*, python_files: list[PythonFile]) -> dict:
     """Build a nested dict representing the namespace.
 
     Keys are paths relative to the project directory. Directory keys have a
@@ -50,6 +50,6 @@ def build_map(*, python_files: list[PythonFile]) -> dict:
     )
 
 
-def render_map(*, namespace: dict) -> str:
+def render_namespace_map(*, mapping: dict) -> str:
     """Render a namespace map dict as a YAML string with an explanatory header."""
-    return render_yaml_tree(header=_HEADER, mapping=namespace)
+    return render_yaml_tree(header=_NAMESPACE_HEADER, mapping=mapping)

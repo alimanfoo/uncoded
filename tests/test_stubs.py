@@ -27,7 +27,7 @@ def _setup(*, tmp_path):
 
 def _sync_root(*, source_root, out, tmp_path, check=False):
     python_files, _skipped = read_python_files(
-        source_root=source_root, project_directory=tmp_path
+        source_roots=[source_root], project_directory=tmp_path
     )
     return sync_stubs(
         python_files=python_files,
@@ -520,10 +520,10 @@ class TestSyncStubs:
         (src / "foo.py").write_text("def hello(): pass\n", encoding="utf-8")
         (tests / "test_foo.py").write_text("def test_hello(): pass\n", encoding="utf-8")
         src_files, _skipped = read_python_files(
-            source_root=src, project_directory=tmp_path
+            source_roots=[src], project_directory=tmp_path
         )
         test_files, _skipped = read_python_files(
-            source_root=tests, project_directory=tmp_path
+            source_roots=[tests], project_directory=tmp_path
         )
 
         sync_stubs(

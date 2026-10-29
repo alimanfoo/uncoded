@@ -20,15 +20,15 @@ from uncoded.config import (
     validate_root,
 )
 from uncoded.docs_map import build_docs_map, read_doc_files, render_docs_map
-from uncoded.extract import PythonFile, read_python_files
+from uncoded.extract import read_python_files
 from uncoded.markers import GENERATED_MARKER
-from uncoded.namespace_map import build_map, render_map
+from uncoded.namespace_map import build_namespace_map, render_namespace_map
 from uncoded.read_helpers import SkippedFile, failure_reason
 from uncoded.refs import TyError, find_refs
 from uncoded.resolver import NamePath, SymbolNotFoundError, UnsupportedNamePathError
 from uncoded.skill import SKILL_DIRECTORIES, agent_instructions, sync_skills
 from uncoded.stubs import sync_stubs
-from uncoded.sync import FileSyncError, remove_file, sync_file
+from uncoded.sync import FileSyncError, sync_file, sync_generated_file
 
 
 def _warn_skipped(*, skipped: list[SkippedFile]) -> None:
@@ -59,26 +59,21 @@ def _sync_code_index(
     their stubs, removing every other stub. Returns the change count and the
     files that could not be read or parsed.
     """
-    python_files: list[PythonFile] = []
-    skipped: list[SkippedFile] = []
-    for source_root in source_roots:
-        root_files, root_skipped = read_python_files(
-            source_root=source_root, project_directory=project_directory
-        )
-        python_files.extend(root_files)
-        skipped.extend(root_skipped)
+    python_files, skipped = read_python_files(
+        source_roots=source_roots, project_directory=project_directory
+    )
     namespace_path = Path(".uncoded/namespace.yaml")
-    if source_roots:
-        changes = sync_file(
-            path=namespace_path,
-            content=render_map(namespace=build_map(python_files=python_files)),
-            project_directory=project_directory,
-            check=check,
-        )
-    else:
-        changes = remove_file(
-            path=namespace_path, project_directory=project_directory, check=check
-        )
+    namespace_content = (
+        render_namespace_map(mapping=build_namespace_map(python_files=python_files))
+        if source_roots
+        else None
+    )
+    changes = sync_generated_file(
+        path=namespace_path,
+        content=namespace_content,
+        project_directory=project_directory,
+        check=check,
+    )
     changes += sync_stubs(
         python_files=python_files,
         output_dir=Path(".uncoded/stubs"),
@@ -97,26 +92,19 @@ def _sync_documentation_index(
     map, or removes it when there are no doc roots. Returns the change count
     and the files that could not be read.
     """
-    files: list[tuple[str, str]] = []
-    skipped: list[SkippedFile] = []
-    for doc_root in doc_roots:
-        root_files, root_skipped = read_doc_files(
-            doc_root=doc_root, project_directory=project_directory
-        )
-        files.extend(root_files)
-        skipped.extend(root_skipped)
+    files, skipped = read_doc_files(
+        doc_roots=doc_roots, project_directory=project_directory
+    )
     docs_path = Path(".uncoded/docs.yaml")
-    if doc_roots:
-        changes = sync_file(
-            path=docs_path,
-            content=render_docs_map(mapping=build_docs_map(files=files)),
-            project_directory=project_directory,
-            check=check,
-        )
-    else:
-        changes = remove_file(
-            path=docs_path, project_directory=project_directory, check=check
-        )
+    docs_content = (
+        render_docs_map(mapping=build_docs_map(files=files)) if doc_roots else None
+    )
+    changes = sync_generated_file(
+        path=docs_path,
+        content=docs_content,
+        project_directory=project_directory,
+        check=check,
+    )
     return changes, skipped
 
 
@@ -232,14 +220,16 @@ class _OutsideProjectError(Exception):
     """Raised when an ``--in`` file is outside the project directory."""
 
 
-def _project_file(*, in_path: str, project_directory: Path) -> Path:
-    """Return the ``--in`` file, or raise _OutsideProjectError when it is outside."""
+def _lookup_inputs(
+    *, name_path: str, in_path: str, project_directory: Path
+) -> tuple[NamePath, Path]:
+    """Parse a lookup's name path and project file, checking the file first."""
     target = Path(in_path)
     if not is_inside_project(path=target, project_directory=project_directory):
         raise _OutsideProjectError(
             f"outside the project directory {project_directory.as_posix()}."
         )
-    return target
+    return NamePath.parse(raw=name_path), target
 
 
 # The failures of a lookup that `uncoded body` and `uncoded refs` report, each
@@ -276,12 +266,12 @@ def _body(*, config: Config, name_path: str, in_path: str) -> int:
     undecodable), or if the source has a syntax error.
     """
     try:
-        target = _project_file(
-            in_path=in_path, project_directory=config.project_directory
+        parsed_name_path, target = _lookup_inputs(
+            name_path=name_path,
+            in_path=in_path,
+            project_directory=config.project_directory,
         )
-        definition = resolve_definition(
-            name_path=NamePath.parse(raw=name_path), in_path=target
-        )
+        definition = resolve_definition(name_path=parsed_name_path, in_path=target)
     except _LOOKUP_ERRORS as e:
         return _report_lookup_error(exc=e, in_path=in_path)
 
@@ -310,11 +300,14 @@ def _refs(*, config: Config, name_path: str, in_path: str) -> int:
     error, or if ty fails.
     """
     try:
+        parsed_name_path, target = _lookup_inputs(
+            name_path=name_path,
+            in_path=in_path,
+            project_directory=config.project_directory,
+        )
         refs = find_refs(
-            name_path=NamePath.parse(raw=name_path),
-            in_path=_project_file(
-                in_path=in_path, project_directory=config.project_directory
-            ),
+            name_path=parsed_name_path,
+            in_path=target,
             project_directory=config.project_directory,
         )
     except TyError as e:

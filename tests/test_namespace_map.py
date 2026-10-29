@@ -3,12 +3,16 @@ import textwrap
 import yaml
 
 from uncoded.extract import _extract_python_file
-from uncoded.namespace_map import _HEADER, build_map, render_map
+from uncoded.namespace_map import (
+    _NAMESPACE_HEADER,
+    build_namespace_map,
+    render_namespace_map,
+)
 
 
 def _map(*, sources):
     """Build the namespace map of the Python files that map rel_path to source."""
-    return build_map(
+    return build_namespace_map(
         python_files=[
             _extract_python_file(source=textwrap.dedent(source), rel_path=rel_path)
             for rel_path, source in sources.items()
@@ -16,7 +20,7 @@ def _map(*, sources):
     )
 
 
-class TestBuildMap:
+class TestBuildNamespaceMap:
     def test_single_file(self):
         result = _map(
             sources={
@@ -132,12 +136,12 @@ class TestBuildMap:
         }
 
 
-class TestRenderMap:
+class TestRenderNamespaceMap:
     def test_roundtrips_through_yaml(self):
         namespace = _map(
             sources={"src/pkg/core.py": "class Engine:\n    def run(self): ...\n"}
         )
-        output = render_map(namespace=namespace)
+        output = render_namespace_map(mapping=namespace)
 
         assert yaml.safe_load(output) == namespace
 
@@ -148,28 +152,28 @@ class TestRenderMap:
                 "src/pkg/alpha.py": "def a_func(): ...\n",
             }
         )
-        output = render_map(namespace=namespace)
+        output = render_namespace_map(mapping=namespace)
 
         assert output.index("zebra.py") < output.index("alpha.py")
 
     def test_function_renders_without_null(self):
-        output = render_map(
-            namespace=_map(sources={"src/pkg/utils.py": "def compute(): ...\n"})
+        output = render_namespace_map(
+            mapping=_map(sources={"src/pkg/utils.py": "def compute(): ...\n"})
         )
 
         assert "compute:" in output
         assert "null" not in output
 
     def test_header_appears_at_top(self):
-        output = render_map(
-            namespace=_map(sources={"src/pkg/utils.py": "def compute(): ...\n"})
+        output = render_namespace_map(
+            mapping=_map(sources={"src/pkg/utils.py": "def compute(): ...\n"})
         )
-        assert output.startswith(_HEADER)
+        assert output.startswith(_NAMESPACE_HEADER)
         # Header must precede any non-comment YAML content.
-        assert output.index(_HEADER) < output.index("src/")
+        assert output.index(_NAMESPACE_HEADER) < output.index("src/")
 
     def test_header_mentions_stub_pointer(self):
         # The header's job is partly to tell a cold-start agent where to find
         # signatures and types. Lock in that pointer.
-        output = render_map(namespace=build_map(python_files=[]))
+        output = render_namespace_map(mapping=build_namespace_map(python_files=[]))
         assert ".uncoded/stubs/" in output

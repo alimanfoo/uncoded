@@ -17,6 +17,21 @@ class SkippedFile:
     reason: str
 
 
+def root_files(
+    *, root: Path, pattern: str, project_directory: Path
+) -> list[tuple[Path, str]]:
+    """List a root's matching files with their project-relative paths.
+
+    A file root lists itself. A directory root lists files that match the
+    pattern in path order. Each relative path uses forward slashes on every
+    platform.
+    """
+    root = root.resolve()
+    project_directory = project_directory.resolve()
+    files = [root] if root.is_file() else sorted(root.rglob(pattern))
+    return [(path, path.relative_to(project_directory).as_posix()) for path in files]
+
+
 def read_source_text(*, path: Path) -> str:
     """Read a Python source file's text under its declared PEP 263 encoding.
 
