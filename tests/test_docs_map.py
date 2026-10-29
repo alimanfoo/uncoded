@@ -155,7 +155,7 @@ class TestReadDocFiles:
         )
         assert results == []
 
-    def test_rel_path_is_relative_to_project_directory(self, *, tmp_path):
+    def test_lists_file_relative_to_project_directory(self, *, tmp_path):
         docs = tmp_path / "docs"
         docs.mkdir()
         (docs / "a.md").write_text("", encoding="utf-8")

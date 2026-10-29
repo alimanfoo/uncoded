@@ -224,7 +224,7 @@ class TestQueryReferences:
             _LSPLocation(path=pkg / "b.py", line=2, character=8),
         ]
 
-    def test_uvx_not_found_raises_ty_error(self, *, tmp_path):
+    def test_reports_missing_uvx(self, *, tmp_path):
         in_path = tmp_path / "m.py"
         in_path.write_text("def foo(): pass\n", encoding="utf-8")
 
@@ -236,7 +236,7 @@ class TestQueryReferences:
                 in_path=in_path, position=(0, 4), project_directory=tmp_path
             )
 
-    def test_uvx_that_cannot_start_raises_ty_error(self, *, tmp_path):
+    def test_reports_uvx_start_failure(self, *, tmp_path):
         in_path = tmp_path / "m.py"
         in_path.write_text("def foo(): pass\n", encoding="utf-8")
 
@@ -329,7 +329,7 @@ class TestRunExchange:
                 project_directory=tmp_path,
             )
 
-    def test_empty_result_list_returns_empty(self, *, tmp_path):
+    def test_treats_an_empty_reference_list_as_no_references(self, *, tmp_path):
         in_path = tmp_path / "m.py"
         in_path.write_text("def foo(): pass\n", encoding="utf-8")
 
@@ -349,7 +349,7 @@ class TestRunExchange:
 
         assert refs == []
 
-    def test_null_result_returns_empty(self, *, tmp_path):
+    def test_treats_a_null_reference_list_as_no_references(self, *, tmp_path):
         in_path = tmp_path / "m.py"
         in_path.write_text("def foo(): pass\n", encoding="utf-8")
 
