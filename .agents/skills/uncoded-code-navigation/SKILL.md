@@ -26,8 +26,8 @@ function's definition is a case for `uncoded body`. Reaching for
 `uncoded refs`. Reaching for `grep` then `Edit` to delete a symbol is a case for
 `uncoded refs` to confirm the symbol is unused, then `Edit`. The grep version of
 any of these is noisier and less reliable. Grep matches comments, strings, and
-unrelated attributes. Grep misses re-exports, so caller and delete checks come
-back incomplete. Grep forces offset arithmetic to slice a definition. The
+unrelated member access. Grep misses re-exports, so caller and delete checks
+come back incomplete. Grep forces offset arithmetic to slice a definition. The
 indexed tools don't.
 
 ## How to execute the rule
@@ -35,19 +35,19 @@ indexed tools don't.
 The code index has two parts: a namespace map and per-file stubs. Start with the
 map and add detail only when the task needs it.
 
-**Step 1: Orient. Sync, then read the namespace map.** Run the project's
-configured `uncoded sync` command, so that the map is current. Then, before
-answering the user and before any other tool call:
+**Step 1: Orient. Sync, then read the namespace map.** Run `uvx uncoded sync`,
+so that the map is current. Then, before answering the user and before any other
+tool call:
 
 ```text
 Read .uncoded/namespace.yaml
 ```
 
-This lists every symbol under the source roots: classes, methods, functions and
-assignments, beneath the directories and files that hold them. Without it
-loaded, "find X" answers come from pretrained guesses. They reflect what a
-project like this probably contains, not what is actually here. Read it once, in
-full, at session start.
+This lists every symbol under the source roots: classes, functions, methods,
+properties, `type` statements and assignments, beneath the directories and files
+that hold them. Without it loaded, "find X" answers come from pretrained
+guesses. They reflect what a project like this probably contains, not what is
+actually here. Read it once, in full, at session start.
 
 **Step 2: Understand. Read the `.pyi` stub before any `.py` source.** Stub paths
 mirror source paths under `.uncoded/stubs/`:
@@ -86,8 +86,8 @@ Per task:
   line as `<path>:<line>:<col>`, sorted by path, then line, then column. Each
   path is relative to the current working directory when possible and otherwise
   absolute. Grep on the name misses re-exports and adds false positives from
-  comments, strings, and attribute lookups on other types. If the next move
-  depends on the answer being complete, grep cannot give you that.
+  comments, strings, and member lookups on other types. If the next move depends
+  on the answer being complete, grep cannot give you that.
 
 - **Edit a symbol.** `uvx uncoded body <name_path> --in <relative_path>` gives
   the exact `old_string`; then `Edit` to apply the change.
@@ -103,11 +103,11 @@ Per task:
   definition, or, for a property, within its setter or deleter. If the symbol is
   unused, `Edit` to remove it.
 
-**Step 4: Refresh.** After every modification to indexed Python source, run the
-project's configured `uncoded sync` command before the next code-navigation
-operation. The modification can change the namespace map and stubs. Run it too
-whenever you notice that something else has changed files, such as a pull, a
-checkout, or another agent working in the same project.
+**Step 4: Refresh.** After every modification to indexed Python source, run
+`uvx uncoded sync` before the next code-navigation operation. The modification
+can change the namespace map and stubs. Run it too whenever you notice that
+something else has changed files, such as a pull, a checkout, or another agent
+working in the same project.
 
 ## Where Read, Edit, and grep are still the right tools
 
