@@ -70,6 +70,24 @@ def sync_file(
     return True
 
 
+def sync_generated_file(
+    *,
+    path: Path,
+    content: str | None,
+    project_directory: Path,
+    check: bool = False,
+) -> bool:
+    """Write a generated file, or remove it when there is no content."""
+    if content is None:
+        return remove_file(path=path, project_directory=project_directory, check=check)
+    return sync_file(
+        path=path,
+        content=content,
+        project_directory=project_directory,
+        check=check,
+    )
+
+
 def remove_file(
     *,
     path: Path,

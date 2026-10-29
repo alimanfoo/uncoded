@@ -28,7 +28,7 @@ from uncoded.refs import TyError, find_refs
 from uncoded.resolver import NamePath, SymbolNotFoundError, UnsupportedNamePathError
 from uncoded.skill import SKILL_DIRECTORIES, agent_instructions, sync_skills
 from uncoded.stubs import sync_stubs
-from uncoded.sync import FileSyncError, remove_file, sync_file
+from uncoded.sync import FileSyncError, sync_file, sync_generated_file
 
 
 def _warn_skipped(*, skipped: list[SkippedFile]) -> None:
@@ -63,17 +63,17 @@ def _sync_code_index(
         source_roots=source_roots, project_directory=project_directory
     )
     namespace_path = Path(".uncoded/namespace.yaml")
-    if source_roots:
-        changes = sync_file(
-            path=namespace_path,
-            content=render_map(namespace=build_map(python_files=python_files)),
-            project_directory=project_directory,
-            check=check,
-        )
-    else:
-        changes = remove_file(
-            path=namespace_path, project_directory=project_directory, check=check
-        )
+    namespace_content = (
+        render_map(namespace=build_map(python_files=python_files))
+        if source_roots
+        else None
+    )
+    changes = sync_generated_file(
+        path=namespace_path,
+        content=namespace_content,
+        project_directory=project_directory,
+        check=check,
+    )
     changes += sync_stubs(
         python_files=python_files,
         output_dir=Path(".uncoded/stubs"),
@@ -96,17 +96,15 @@ def _sync_documentation_index(
         doc_roots=doc_roots, project_directory=project_directory
     )
     docs_path = Path(".uncoded/docs.yaml")
-    if doc_roots:
-        changes = sync_file(
-            path=docs_path,
-            content=render_docs_map(mapping=build_docs_map(files=files)),
-            project_directory=project_directory,
-            check=check,
-        )
-    else:
-        changes = remove_file(
-            path=docs_path, project_directory=project_directory, check=check
-        )
+    docs_content = (
+        render_docs_map(mapping=build_docs_map(files=files)) if doc_roots else None
+    )
+    changes = sync_generated_file(
+        path=docs_path,
+        content=docs_content,
+        project_directory=project_directory,
+        check=check,
+    )
     return changes, skipped
 
 
