@@ -28,9 +28,9 @@ indexed tools don't.
 The code index has two parts: a namespace map and per-file stubs. Start with the
 map and add detail only when the task needs it.
 
-**Step 1: Orient. Sync, then read the namespace map.** Run the project's
-configured `uncoded sync` command, so that the map is current. Then, before
-answering the user and before any other tool call:
+**Step 1: Orient. Sync, then read the namespace map.** Run `uvx uncoded sync`,
+so that the map is current. Then, before answering the user and before any other
+tool call:
 
 ```text
 Read .uncoded/namespace.yaml
@@ -96,11 +96,11 @@ Per task:
   definition, or, for a property, within its setter or deleter. If the symbol is
   unused, `Edit` to remove it.
 
-**Step 4: Refresh.** After every modification to indexed Python source, run the
-project's configured `uncoded sync` command before the next code-navigation
-operation. The modification can change the namespace map and stubs. Run it too
-whenever you notice that something else has changed files, such as a pull, a
-checkout, or another agent working in the same project.
+**Step 4: Refresh.** After every modification to indexed Python source, run
+`uvx uncoded sync` before the next code-navigation operation. The modification
+can change the namespace map and stubs. Run it too whenever you notice that
+something else has changed files, such as a pull, a checkout, or another agent
+working in the same project.
 
 ## Where Read, Edit, and grep are still the right tools
 
