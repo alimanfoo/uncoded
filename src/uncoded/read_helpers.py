@@ -49,13 +49,10 @@ def failure_reason(*, error: Exception) -> str:
         return error.strerror or str(error)
     if isinstance(error, SyntaxError):
         message = error.msg
-        if error.filename is not None:
-            message = message.replace(f" for {error.filename!r}", "")
-        else:
-            prefix, separator, reason = message.rpartition(": ")
-            error_kind, marker, _filename = prefix.partition(" for ")
-            if marker and separator:
-                message = f"{error_kind}: {reason}"
+        prefix, separator, reason = message.rpartition(": ")
+        error_kind, marker, _filename = prefix.partition(" for ")
+        if marker and separator:
+            message = f"{error_kind}: {reason}"
         line = f" at line {error.lineno}" if error.lineno is not None else ""
         return f"SyntaxError{line}: {message}"
     return str(error)
