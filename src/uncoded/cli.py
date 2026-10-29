@@ -197,7 +197,8 @@ def _init(*, config: Config | None) -> int:
                 "uncoded is configured in pyproject.toml, but found none in this "
                 "directory."
             )
-        existing = pyproject_path.read_text(encoding="utf-8")
+        with pyproject_path.open(encoding="utf-8", newline="") as f:
+            existing = f.read()
         content = render_conventional_config(directory=start, pyproject=existing)
         sync_file(path=pyproject, content=content, project_directory=start)
         config = read_config(start=start)

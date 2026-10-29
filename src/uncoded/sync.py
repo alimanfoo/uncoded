@@ -65,7 +65,7 @@ def sync_file(
             target.parent.mkdir(parents=True, exist_ok=True)
             with TemporaryDirectory(dir=target.parent) as temporary_directory:
                 temporary = Path(temporary_directory) / target.name
-                temporary.write_text(content, encoding="utf-8")
+                temporary.write_text(content, encoding="utf-8", newline="")
                 temporary.replace(target)
     if existing is None:
         print(f"{'Would write' if check else 'Wrote'} {path.as_posix()}")

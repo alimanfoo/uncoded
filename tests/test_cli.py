@@ -733,9 +733,7 @@ class TestInitCommand:
             roots=["src", "tests", "README.md", "AGENTS.md", "docs"],
         )
         (tmp_path / "CLAUDE.md").write_text("# Claude\n", encoding="utf-8")
-        (tmp_path / "pyproject.toml").write_text(
-            '[project]\nname = "demo"\n', encoding="utf-8"
-        )
+        (tmp_path / "pyproject.toml").write_bytes(b'[project]\r\nname = "demo"\r\n')
         original_pyproject = (tmp_path / "pyproject.toml").read_bytes()
         unedited = {
             name: (tmp_path / name).read_bytes() for name in ["AGENTS.md", "CLAUDE.md"]
@@ -937,7 +935,12 @@ class TestInitCommand:
 
         def fail_after_partial_write(*args, **kwargs):
             path, content = args
-            write_text(path, content[:1], encoding=kwargs["encoding"])
+            write_text(
+                path,
+                content[:1],
+                encoding=kwargs["encoding"],
+                newline=kwargs["newline"],
+            )
             raise failure
 
         with mock.patch.object(
