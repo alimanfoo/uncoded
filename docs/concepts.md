@@ -117,10 +117,8 @@ defined, imported or used.
 
 ### Heading
 
-A **heading** is one of a subset of CommonMark's ATX headings: a line that
-starts in its first column with one to six `#` characters and a space, followed
-by non-empty text, outside a fenced code block. uncoded does not index setext
-headings, which are underlined.
+A **heading** is a CommonMark ATX heading with non-empty text, outside a fenced
+code block. uncoded does not index setext headings, which are underlined.
 
 ### Root
 

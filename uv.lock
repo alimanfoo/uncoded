@@ -1056,6 +1056,7 @@ wheels = [
 name = "uncoded"
 source = { editable = "." }
 dependencies = [
+    { name = "markdown-it-py" },
     { name = "pyyaml" },
 ]
 
@@ -1075,7 +1076,10 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "pyyaml", specifier = ">=6.0" }]
+requires-dist = [
+    { name = "markdown-it-py", specifier = ">=4.2.0" },
+    { name = "pyyaml", specifier = ">=6.0" },
+]
 
 [package.metadata.requires-dev]
 dev = [

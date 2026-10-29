@@ -3,6 +3,8 @@
 from collections.abc import Iterable
 from pathlib import Path
 
+from markdown_it import MarkdownIt
+
 from uncoded.markers import GENERATED_MARKER
 from uncoded.read_helpers import SkippedFile, failure_reason
 from uncoded.yaml_tree import nest_by_path, render_yaml_tree
@@ -19,64 +21,16 @@ _DOCS_HEADER = f"""\
 """
 
 
-def _parse_atx_heading(*, line: str) -> tuple[int, str] | None:
-    if not line.startswith("#"):
-        return None
-    # Count consecutive leading #.
-    level = 0
-    while level < len(line) and line[level] == "#":
-        level += 1
-    # Valid ATX: 1-6 # followed by exactly one space.
-    if level > 6 or level >= len(line) or line[level] != " ":
-        return None
-    title = line[level + 1 :].strip()
-    # Strip a trailing # run only when it is a CommonMark closing
-    # sequence: preceded by whitespace, or the title is entirely #s.
-    if title.endswith("#"):
-        stripped = title.rstrip("#")
-        if not stripped or stripped[-1] in " \t":
-            title = stripped.rstrip()
-    return (level, title) if title else None
-
-
 def _extract_headings(*, text: str) -> list[tuple[int, str]]:
-    """Return the ATX headings in ``text`` as ordered (level, title) pairs.
-
-    Recognises ATX headings only: 1-6 ``#`` followed by a space and a
-    non-empty title. A trailing ``#`` run is stripped only when it forms
-    a CommonMark closing sequence — preceded by whitespace, or the title
-    consists entirely of ``#`` characters. A ``#`` attached to the final
-    word (e.g. ``C#``) is preserved. Lines inside fenced code blocks
-    (opened by a line starting with ```` ``` ```` or ``~~~``, closed by
-    the matching marker) are not headings. Setext underlines are never
-    recognised.
-
-    Corners not in the criterion:
-    - Indented headings: the ``#`` must be at column 0; leading spaces
-      are not stripped.
-    - Fence lengths: fences are matched by their first three characters
-      (````` ``` ````` or ``~~~``), regardless of the exact number of
-      backticks or tildes.
-    """
+    """Return non-empty CommonMark ATX headings as (level, title) pairs."""
     headings: list[tuple[int, str]] = []
-    in_fence = False
-    fence_marker = ""
-
-    for line in text.splitlines():
-        if in_fence:
-            if line.startswith(fence_marker):
-                in_fence = False
-                fence_marker = ""
+    tokens = MarkdownIt("commonmark").parse(text)
+    for index, token in enumerate(tokens):
+        if token.type != "heading_open" or set(token.markup) != {"#"}:
             continue
-
-        if line.startswith(("```", "~~~")):
-            in_fence = True
-            fence_marker = line[:3]
-            continue
-
-        result = _parse_atx_heading(line=line)
-        if result is not None:
-            headings.append(result)
+        title = tokens[index + 1].content
+        if title:
+            headings.append((int(token.tag[1:]), title))
 
     return headings
 

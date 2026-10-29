@@ -15,6 +15,7 @@ authors = [
     { name = "Alistair Miles", email = "alimanfoo@googlemail.com" },
 ]
 dependencies = [
+    "markdown-it-py>=4.2.0",
     "pyyaml>=6.0",
 ]
 classifiers = [
