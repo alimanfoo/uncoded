@@ -572,9 +572,8 @@ class TestConfigurationThatNamesNoRoots:
         captured = capsys.readouterr()
         assert "Commit" not in captured.out
         assert captured.err == (
-            "Error: nothing to index. Add source-roots or doc-roots to "
-            "[tool.uncoded] in pyproject.toml, or as top-level keys in "
-            ".uncoded.toml.\n"
+            f"Error: {(tmp_path / '.uncoded.toml').as_posix()}: "
+            "names no roots. Add source-roots or doc-roots.\n"
         )
 
     @pytest.mark.parametrize("command", ["body", "refs"])

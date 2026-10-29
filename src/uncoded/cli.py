@@ -12,6 +12,7 @@ from uncoded.config import (
     UNCODED_TOML,
     Config,
     ConfigError,
+    _configuration_file_error,
     find_config,
     is_inside_project,
     read_config,
@@ -142,10 +143,9 @@ def _sync(*, config: Config, check: bool = False) -> int:
     would change, and 0 otherwise.
     """
     if not config.source_roots and not config.doc_roots:
-        raise ConfigError(
-            "nothing to index. "
-            "Add source-roots or doc-roots to [tool.uncoded] in pyproject.toml, "
-            "or as top-level keys in .uncoded.toml."
+        raise _configuration_file_error(
+            path=config.configuration_file,
+            problem="names no roots. Add source-roots or doc-roots.",
         )
 
     project_directory = config.project_directory
