@@ -242,7 +242,8 @@ def render_conventional_config(*, directory: Path, pyproject: str) -> str:
     lines.extend(
         f"{kind}-roots = {json.dumps(found)}" for kind, found in roots.items() if found
     )
-    separator = "\n" if pyproject and not pyproject.endswith("\n") else ""
+    trailing_newlines = len(pyproject) - len(pyproject.rstrip("\n"))
+    separator = "\n" * (2 - min(trailing_newlines, 2)) if pyproject else ""
     content = pyproject + separator + "\n".join(lines) + "\n"
     try:
         tomllib.loads(content)
