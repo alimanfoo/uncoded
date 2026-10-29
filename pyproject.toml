@@ -47,6 +47,10 @@ Repository = "https://github.com/alimanfoo/uncoded"
 Changelog = "https://alimanfoo.github.io/uncoded/changelog/"
 Discussions = "https://github.com/alimanfoo/uncoded/discussions"
 
+[tool.uncoded]
+source-roots = ["src", "tests"]
+doc-roots = ["README.md", "AGENTS.md", "docs", "src/uncoded"]
+
 [tool.hatch.version]
 source = "vcs"
 

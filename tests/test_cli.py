@@ -198,8 +198,9 @@ class TestSyncApplyMode:
     def test_skipped_files_are_warned_about_and_counted(
         self, *, tmp_path, monkeypatch, capsys
     ):
-        (tmp_path / ".uncoded.toml").write_text(
-            'source-roots = ["src"]\ndoc-roots = ["docs"]\n', encoding="utf-8"
+        (tmp_path / "pyproject.toml").write_text(
+            '[tool.uncoded]\nsource-roots = ["src"]\ndoc-roots = ["docs"]\n',
+            encoding="utf-8",
         )
         (tmp_path / "src").mkdir()
         (tmp_path / "src" / "good.py").write_text(
@@ -238,8 +239,9 @@ class TestSyncApplyMode:
     def test_overlapping_source_roots_skip_a_file_once(
         self, *, tmp_path, monkeypatch, capsys
     ):
-        (tmp_path / ".uncoded.toml").write_text(
-            'source-roots = ["src", "src/pkg"]\n', encoding="utf-8"
+        (tmp_path / "pyproject.toml").write_text(
+            '[tool.uncoded]\nsource-roots = ["src", "src/pkg"]\n',
+            encoding="utf-8",
         )
         package = tmp_path / "src" / "pkg"
         package.mkdir(parents=True)
@@ -293,8 +295,9 @@ class TestSyncApplyMode:
         project = tmp_path / "project"
         (project / "src").mkdir(parents=True)
         (project / "docs").mkdir()
-        (project / ".uncoded.toml").write_text(
-            'source-roots = ["src"]\ndoc-roots = ["docs"]\n', encoding="utf-8"
+        (project / "pyproject.toml").write_text(
+            '[tool.uncoded]\nsource-roots = ["src"]\ndoc-roots = ["docs"]\n',
+            encoding="utf-8",
         )
         (project / "src" / "linked.py").symlink_to(outside / "linked.py")
         (project / "src" / "pkg").symlink_to(outside / "pkg", target_is_directory=True)
@@ -527,16 +530,6 @@ _COMMANDS = [["sync"], ["check"], _BODY, ["refs", "fn", "--in", "src/foo.py"]]
 _EVERY_COMMAND = [["init"], *_COMMANDS]
 
 
-def _init_uncoded_toml_project(*, tmp_path, monkeypatch):
-    """Set up a project that .uncoded.toml configures, with ``fn`` in src/foo.py."""
-    (tmp_path / ".uncoded.toml").write_text(
-        'source-roots = ["src"]\n', encoding="utf-8"
-    )
-    (tmp_path / "src").mkdir()
-    (tmp_path / "src" / "foo.py").write_text("def fn():\n    pass\n", encoding="utf-8")
-    monkeypatch.chdir(tmp_path)
-
-
 def _contents(*, project_directory):
     """Map each path in ``project_directory`` to its bytes, or None for a directory."""
     return {
@@ -545,35 +538,12 @@ def _contents(*, project_directory):
     }
 
 
-class TestTwoConfigurationFiles:
-    @pytest.mark.parametrize("command", _EVERY_COMMAND)
-    def test_every_command_refuses(self, *, tmp_path, monkeypatch, capsys, command):
-        _init_uncoded_toml_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
-        (tmp_path / "pyproject.toml").write_text(
-            '[tool.uncoded]\nsource-roots = ["src"]\n', encoding="utf-8"
-        )
-        before = _contents(project_directory=tmp_path)
-
-        with mock.patch.object(cli, "find_refs") as find_refs:
-            assert _run(monkeypatch=monkeypatch, arguments=command) == 1
-
-        find_refs.assert_not_called()
-        assert _contents(project_directory=tmp_path) == before
-        captured = capsys.readouterr()
-        assert captured.out == ""
-        assert captured.err == (
-            f"Error: both {(tmp_path / 'pyproject.toml').resolve().as_posix()} and "
-            f"{(tmp_path / '.uncoded.toml').resolve().as_posix()} configure uncoded. "
-            "Configure uncoded in one file only.\n"
-        )
-
-
 class TestConfigurationThatNamesNoRoots:
     @pytest.mark.parametrize("command", [["init"], ["sync"], ["check"]])
     def test_stops_before_writing(self, *, tmp_path, monkeypatch, capsys, command):
         # A misspelt setting is ignored, so it names no root.
-        (tmp_path / ".uncoded.toml").write_text(
-            'source_roots = ["src"]\n', encoding="utf-8"
+        (tmp_path / "pyproject.toml").write_text(
+            '[tool.uncoded]\nsource_roots = ["src"]\n', encoding="utf-8"
         )
         (tmp_path / "src").mkdir()
         monkeypatch.chdir(tmp_path)
@@ -585,14 +555,14 @@ class TestConfigurationThatNamesNoRoots:
         captured = capsys.readouterr()
         assert "Commit" not in captured.out
         assert captured.err == (
-            f"Error: {(tmp_path / '.uncoded.toml').as_posix()}: "
+            f"Error: {(tmp_path / 'pyproject.toml').as_posix()}: "
             "names no roots. Add source-roots or doc-roots.\n"
         )
 
     @pytest.mark.parametrize("command", ["body", "refs"])
     def test_body_and_refs_still_work(self, *, tmp_path, monkeypatch, capsys, command):
-        (tmp_path / ".uncoded.toml").write_text(
-            'source_roots = ["src"]\n', encoding="utf-8"
+        (tmp_path / "pyproject.toml").write_text(
+            '[tool.uncoded]\nsource_roots = ["src"]\n', encoding="utf-8"
         )
         (tmp_path / "m.py").write_text("def fn():\n    pass\n", encoding="utf-8")
         monkeypatch.chdir(tmp_path)
@@ -606,10 +576,16 @@ class TestConfigurationThatNamesNoRoots:
         assert capsys.readouterr().err == ""
 
 
-# One configuration file of each kind that cannot be used, with its problem.
+# Configuration file contents that cannot be used, with each problem.
 _UNUSABLE_CONFIGS = [
-    ('source-roots = ["src"\n', "not valid TOML: Unclosed array (at end of document)"),
-    ('source-roots = "src"\n', "source-roots is not a list of strings"),
+    (
+        '[tool.uncoded]\nsource-roots = ["src"\n',
+        "not valid TOML: Unclosed array (at end of document)",
+    ),
+    (
+        '[tool.uncoded]\nsource-roots = "src"\n',
+        "source-roots is not a list of strings",
+    ),
 ]
 
 
@@ -620,8 +596,8 @@ class TestConfigurationFileThatCannotBeUsed:
         self, *, tmp_path, monkeypatch, capsys, command, unusable_config
     ):
         toml, problem = unusable_config
-        _init_uncoded_toml_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
-        configuration_file = tmp_path / ".uncoded.toml"
+        _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        configuration_file = tmp_path / "pyproject.toml"
         configuration_file.write_text(toml, encoding="utf-8")
         before = _contents(project_directory=tmp_path)
         monkeypatch.setattr(sys, "argv", ["uncoded", *command])
@@ -684,13 +660,14 @@ class TestRootThatCannotBeUsed:
         (project / "setup.py").write_text("", encoding="utf-8")
         (project / "readme.rst").write_text("= Title\n", encoding="utf-8")
         (project / "link").symlink_to(tmp_path / "outside", target_is_directory=True)
-        configuration_file = project / ".uncoded.toml"
+        configuration_file = project / "pyproject.toml"
         configuration_file.write_text(
-            'source-roots = ["src"]\ndoc-roots = ["docs"]\n', encoding="utf-8"
+            '[tool.uncoded]\nsource-roots = ["src"]\ndoc-roots = ["docs"]\n',
+            encoding="utf-8",
         )
         monkeypatch.chdir(project)
         assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 0
-        configuration_file.write_text(toml, encoding="utf-8")
+        configuration_file.write_text(f"[tool.uncoded]\n{toml}", encoding="utf-8")
         before = _contents(project_directory=tmp_path)
         capsys.readouterr()
 
@@ -779,20 +756,20 @@ class TestInitCommand:
             roots=["src", "tests", "README.md", "AGENTS.md", "docs"],
         )
         (tmp_path / "CLAUDE.md").write_text("# Claude\n", encoding="utf-8")
-        (tmp_path / "pyproject.toml").write_text(
-            '[project]\nname = "demo"\n', encoding="utf-8"
-        )
+        (tmp_path / "pyproject.toml").write_bytes(b'[project]\r\nname = "demo"\r\n')
+        original_pyproject = (tmp_path / "pyproject.toml").read_bytes()
         unedited = {
-            name: (tmp_path / name).read_bytes()
-            for name in ["AGENTS.md", "CLAUDE.md", "pyproject.toml"]
+            name: (tmp_path / name).read_bytes() for name in ["AGENTS.md", "CLAUDE.md"]
         }
 
         assert _run(monkeypatch=monkeypatch, arguments=["init"]) == 0
 
         assert {name: (tmp_path / name).read_bytes() for name in unedited} == unedited
-        assert (tmp_path / ".uncoded.toml").read_text(encoding="utf-8") == (
-            'source-roots = ["src", "tests"]\n'
-            'doc-roots = ["README.md", "AGENTS.md", "docs"]\n'
+        assert (tmp_path / "pyproject.toml").read_bytes() == (
+            original_pyproject
+            + b"[tool.uncoded]\n"
+            + b'source-roots = ["src", "tests"]\n'
+            + b'doc-roots = ["README.md", "AGENTS.md", "docs"]\n'
         )
         assert (tmp_path / ".uncoded" / "namespace.yaml").exists()
         assert (tmp_path / ".uncoded" / "docs.yaml").exists()
@@ -814,11 +791,12 @@ class TestInitCommand:
 
     def test_names_only_the_roots_that_exist(self, *, tmp_path, monkeypatch, capsys):
         _make_roots(tmp_path=tmp_path, monkeypatch=monkeypatch, roots=["docs"])
+        (tmp_path / "pyproject.toml").write_text("", encoding="utf-8")
 
         assert _run(monkeypatch=monkeypatch, arguments=["init"]) == 0
 
-        assert (tmp_path / ".uncoded.toml").read_text(encoding="utf-8") == (
-            'doc-roots = ["docs"]\n'
+        assert (tmp_path / "pyproject.toml").read_text(encoding="utf-8") == (
+            '[tool.uncoded]\ndoc-roots = ["docs"]\n'
         )
         for skill_path in _SOURCE_SKILL_PATHS:
             assert not (tmp_path / skill_path).exists()
@@ -831,19 +809,18 @@ class TestInitCommand:
         project = tmp_path / "project"
         project.mkdir()
         _make_roots(tmp_path=project, monkeypatch=monkeypatch, roots=[])
+        (project / "pyproject.toml").write_text("", encoding="utf-8")
         (project / "README.md").write_text("# T\n", encoding="utf-8")
         (project / "src").write_text("", encoding="utf-8")
         (project / "tests").symlink_to(tmp_path / "outside", target_is_directory=True)
 
         assert _run(monkeypatch=monkeypatch, arguments=["init"]) == 0
 
-        assert (project / ".uncoded.toml").read_text(encoding="utf-8") == (
-            'doc-roots = ["README.md"]\n'
+        assert (project / "pyproject.toml").read_text(encoding="utf-8") == (
+            '[tool.uncoded]\ndoc-roots = ["README.md"]\n'
         )
 
-    def test_passes_over_pyproject_without_uncoded_table(
-        self, *, tmp_path, monkeypatch
-    ):
+    def test_appends_to_pyproject_without_uncoded_table(self, *, tmp_path, monkeypatch):
         _make_roots(tmp_path=tmp_path, monkeypatch=monkeypatch, roots=["src"])
         (tmp_path / "pyproject.toml").write_text(
             '[project]\nname = "demo"\n', encoding="utf-8"
@@ -851,7 +828,36 @@ class TestInitCommand:
 
         assert _run(monkeypatch=monkeypatch, arguments=["init"]) == 0
 
-        assert (tmp_path / ".uncoded.toml").exists()
+        assert (tmp_path / "pyproject.toml").read_text(encoding="utf-8") == (
+            '[project]\nname = "demo"\n[tool.uncoded]\nsource-roots = ["src"]\n'
+        )
+
+    def test_adds_a_newline_before_the_table(self, *, tmp_path, monkeypatch):
+        _make_roots(tmp_path=tmp_path, monkeypatch=monkeypatch, roots=["src"])
+        (tmp_path / "pyproject.toml").write_text(
+            '[project]\nname = "demo"', encoding="utf-8"
+        )
+
+        assert _run(monkeypatch=monkeypatch, arguments=["init"]) == 0
+
+        assert (tmp_path / "pyproject.toml").read_text(encoding="utf-8") == (
+            '[project]\nname = "demo"\n[tool.uncoded]\nsource-roots = ["src"]\n'
+        )
+
+    def test_leaves_an_inline_tool_table_valid(self, *, tmp_path, monkeypatch, capsys):
+        _make_roots(tmp_path=tmp_path, monkeypatch=monkeypatch, roots=["src"])
+        pyproject = tmp_path / "pyproject.toml"
+        pyproject.write_text("tool = {}\n", encoding="utf-8")
+
+        assert _run(monkeypatch=monkeypatch, arguments=["init"]) == 1
+
+        assert pyproject.read_text(encoding="utf-8") == "tool = {}\n"
+        captured = capsys.readouterr()
+        assert captured.out == ""
+        assert captured.err.startswith(
+            "Error: cannot append [tool.uncoded] to pyproject.toml without "
+            "changing its existing content: "
+        )
 
     def test_uses_the_configuration_file_above_a_subdirectory(
         self, *, tmp_path, monkeypatch, capsys
@@ -862,7 +868,7 @@ class TestInitCommand:
 
         assert _run(monkeypatch=monkeypatch, arguments=["init"]) == 0
 
-        assert not (tmp_path / "src" / ".uncoded.toml").exists()
+        assert not (tmp_path / "src" / "pyproject.toml").exists()
         assert (tmp_path / ".uncoded" / "namespace.yaml").exists()
         out = capsys.readouterr().out
         assert out.startswith(
@@ -874,17 +880,35 @@ class TestInitCommand:
         self, *, tmp_path, monkeypatch, capsys
     ):
         _make_roots(tmp_path=tmp_path, monkeypatch=monkeypatch, roots=["lib"])
+        (tmp_path / "pyproject.toml").write_text(
+            '[project]\nname = "demo"\n', encoding="utf-8"
+        )
+        before = _contents(project_directory=tmp_path)
 
         assert _run(monkeypatch=monkeypatch, arguments=["init"]) == 1
 
-        assert _contents(project_directory=tmp_path) == {Path("lib"): None}
+        assert _contents(project_directory=tmp_path) == before
         captured = capsys.readouterr()
         assert captured.out == ""
         assert captured.err.startswith(
             "Error: found none of the source roots src, tests or the doc roots "
             "README.md, AGENTS.md, docs in this directory"
         )
-        assert "Write .uncoded.toml by hand" in captured.err
+        assert "Add [tool.uncoded] to pyproject.toml by hand" in captured.err
+
+    def test_stops_when_there_is_no_pyproject(self, *, tmp_path, monkeypatch, capsys):
+        _make_roots(tmp_path=tmp_path, monkeypatch=monkeypatch, roots=["src"])
+        before = _contents(project_directory=tmp_path)
+
+        assert _run(monkeypatch=monkeypatch, arguments=["init"]) == 1
+
+        assert _contents(project_directory=tmp_path) == before
+        captured = capsys.readouterr()
+        assert captured.out == ""
+        assert captured.err == (
+            "Error: uncoded is configured in pyproject.toml, but found none in "
+            "this directory.\n"
+        )
 
     def test_leaves_an_existing_configuration_file_as_it_is(
         self, *, tmp_path, monkeypatch, capsys
@@ -896,7 +920,6 @@ class TestInitCommand:
         assert _run(monkeypatch=monkeypatch, arguments=["init"]) == 0
 
         assert (tmp_path / "pyproject.toml").read_text(encoding="utf-8") == pyproject
-        assert not (tmp_path / ".uncoded.toml").exists()
         assert (tmp_path / ".uncoded" / "namespace.yaml").exists()
         out = capsys.readouterr().out
         assert out.startswith(
@@ -910,6 +933,7 @@ class TestInitCommand:
         _make_roots(
             tmp_path=tmp_path, monkeypatch=monkeypatch, roots=["src", "README.md"]
         )
+        (tmp_path / "pyproject.toml").write_text("", encoding="utf-8")
         assert _run(monkeypatch=monkeypatch, arguments=["init"]) == 0
         first = capsys.readouterr().out
         files = {p: p.read_bytes() for p in tmp_path.rglob("*") if p.is_file()}
@@ -928,17 +952,19 @@ class TestInitCommand:
         self, *, tmp_path, monkeypatch, capsys
     ):
         _make_roots(tmp_path=tmp_path, monkeypatch=monkeypatch, roots=["src"])
+        (tmp_path / "pyproject.toml").write_text("", encoding="utf-8")
         failure = PermissionError(13, "Permission denied")
 
         with mock.patch.object(Path, "write_text", side_effect=failure):
             assert _run(monkeypatch=monkeypatch, arguments=["init"]) == 1
 
-        assert _contents(project_directory=tmp_path) == {Path("src"): None}
+        assert _contents(project_directory=tmp_path) == {
+            Path("pyproject.toml"): b"",
+            Path("src"): None,
+        }
         captured = capsys.readouterr()
         assert captured.out == ""
-        assert captured.err == (
-            "Error: cannot write .uncoded.toml: Permission denied\n"
-        )
+        assert captured.err == "Error: cannot write pyproject.toml: Permission denied\n"
 
 
 class TestOutsideAProject:

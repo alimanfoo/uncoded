@@ -28,9 +28,9 @@ indexed tools don't.
 The code index has two parts: a namespace map and per-file stubs. Start with the
 map and add detail only when the task needs it.
 
-**Step 1: Orient. Sync, then read the namespace map.** Run `uvx uncoded sync`,
-so that the map is current. Then, before answering the user and before any other
-tool call:
+**Step 1: Orient. Sync, then read the namespace map.** Run
+`uv run uncoded sync`, so that the map is current. Then, before answering the
+user and before any other tool call:
 
 ```text
 Read .uncoded/namespace.yaml
@@ -67,14 +67,14 @@ unchanged. Use the exact `relative_path` and `name_path` from the map. Use
 Per task:
 
 - **Read a symbol's definition.**
-  `uvx uncoded body <name_path> --in <relative_path>` prints the symbol's source
-  text to stdout, exactly as it is in the file. Returns exactly the symbol. No
-  offset arithmetic, no risk of reading too much. Its output is the exact text
-  `Edit` needs as `old_string`. You need no extra `Read` for partial edits. Stay
-  on stubs for a wider sweep.
+  `uv run uncoded body <name_path> --in <relative_path>` prints the symbol's
+  source text to stdout, exactly as it is in the file. Returns exactly the
+  symbol. No offset arithmetic, no risk of reading too much. Its output is the
+  exact text `Edit` needs as `old_string`. You need no extra `Read` for partial
+  edits. Stay on stubs for a wider sweep.
 
 - **Find every reference to a symbol.**
-  `uvx uncoded refs <name_path> --in <relative_path>`. Prints the symbol's
+  `uv run uncoded refs <name_path> --in <relative_path>`. Prints the symbol's
   definition, each import of it, and each use of it. Prints one reference per
   line as `<path>:<line>:<col>`, sorted by path, then line, then column. Each
   path is relative to the current working directory when possible and otherwise
@@ -82,14 +82,14 @@ Per task:
   comments, strings, and member lookups on other types. If the next move depends
   on the answer being complete, grep cannot give you that.
 
-- **Edit a symbol.** `uvx uncoded body <name_path> --in <relative_path>` gives
-  the exact `old_string`; then `Edit` to apply the change.
+- **Edit a symbol.** `uv run uncoded body <name_path> --in <relative_path>`
+  gives the exact `old_string`; then `Edit` to apply the change.
 
-- **Rename.** `uvx uncoded refs <name_path> --in <relative_path>` enumerates
+- **Rename.** `uv run uncoded refs <name_path> --in <relative_path>` enumerates
   every site; then `Edit` at each.
 
-- **Safely delete.** `uvx uncoded refs <name_path> --in <relative_path>` lists
-  every reference. Read the source at each reference's line to see which
+- **Safely delete.** `uv run uncoded refs <name_path> --in <relative_path>`
+  lists every reference. Read the source at each reference's line to see which
   definition it lies in. A definition runs from its first decorator to the end
   of its body. The symbol is unused when every reference lies within its own
   definition, within a definition that it redefines, such as an `@overload`
@@ -97,10 +97,10 @@ Per task:
   unused, `Edit` to remove it.
 
 **Step 4: Refresh.** After every modification to indexed Python source, run
-`uvx uncoded sync` before the next code-navigation operation. The modification
-can change the namespace map and stubs. Run it too whenever you notice that
-something else has changed files, such as a pull, a checkout, or another agent
-working in the same project.
+`uv run uncoded sync` before the next code-navigation operation. The
+modification can change the namespace map and stubs. Run it too whenever you
+notice that something else has changed files, such as a pull, a checkout, or
+another agent working in the same project.
 
 ## Where Read, Edit, and grep are still the right tools
 

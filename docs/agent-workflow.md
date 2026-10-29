@@ -29,7 +29,7 @@ that matter.
 3. `uncoded body` returns one symbol's exact source when the task needs it:
 
 ```sh
-uvx uncoded body greet --in src/greetings.py
+uv run uncoded body greet --in src/greetings.py
 ```
 
 This example assumes `greet` is defined in `src/greetings.py`. For a method, use
@@ -45,7 +45,7 @@ Before renaming, changing a signature, or deleting a symbol, the agent checks
 its references:
 
 ```sh
-uvx uncoded refs greet --in src/greetings.py
+uv run uncoded refs greet --in src/greetings.py
 ```
 
 The results identify the sites to inspect and update. After changing indexed

@@ -1,2 +1,0 @@
-source-roots = ["src", "tests"]
-doc-roots = ["README.md", "AGENTS.md", "docs", "src/uncoded"]

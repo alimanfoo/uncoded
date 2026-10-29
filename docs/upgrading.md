@@ -2,17 +2,32 @@
 
 To upgrade a project to a new release of uncoded:
 
-1. Find the release that the project uses. If a pre-commit hook runs uncoded, it
-   is the version in its `entry`. Without a hook, it is the version that
-   `uvx uncoded --version` prints.
+1. Find the release that the project uses. For version 6 or later, run
+   `uv run uncoded --version`. For an earlier version, read the version from the
+   pre-commit hook's `entry`, or run `uvx uncoded --version` if there is no
+   hook.
 2. Read [the changelog](changelog.md) for every release after that release.
 3. If the new release is major, follow the section below for each major release
    that the upgrade crosses, oldest first.
-4. If a pre-commit hook runs uncoded, raise the version in its `entry` to the
-   new release.
-5. Run `uvx uncoded@<version> sync`, where `<version>` is the new release, and
-   commit every file that the upgrade changes, including every installed skill
+4. Run `uv lock --upgrade-package uncoded`.
+5. Run `uv run uncoded sync`, and commit `uv.lock` and every installed skill
    file that the command writes, rewrites or removes.
+
+## From version 5 to version 6
+
+Version 6 supports projects that use uv and require Python 3.12 or later. It
+runs uncoded from the project's uv environment and reads its settings only from
+`pyproject.toml`.
+
+1. If the project has no `pyproject.toml`, create a uv project first. If the
+   project supports Python below 3.12, raise that requirement before upgrading,
+   or keep using version 5.
+2. Add uncoded as a development dependency with `uv add --dev uncoded`.
+3. Move the settings from `.uncoded.toml` into a `[tool.uncoded]` table in
+   `pyproject.toml`, then delete `.uncoded.toml`.
+4. Change the uncoded pre-commit hook's `entry` to `uv run uncoded sync`.
+5. Run `uv run uncoded sync`, then commit the regenerated installed skill files
+   with `pyproject.toml`, `uv.lock` and the pre-commit configuration.
 
 ## From version 4 to version 5
 
