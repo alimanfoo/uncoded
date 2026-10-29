@@ -34,6 +34,15 @@ _DOC_SKILL_PATHS = [
 ]
 _SKILL_PATHS = _SOURCE_SKILL_PATHS + _DOC_SKILL_PATHS
 
+_ENCODING_ERRORS = [
+    (
+        b"# coding: fake-encoding\ndef fn(): pass\n",
+        "unknown encoding: fake-encoding",
+    ),
+    (b"\xef\xbb\xbf# coding: latin-1\ndef fn(): pass\n", "encoding problem: utf-8"),
+    (b"# caf\xe9\ndef fn(): pass\n", "invalid or missing encoding declaration"),
+]
+
 
 def _init_source_project(*, tmp_path, monkeypatch, source_roots=("src",)):
     """Set up a minimal project: pyproject.toml + source root + chdir.
@@ -211,6 +220,20 @@ class TestSyncApplyMode:
         assert err_lines[1].startswith("warning: skipping docs/bad.md: ")
         assert err_lines[2] == "warning: skipped 2 file(s)"
         assert (tmp_path / ".uncoded" / "stubs" / "src" / "good.pyi").exists()
+
+    @pytest.mark.parametrize(("contents", "reason"), _ENCODING_ERRORS)
+    def test_encoding_error_is_warned_about_once(
+        self, *, tmp_path, monkeypatch, capsys, contents, reason
+    ):
+        _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
+        (tmp_path / "src" / "bad.py").write_bytes(contents)
+
+        assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 0
+
+        assert capsys.readouterr().err == (
+            f"warning: skipping src/bad.py: SyntaxError: {reason}\n"
+            "warning: skipped 1 file(s)\n"
+        )
 
     def test_overlapping_source_roots_skip_a_file_once(
         self, *, tmp_path, monkeypatch, capsys
@@ -1086,25 +1109,15 @@ class TestBodyCommand:
         )
         assert "foo.py" in capsys.readouterr().err
 
-    def test_undecodable_file_exits_one(self, *, tmp_path, monkeypatch, capsys):
+    @pytest.mark.parametrize(("contents", "reason"), _ENCODING_ERRORS)
+    def test_encoding_error_names_file_once(
+        self, *, tmp_path, monkeypatch, capsys, contents, reason
+    ):
         _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
-        (tmp_path / "src" / "m.py").write_bytes(b"\xff\xfe not utf-8")
+        (tmp_path / "src" / "m.py").write_bytes(contents)
 
         assert _body(monkeypatch=monkeypatch, name_path="fn", in_path="src/m.py") == 1
-        err = capsys.readouterr().err
-        assert "Error:" in err
-        assert "m.py" in err
-
-    def test_unknown_encoding_exits_one(self, *, tmp_path, monkeypatch, capsys):
-        _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
-        (tmp_path / "src" / "m.py").write_bytes(
-            b"# -*- coding: fake-encoding -*-\ndef fn(): pass\n"
-        )
-
-        assert _body(monkeypatch=monkeypatch, name_path="fn", in_path="src/m.py") == 1
-        err = capsys.readouterr().err
-        assert "Error:" in err
-        assert "m.py" in err
+        assert capsys.readouterr().err == f"Error: src/m.py: SyntaxError: {reason}\n"
 
     def test_in_path_resolves_relative_to_cwd(self, *, tmp_path, monkeypatch, capsys):
         _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
