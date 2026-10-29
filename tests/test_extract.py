@@ -132,6 +132,24 @@ class TestReadAndExtract:
             )
         ]
 
+    def test_skips_file_with_unknown_encoding(self, *, tmp_path):
+        source_root = tmp_path / "src"
+        bad_file = source_root / "bad's.py"
+        bad_file.parent.mkdir()
+        bad_file.write_text("# coding: unknown\n", encoding="utf-8")
+
+        files, skipped = read_python_files(
+            source_roots=[source_root], project_directory=tmp_path
+        )
+
+        assert files == []
+        assert skipped == [
+            SkippedFile(
+                path="src/bad's.py",
+                reason="SyntaxError: unknown encoding: unknown",
+            )
+        ]
+
     def test_skips_unreadable_file_with_reason(self, *, tmp_path):
         # A directory whose name ends in .py cannot be read as a file. The
         # reason leaves out the error's own copy of the path.

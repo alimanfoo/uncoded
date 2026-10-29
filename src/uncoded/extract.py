@@ -264,8 +264,9 @@ def read_python_files(
             try:
                 python_file = _extract_python_file(source=source, rel_path=rel_path)
             except SyntaxError as e:
-                reason = f"SyntaxError at line {e.lineno}: {e.msg}"
-                skipped.append(SkippedFile(path=rel_path, reason=reason))
+                skipped.append(
+                    SkippedFile(path=rel_path, reason=failure_reason(error=e))
+                )
                 continue
             if python_file.symbols:
                 python_files.append(python_file)

@@ -56,9 +56,18 @@ def failure_reason(*, error: Exception) -> str:
     """Return why reading a file failed, for a message that names the file.
 
     An OSError from the system names the file again, by its absolute path in
-    the system's form, so this gives only its reason. An OSError without one
-    gives its own text.
+    the system's form, so this gives only its reason. A SyntaxError can do the
+    same for a malformed encoding cookie. An error without a filename gives
+    its own text.
     """
     if isinstance(error, OSError):
         return error.strerror or str(error)
+    if isinstance(error, SyntaxError):
+        message = error.msg
+        prefix, separator, reason = message.rpartition(": ")
+        error_kind, marker, _filename = prefix.partition(" for ")
+        if marker and separator:
+            message = f"{error_kind}: {reason}"
+        line = f" at line {error.lineno}" if error.lineno is not None else ""
+        return f"SyntaxError{line}: {message}"
     return str(error)
