@@ -35,9 +35,10 @@ jobs:
       - run: uv run uncoded sync
       - run: uv run ruff format --check --no-respect-gitignore --line-length 320 --config 'format.quote-style="preserve"' .uncoded/stubs
 
-  # The test job runs every supported Python on Linux and Windows. Pushes to
-  # main also run every Python on macOS. Pull requests omit the two middle
-  # macOS versions to stay within the account's macOS runner capacity.
+  # The test job runs every supported Python because the standard library
+  # behaves differently between versions. Pull requests omit the two middle
+  # macOS versions to stay within the account's macOS runner capacity, and
+  # pushes to main run them all.
   # setup-uv sets UV_PYTHON, which every later uv command obeys.
   test:
     runs-on: ${{ matrix.os }}

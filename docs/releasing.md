@@ -36,7 +36,7 @@ If the release is major or minor, do this too. A patch release skips it.
    `python` list of the `test` job in `.github/workflows/ci.yml`. That list runs
    from the `requires-python` floor in `pyproject.toml` up, and is the one
    record of the Python versions that uncoded is tested on. Pull requests run
-   macOS only on the first and last versions, so update the two middle macOS
+   macOS only on the oldest and newest versions, so update the two middle macOS
    exclusions when this list changes. Pushes to `main` run every version on
    macOS.
 2. Read the repository settings back, since they live outside the repository.
