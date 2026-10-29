@@ -27,6 +27,12 @@ includes it. Each entry links the pull request that made the change.
   in the `entry` of its pre-commit hook.
   ([#380](https://github.com/alimanfoo/uncoded/pull/380))
 
+### Fixed
+
+- `uncoded refs` now finds every reference when valid whitespace separates a
+  `def`, `async def` or `class` keyword from its name.
+  ([#401](https://github.com/alimanfoo/uncoded/pull/401))
+
 ## [4.0.0](https://github.com/alimanfoo/uncoded/releases/tag/v4.0.0) — 2026-10-28
 
 Before upgrading, follow

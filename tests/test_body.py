@@ -1,4 +1,3 @@
-import ast
 import textwrap
 
 import pytest
@@ -8,7 +7,6 @@ from uncoded.resolver import (
     NamePath,
     SymbolNotFoundError,
     UnsupportedNamePathError,
-    _resolve_ast_node,
     resolve_name_position,
 )
 
@@ -376,114 +374,47 @@ class TestUnsupportedNamePathError:
         self._assert_raises(name_path="foo//bar")
 
 
-class TestResolveAstNode:
-    def test_returns_function_def_for_top_level_function(self, *, tmp_path):
-        source = textwrap.dedent("""\
-            def compute(x: int) -> int:
-                return x * 2
-        """)
-        path = tmp_path / "m.py"
-        path.write_text(source, encoding="utf-8", newline="")
-
-        node = _resolve_ast_node(name_path=NamePath("compute"), in_path=path)
-
-        assert isinstance(node, ast.FunctionDef)
-        assert node.name == "compute"
-
-    def test_returns_method_node_for_class_member(self, *, tmp_path):
-        source = textwrap.dedent("""\
-            class Engine:
-                def start(self):
-                    pass
-        """)
-        path = tmp_path / "m.py"
-        path.write_text(source, encoding="utf-8", newline="")
-
-        node = _resolve_ast_node(name_path=NamePath("Engine", "start"), in_path=path)
-
-        assert isinstance(node, ast.FunctionDef)
-        assert node.name == "start"
-
-    def test_raises_symbol_not_found(self, *, tmp_path):
-        path = tmp_path / "m.py"
-        path.write_text("def other(): pass\n", encoding="utf-8", newline="")
-
-        with pytest.raises(SymbolNotFoundError, match="missing"):
-            _resolve_ast_node(name_path=NamePath("missing"), in_path=path)
-
-    def test_raises_unsupported_name_path(self):
-        with pytest.raises(UnsupportedNamePathError):
-            NamePath.parse(raw="A/B/C")
-
-    def test_raises_when_the_file_is_missing(self, *, tmp_path):
-        with pytest.raises(FileNotFoundError):
-            _resolve_ast_node(
-                name_path=NamePath("foo"), in_path=tmp_path / "nonexistent.py"
-            )
-
-    def test_raises_when_the_file_cannot_be_parsed(self, *, tmp_path):
-        path = tmp_path / "m.py"
-        path.write_text("def broken(:\n", encoding="utf-8", newline="")
-
-        with pytest.raises(SyntaxError):
-            _resolve_ast_node(name_path=NamePath("broken"), in_path=path)
-
-
 class TestResolveNamePosition:
-    def test_function(self, *, tmp_path):
-        source = textwrap.dedent("""\
-            def compute(x: int) -> int:
-                return x * 2
-        """)
+    @pytest.mark.parametrize(
+        ("source", "name", "position"),
+        [
+            pytest.param(
+                "def  compute(x: int) -> int:\n    return x * 2\n",
+                "compute",
+                (0, 5),
+                id="function-with-two-spaces",
+            ),
+            pytest.param(
+                "class\tEngine:\n    pass\n",
+                "Engine",
+                (0, 6),
+                id="class-with-tab",
+            ),
+            pytest.param(
+                "async def   fetch():\n    return 0\n",
+                "fetch",
+                (0, 12),
+                id="async-function-with-extra-spaces",
+            ),
+            pytest.param(
+                "def \\\n    continued():\n    pass\n",
+                "continued",
+                (1, 4),
+                id="line-continuation",
+            ),
+            pytest.param(
+                "import functools\n\n@functools.cache\ndef compute():\n    return 1\n",
+                "compute",
+                (3, 4),
+                id="decorated-function",
+            ),
+        ],
+    )
+    def test_definition_name_follows_token(self, *, tmp_path, source, name, position):
         path = tmp_path / "m.py"
         path.write_text(source, encoding="utf-8", newline="")
 
-        assert resolve_name_position(name_path=NamePath("compute"), in_path=path) == (
-            0,
-            4,
-        )
-
-    def test_function_decorator_does_not_shift_line(self, *, tmp_path):
-        source = textwrap.dedent("""\
-            import functools
-
-            @functools.cache
-            def compute():
-                return 1
-        """)
-        path = tmp_path / "m.py"
-        path.write_text(source, encoding="utf-8", newline="")
-
-        assert resolve_name_position(name_path=NamePath("compute"), in_path=path) == (
-            3,
-            4,
-        )
-
-    def test_async_function(self, *, tmp_path):
-        source = textwrap.dedent("""\
-            async def fetch():
-                return 0
-        """)
-        path = tmp_path / "m.py"
-        path.write_text(source, encoding="utf-8", newline="")
-
-        assert resolve_name_position(name_path=NamePath("fetch"), in_path=path) == (
-            0,
-            10,
-        )
-
-    def test_class(self, *, tmp_path):
-        source = textwrap.dedent("""\
-            class Engine:
-                pass
-        """)
-        path = tmp_path / "m.py"
-        path.write_text(source, encoding="utf-8", newline="")
-
-        assert resolve_name_position(name_path=NamePath("Engine"), in_path=path) == (
-            0,
-            6,
-        )
+        assert resolve_name_position(name_path=NamePath(name), in_path=path) == position
 
     def test_annotated_assignment(self, *, tmp_path):
         source = textwrap.dedent("""\

@@ -1,6 +1,8 @@
 """Name-path resolution: parse, AST-walk, and position extraction."""
 
 import ast
+import io
+import tokenize
 from pathlib import Path
 from typing import NamedTuple
 
@@ -46,35 +48,41 @@ class UnsupportedNamePathError(Exception):
     """
 
 
-def _resolve_ast_node(*, name_path: NamePath, in_path: Path) -> SymbolNode:
-    """Return the AST node for the symbol named by name_path in in_path.
-
-    Raises SymbolNotFoundError if the symbol is not present. Lets OSError,
-    UnicodeDecodeError, and SyntaxError propagate from the file read.
-    """
-    source = read_source_text(path=in_path)
-    return resolve_ast_node_from_source(
-        name_path=name_path, source=source, in_path=in_path
+def _definition_name_position(
+    *,
+    node: ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef,
+    source: str,
+) -> tuple[int, int]:
+    lines = io.StringIO(source, newline="").readlines()
+    statement = "".join(lines[node.lineno - 1 :])
+    name_tokens = (
+        token
+        for token in tokenize.generate_tokens(io.StringIO(statement).readline)
+        if token.type == tokenize.NAME
     )
+    keyword = "class" if isinstance(node, ast.ClassDef) else "def"
+    next(token for token in name_tokens if token.string == keyword)
+    name = next(name_tokens)
+    return (node.lineno + name.start[0] - 2, name.start[1])
 
 
 def resolve_name_position(*, name_path: NamePath, in_path: Path) -> tuple[int, int]:
     """Return the 0-indexed (line, character) position of the name token for name_path.
 
     Follows LSP convention: both line and character are 0-indexed.
-    For def/async def/class, character points past the keyword to the identifier.
+    For def/async def/class, source tokens locate the identifier because the AST
+    does not record its position.
     For assignments and type statements, character points at the start of the
     target name.
     Raises SymbolNotFoundError, OSError, UnicodeDecodeError, and SyntaxError under
-    the same conditions as _resolve_ast_node.
+    the same conditions as resolve_ast_node_from_source.
     """
-    node = _resolve_ast_node(name_path=name_path, in_path=in_path)
-    if isinstance(node, ast.FunctionDef):
-        return (node.lineno - 1, node.col_offset + len("def "))
-    if isinstance(node, ast.AsyncFunctionDef):
-        return (node.lineno - 1, node.col_offset + len("async def "))
-    if isinstance(node, ast.ClassDef):
-        return (node.lineno - 1, node.col_offset + len("class "))
+    source = read_source_text(path=in_path)
+    node = resolve_ast_node_from_source(
+        name_path=name_path, source=source, in_path=in_path
+    )
+    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+        return _definition_name_position(node=node, source=source)
     if isinstance(node, ast.AnnAssign):
         return (node.target.lineno - 1, node.target.col_offset)
     if isinstance(node, ast.Assign):
