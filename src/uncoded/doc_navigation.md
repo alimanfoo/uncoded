@@ -3,9 +3,9 @@
 This codebase uses [uncoded](https://github.com/alimanfoo/uncoded) to maintain a
 documentation index.
 
-**Step 1: Orient. Sync, then read the docs map.** Run the project's configured
-`uncoded sync` command, so that the map is current. Then, before answering the
-user and before any other tool call:
+**Step 1: Orient. Sync, then read the docs map.** Run `uvx uncoded sync`, so
+that the map is current. Then, before answering the user and before any other
+tool call:
 
 ```text
 Read .uncoded/docs.yaml
@@ -19,8 +19,8 @@ identified in the map. Headings in the map are literal text, except for a suffix
 of the form `(N)`, which is not in the file. The suffix marks the Nth heading
 with the same text under one parent, so read the parent's section to find it.
 
-**Step 3: Refresh.** After every modification to indexed Markdown, run the
-project's configured `uncoded sync` command before the next
-documentation-navigation operation. The modification can change the docs map.
-Run it too whenever you notice that something else has changed files, such as a
-pull, a checkout, or another agent working in the same project.
+**Step 3: Refresh.** After every modification to indexed Markdown, run
+`uvx uncoded sync` before the next documentation-navigation operation. The
+modification can change the docs map. Run it too whenever you notice that
+something else has changed files, such as a pull, a checkout, or another agent
+working in the same project.
