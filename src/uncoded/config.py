@@ -242,7 +242,10 @@ def render_conventional_config(*, directory: Path, pyproject: str) -> str:
     lines.extend(
         f"{kind}-roots = {json.dumps(found)}" for kind, found in roots.items() if found
     )
-    trailing_newlines = len(pyproject) - len(pyproject.rstrip("\n"))
+    normalized_line_endings = pyproject.replace("\r\n", "\n")
+    trailing_newlines = len(normalized_line_endings) - len(
+        normalized_line_endings.rstrip("\n")
+    )
     separator = "\n" * (2 - min(trailing_newlines, 2)) if pyproject else ""
     content = pyproject + separator + "\n".join(lines) + "\n"
     try:

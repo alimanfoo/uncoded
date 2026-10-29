@@ -825,26 +825,38 @@ class TestInitCommand:
         ("pyproject", "expected"),
         [
             pytest.param(
-                "[dependency-groups]\ndev = [\n]\n",
-                "[dependency-groups]\ndev = [\n]\n\n"
-                '[tool.uncoded]\nsource-roots = ["src"]\n',
-                id="final-newline",
+                b"[dependency-groups]\ndev = [\n]\n",
+                b"[dependency-groups]\ndev = [\n]\n\n"
+                b'[tool.uncoded]\nsource-roots = ["src"]\n',
+                id="final-lf-newline",
             ),
             pytest.param(
-                "[dependency-groups]\ndev = [\n]\n\n",
-                "[dependency-groups]\ndev = [\n]\n\n"
-                '[tool.uncoded]\nsource-roots = ["src"]\n',
-                id="final-blank-line",
+                b"[dependency-groups]\ndev = [\n]\n\n",
+                b"[dependency-groups]\ndev = [\n]\n\n"
+                b'[tool.uncoded]\nsource-roots = ["src"]\n',
+                id="final-lf-blank-line",
             ),
             pytest.param(
-                "[dependency-groups]\ndev = [\n]",
-                "[dependency-groups]\ndev = [\n]\n\n"
-                '[tool.uncoded]\nsource-roots = ["src"]\n',
+                b"[dependency-groups]\r\ndev = [\r\n]\r\n",
+                b"[dependency-groups]\r\ndev = [\r\n]\r\n\n"
+                b'[tool.uncoded]\nsource-roots = ["src"]\n',
+                id="final-crlf-newline",
+            ),
+            pytest.param(
+                b"[dependency-groups]\r\ndev = [\r\n]\r\n\r\n",
+                b"[dependency-groups]\r\ndev = [\r\n]\r\n\r\n"
+                b'[tool.uncoded]\nsource-roots = ["src"]\n',
+                id="final-crlf-blank-line",
+            ),
+            pytest.param(
+                b"[dependency-groups]\ndev = [\n]",
+                b"[dependency-groups]\ndev = [\n]\n\n"
+                b'[tool.uncoded]\nsource-roots = ["src"]\n',
                 id="no-final-newline",
             ),
             pytest.param(
-                "",
-                '[tool.uncoded]\nsource-roots = ["src"]\n',
+                b"",
+                b'[tool.uncoded]\nsource-roots = ["src"]\n',
                 id="empty",
             ),
         ],
@@ -853,11 +865,11 @@ class TestInitCommand:
         self, *, tmp_path, monkeypatch, pyproject, expected
     ):
         _make_roots(tmp_path=tmp_path, monkeypatch=monkeypatch, roots=["src"])
-        (tmp_path / "pyproject.toml").write_text(pyproject, encoding="utf-8")
+        (tmp_path / "pyproject.toml").write_bytes(pyproject)
 
         assert _run(monkeypatch=monkeypatch, arguments=["init"]) == 0
 
-        assert (tmp_path / "pyproject.toml").read_text(encoding="utf-8") == expected
+        assert (tmp_path / "pyproject.toml").read_bytes() == expected
 
     def test_leaves_an_inline_tool_table_valid(self, *, tmp_path, monkeypatch, capsys):
         _make_roots(tmp_path=tmp_path, monkeypatch=monkeypatch, roots=["src"])
