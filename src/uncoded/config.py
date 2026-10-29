@@ -214,12 +214,12 @@ def _resolve_root(
     return resolved, "is not a directory or a Markdown file"
 
 
-def render_conventional_config(*, directory: Path) -> str:
-    """Return a conventional ``[tool.uncoded]`` table for ``directory``.
+def render_conventional_config(*, directory: Path, pyproject: str) -> str:
+    """Append a conventional ``[tool.uncoded]`` table to ``pyproject``.
 
     The table names as roots whichever of the conventional roots in
     ``directory`` are valid roots. Raises :exc:`ConfigError` when none of them
-    are.
+    are, or when appending the table would make the TOML invalid.
     """
     roots: dict[str, list[str]] = {kind: [] for kind in _CONVENTIONAL_ROOTS}
     for kind, names in _CONVENTIONAL_ROOTS.items():
@@ -242,4 +242,13 @@ def render_conventional_config(*, directory: Path) -> str:
     lines.extend(
         f"{kind}-roots = {json.dumps(found)}" for kind, found in roots.items() if found
     )
-    return "\n".join(lines) + "\n"
+    separator = "\n" if pyproject and not pyproject.endswith("\n") else ""
+    content = pyproject + separator + "\n".join(lines) + "\n"
+    try:
+        tomllib.loads(content)
+    except tomllib.TOMLDecodeError as e:
+        raise ConfigError(
+            "cannot append [tool.uncoded] to pyproject.toml without changing "
+            f"its existing content: {e}"
+        ) from e
+    return content

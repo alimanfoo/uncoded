@@ -13,6 +13,7 @@ changes nothing.
 from collections.abc import Generator, Sequence
 from contextlib import contextmanager
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 from uncoded.read_helpers import failure_reason
 
@@ -62,7 +63,10 @@ def sync_file(
     if not check:
         with _naming_failure(action="write", path=path):
             target.parent.mkdir(parents=True, exist_ok=True)
-            target.write_text(content, encoding="utf-8")
+            with TemporaryDirectory(dir=target.parent) as temporary_directory:
+                temporary = Path(temporary_directory) / target.name
+                temporary.write_text(content, encoding="utf-8")
+                temporary.replace(target)
     if existing is None:
         print(f"{'Would write' if check else 'Wrote'} {path.as_posix()}")
         return True

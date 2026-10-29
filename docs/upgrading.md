@@ -19,11 +19,14 @@ Version 6 supports projects that use uv and require Python 3.12 or later. It
 runs uncoded from the project's uv environment and reads its settings only from
 `pyproject.toml`.
 
-1. Add uncoded as a development dependency with `uv add --dev uncoded`.
-2. Move the settings from `.uncoded.toml` into a `[tool.uncoded]` table in
+1. If the project has no `pyproject.toml`, create a uv project first. If the
+   project supports Python below 3.12, raise that requirement before upgrading,
+   or keep using version 5.
+2. Add uncoded as a development dependency with `uv add --dev uncoded`.
+3. Move the settings from `.uncoded.toml` into a `[tool.uncoded]` table in
    `pyproject.toml`, then delete `.uncoded.toml`.
-3. Change the uncoded pre-commit hook's `entry` to `uv run uncoded sync`.
-4. Run `uv run uncoded sync`, then commit the regenerated installed skill files
+4. Change the uncoded pre-commit hook's `entry` to `uv run uncoded sync`.
+5. Run `uv run uncoded sync`, then commit the regenerated installed skill files
    with `pyproject.toml`, `uv.lock` and the pre-commit configuration.
 
 ## From version 4 to version 5

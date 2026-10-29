@@ -823,6 +823,21 @@ class TestInitCommand:
             '[project]\nname = "demo"\n[tool.uncoded]\nsource-roots = ["src"]\n'
         )
 
+    def test_leaves_an_inline_tool_table_valid(self, *, tmp_path, monkeypatch, capsys):
+        _make_roots(tmp_path=tmp_path, monkeypatch=monkeypatch, roots=["src"])
+        pyproject = tmp_path / "pyproject.toml"
+        pyproject.write_text("tool = {}\n", encoding="utf-8")
+
+        assert _run(monkeypatch=monkeypatch, arguments=["init"]) == 1
+
+        assert pyproject.read_text(encoding="utf-8") == "tool = {}\n"
+        captured = capsys.readouterr()
+        assert captured.out == ""
+        assert captured.err.startswith(
+            "Error: cannot append [tool.uncoded] to pyproject.toml without "
+            "changing its existing content: "
+        )
+
     def test_uses_the_configuration_file_above_a_subdirectory(
         self, *, tmp_path, monkeypatch, capsys
     ):
@@ -918,8 +933,16 @@ class TestInitCommand:
         _make_roots(tmp_path=tmp_path, monkeypatch=monkeypatch, roots=["src"])
         (tmp_path / "pyproject.toml").write_text("", encoding="utf-8")
         failure = PermissionError(13, "Permission denied")
+        write_text = Path.write_text
 
-        with mock.patch.object(Path, "write_text", side_effect=failure):
+        def fail_after_partial_write(*args, **kwargs):
+            path, content = args
+            write_text(path, content[:1], encoding=kwargs["encoding"])
+            raise failure
+
+        with mock.patch.object(
+            Path, "write_text", autospec=True, side_effect=fail_after_partial_write
+        ):
             assert _run(monkeypatch=monkeypatch, arguments=["init"]) == 1
 
         assert _contents(project_directory=tmp_path) == {

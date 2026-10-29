@@ -19,7 +19,7 @@ formatters that change indexed files:
   hooks:
     - id: uncoded
       name: uncoded
-        entry: uv run uncoded sync
+      entry: uv run uncoded sync
       language: system
       always_run: true
       pass_filenames: false

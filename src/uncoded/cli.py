@@ -198,8 +198,7 @@ def _init(*, config: Config | None) -> int:
                 "directory."
             )
         existing = pyproject_path.read_text(encoding="utf-8")
-        separator = "\n" if existing and not existing.endswith("\n") else ""
-        content = existing + separator + render_conventional_config(directory=start)
+        content = render_conventional_config(directory=start, pyproject=existing)
         sync_file(path=pyproject, content=content, project_directory=start)
         config = read_config(start=start)
     else:
