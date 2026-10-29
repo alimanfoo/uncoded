@@ -67,8 +67,8 @@ The code index describes static Python structure. It does not run imports or
 resolve runtime registration. Files that cannot be parsed or decoded are skipped
 with a warning.
 
-The documentation index records headings that begin with `#`. It excludes
-underlined headings and headings inside fenced code blocks. Read documentation
-sections directly; `body` and `refs` operate on Python symbols.
+The documentation index records ATX headings. It excludes underlined headings
+and headings inside fenced code blocks. Read documentation sections directly;
+`body` and `refs` operate on Python symbols.
 
 Keep using tests and type checks to verify changes.

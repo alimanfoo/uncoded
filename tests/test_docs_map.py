@@ -27,7 +27,7 @@ class TestExtractHeadings:
         ]
 
     def test_trailing_hashes_stripped(self):
-        assert _extract_headings(text="### Setup ###\n") == [(3, "Setup")]
+        assert _extract_headings(text="## Closed ##\n") == [(2, "Closed")]
 
     def test_trailing_hashes_with_surrounding_spaces_stripped(self):
         assert _extract_headings(text="## Title ## \n") == [(2, "Title")]
@@ -36,15 +36,12 @@ class TestExtractHeadings:
         assert _extract_headings(text="## Done ###\n") == [(2, "Done")]
 
     def test_hash_attached_to_word_preserved(self):
-        # C# — the # is not preceded by whitespace, so it is not a closing
-        # sequence and must be kept in the title.
-        assert _extract_headings(text="## Using C#\n") == [(2, "Using C#")]
+        assert _extract_headings(text="# C#\n") == [(1, "C#")]
 
     def test_multiple_hashes_attached_to_words_preserved(self):
         assert _extract_headings(text="## C# vs F#\n") == [(2, "C# vs F#")]
 
     def test_hash_attached_to_word_with_closing_sequence(self):
-        # Closing sequence (space + ##) is stripped; C# in the middle is kept.
         assert _extract_headings(text="## C# intro ##\n") == [(2, "C# intro")]
 
     def test_seven_hashes_not_a_heading(self):
@@ -79,6 +76,14 @@ class TestExtractHeadings:
         text = "# Before\n```python\n# Inside\n```\n# After\n"
         assert _extract_headings(text=text) == [(1, "Before"), (1, "After")]
 
+    def test_shorter_fence_does_not_close_fence(self):
+        text = "````\n```\n# Inside\n````\n# After\n"
+        assert _extract_headings(text=text) == [(1, "After")]
+
+    def test_fence_with_info_string_does_not_close_fence(self):
+        text = "```\n```python\n# Inside\n```\n"
+        assert _extract_headings(text=text) == []
+
     def test_unclosed_fence_suppresses_rest_of_file(self):
         text = "# Before\n```\n# Never seen\n"
         assert _extract_headings(text=text) == [(1, "Before")]
@@ -98,9 +103,16 @@ class TestExtractHeadings:
     def test_title_with_special_chars(self):
         assert _extract_headings(text="## Hello, World!\n") == [(2, "Hello, World!")]
 
-    def test_leading_spaces_not_a_heading(self):
-        # The # must be at column 0; leading spaces are not stripped.
-        assert _extract_headings(text="  # Indented\n") == []
+    def test_heading_indented_by_three_spaces(self):
+        assert _extract_headings(text="   # Indented\n") == [(1, "Indented")]
+
+    def test_heading_inside_html_comment_block_is_not_a_heading(self):
+        text = "<!--\n# Inside\n-->\n# After\n"
+        assert _extract_headings(text=text) == [(1, "After")]
+
+    def test_yaml_front_matter_has_no_heading(self):
+        text = "---\ntitle: Example\n---\n"
+        assert _extract_headings(text=text) == []
 
 
 class TestReadDocFiles:

@@ -29,6 +29,9 @@ includes it. Each entry links the pull request that made the change.
 
 ### Fixed
 
+- The docs map follows CommonMark's fence-closing rules, so a shorter fence or
+  one with an info string no longer exposes headings inside a fenced code block.
+  ([#403](https://github.com/alimanfoo/uncoded/pull/403))
 - `uncoded refs` now finds every reference when valid whitespace separates a
   `def`, `async def` or `class` keyword from its name.
   ([#401](https://github.com/alimanfoo/uncoded/pull/401))

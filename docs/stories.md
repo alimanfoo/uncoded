@@ -256,9 +256,9 @@ Two headings with the same text under the same parent heading appear in the docs
 map as, for example, "Usage" and "Usage (2)". For "Usage (2)", the agent reads
 the section under the second heading called "Usage" under that parent.
 
-The docs map leaves out headings that are underlined, indented, empty, or inside
-a fenced code block, and lists a file with no headings without any. For those,
-the agent reads the file.
+The docs map leaves out headings that are underlined, empty, or inside a fenced
+code block, and lists a file with no headings without any. For those, the agent
+reads the file.
 
 uncoded has no command that prints a section. The agent's own tools find a
 heading and read the section under it just as well.
