@@ -20,6 +20,12 @@ includes it. Each entry links the pull request that made the change.
 
 ## Unreleased
 
+## [6.0.1](https://github.com/alimanfoo/uncoded/releases/tag/v6.0.1) — 2026-10-29
+
+This release makes no change to the contract. `uncoded init` now separates the
+`[tool.uncoded]` table from the rest of `pyproject.toml` with a blank line.
+([#422](https://github.com/alimanfoo/uncoded/pull/422))
+
 ## [6.0.0](https://github.com/alimanfoo/uncoded/releases/tag/v6.0.0) — 2026-10-29
 
 Before upgrading, follow
