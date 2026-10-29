@@ -470,10 +470,10 @@ The user's code defines the same name twice in one module body or class body.
 That is usually a mistake, although an overloaded function does it on purpose.
 The later symbol redefines the earlier one.
 
-The namespace map lists the name once, and the stub shows each definition, in
-the order of the file. A name path reaches only the later symbol, so
-`uncoded body` prints the later definition. The agent reads the earlier
-definition in the stub or the file.
+The namespace map lists the name once, where it is first defined, and the stub
+shows each definition, in the order of the file. A name path reaches only the
+later symbol, so `uncoded body` prints the later definition. The agent reads the
+earlier definition in the stub or the file.
 
 ## Expected faults
 

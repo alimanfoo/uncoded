@@ -36,11 +36,11 @@ tool call:
 Read .uncoded/namespace.yaml
 ```
 
-This lists every symbol under the source roots: classes, methods, functions and
-assignments, beneath the directories and files that hold them. Without it
-loaded, "find X" answers come from pretrained guesses. They reflect what a
-project like this probably contains, not what is actually here. Read it once, in
-full, at session start.
+This lists every symbol under the source roots: classes, functions, methods,
+properties, `type` statements and assignments, beneath the directories and files
+that hold them. Without it loaded, "find X" answers come from pretrained
+guesses. They reflect what a project like this probably contains, not what is
+actually here. Read it once, in full, at session start.
 
 **Step 2: Understand. Read the `.pyi` stub before any `.py` source.** Stub paths
 mirror source paths under `.uncoded/stubs/`:

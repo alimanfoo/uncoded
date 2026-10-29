@@ -20,12 +20,27 @@ includes it. Each entry links the pull request that made the change.
 
 ## Unreleased
 
+## [5.0.0](https://github.com/alimanfoo/uncoded/releases/tag/v5.0.0) — 2026-10-29
+
+Before upgrading, follow
+[Upgrading from version 4 to version 5](upgrading.md#from-version-4-to-version-5).
+
 ### Breaking
 
 - uncoded no longer reads the `required-version` setting, and `uncoded init` no
   longer writes it. uncoded runs at any version, and a project pins its version
   in the `entry` of its pre-commit hook.
   ([#380](https://github.com/alimanfoo/uncoded/pull/380))
+
+### Changed
+
+- The navigation and consistency review skills tell the agent to run
+  `uvx uncoded sync` and `uvx uncoded body`, in place of the project's
+  configured command, which nothing configures.
+  ([#407](https://github.com/alimanfoo/uncoded/pull/407))
+- The docs map lists every CommonMark ATX heading, including one indented by up
+  to three spaces, and leaves out a line that starts with `#` inside an HTML
+  block. ([#403](https://github.com/alimanfoo/uncoded/pull/403))
 
 ### Fixed
 
