@@ -99,8 +99,3 @@ for:
 - Repository: `uncoded`
 - Workflow: `publish.yml`
 - Environment: `pypi`
-
-## Upgrade this repository
-
-Once the publish workflow ends, upgrade this repository to the new release, as
-[Upgrading](upgrading.md) says. Merge the upgrade in a pull request of its own.

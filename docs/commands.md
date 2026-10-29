@@ -1,15 +1,15 @@
 # Commands
 
-Run uncoded with `uvx uncoded`.
+Run uncoded from the project's environment with `uv run uncoded`.
 
-| To…                                   | Use                                        |
-| ------------------------------------- | ------------------------------------------ |
-| Set uncoded up in a project           | `uvx uncoded init`                         |
-| Build or refresh the index and skills | `uvx uncoded sync`                         |
-| Check generated files without writing | `uvx uncoded check`                        |
-| Read a Python symbol's definition     | `uvx uncoded body <name_path> --in <file>` |
-| Find references to a Python symbol    | `uvx uncoded refs <name_path> --in <file>` |
-| Print the installed version           | `uvx uncoded --version`                    |
+| To…                                   | Use                                           |
+| ------------------------------------- | --------------------------------------------- |
+| Set uncoded up in a project           | `uv run uncoded init`                         |
+| Build or refresh the index and skills | `uv run uncoded sync`                         |
+| Check generated files without writing | `uv run uncoded check`                        |
+| Read a Python symbol's definition     | `uv run uncoded body <name_path> --in <file>` |
+| Find references to a Python symbol    | `uv run uncoded refs <name_path> --in <file>` |
+| Print the installed version           | `uv run uncoded --version`                    |
 
 Every command but `init` and `--version` runs inside a project. It finds the
 configuration file in the current directory or the nearest directory above it.
@@ -74,23 +74,24 @@ options:
 <!-- [[[end]]] -->
 
 ```sh
-uvx uncoded init
+uv run uncoded init
 ```
 
 Sets uncoded up in the project, then runs `sync`. Run it in the directory that
 is to be the project directory.
 
-If no configuration file is found in that directory or above it, `init` writes
-`.uncoded.toml` there. Its source roots are whichever of `src` and `tests`
-exist, and its doc roots are whichever of `README.md`, `AGENTS.md` and `docs`
-exist. If none of them exist, `init` writes nothing and exits with status `1`.
-If `init` cannot write the configuration file, it says why and exits with status
-`1`. A configuration file that `init` finds is left as it is.
+If no configuration file is found in that directory or above it, `init` appends
+a `[tool.uncoded]` table to the `pyproject.toml` in that directory. Its source
+roots are whichever of `src` and `tests` exist, and its doc roots are whichever
+of `README.md`, `AGENTS.md` and `docs` exist. If `pyproject.toml` does not
+exist, or if none of those roots exist, `init` writes nothing and exits with
+status `1`. If `init` cannot write the configuration file, it says why and exits
+with status `1`. A configuration file that `init` finds is left as it is.
 
 If `sync` fails, `init` stops there with exit status `1`. After `sync`, `init`
 says which files to commit, and prints the lines to add to `AGENTS.md` or
 `CLAUDE.md` that tell agents to load the navigation skills. It does not edit
-those files or `pyproject.toml`. Running it again does no harm.
+those files. Running it again does no harm.
 
 ## `sync`
 
@@ -106,7 +107,7 @@ options:
 <!-- [[[end]]] -->
 
 ```sh
-uvx uncoded sync
+uv run uncoded sync
 ```
 
 Builds or refreshes the index and the skills. Output lists files created,
@@ -132,7 +133,7 @@ options:
 <!-- [[[end]]] -->
 
 ```sh
-uvx uncoded check
+uv run uncoded check
 ```
 
 Runs the same pipeline as `sync` without changing files.
@@ -164,8 +165,8 @@ options:
 <!-- [[[end]]] -->
 
 ```sh
-uvx uncoded body greet --in src/greetings.py
-uvx uncoded body Greeter/greet --in src/greetings.py
+uv run uncoded body greet --in src/greetings.py
+uv run uncoded body Greeter/greet --in src/greetings.py
 ```
 
 Prints the named symbol's source to standard output, exactly as written in the
@@ -199,8 +200,8 @@ options:
 <!-- [[[end]]] -->
 
 ```sh
-uvx uncoded refs greet --in src/greetings.py
-uvx uncoded refs Greeter/greet --in src/greetings.py
+uv run uncoded refs greet --in src/greetings.py
+uv run uncoded refs Greeter/greet --in src/greetings.py
 ```
 
 Finds every reference to the symbol: its definition, each import of it, and each
@@ -221,7 +222,7 @@ first call may download it. `uvx` must be on `PATH`.
 ## `--version`
 
 ```sh
-uvx uncoded --version
+uv run uncoded --version
 ```
 
 Prints `uncoded` and the installed version, such as `uncoded <version>`.

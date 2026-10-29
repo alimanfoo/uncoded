@@ -9,7 +9,6 @@ from typing import cast
 from uncoded import __version__
 from uncoded.body import resolve_definition
 from uncoded.config import (
-    UNCODED_TOML,
     Config,
     ConfigError,
     _configuration_file_error,
@@ -180,18 +179,28 @@ def _sync(*, config: Config, check: bool = False) -> int:
 def _init(*, config: Config | None) -> int:
     """Set uncoded up in the project at the current directory, then sync it.
 
-    With no configuration, writes a configuration file in the current directory
-    naming the conventional roots. Leaves the configuration file of ``config``
-    as it is, and says where it is. After the sync, says what to commit and
-    prints the lines that tell agents to load the navigation skills. Returns 0.
-    Raises ConfigError when there is no root to name or the sync fails, and
-    FileSyncError when the configuration file cannot be written or a generated
-    file cannot be read, written or removed.
+    With no configuration, appends a configuration table to ``pyproject.toml``
+    in the current directory, naming the conventional roots. Leaves the
+    configuration file of ``config`` as it is, and says where it is. After the
+    sync, says what to commit and prints the lines that tell agents to load the
+    navigation skills. Returns 0. Raises ConfigError when there is no
+    ``pyproject.toml`` or root to name or the sync fails, and FileSyncError when
+    the configuration file cannot be written or a generated file cannot be
+    read, written or removed.
     """
     if config is None:
         start = Path.cwd()
-        content = render_conventional_config(directory=start)
-        sync_file(path=Path(UNCODED_TOML), content=content, project_directory=start)
+        pyproject = Path("pyproject.toml")
+        pyproject_path = start / pyproject
+        if not pyproject_path.is_file():
+            raise ConfigError(
+                "uncoded is configured in pyproject.toml, but found none in this "
+                "directory."
+            )
+        existing = pyproject_path.read_text(encoding="utf-8")
+        separator = "\n" if existing and not existing.endswith("\n") else ""
+        content = existing + separator + render_conventional_config(directory=start)
+        sync_file(path=pyproject, content=content, project_directory=start)
         config = read_config(start=start)
     else:
         print(

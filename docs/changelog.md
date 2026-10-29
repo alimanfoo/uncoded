@@ -20,6 +20,14 @@ includes it. Each entry links the pull request that made the change.
 
 ## Unreleased
 
+### Breaking
+
+- The skills run uncoded from the project's uv environment, so a project must
+  use uv, require Python 3.12 or later, and add uncoded as a development
+  dependency. `.uncoded.toml` is no longer read, and `uncoded init` now appends
+  the configuration to `pyproject.toml`.
+  ([#415](https://github.com/alimanfoo/uncoded/pull/415))
+
 ## [5.0.0](https://github.com/alimanfoo/uncoded/releases/tag/v5.0.0) — 2026-10-29
 
 Before upgrading, follow

@@ -19,7 +19,7 @@ zero-reference symbols, or redundant public surfaces merely because they exist.
 
 ## Prerequisites
 
-Run `uvx uncoded sync`. Read the project's agent instructions and follow its
+Run `uv run uncoded sync`. Read the project's agent instructions and follow its
 navigation rules.
 
 ## Orientation
@@ -52,8 +52,8 @@ Findings may cover:
 - name-behaviour disagreement
 
 Read each relevant source file's stub for names and signatures. Run
-`uvx uncoded body` only when a docstring or implementation is needed to confirm
-a candidate. Do not retrieve every definition.
+`uv run uncoded body` only when a docstring or implementation is needed to
+confirm a candidate. Do not retrieve every definition.
 
 ## Report
 

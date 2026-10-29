@@ -69,13 +69,14 @@ promises is an enhancement.
 
 #### The developer sets uncoded up in a project
 
-The developer has a Python project, and wants the agents that work in it to find
-their way around its code and documentation. In the directory that is to be the
-project directory, they run `uvx uncoded init`.
+The developer has a Python project that is managed with uv and requires Python
+3.12 or later. They want the agents that work in it to find their way around its
+code and documentation. In the directory that is to be the project directory,
+they run `uv add --dev uncoded`, then `uv run uncoded init`.
 
 `uncoded init` looks for an existing configuration file in that directory and
-the directories above it. Finding none, it writes `.uncoded.toml` in that
-directory. In it:
+the directories above it. Finding none, it appends a `[tool.uncoded]` table to
+the `pyproject.toml` in that directory. In it:
 
 - the source roots are whichever of `src` and `tests` exist in that directory;
 - the doc roots are whichever of `README.md`, `AGENTS.md` and `docs` exist in
@@ -92,14 +93,20 @@ installed skill files. It ends by doing three things:
 - it says that without those lines, agents load the uncoded skills only when
   they choose to.
 
-It exits with status `0`. It does not edit `AGENTS.md`, `CLAUDE.md` or
-`pyproject.toml`.
+It exits with status `0`. Apart from appending the table, it leaves the earlier
+content of `pyproject.toml` byte for byte as it was. It does not edit
+`AGENTS.md` or `CLAUDE.md`.
 
-The developer checks the roots in `.uncoded.toml`, and adds the printed lines to
-`AGENTS.md` or `CLAUDE.md`. They commit the edited `AGENTS.md` or `CLAUDE.md`,
-the configuration file and the installed skill files.
+The developer checks the roots in `pyproject.toml`, and adds the printed lines
+to `AGENTS.md` or `CLAUDE.md`. They commit the edited `AGENTS.md` or
+`CLAUDE.md`, `pyproject.toml`, `uv.lock` and the installed skill files.
 
-Three variations:
+Variations:
+
+- **There is no `pyproject.toml` in that directory.** `uncoded init` writes
+  nothing. It says that uncoded is configured in `pyproject.toml` and that it
+  found none there. It exits with status `1`. The developer creates the file
+  through uv, and runs `uncoded init` again.
 
 - **None of those directories and files exist.** `uncoded init` writes no
   configuration file. It says which directories and files it looked for, and how
@@ -109,12 +116,12 @@ Three variations:
   it is, says so, and carries on: it runs `uncoded sync`, says which files to
   commit, and prints the lines. Running `uncoded init` a second time therefore
   does no harm.
-- **The developer prefers the settings in `pyproject.toml`.** They move the
-  settings from `.uncoded.toml` into the `[tool.uncoded]` table of
-  `pyproject.toml`, and delete `.uncoded.toml`.
 
-The value to the developer is that setting uncoded up takes one command and one
-paste, and that every agent that works in the project from then on is told to
+Projects that are not managed with uv, or that support Python below 3.12, are
+outside what uncoded supports.
+
+The value to the developer is that uncoded follows the project's existing uv
+workflow, and that every agent that works in the project from then on is told to
 use uncoded.
 
 #### The developer changes what is indexed
@@ -148,12 +155,12 @@ with no other step.
 
 The developer wants a commit to fail when it would leave the installed skill
 files stale, for example when an agent forgot to run `uncoded sync`. They add a
-hook to their pre-commit configuration that runs `uvx uncoded@<version> sync`,
-naming the release of uncoded that the project uses. The hook passes no file
-names to the command, and runs on every commit. When the hook changes an
-installed skill file, pre-commit fails the commit. Whoever made the commit, the
-developer or an agent, stages the changed file and commits again. A CI job that
-runs the same pre-commit hooks catches what a local commit missed.
+local hook to their pre-commit configuration with `language: system` that runs
+`uv run uncoded sync`. The hook passes no file names to the command, and runs on
+every commit. When the hook changes an installed skill file, pre-commit fails
+the commit. Whoever made the commit, the developer or an agent, stages the
+changed file and commits again. A CI job that runs the same pre-commit hooks
+catches what a local commit missed.
 
 `uncoded check` is for a different need. It reports whether the generated files
 are current, without changing anything. It exits with status `0` when they are
@@ -167,24 +174,17 @@ committed without anyone noticing.
 
 #### The developer upgrades uncoded
 
-A new release of uncoded is out, and the developer wants it. They raise the
-version in the `entry` of their pre-commit hook. At the next commit, the hook
-runs the new version, which writes, rewrites or removes the installed skill
-files that the new version generates differently. If any change, pre-commit
-fails the commit. The developer commits the pre-commit configuration and the
-installed skill files together. Before upgrading to a new major version, they
-read `docs/upgrading.md`, which says what else to change. That includes deleting
-any installed skill files that an earlier version wrote under names the new
-version no longer uses, since `uncoded sync` removes only the skills the running
-version generates.
-
-Until someone raises the version in the hook, it holds. A new release never
-reaches the committed files unannounced. An agent or a developer that runs
-another version of uncoded changes only the index, which is local, and the
-installed skill files in the working tree. If anyone stages those files, the
-hook writes them back and fails the commit. A project without a pre-commit hook
-pins no version, so each run of `uncoded sync` writes the installed skill files
-that its own version generates.
+A new release of uncoded is out, and the developer wants it. They run
+`uv lock --upgrade-package uncoded`, or merge a Dependabot pull request that
+does the same. At the next commit, the hook runs the new version, which writes,
+rewrites or removes the installed skill files that the new version generates
+differently. If any change, pre-commit fails the commit. A Dependabot pull
+request therefore fails the hook until someone commits the regenerated files.
+The developer commits `uv.lock` and the installed skill files together. Before
+upgrading to a new major version, they read `docs/upgrading.md`, which says what
+else to change. That includes deleting any installed skill files that an earlier
+version wrote under names the new version no longer uses, since `uncoded sync`
+removes only the skills the running version generates.
 
 The value to the developer is that upgrading is one deliberate change, visible
 in a pull request, and that two projects on one machine can use different
@@ -196,10 +196,10 @@ versions of uncoded side by side.
 
 An agent starts work in the project. The lines in `AGENTS.md` or `CLAUDE.md`
 tell it to load the navigation skills, and it loads each of them once. Following
-them, it runs `uncoded sync` before it reads either map, so that the index is
-current, whatever has changed since it was last written. It then reads in full
-the namespace map, if the project has source roots, and the docs map, if it has
-doc roots.
+them, it runs `uv run uncoded sync` before it reads either map, so that the
+index is current, whatever has changed since it was last written. It then reads
+in full the namespace map, if the project has source roots, and the docs map, if
+it has doc roots.
 
 The value to the agent is that it starts every session from a current index and
 a complete list of the project's symbols. That list is what gives it recall.
@@ -214,14 +214,14 @@ annotation. It leaves out parameter defaults, decorators, docstrings and bodies,
 so when the agent needs those, it reads the definition.
 
 For a symbol it is confident it needs, the agent runs
-`uncoded body <name path> --in <file>` from the project directory, taking the
-name path and the file from the namespace map. It gets the symbol's definition,
-exactly as it is in the file, in one call, and the command exits with status
-`0`. `uncoded body` prints whole lines, so when another statement shares a line
-with the definition, as in `x = 1; y = 2`, it prints that statement too. What
-uncoded prints is UTF-8 on every system, whatever encoding the system uses for
-its output, so a definition that holds `é` comes out exactly as it is in the
-file.
+`uv run uncoded body <name path> --in <file>` from the project directory, taking
+the name path and the file from the namespace map. It gets the symbol's
+definition, exactly as it is in the file, in one call, and the command exits
+with status `0`. `uncoded body` prints whole lines, so when another statement
+shares a line with the definition, as in `x = 1; y = 2`, it prints that
+statement too. What uncoded prints is UTF-8 on every system, whatever encoding
+the system uses for its output, so a definition that holds `é` comes out exactly
+as it is in the file.
 
 The agent stops as soon as it knows enough, which is often after the namespace
 map or a stub.
@@ -269,10 +269,10 @@ reads anything, and it reads only the sections it needs.
 #### The agent edits a symbol's definition
 
 The agent needs to change a symbol's definition, such as a function's. It runs
-`uncoded body` for the symbol, and passes what it prints, unchanged, to its edit
-tool as the text to replace. That text is the symbol's definition, exactly as it
-is in the file, so the edit lands in the right place without the agent reading
-the file to find line numbers.
+`uv run uncoded body` for the symbol, and passes what it prints, unchanged, to
+its edit tool as the text to replace. That text is the symbol's definition,
+exactly as it is in the file, so the edit lands in the right place without the
+agent reading the file to find line numbers.
 
 What `uncoded body` prints is always one unbroken stretch of the file. A
 property's definition is its getter, so for a property `uncoded body` prints the
@@ -285,13 +285,13 @@ and nothing around it.
 #### The agent renames a symbol, changes its signature, or deletes it
 
 Before renaming a symbol, changing its signature or deleting it, the agent runs
-`uncoded refs <name path> --in <file>` from the project directory. The command
-prints every reference to the symbol anywhere in the project directory: its
-definition, each import of it, and each use of it. It prints one reference per
-line, as `path:line:column`, sorted by path, then line, then column. A path is
-relative to the current directory when the reference is beneath it, and absolute
-otherwise, so it is relative throughout when the agent runs the command from the
-project directory. It exits with status `0`.
+`uv run uncoded refs <name path> --in <file>` from the project directory. The
+command prints every reference to the symbol anywhere in the project directory:
+its definition, each import of it, and each use of it. It prints one reference
+per line, as `path:line:column`, sorted by path, then line, then column. A path
+is relative to the current directory when the reference is beneath it, and
+absolute otherwise, so it is relative throughout when the agent runs the command
+from the project directory. It exits with status `0`.
 
 The agent updates every reference that the change affects. It deletes a symbol
 only when the symbol is unused, as the concepts page defines it.
@@ -316,11 +316,11 @@ as it is.
 #### The agent runs the consistency review
 
 The developer asks an agent for a consistency review, or the agent's task calls
-for one. The agent loads `uncoded-consistency-review`, runs `uncoded sync`, and
-reads the namespace map. It then looks for pairs of claims about the same
-concept that ought to agree but do not, such as two names for one thing, or a
-docstring that contradicts its function's signature. It reports only the
-disagreements it can support, quoting both claims.
+for one. The agent loads `uncoded-consistency-review`, runs
+`uv run uncoded sync`, and reads the namespace map. It then looks for pairs of
+claims about the same concept that ought to agree but do not, such as two names
+for one thing, or a docstring that contradicts its function's signature. It
+reports only the disagreements it can support, quoting both claims.
 
 The value to the developer is that inconsistencies in the code's names and in
 the claims about its symbols are found by a systematic review of the whole code,
@@ -394,19 +394,6 @@ configuration file to a directory that contains the root.
 Symbolic links beneath a root are not checked in this way. A linked file beneath
 a root is indexed, wherever its target is, and a linked directory beneath a root
 is not followed.
-
-### Two configuration files in one directory
-
-One directory holds both `.uncoded.toml` and a `pyproject.toml` with a
-`[tool.uncoded]` table, perhaps because the developer moved the settings and
-forgot to delete one of them. Every uncoded command, including `uncoded init`,
-stops, names both files, and says to keep only one. It exits with status `1` and
-writes nothing.
-
-A `pyproject.toml` without a `[tool.uncoded]` table, in the same directory as
-`.uncoded.toml`, is not a conflict.
-
-The developer deletes one of the two.
 
 ### An `--in` file that cannot be used
 

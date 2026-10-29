@@ -25,15 +25,15 @@ This page replaces "ontology", the name it was first written under.
 
 ### Project
 
-A **project** is a codebase that uses uncoded.
+A **project** is a codebase that is managed with uv and has uncoded as a
+development dependency.
 
 Replaces: "host project".
 
 ### Configuration file
 
-A project's **configuration file** is where its uncoded settings live: either a
-`.uncoded.toml` file, with the settings as top-level keys, or a `pyproject.toml`
-file, with the settings in its `[tool.uncoded]` table.
+A project's **configuration file** is its `pyproject.toml`, with the uncoded
+settings in its `[tool.uncoded]` table.
 
 Replaces: "config file".
 

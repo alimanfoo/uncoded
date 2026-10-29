@@ -65,7 +65,7 @@ When the agent needs the exact source, it retrieves that definition without
 reading the rest of the source file:
 
 ```sh
-uvx uncoded body greet --in src/greetings.py
+uv run uncoded body greet --in src/greetings.py
 ```
 
 Broad questions may need only the map. Questions about names and types may stop

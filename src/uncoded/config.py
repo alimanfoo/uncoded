@@ -1,4 +1,4 @@
-"""Read uncoded configuration from pyproject.toml or .uncoded.toml."""
+"""Read uncoded configuration from pyproject.toml."""
 
 import json
 import tomllib
@@ -7,8 +7,6 @@ from pathlib import Path
 from typing import Literal
 
 from uncoded.read_helpers import failure_reason
-
-UNCODED_TOML = ".uncoded.toml"
 
 # The roots that uncoded init names, by kind, in the order it names them.
 _CONVENTIONAL_ROOTS: dict[Literal["source", "doc"], tuple[str, ...]] = {
@@ -89,20 +87,10 @@ def _configuration_file_at(*, directory: Path) -> tuple[Path, dict] | None:
 
     A ``pyproject.toml`` without a ``[tool.uncoded]`` table is not a
     configuration file, so the search passes over it. Raises
-    :exc:`ConfigError` when ``pyproject.toml`` and ``.uncoded.toml`` both
-    configure uncoded, or when either cannot be used.
+    :exc:`ConfigError` when the file cannot be used.
     """
     pyproject = directory / "pyproject.toml"
-    uncoded_toml = directory / UNCODED_TOML
     pyproject_settings = _pyproject_settings(pyproject_path=pyproject)
-    uncoded_toml_settings = _load_toml(path=uncoded_toml)
-    if uncoded_toml_settings is not None:
-        if pyproject_settings is not None:
-            raise ConfigError(
-                f"both {pyproject.as_posix()} and {uncoded_toml.as_posix()} "
-                "configure uncoded. Configure uncoded in one file only."
-            )
-        return uncoded_toml, uncoded_toml_settings
     if pyproject_settings is not None:
         return pyproject, pyproject_settings
     return None
@@ -111,9 +99,7 @@ def _configuration_file_at(*, directory: Path) -> tuple[Path, dict] | None:
 def _find_configuration_file(*, start: Path) -> tuple[Path, dict] | None:
     """Return the nearest configuration file and its settings, from ``start`` up.
 
-    The nearest directory with a result wins. Ambiguity is a same-directory
-    condition only. Files at different levels do not conflict. Returns None
-    when no configuration file is found.
+    Returns None when no configuration file is found.
     """
     start_resolved = start.resolve()
     for directory in [start_resolved, *start_resolved.parents]:
@@ -126,11 +112,9 @@ def _find_configuration_file(*, start: Path) -> tuple[Path, dict] | None:
 def find_config(*, start: Path) -> Config | None:
     """Locate the configuration file and read all uncoded settings from it.
 
-    Walks up from ``start`` looking for ``.uncoded.toml`` or a
-    ``pyproject.toml`` with a ``[tool.uncoded]`` table. Returns None when no
-    configuration file is found. Raises :exc:`ConfigError` when two files in
-    the same directory both configure uncoded, or when a file that the search
-    reads cannot be used.
+    Walks up from ``start`` looking for a ``pyproject.toml`` with a
+    ``[tool.uncoded]`` table. Returns None when no configuration file is found.
+    Raises :exc:`ConfigError` when a file that the search reads cannot be used.
     """
     found = _find_configuration_file(start=start)
     if found is None:
@@ -231,9 +215,9 @@ def _resolve_root(
 
 
 def render_conventional_config(*, directory: Path) -> str:
-    """Return the text of a configuration file for the project in ``directory``.
+    """Return a conventional ``[tool.uncoded]`` table for ``directory``.
 
-    The file names as roots whichever of the conventional roots in
+    The table names as roots whichever of the conventional roots in
     ``directory`` are valid roots. Raises :exc:`ConfigError` when none of them
     are.
     """
@@ -250,11 +234,12 @@ def render_conventional_config(*, directory: Path) -> str:
             "found none of the source roots "
             f"{', '.join(_CONVENTIONAL_ROOTS['source'])} or the doc roots "
             f"{', '.join(_CONVENTIONAL_ROOTS['doc'])} in this directory, so "
-            f"wrote no configuration file. Write {UNCODED_TOML} by hand, with "
-            "source-roots listing the directories of Python code and doc-roots "
-            "listing the Markdown files and directories."
+            "changed no configuration file. Add [tool.uncoded] to pyproject.toml "
+            "by hand, with source-roots listing the directories of Python code "
+            "and doc-roots listing the Markdown files and directories."
         )
-    lines = [
+    lines = ["[tool.uncoded]"]
+    lines.extend(
         f"{kind}-roots = {json.dumps(found)}" for kind, found in roots.items() if found
-    ]
+    )
     return "\n".join(lines) + "\n"
