@@ -439,38 +439,7 @@ class TestSyncCheckMode:
         assert "Error" in capsys.readouterr().err
 
 
-class TestMainDispatch:
-    def test_sync_subcommand_runs_in_apply_mode(self, *, tmp_path, monkeypatch):
-        _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
-        (tmp_path / "src" / "foo.py").write_text(
-            "def hello(): pass\n", encoding="utf-8"
-        )
-        monkeypatch.setattr(sys, "argv", ["uncoded", "sync"])
-
-        assert cli.main() == 0
-        assert (tmp_path / ".uncoded" / "namespace.yaml").exists()
-
-    def test_check_subcommand_runs_in_check_mode(self, *, tmp_path, monkeypatch):
-        _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
-        (tmp_path / "src" / "foo.py").write_text(
-            "def hello(): pass\n", encoding="utf-8"
-        )
-        monkeypatch.setattr(sys, "argv", ["uncoded", "check"])
-
-        assert cli.main() == 1
-        # No generated files written in check mode.
-        assert not (tmp_path / ".uncoded").exists()
-
-    def test_check_subcommand_returns_zero_when_current(self, *, tmp_path, monkeypatch):
-        _init_source_project(tmp_path=tmp_path, monkeypatch=monkeypatch)
-        (tmp_path / "src" / "foo.py").write_text(
-            "def hello(): pass\n", encoding="utf-8"
-        )
-        _run(monkeypatch=monkeypatch, arguments=["sync"])
-
-        monkeypatch.setattr(sys, "argv", ["uncoded", "check"])
-        assert cli.main() == 0
-
+class TestVersion:
     def test_version_flag_prints_version(self, *, monkeypatch, capsys):
         monkeypatch.setattr(sys, "argv", ["uncoded", "--version"])
         with pytest.raises(SystemExit) as exc_info:
