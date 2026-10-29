@@ -931,21 +931,8 @@ class TestInitCommand:
         _make_roots(tmp_path=tmp_path, monkeypatch=monkeypatch, roots=["src"])
         (tmp_path / "pyproject.toml").write_text("", encoding="utf-8")
         failure = PermissionError(13, "Permission denied")
-        write_text = Path.write_text
 
-        def fail_after_partial_write(*args, **kwargs):
-            path, content = args
-            write_text(
-                path,
-                content[:1],
-                encoding=kwargs["encoding"],
-                newline=kwargs["newline"],
-            )
-            raise failure
-
-        with mock.patch.object(
-            Path, "write_text", autospec=True, side_effect=fail_after_partial_write
-        ):
+        with mock.patch.object(Path, "write_text", side_effect=failure):
             assert _run(monkeypatch=monkeypatch, arguments=["init"]) == 1
 
         assert _contents(project_directory=tmp_path) == {
