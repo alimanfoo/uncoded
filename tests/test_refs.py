@@ -1,5 +1,6 @@
 import io
 import json
+import os
 import subprocess
 import textwrap
 from pathlib import Path
@@ -18,6 +19,7 @@ from uncoded.refs import (
     _Reference,
     _run_exchange,
     _terminate,
+    _uri_to_path,
     find_refs,
 )
 from uncoded.resolver import NamePath
@@ -220,6 +222,26 @@ class TestPathForDisplay:
         result = _path_for_display(path=other)
 
         assert result == other
+
+
+class TestUriToPath:
+    def test_keeps_host_in_network_path(self):
+        result = _uri_to_path(uri="file://server/share/pkg/m.py")
+
+        assert result.as_posix().lstrip("/") == "server/share/pkg/m.py"
+
+    @pytest.mark.skipif(
+        os.name != "nt", reason="UNC paths have their native form only on Windows."
+    )
+    def test_returns_unc_path_for_uri_with_host(self):
+        result = _uri_to_path(uri="file://server/share/pkg/m.py")
+
+        assert result == Path(r"\\server\share\pkg\m.py")
+
+    def test_uses_uri_path_without_host(self):
+        result = _uri_to_path(uri="file:///share/pkg/m.py")
+
+        assert result.as_posix() == "/share/pkg/m.py"
 
 
 class TestQueryReferences:
