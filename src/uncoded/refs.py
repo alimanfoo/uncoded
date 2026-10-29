@@ -274,6 +274,8 @@ def _read_response(*, stream: IO[bytes], request_id: int) -> dict:
         msg = _read_message(stream=stream)
         if msg.get("id") != request_id:
             continue
+        if "result" not in msg and "error" not in msg:
+            continue
         if "error" in msg:
             error = msg["error"]
             raise TyError(

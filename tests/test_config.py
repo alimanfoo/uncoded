@@ -10,7 +10,7 @@ from uncoded.config import (
 
 
 class TestFindConfig:
-    def test_returns_none_when_no_configuration_file(self, *, tmp_path):
+    def test_finds_no_configuration_file(self, *, tmp_path):
         assert find_config(start=tmp_path) is None
 
 

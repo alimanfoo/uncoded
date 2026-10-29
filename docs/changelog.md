@@ -32,6 +32,9 @@ includes it. Each entry links the pull request that made the change.
 - `uncoded refs` now finds every reference when valid whitespace separates a
   `def`, `async def` or `class` keyword from its name.
   ([#401](https://github.com/alimanfoo/uncoded/pull/401))
+- `uncoded refs` ignores a request from ty while waiting for a response, even
+  when its id equals its own request's. It could fail with a traceback.
+  ([#395](https://github.com/alimanfoo/uncoded/pull/395))
 
 ## [4.0.0](https://github.com/alimanfoo/uncoded/releases/tag/v4.0.0) — 2026-10-28
 

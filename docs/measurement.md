@@ -15,7 +15,7 @@ after `1c0b9ba`: #362, #364, #366, #367 and #368. Only "True documents",
 "Machine-checked rules" and "Fast readable tests" change. The other criteria
 stand as measured at `1c0b9ba`.
 
-An open issue owns each shortfall below.
+An open issue owns each shortfall below that a change to the repository can fix.
 
 ## Results
 
@@ -34,7 +34,7 @@ An open issue owns each shortfall below.
 | Machine-checked rules      | 7 of the 7 rules checked; no rule found that review missed more than once                                         | met     |                              |
 | Fast readable tests        | 494 tests, the default 486 in 3.10 seconds at 100% branch coverage; 17 test names fall short of the bar           | not met | #359, #340                   |
 | Accurate tracker           | 0 of 26 open issues use a replaced word or ask for work done or ruled out                                         | met     |                              |
-| Reviewed changes           | 41 pull requests merged since v3.0.0, 40 linking an issue or spec, 8 answering the definition of done             | not met | #360                         |
+| Reviewed changes           | 41 pull requests merged since v3.0.0, 40 linking an issue or spec, 8 answering the definition of done             | not met |                              |
 | Loud failures              | `strict = true`, `pytest>=9.0`, a 30-second test timeout, raised to 120 seconds on macOS and Windows in CI        | met     |                              |
 | Rules not cases            | 11 entries on the ledger, each with an external cause; 0 conditionals that name a situation off the ledger        | met     |                              |
 | Invariants by construction | 0 branches that defend against a state the types could rule out                                                   | met     |                              |
@@ -154,8 +154,7 @@ An open issue owns each shortfall below.
   pull requests merged since, #252 links no issue or spec, and 8 answer the
   definition of done. Four commits reached `main` outside a pull request, the
   last on 2026-10-24, before branch protection required one. `AGENTS.md` asks
-  every pull request to answer the definition of done from #355 on, and #360
-  owns the shortfall until a measurement counts only those pull requests.
+  every pull request to answer the definition of done from #355 on.
 - **Rules not cases.** Every entry on [the ledger](special-cases.md) is where it
   says, with a cause outside uncoded, and review found no other conditional that
   names a situation. #355 removed an override in `yaml_tree.py` that indented
