@@ -66,6 +66,64 @@ class TestFindRefsWithoutTy:
 
 @pytest.mark.integration
 class TestFindRefs:
+    @pytest.mark.parametrize(
+        ("source", "name", "positions"),
+        [
+            pytest.param(
+                "def  foo():\n    pass\n\n\nfoo()\n",
+                "foo",
+                [(1, 6), (5, 1)],
+                id="function-with-two-spaces",
+            ),
+            pytest.param(
+                "class\tEngine:\n    pass\n\nEngine()\n",
+                "Engine",
+                [(1, 7), (4, 1)],
+                id="class-with-tab",
+            ),
+            pytest.param(
+                "async def   fetch():\n    pass\n\nfetch()\n",
+                "fetch",
+                [(1, 13), (4, 1)],
+                id="async-function-with-extra-spaces",
+            ),
+            pytest.param(
+                "def \\\n    continued():\n    pass\n\ncontinued()\n",
+                "continued",
+                [(2, 5), (5, 1)],
+                id="line-continuation",
+            ),
+            pytest.param(
+                (
+                    "import functools\n\n"
+                    "@functools.cache\n"
+                    "def decorated():\n"
+                    "    pass\n\n"
+                    "decorated()\n"
+                ),
+                "decorated",
+                [(4, 5), (7, 1)],
+                id="decorated-function",
+            ),
+        ],
+    )
+    def test_definition_name_follows_token(self, *, tmp_path, source, name, positions):
+        path = tmp_path / "a.py"
+        (tmp_path / "pyproject.toml").write_text(
+            '[project]\nname = "t"\n', encoding="utf-8"
+        )
+        path.write_text(source, encoding="utf-8")
+
+        refs = find_refs(
+            name_path=NamePath(name),
+            in_path=path,
+            project_directory=tmp_path,
+        )
+
+        assert refs == [
+            _Reference(path=path, line=line, col=col) for line, col in positions
+        ]
+
     def test_unused_symbol_has_only_its_definition(self, *, tmp_path):
         pkg = tmp_path / "pkg"
         pkg.mkdir()
