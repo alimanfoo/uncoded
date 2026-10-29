@@ -250,24 +250,19 @@ def read_python_files(
     """
     python_files: list[PythonFile] = []
     skipped: list[SkippedFile] = []
-    for source_root in source_roots:
-        for py_file, rel_path in root_files(
-            root=source_root, pattern="*.py", project_directory=project_directory
-        ):
-            try:
-                source = read_source_text(path=py_file)
-            except (OSError, UnicodeDecodeError, SyntaxError) as e:
-                skipped.append(
-                    SkippedFile(path=rel_path, reason=failure_reason(error=e))
-                )
-                continue
-            try:
-                python_file = _extract_python_file(source=source, rel_path=rel_path)
-            except SyntaxError as e:
-                skipped.append(
-                    SkippedFile(path=rel_path, reason=failure_reason(error=e))
-                )
-                continue
-            if python_file.symbols:
-                python_files.append(python_file)
+    for py_file, rel_path in root_files(
+        roots=source_roots, pattern="*.py", project_directory=project_directory
+    ):
+        try:
+            source = read_source_text(path=py_file)
+        except (OSError, UnicodeDecodeError, SyntaxError) as e:
+            skipped.append(SkippedFile(path=rel_path, reason=failure_reason(error=e)))
+            continue
+        try:
+            python_file = _extract_python_file(source=source, rel_path=rel_path)
+        except SyntaxError as e:
+            skipped.append(SkippedFile(path=rel_path, reason=failure_reason(error=e)))
+            continue
+        if python_file.symbols:
+            python_files.append(python_file)
     return python_files, skipped

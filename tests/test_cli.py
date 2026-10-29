@@ -212,6 +212,27 @@ class TestSyncApplyMode:
         assert err_lines[2] == "warning: skipped 2 file(s)"
         assert (tmp_path / ".uncoded" / "stubs" / "src" / "good.pyi").exists()
 
+    def test_overlapping_source_roots_skip_a_file_once(
+        self, *, tmp_path, monkeypatch, capsys
+    ):
+        (tmp_path / ".uncoded.toml").write_text(
+            'source-roots = ["src", "src/pkg"]\n', encoding="utf-8"
+        )
+        package = tmp_path / "src" / "pkg"
+        package.mkdir(parents=True)
+        (package / "good.py").write_text("def good(): pass\n", encoding="utf-8")
+        (package / "bad.py").write_text("def bad(:\n", encoding="utf-8")
+        monkeypatch.chdir(tmp_path)
+
+        assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 0
+
+        err_lines = capsys.readouterr().err.splitlines()
+        assert err_lines == [
+            "warning: skipping src/pkg/bad.py: SyntaxError at line 1: invalid syntax",
+            "warning: skipped 1 file(s)",
+        ]
+        assert (tmp_path / ".uncoded" / "stubs" / "src" / "pkg" / "good.pyi").exists()
+
     def test_check_counts_skipped_files_and_exits_0_when_current(
         self, *, tmp_path, monkeypatch, capsys
     ):
@@ -1455,6 +1476,22 @@ class TestSyncDocRoots:
         assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 0
         docs_yaml = (tmp_path / ".uncoded" / "docs.yaml").read_text(encoding="utf-8")
         assert "README.md" in docs_yaml
+
+    def test_overlapping_doc_roots_list_headings_once(self, *, tmp_path, monkeypatch):
+        docs = tmp_path / "docs"
+        docs.mkdir()
+        (docs / "index.md").write_text("# Overview\n", encoding="utf-8")
+        (tmp_path / "pyproject.toml").write_text(
+            '[project]\nname = "demo"\n\n[tool.uncoded]\n'
+            'doc-roots = ["docs", "docs/index.md"]\n',
+            encoding="utf-8",
+        )
+        monkeypatch.chdir(tmp_path)
+
+        assert _run(monkeypatch=monkeypatch, arguments=["sync"]) == 0
+
+        docs_yaml = (tmp_path / ".uncoded" / "docs.yaml").read_text(encoding="utf-8")
+        assert yaml.safe_load(docs_yaml) == {"docs/": {"index.md": {"Overview": None}}}
 
     def test_both_kinds_of_root_write_both_indexes(self, *, tmp_path, monkeypatch):
         (tmp_path / "pyproject.toml").write_text(
