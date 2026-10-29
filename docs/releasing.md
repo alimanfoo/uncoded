@@ -33,8 +33,9 @@ A shortfall does not hold the release back. A failing test or check does.
 If the release is major or minor, do this too. A patch release skips it.
 
 1. Add each Python release that came out since the previous release to the
-   `python` list of the `test` job in `.github/workflows/ci.yml`. That list is
-   the one record of the Python versions that uncoded supports.
+   `python` list of the `test` job in `.github/workflows/ci.yml`. That list runs
+   from the `requires-python` floor in `pyproject.toml` up, and is the one
+   record of the Python versions that uncoded is tested on.
 2. Read the repository settings back, since they live outside the repository.
    The calls need a `gh` session with admin rights on the repository:
 

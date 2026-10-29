@@ -14,7 +14,9 @@ The contract covers:
 - each command, its flags and its exit statuses;
 - the data that a command prints on standard output, such as the source that
   `uncoded body` prints and the references that `uncoded refs` prints;
-- each configuration key;
+- the kind of project that uncoded supports, and the file that holds its
+  settings;
+- each setting;
 - each generated file's path, and the layout of the namespace map, the docs map
   and the stubs;
 - what each uncoded skill tells the agent to do; and
@@ -37,8 +39,10 @@ no version of their own.
 A release is major, such as 4.0.0 after 3.x, when it changes the contract in a
 way that can break a project. That is when it:
 
-- removes or renames a command, a flag, a configuration key or a generated
-  file's path, or changes its meaning or its default;
+- narrows the kind of project that uncoded supports, or moves its settings to
+  another file;
+- removes or renames a command, a flag, a setting or a generated file's path, or
+  changes its meaning or its default;
 - changes an exit status, or the format of the data that a command prints on
   standard output;
 - changes how a generated file is laid out, such as how its keys nest or which
@@ -51,9 +55,9 @@ way that can break a project. That is when it:
 ### Minor releases
 
 A release is minor, such as 3.1.0 after 3.0.x, when it adds a command, a flag, a
-configuration key, a generated file or new guidance in a skill, or deprecates a
-feature. A deprecated feature keeps working, with a warning, until a major
-release removes it.
+setting, a generated file or new guidance in a skill, or deprecates a feature. A
+deprecated feature keeps working, with a warning, until a major release removes
+it.
 
 ### Patch releases
 
