@@ -46,7 +46,7 @@ class TestBuildMap:
         assert pkg["core.py"] == {"start": None}
         assert pkg["utils/"]["helpers.py"] == {"format_output": None}
 
-    def test_class_with_attributes_and_methods(self):
+    def test_class_with_assignments_properties_and_methods(self):
         result = _map(
             sources={
                 "src/pkg/models.py": """\

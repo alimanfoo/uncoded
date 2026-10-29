@@ -215,7 +215,7 @@ class TestResolveDefinitionClassMember:
         expected = "    @property\n    def path(self):\n        return self._path\n"
         assert result == expected
 
-    def test_class_attribute_annotated(self, *, tmp_path):
+    def test_class_assignment_annotated(self, *, tmp_path):
         source = textwrap.dedent("""\
             class Counter:
                 count: int = 0
@@ -229,7 +229,7 @@ class TestResolveDefinitionClassMember:
 
         assert result == "    count: int = 0\n"
 
-    def test_class_attribute_unannotated(self, *, tmp_path):
+    def test_class_assignment_unannotated(self, *, tmp_path):
         source = textwrap.dedent("""\
             class Config:
                 debug = False
@@ -241,7 +241,7 @@ class TestResolveDefinitionClassMember:
 
         assert result == "    debug = False\n"
 
-    def test_scans_past_non_matching_attribute(self, *, tmp_path):
+    def test_scans_past_non_matching_assignment(self, *, tmp_path):
         source = textwrap.dedent("""\
             class Config:
                 debug = False

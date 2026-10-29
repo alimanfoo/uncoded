@@ -19,8 +19,8 @@ function's definition is a case for `uncoded body`. Reaching for
 `uncoded refs`. Reaching for `grep` then `Edit` to delete a symbol is a case for
 `uncoded refs` to confirm the symbol is unused, then `Edit`. The grep version of
 any of these is noisier and less reliable. Grep matches comments, strings, and
-unrelated attributes. Grep misses re-exports, so caller and delete checks come
-back incomplete. Grep forces offset arithmetic to slice a definition. The
+unrelated member access. Grep misses re-exports, so caller and delete checks
+come back incomplete. Grep forces offset arithmetic to slice a definition. The
 indexed tools don't.
 
 ## How to execute the rule
@@ -79,8 +79,8 @@ Per task:
   line as `<path>:<line>:<col>`, sorted by path, then line, then column. Each
   path is relative to the current working directory when possible and otherwise
   absolute. Grep on the name misses re-exports and adds false positives from
-  comments, strings, and attribute lookups on other types. If the next move
-  depends on the answer being complete, grep cannot give you that.
+  comments, strings, and member lookups on other types. If the next move depends
+  on the answer being complete, grep cannot give you that.
 
 - **Edit a symbol.** `uvx uncoded body <name_path> --in <relative_path>` gives
   the exact `old_string`; then `Edit` to apply the change.
