@@ -1,7 +1,7 @@
 [build-system]
 # Pinned exactly, because the build backend decides what a release ships and
 # uv.lock does not cover build requirements.
-requires = ["hatchling==1.32.4", "hatch-vcs==0.5.0"]
+requires = ["hatchling==1.33.0", "hatch-vcs==0.5.0"]
 build-backend = "hatchling.build"
 
 [project]
@@ -26,15 +26,15 @@ classifiers = [
 [dependency-groups]
 dev = [
     "cogapp==3.6.0",
-    "complexipy==8.1.0",
+    "complexipy==8.3.0",
     "import-linter==2.15",
     "mkdocs==1.6.1",
-    "mkdocs-material==9.7.7",
+    "mkdocs-material==9.8.0",
     "pre-commit>=4.7.0",
     "pytest>=9.1.1",
     "pytest-cov>=6.0",
     "pytest-timeout>=2.4",
-    "ruff==0.17.1",
+    "ruff==0.17.3",
     "ty>=0.0.93",
 ]
 
